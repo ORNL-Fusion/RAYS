@@ -1,0 +1,4 @@
+cp ../RAYS_code/*.f90 .
+cp ../RAYS_code/*.f .
+rm RAYS.f90
+make
