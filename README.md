@@ -23,7 +23,7 @@ which was based on the ancient RAYS code.  I have stripped out all graphics and
 preprocessing into separate rudimentary codes, and for now I have deleted all reference to
 warm plasma effects.  It uses fortran 90 modules
 extensively and focuses on defining generic interfaces which are supported by modules which
-may be very specific.  The approach is similar in many was to that of the IPS.
+may be very specific.  The approach is similar in many ways to that of the IPS.
 There are many useful parts left in the closet from the previous editions
 which I believe can be easily adapted and reattached to this architecture.  But for now
 the focus is on simplicity.  Other capabilities can be added as there is interest, and as we
