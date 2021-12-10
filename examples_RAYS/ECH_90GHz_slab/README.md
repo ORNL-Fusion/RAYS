@@ -14,6 +14,8 @@ Case 1 is extraordinary mode launched above the lower hybrid resonance. rays
 with nz = 0.4, 0.5, 0.6.  The interesting behaviour of the three rays is explained in
 the reference mentioned above.
 
+![Screenshot](Three_rays_x_mode.png)
+
 Case 2 is ordinary mode launched below the plasma cutoff.  Again an explanation is 
 given in the IEEE paper
 
