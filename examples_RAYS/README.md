@@ -1,4 +1,4 @@
-# A collection of examples running the RAYS code, the post_process_RAYS code,and ray plotting codes
+# A collection of examples running the RAYS code, the post_process_RAYS code, and ray plotting codes
 
 The RAYS code requires one input namelist file called rays.in.  The 
 post\_process\_RAYS code also requires an input namelist file called 
