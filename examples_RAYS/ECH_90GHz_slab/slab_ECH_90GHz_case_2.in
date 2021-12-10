@@ -2,7 +2,7 @@
   message_unit=11,
   verbosity=3,
   run_description='ECH in slab geometry 90Ghz'
-  run_label='run_1'
+  run_label='run_2'
   integrate_eq_gradients=.false.
 /
  &species_list
@@ -18,7 +18,7 @@
  &rf_list
   frf=90.e9,
   k0_sign = 1
-  wave_mode='minus'
+  wave_mode='plus'
   ray_dispersion_model='cold',
   ray_param='time',
   dispersion_resid_limit = 0.1
@@ -57,17 +57,17 @@
 /
  &simple_slab_ray_init_list
  n_x_launch=1,
- x_launch0= -0.08,
- dx_launch=0.4,
+ x_launch0= -0.45,
+ dx_launch=0.,
  n_z_launch=1,
  z_launch0= -0.6,
  dz_launch=0.,
  n_ky_launch=1,
  rindex_y0=0.,
  delta_rindex_y0=.1
- n_kz_launch=3,
- rindex_z0=0.4,
- delta_rindex_z0=0.1
+ n_kz_launch=2,
+ rindex_z0=0.2,
+ delta_rindex_z0=0.4
  /
  &ode_list
   ode_solver_name='SG_ODE',

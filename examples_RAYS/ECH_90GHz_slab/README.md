@@ -19,5 +19,7 @@ the reference mentioned above.
 Case 2 is ordinary mode launched below the plasma cutoff.  Again an explanation is 
 given in the IEEE paper
 
+![Screenshot](Two_rays_O_mode)
+
 
 
