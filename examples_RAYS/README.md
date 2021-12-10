@@ -14,6 +14,8 @@ in there.  I make an aliases for the codes to make execution simple. e.g.
 
 
 alias rays=\'/Users/dbb/Lab\_work/git\_dbb/RAYS/RAYS\_code/RAYS\'
+
 alias pp\_rays=\'/Users/dbb/Lab\_work/git\_dbb/RAYS/post\_process\_RAYS/post\_process\_RAYS\'
+
 alias plt\_rays=\'python /Users/dbb/Lab\_work/git\_dbb/RAYS/graphics\_RAYS/plot\_RAYS\_slab.py\'
-\
+
