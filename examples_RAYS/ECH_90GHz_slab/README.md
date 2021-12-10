@@ -16,8 +16,8 @@ the reference mentioned above.
 
 ![Screenshot](Three_rays_x_mode.png)
 
-Case 2 is ordinary mode launched below the plasma cutoff.  Again an explanation is 
-given in the IEEE paper
+Case 2 is ordinary mode launched below the plasma cutoff with nz = 0.2, 0.6.  Again an
+explanation is given in the IEEE paper.
 
 ![Screenshot](Two_rays_O_mode.png)
 
