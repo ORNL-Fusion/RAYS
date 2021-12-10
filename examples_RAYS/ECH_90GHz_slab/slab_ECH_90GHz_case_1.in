@@ -1,0 +1,86 @@
+ &diagnostics_list
+  message_unit=11,
+  verbosity=3,
+  run_description='ECH in slab geometry 90Ghz'
+  run_label='run_1c'
+  integrate_eq_gradients=.false.
+/
+ &species_list
+ n0=1.0e20,
+ spec_name(0) = 'electron',
+ spec_model(0) = 'cold',
+ t0s(0)=5.0e3 ,
+ spec_name(1) = 'deuterium',
+ spec_model(1) = 'cold',
+ t0s(1)=1.0e2 ,
+ eta(1)=1.
+/
+ &rf_list
+  frf=90.e9,
+  k0_sign = 1
+  wave_mode='minus'
+  ray_dispersion_model='cold',
+  ray_param='time',
+  dispersion_resid_limit = 0.1
+/
+ &damping_list
+  damping_model='no_damp'
+  multi_spec_damping = .false.
+  total_damping_limit = 0.99
+/
+ &equilibrium_list
+ equilib_model='slab',
+ b0 = 1.
+/
+ &slab_eq_list
+  bx_prof_model='zero',
+  by_prof_model='constant',
+  by0=0.0,
+  bz_prof_model='constant',
+  bz0=1.286,
+  LBz_scale = 1.125
+  dens_prof_model='linear',
+  Ln_scale = 0.714286
+  rmaj=1.,
+  rmin=.5,
+  t_prof_model=2*'zero'
+  xmin = -0.5
+  xmax = 0.5
+  ymin = -0.5
+  ymax = 0.5
+  zmin = -1.
+  zmax = 1.
+/
+ &ray_init_list
+ ray_init_model = 'simple_slab',
+ nray_max = 100
+/
+ &simple_slab_ray_init_list
+ n_x_launch=1,
+ x_launch0= -0.08,
+ dx_launch=0.4,
+ n_z_launch=1,
+ z_launch0= -0.6,
+ dz_launch=0.,
+ n_ky_launch=1,
+ rindex_y0=0.,
+ delta_rindex_y0=.1
+ n_kz_launch=3,
+ rindex_z0=0.4,
+ delta_rindex_z0=0.1
+ /
+ &ode_list
+  ode_solver_name='SG_ODE',
+  nstep_max=500,
+  ds=5.e-11,
+  s_max = 1.0
+/
+ &SG_ode_list
+ rel_err0=1.e-4,
+ abs_err0=1.e-4
+ SG_error_limit = 0.1
+/ 
+ NSTX
+
+
+
