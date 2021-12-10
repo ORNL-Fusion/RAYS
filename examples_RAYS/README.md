@@ -3,7 +3,7 @@
 The RAYS code requires one input namelist file called *rays.in*.  The 
 post\_process\_RAYS code also requires an input namelist file called 
 *post\_process\_rays.in*.  Typically I give the input files a more specific name
-and do a soft link to the generic filenames.  The rays.in list contains a variable
+and do a soft link to the generic filenames.  The *rays.in* list contains a variable
 \'run\_label\' to help identify the specific run.  This run label is attached to the
 names of output files again to help keep things straight and to make it convenient to
 group related runs in a single directory.
