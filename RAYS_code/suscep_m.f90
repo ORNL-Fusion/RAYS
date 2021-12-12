@@ -32,17 +32,6 @@
 
     complex :: eps(3,3), eps_cold(3,3)
     
-    
-
-!   expand_z0: if the Z function argument > "expand_z0", use large argument
-!              expansion of Z in SUSCEP.
-!   expand_z1: if the Z function argument > "expand_z1", use large argument
-!              expansion of Z in DERIV_WARM.
-
-    real :: expand_z0, expand_z1
-    
-
-
 ! ********************************************************************************
 
 contains
@@ -64,112 +53,6 @@ contains
 !       SUSCEPTIBILITY ROUTINES
 ! ********************************************************************************
 
- subroutine suscep_bessel(is)
- 
-!   calculates the warm plasma susceptibility for  a single species "is".
-!   Notations in Stix's book are used.
-!   Output, chis, is stored in module suscep_m
-
-    use constants_m, only : zi=>i
-    use equilibrium_m, only : ts, b0, omgc, omgp2
-    use rf_m, only : omgrf, k1, k3
-    use species_m, only : qs, ms, nmins, nmaxs, n_limit
-
-    implicit none
-
-    integer, intent(in) :: is
-
-    complex :: lambda, a, b, ei(-n_limit:n_limit), eip(-n_limit:n_limit)
-    complex :: zf(-n_limit:n_limit), zfp(-n_limit:n_limit)
-    complex :: chin(6,-n_limit:n_limit)
-    real :: vth, beta, xi(-n_limit:n_limit), iomgc
-
-    complex, external :: zfun0
-
-
-    integer :: n, nmin, nmax
-    
-    nmin = nmins(is)
-    nmax = nmaxs(is)
-    
-!   Sign of omgc:
-    iomgc = sign(1.,omgc(is))
-
-!   Thermal speed:
-    vth = sqrt( 2.*ts(is)/ms(is) )
-
-!   Eq.(10-55) for lambda:
-    lambda = k1**2*ts(is) / (ms(is)*omgc(is)**2)
-
-!   ei = exp(-lambda)*I_n(lambda), eip = exp(-lambda)*I'_n(lambda).
-
-       call ebessel_dbb(lambda, nmin, nmax, ei(nmin:nmax), eip(nmin:nmax))
-
-
-    if ( k3 /= 0. ) then
-!      beta = (Omga_p/Omega)^2 * [Omega/(k3*vth)].
-       beta = omgp2(is)/(omgrf*k3*vth)
-
-!      Z function.
-       do n = nmin, nmax
-          xi(n) = (omgrf-n*omgc(is)) / (k3*vth)
-
-          if ( abs(xi(n)) < expand_z0 ) then
-             zf(n) = zfun0(cmplx(xi(n)), k3)
-             zfp(n) = -2.*(1+xi(n)*zf(n)) ! Z'
-          else
-             zf(n) = -1./xi(n) * (1.+.5/xi(n)**2+.75/xi(n)**4)
-             zfp(n) = 1./xi(n)**2 * (1.+1.5/xi(n)**2+3.75/xi(n)**4)
-          end if
-       end do
-
-       do n = nmin, nmax
-          chin(1,n) = n**2 * (ei(n)/lambda) * zf(n)
-          chin(2,n) = chin(1,n) + 2.*lambda*(ei(n)-eip(n)) * zf(n)
-          chin(3,n) = -ei(n) * xi(n) * zfp(n)
-
-          chin(4,n) = zi * n * (eip(n)-ei(n)) * zf(n)
-          chin(5,n) = -iomgc * sqrt(.5/lambda) * n * ei(n) * zfp(n)
-          chin(6,n) = iomgc * zi * sqrt(.5*lambda) * (eip(n)-ei(n)) * zfp(n)
-
-       end do
-       
-    else
-!      For k3=0.
-!      See Eq.(11-32). Here, an=A_n, but bn=B_n/k3.
-       do n = nmin, nmax
-          a = -1. / (omgrf-n*omgc(is))
-          b = -.5 * (vth/(omgrf-n*omgc(is)))**2
-         
-!         Eq.(10-57):
-          chin(1,n) = n**2 * (ei(n)/lambda) * a 
-          chin(4,n) = zi * n * (eip(n)-ei(n)) * a
-          chin(5,n) = 0.
-
-          chin(2,n) = chin(1,n) + 2.*lambda*(ei(n)-eip(n)) * a
-          chin(6,n) = 0.
-
-          chin(3,n) = 2.*(omgrf-n*omgc(is))/vth**2 * ei(n) * b
-          
-       end do
-       
-        beta = omgp2(is)/omgrf
-
-    end if
-     
-     chis(1,1,is) = beta*sum(chin(1,nmin:nmax))
-     chis(2,2,is) = beta*sum(chin(2,nmin:nmax))
-     chis(3,3,is) = beta*sum(chin(3,nmin:nmax))
-     chis(1,2,is) = beta*sum(chin(4,nmin:nmax))
-     chis(1,3,is) = beta*sum(chin(5,nmin:nmax))
-     chis(2,3,is) = beta*sum(chin(6,nmin:nmax))
-     
-     chis(2,1,is) = -chis(1,2,is)
-     chis(3,1,is) = chis(1,3,is)
-     chis(3,2,is) = -chis(2,3,is)
-
-    return
- end subroutine suscep_bessel
 
 ! ********************************************************************************
 
@@ -273,9 +156,6 @@ contains
     
       case ('cold')
         call suscep_cold_chis(is)
-        
-      case('bessel')
-        call suscep_bessel(is)
         
       case default
         write (0,*) 'dielectric_tensor: unimplemented species model =', spec_model(is)

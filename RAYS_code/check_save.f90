@@ -24,18 +24,10 @@
     real :: total_absorption, total_species_absorption
     complex :: eps_h(3,3), eps_a(3,3)
     real :: ah, diff_vec(3), r 
-
-
-    interface
-       subroutine deriv(dddx, dddk, dddw)
-          real, intent(out), optional :: dddx(3), dddk(3), dddw
-       end subroutine deriv
-    end interface
-
   
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!  
  
-!   Calculates the plasma equilibrium.
+!   Calculate the plasma equilibrium.
     equib_err = ''
     call equilibrium(v(1:3))
     if (equib_err .ne. '') then
@@ -75,28 +67,14 @@
 !   First, calculate dD/dk, dD/dx, and dD/d(omega)
 
 
-    if ( ray_dispersion_model == 'warm' ) then
-
-!      Derivatives of D for a warm plasma.
-       call deriv(dddx, dddk, dddw)
-
-
-!   The plasma ray tracing in this code works only under the condition
-!   of |eps_h| > |eps_a|. 
-     eps_h = .5 * (eps + conjg(transpose(eps)))
-     eps_a = .5 * (eps - conjg(transpose(eps)))
-         ah = sum(abs(eps_a)) / sum(abs(eps_h))
-    
-         call message('check_save: |eps_a|/|eps_h|',ah,2)
-    
        
-    else if ( ray_dispersion_model == 'cold' ) then
+    if ( ray_dispersion_model == 'cold' ) then
 
 !      Derivatives of D for a cold plasma.
        call deriv_cold(dddx, dddk, dddw)      
     else
        write(*,*) 'CHECK_SAVE: ray_dispersion_model = ', ray_dispersion_model
-       stop 'check_save: bad ray_dispersion_model'
+       stop 'check_save: unimplemented ray_dispersion_model'
     end if
 
 !   Group velocity.

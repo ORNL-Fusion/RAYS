@@ -45,12 +45,6 @@
     integer :: is
 
 !***********************************
-
-    interface deriv
-       subroutine deriv(dddx, dddk, dddw)
-          real, intent(out), optional :: dddx(3), dddk(3), dddw
-       end subroutine deriv
-    end interface deriv
  
     interface deriv_cold
        subroutine deriv_cold(dddx, dddk, dddw)
@@ -87,9 +81,6 @@
 !   Calculate dD/dk, dD/dx, and dD/d(omega) 
 
     dispersion_model: select case (trim(ray_dispersion_model))
-        case ('warm' )
-    !      Derivatives of D for a warm plasma.
-           call deriv(dddx, dddk, dddw)
 
         case ('cold' )
     !      Derivatives of D for a cold plasma.
