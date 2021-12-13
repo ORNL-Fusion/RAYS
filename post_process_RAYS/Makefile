@@ -2,8 +2,8 @@
 F90_SRCS=$(wildcard *.f90)
 F90_OBJS=$(patsubst %.f90,%.o,$(F90_SRCS))
 
-F77_SRCS=$(wildcard *.f)
-F77_OBJS=$(patsubst %.f,%.o,$(F77_SRCS))
+#F77_SRCS=$(wildcard *.f)
+#F77_OBJS=$(patsubst %.f,%.o,$(F77_SRCS))
 
 
 # Ditto for mods (They will be in both lists)
@@ -24,15 +24,16 @@ default : $(PROGRAM)
 $(F90_OBJS) : %.o : %.f90
 	$(FC) $(FCFLAGS) -o $@ $<
 
-$(F77_OBJS) : %.o : %.f
-	$(FC) $(FCFLAGS) -o $@ $<
+#$(F77_OBJS) : %.o : %.f
+#	$(FC) $(FCFLAGS) -o $@ $<
 
 # Linker
 $(PROGRAM) : $(F90_OBJS)
 	$(FC) $(FLFLAGS) -o $@ $^
 
 depend .depend:
-	makedepf90  -o $(PROGRAM) *.f90 *.f > .depend
+#	makedepf90  -o $(PROGRAM) *.f90 *.f > .depend
+	makedepf90  -o $(PROGRAM) *.f90 > .depend
 	
 -include .depend
 
