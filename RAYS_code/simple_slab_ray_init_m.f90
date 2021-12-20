@@ -5,17 +5,19 @@
 ! which generates initial positions, rvec0 = (x0, 0., 0 : nray), and initial refractive
 ! index vector, rindex_vec0 = (nx0, ny0, nz0 : nray).
 
+    use constants_m, only : rkind
+    
     implicit none
 
     integer:: n_x_launch = 1
-    real ::  x_launch0 = 0., dx_launch = 0.
+    real(KIND=rkind) ::  x_launch0 = 0., dx_launch = 0.
     integer:: n_y_launch = 1
-    real ::  y_launch0 = 0., dy_launch = 0.
+    real(KIND=rkind) ::  y_launch0 = 0., dy_launch = 0.
     integer:: n_z_launch = 1
-    real ::  z_launch0 = 0., dz_launch = 0.
+    real(KIND=rkind) ::  z_launch0 = 0., dz_launch = 0.
 
     integer:: n_ky_launch, n_kz_launch
-    real ::  rindex_y0, delta_rindex_y0, rindex_z0, delta_rindex_z0
+    real(KIND=rkind) ::  rindex_y0, delta_rindex_y0, rindex_z0, delta_rindex_z0
      
  namelist /simple_slab_ray_init_list/ &
      & n_x_launch, x_launch0, dx_launch, n_y_launch, y_launch0, dy_launch, &
@@ -49,12 +51,12 @@ contains
     
     integer, intent(in) :: nray_max
     integer, intent(out) :: nray
-    real, allocatable, intent(out) :: rvec0(:, :), rindex_vec0(:, :)
+    real(KIND=rkind), allocatable, intent(out) :: rvec0(:, :), rindex_vec0(:, :)
     
     integer :: ix, iy, iz, iky, ikz, count
-    real :: x, y, z, rindex_y, rindex_z
-    real :: rvec(3)
-    complex :: rindex_x
+    real(KIND=rkind) :: x, y, z, rindex_y, rindex_z
+    real(KIND=rkind) :: rvec(3)
+    complex(KIND=rkind) :: rindex_x
 
 ! Read and write input namelist
     open(unit=input_unit, file='rays.in',action='read', status='old', form='formatted')
@@ -109,7 +111,7 @@ contains
 
                 count = count +1
                 rvec0( : , count) = rvec
-                rindex_vec0( : , count) = (/ real(rindex_x), rindex_y, rindex_z /)
+                rindex_vec0( : , count) = (/ real(rindex_x, KIND=rkind), rindex_y, rindex_z /)
 
             end do kzloop 
         end do kyloop

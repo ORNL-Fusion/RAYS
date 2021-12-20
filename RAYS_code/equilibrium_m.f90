@@ -2,31 +2,33 @@
  
 !   contains equilibrium quantities.
 
+    use constants_m, only : rkind
+    
     implicit none
 
 !   Switch to select equilibrium.
     character(len = 15) :: equilib_model
     
 !   B field at reference point (e.g. magnetic axis)    
-    real :: b0
+    real(KIND=rkind) :: b0
 
 !   B field. Note that bvec = B, bmag = |B|, gradbmag(i) = d(bmag)/d[x(i)],
 !   bunit = B/|B|, and gradbunit(i,j) = d[B(j)/bmag]/d[x(i)],
 !   gradbtensor(i,j) = d[B(j)]/d[x(i)].
-    real :: bvec(3), bmag, gradbmag(3), bunit(3), gradbunit(3,3), gradbtensor(3,3)
+    real(KIND=rkind) :: bvec(3), bmag, gradbmag(3), bunit(3), gradbunit(3,3), gradbtensor(3,3)
     
 ! Flux function psi
-    real :: psi, gradpsi(3)
+    real(KIND=rkind) :: psi, gradpsi(3)
 
 !   Density.
-    real, allocatable :: ns(:), gradns(:,:)
+    real(KIND=rkind), allocatable :: ns(:), gradns(:,:)
 
 !   Temperature.
-    real, allocatable :: ts(:), gradts(:,:)
+    real(KIND=rkind), allocatable :: ts(:), gradts(:,:)
 
 !   Some often used plasma parameters.
-    real, allocatable :: omgc(:), omgp2(:)
-    real, allocatable :: alpha(:), gamma(:)
+    real(KIND=rkind), allocatable :: omgc(:), omgp2(:)
+    real(KIND=rkind), allocatable :: alpha(:), gamma(:)
       
     namelist /equilibrium_list/ equilib_model, b0
     
@@ -95,7 +97,7 @@ contains
  
     implicit none
 
-    real, intent(in) :: rvec(3)
+    real(KIND=rkind), intent(in) :: rvec(3)
 
     integer :: ivec, ivec1, ivec2
 

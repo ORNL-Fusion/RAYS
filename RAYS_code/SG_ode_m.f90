@@ -1,16 +1,18 @@
  module SG_ode_m
 !   contains parameters specific to SG_ode ODE solver.
 
+    use constants_m, only : rkind
+
     implicit none
 
 !   Target relative and absolute errors for the ODE solver.
-    real :: rel_err0, abs_err0
+    real(KIND=rkind) :: rel_err0, abs_err0
 
 !   Evolving relative and absolute errors from the ODE solver.
-    real :: rel_err, abs_err
+    real(KIND=rkind) :: rel_err, abs_err
 
 !   Total ODE error limit abs(rel_err)+abs(abs_err) above which to bail.
-    real :: SG_error_limit = 0.1  ! Default
+    real(KIND=rkind) :: SG_error_limit = 0.1  ! Default
 
 !   Return status flag
     integer :: iflag
@@ -71,13 +73,13 @@ contains
   ! Arguments of ODE
     external eqn_ray
     integer, intent(in) :: nv
-    real, intent(inout) :: v(nv)
-    real, intent(inout) :: s, sout
+    real(KIND=rkind), intent(inout) :: v(nv)
+    real(KIND=rkind), intent(inout) :: s, sout
 
-    real :: work(100+21*nv)
+    real(KIND=rkind) :: work(100+21*nv)
     integer :: iwork(5)
     
-    real :: total_error
+    real(KIND=rkind) :: total_error
 
     odeloop: do
 

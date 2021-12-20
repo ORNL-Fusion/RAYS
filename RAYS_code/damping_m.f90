@@ -1,6 +1,8 @@
  module damping_m
 !   contains parameters and routines to calculate damping
 
+    use constants_m, only : rkind
+    
     implicit none
      
 !   Switch to select which model to use for damping calculation
@@ -15,11 +17,11 @@
     logical :: multi_spec_damping = .false.
 
 !   Ray is considered totally damped if damping > total_damping_limit
-    real :: total_damping_limit = 0.99
+    real(KIND=rkind) :: total_damping_limit = 0.99
     
 ! The warm plasma quantities are needed in routine poynting - generated in routine deriv()
     
-    complex :: depsdw_h3x3(3,3)
+    complex(KIND=rkind) :: depsdw_h3x3(3,3)
     
     namelist /damping_list/ damping_model, multi_spec_damping, total_damping_limit
     
@@ -64,10 +66,10 @@
 
     implicit none
 
-    real, intent(in) :: v(:), k1, k3
-    real, intent(out) :: ksi(0:nspec), ki
+    real(KIND=rkind), intent(in) :: v(:), k1, k3
+    real(KIND=rkind), intent(out) :: ksi(0:nspec), ki
 
-    real, intent(in) :: vg(3)    
+    real(KIND=rkind), intent(in) :: vg(3)    
     
     model: select case (trim(damping_model))
 

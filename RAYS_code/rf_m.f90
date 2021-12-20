@@ -1,5 +1,7 @@
  module rf_m
- 
+
+    use constants_m, only : rkind
+     
     implicit none
 
 !   Name of dispersion model used in ray tracing
@@ -7,13 +9,13 @@
 
 !   RF wave frequency: omgrf = 2*pi*frf, frf in Hz, and wave number
 !   in vacuum: k0 = clight / omgrf
-    real :: omgrf, frf, k0
+    real(KIND=rkind) :: omgrf, frf, k0
         
 !   kvec (nvec) = k (k/k0) in xyz coordinates (vector):
 !   k1 (n1) = perpedicular component of kvec (nvec) (magnitude).
 !   k3 (n3) = parallel component of kvec (nvec) (magnitude).
-    real :: kvec(3), k1, k3
-    real :: nvec(3), n1, n3  
+    real(KIND=rkind) :: kvec(3), k1, k3
+    real(KIND=rkind) :: nvec(3), n1, n3  
  
 !   A switch to select which root from the dispersion to be used for
 !   k initialization: i.e., fast wave, slow wave, IBW, or KAW, etc. 
@@ -31,7 +33,7 @@
     character(len = 4) :: ray_param = 'arcl'
 
 !   Maximum allowable residual of dispersion function. Used in checksave()
-    real :: dispersion_resid_limit
+    real(KIND=rkind) :: dispersion_resid_limit
     
     namelist /rf_list/ ray_dispersion_model, frf, wave_mode, k0_sign, ray_param, &
                      & dispersion_resid_limit

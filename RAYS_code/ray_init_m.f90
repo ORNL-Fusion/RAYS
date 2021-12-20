@@ -24,8 +24,10 @@
 !
 ! This module is called from main program.
 
-    implicit none   
+    use constants_m, only : rkind
 
+    implicit none   
+    
     character(len=15) :: ray_init_model
 
 !   Initial position and wavenumber of the ray.  The number of rays to be traced, nray,
@@ -38,8 +40,8 @@
 !   Number of rays.
     integer :: nray
 
-    real, allocatable :: rvec0(:,:)
-    real, allocatable :: rindex_vec0(:,:)
+    real(KIND=rkind), allocatable :: rvec0(:,:)
+    real(KIND=rkind), allocatable :: rindex_vec0(:,:)
 
     namelist /ray_init_list/ ray_init_model, nray_max
 

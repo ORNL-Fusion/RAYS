@@ -1,7 +1,7 @@
  subroutine check_save(s, nv, v)
 !   does some checking and saves output for plotting after each step.
 
-    use constants_m, only : output_unit
+    use constants_m, only : rkind, output_unit
     use diagnostics_m, only : integrate_eq_gradients, message, text_message, equib_err, &
                             & ray_stop_flag
     use equilibrium_m, only : equilibrium, b0, bmag, bunit, bvec, ns, ts, alpha, gamma
@@ -14,16 +14,16 @@
 
     implicit none
 
-    real, intent(in) :: s
+    real(KIND=rkind), intent(in) :: s
     integer, intent(in) :: nv
-    real, intent(in) :: v(nv)
+    real(KIND=rkind), intent(in) :: v(nv)
 
     integer :: nv0
-    real :: dddx(3), dddk(3), dddw, vg(3), vg0
-    real :: ksi(0:nspec), ki
-    real :: total_absorption, total_species_absorption
-    complex :: eps_h(3,3), eps_a(3,3)
-    real :: ah, diff_vec(3), r 
+    real(KIND=rkind) :: dddx(3), dddk(3), dddw, vg(3), vg0
+    real(KIND=rkind) :: ksi(0:nspec), ki
+    real(KIND=rkind) :: total_absorption, total_species_absorption
+    complex(KIND=rkind) :: eps_h(3,3), eps_a(3,3)
+    real(KIND=rkind) :: ah, diff_vec(3), r 
   
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!  
  
@@ -148,7 +148,7 @@
 
 contains
  
-    real function residual(k1, k3)
+    real(KIND=rkind) function residual(k1, k3)
 !      calculates the residual for given k1 and k3.
 !      get dielectric tensor from module suscep_m
 
@@ -157,11 +157,11 @@ contains
 
        implicit none 
 
-       real :: k1, k3
+       real(KIND=rkind) :: k1, k3
 
-       complex :: eps_h(3,3), epsn(3,3), ctmp
-       complex :: eps_norm(3,3)
-       real :: n(3)
+       complex(KIND=rkind) :: eps_h(3,3), epsn(3,3), ctmp
+       complex(KIND=rkind) :: eps_norm(3,3)
+       real(KIND=rkind) :: n(3)
 
        integer :: i, j
 
@@ -200,7 +200,7 @@ contains
           stop 1
        end if
 
-       residual = real(ctmp) / &
+       residual = abs(ctmp) / &
           & ( eps_norm(3,3)*(eps_norm(1,1)*eps_norm(2,2)) &
           & + eps_norm(3,3)*(eps_norm(2,1)*eps_norm(1,2)) &
           & + eps_norm(3,2)*(eps_norm(1,1)*eps_norm(2,3)) &

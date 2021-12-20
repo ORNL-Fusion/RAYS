@@ -1,6 +1,6 @@
  subroutine trace_rays
 
-    use constants_m, only : ray_list_unit
+    use constants_m, only : rkind, ray_list_unit
     use diagnostics_m, only : message_unit, message, stop_ode, verbosity, ray_stop_flag, &
                                t_start_tracing, t_finish_tracing
     use ode_m, only : ode_solver, ray_init_ode_solver, nv, v, ds, s_max, nstep_max
@@ -12,14 +12,15 @@
 
     integer :: iray, nstep, npoints(nray)
     character(len = 20) :: ray_stop(nray)
-    real :: s, sout
+    real(KIND=rkind) :: s, sout
 
     interface
        subroutine eqn_ray(s, v, dvds)
+          use constants_m, only : rkind
           use ode_m, only : nv
-          real ( kind = 4 ), intent(in) :: s
-          real ( kind = 4 ), intent(in) :: v(:)
-          real ( kind = 4 ), intent(out) :: dvds(:)
+          real ( kind = rkind ), intent(in) :: s
+          real ( kind = rkind ), intent(in) :: v(:)
+          real ( kind = rkind ), intent(out) :: dvds(:)
        end subroutine eqn_ray
     end interface
 

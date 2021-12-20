@@ -3,6 +3,7 @@
 ! Initializes ode vector v. 
 ! Called from subroutine ray_tracing before integrating each ray.
 
+    use constants_m, only : rkind
     use diagnostics_m, only : integrate_eq_gradients, message
     use equilibrium_m, only : equilib_model, equilibrium, bvec, ns, ts
     use rf_m, only : k0
@@ -13,7 +14,7 @@
     implicit none
 
     integer, intent(in) :: iray, nv
-    real, intent(inout) :: v(nv)
+    real(KIND=rkind), intent(inout) :: v(nv)
 
     integer :: nv0
 
