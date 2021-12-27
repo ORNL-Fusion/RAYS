@@ -1,6 +1,8 @@
  module slab_processor_m
 ! Post processing for slab equilibrium, all variation in x direction
 
+    use constants_m, only : rkind
+
     implicit none
 
     character(len=80) :: processor = ''
@@ -13,15 +15,15 @@
 !   resonances found between x_min and x_max.  Allow for multiple resonances <= n_locs
     integer, parameter :: n_locs = 5
     integer :: n_ce_res, n_2ce_res, n_hybrid_res
-    real, dimension(n_locs) :: x_ce_res, x_2ce_res, x_hybrid_res
+    real(KIND=rkind), dimension(n_locs) :: x_ce_res, x_2ce_res, x_hybrid_res
 
 !   Number and x locations of cutoffs
     integer :: n_P_cut, n_H_cut, n_det
-    real, dimension(n_locs) :: x_P_cut, x_H_cut, x_det
+    real(KIND=rkind), dimension(n_locs) :: x_P_cut, x_H_cut, x_det
 
 ! Alpha at hybrid cutoffs
-    real, dimension(n_locs) :: alpha_e_H_cut
-    real, dimension(n_locs) :: alpha_e_det
+    real(KIND=rkind), dimension(n_locs) :: alpha_e_H_cut
+    real(KIND=rkind), dimension(n_locs) :: alpha_e_det
 
 ! Number of k vectors to plot for each ray in graphics
     integer :: num_plot_k_vectors
@@ -57,6 +59,7 @@
 
   subroutine slab_processor
 
+    use constants_m, only : rkind
     use diagnostics_m, only : message_unit, message, text_message
 
     implicit none
@@ -89,6 +92,7 @@
 ! component of k_perp in the y-z plane, nz is not n_parallel and the cutoff (kx = 0) is in
 ! a different place.  Could be generalized.  Maybe later.
 
+    use constants_m, only : rkind
     use diagnostics_m, only : run_label
     use equilibrium_m, only : equilibrium, bunit, alpha, gamma
     use slab_eq_m, only : xmin, xmax
@@ -98,11 +102,11 @@
     implicit none
 
     integer, parameter :: n_xpoints = 1000 ! Number of x points in scan
-    real :: v_ce_0, v_ce_1, v_2ce_0, v_2ce_1, v_hybrid_0, v_hybrid_1
-    real :: v_P_cut_0, v_P_cut_1,  v_H_cut_0, v_H_cut_1
-    real :: a, b, c, v_det_0, v_det_1 ! parameters for calculating determinant
+    real(KIND=rkind) :: v_ce_0, v_ce_1, v_2ce_0, v_2ce_1, v_hybrid_0, v_hybrid_1
+    real(KIND=rkind) :: v_P_cut_0, v_P_cut_1,  v_H_cut_0, v_H_cut_1
+    real(KIND=rkind) :: a, b, c, v_det_0, v_det_1 ! parameters for calculating determinant
     integer :: iray, ix
-    real :: nz, x, dx
+    real(KIND=rkind) :: nz, x, dx
     complex :: vH
 
 
@@ -136,20 +140,20 @@
         x_loop: do ix = 0, n_xpoints-1
             x = xmin + ix*dx
         
-            call equilibrium( (/x, 0., 0./) )
+            call equilibrium( (/real(x, KIND=rkind), real(0., KIND=rkind), real(0., KIND=rkind)/) )
             call dielectric_cold
             v_ce_1 = gamma(0)+1. ! remember gamma(0) is negative
             v_2ce_1 = gamma(0)+0.5
-            v_hybrid_1 = real(eps_cold(1,1))
-            v_P_cut_1 = real(eps_cold(3,3))
+            v_hybrid_1 = real(eps_cold(1,1), KIND=rkind)
+            v_P_cut_1 = real(eps_cold(3,3), KIND=rkind)
             v_H_cut_1 = real(( eps_cold(1,1)**2+eps_cold(1,2)**2 - 2.*eps_cold(1,1)*nz**2 &
-                    & + nz**4 ))
+                    & + nz**4 ), KIND=rkind)
  
-		   a = real( eps_cold(1,1) )
+		   a = real( eps_cold(1,1), KIND=rkind )
 		   b = real( -(eps_cold(1,1)**2+eps_cold(1,2)**2+eps_cold(1,1)*eps_cold(3,3)) &
-			  & + (eps_cold(1,1)+eps_cold(3,3))*nz**2 )
+			  & + (eps_cold(1,1)+eps_cold(3,3))*nz**2, KIND=rkind )
 		   c = real( ( eps_cold(1,1)**2+eps_cold(1,2)**2 - 2.*eps_cold(1,1)*nz**2 &
-			  & + nz**4 ) *	 eps_cold(3,3) )
+			  & + nz**4 ) *	 eps_cold(3,3), KIND=rkind )
 		  
 		   v_det_1 = b**2-4.*a*c
            
@@ -233,7 +237,7 @@
   subroutine write_eq_profiles
 ! Writes equilibrium profiles and other stuff for plotting
 
-    use constants_m, only : pi
+    use constants_m, only : rkind, pi
     use diagnostics_m, only : run_label
     use equilibrium_m, only : equilibrium, bmag, bunit, ns, omgc, omgp2, alpha, gamma
     use slab_eq_m, only : xmin, xmax
@@ -246,8 +250,8 @@
 
     integer, parameter :: n_xpoints = 101 ! Number of x points in scan
     integer :: iray, ix
-    real :: x, dx
-    real, dimension(9) :: profile_vec
+    real(KIND=rkind) :: x, dx
+    real(KIND=rkind), dimension(9) :: profile_vec
     character(len = 9), dimension(9) :: prof_name
     character(len = 10), parameter  :: b10 = '          '
     character(len = 9), parameter  ::   b9 = '         '
@@ -271,7 +275,7 @@
         x = xmin + ix*dx
         profile_vec(1) = x
         
-        call equilibrium( (/x, 0., 0./) )
+        call equilibrium( (/real(x, KIND=rkind), real(0., KIND=rkind), real(0., KIND=rkind)/) )
         
         profile_vec(2) = ns(0) ! electron density
         profile_vec(3) = bmag ! total B field
@@ -296,7 +300,7 @@
   subroutine write_kx_profiles
 ! Writes equilibrium profiles and other stuff for plotting
 
-    use constants_m, only : pi
+    use constants_m, only : rkind, pi
     use diagnostics_m, only : run_label
     use equilibrium_m, only : equilibrium, bmag, bunit, ns, omgc, omgp2, alpha, gamma
     use slab_eq_m, only : xmin, xmax
@@ -311,11 +315,11 @@
 
     integer, parameter :: n_xpoints = 101 ! Number of x points in scan
     integer :: iray, ix
-    real :: x, dx
-    real :: ny, nz
-    real, dimension(9) :: profile_vec
+    real(KIND=rkind) :: x, dx
+    real(KIND=rkind) :: ny, nz
+    real(KIND=rkind), dimension(9) :: profile_vec
     character(len = 15), dimension(9) :: profile_name_vec
-    complex :: nx
+    complex(KIND=rkind) :: nx
 
     write(*,*)  'Start writing kx profile vectors'  
 
@@ -341,28 +345,28 @@
             x = xmin + ix*dx
             profile_vec(1) = x
             
-            call equilibrium( (/x, 0., 0./) )
+            call equilibrium( (/real(x, KIND=rkind), real(0., KIND=rkind), real(0., KIND=rkind)/) )
             
             ! kx vs x for fast and slow cold plasma roots
             wave_mode = 'plus'
             call solve_disp_nx_vs_ny_nz(ray_dispersion_model, wave_mode, k0_sign, ny, nz, nx)            
-            profile_vec(2) = k0*real(nx)
+            profile_vec(2) = k0*real(nx, KIND=rkind)
             profile_vec(3) = k0*aimag(nx)
             
             wave_mode = 'minus'
             call solve_disp_nx_vs_ny_nz(ray_dispersion_model, wave_mode, k0_sign, ny, nz, nx)            
-            profile_vec(4) = k0*real(nx)
+            profile_vec(4) = k0*real(nx, KIND=rkind)
             profile_vec(5) = k0*aimag(nx)
             ! kx vs x for fast and slow cold plasma roots
 
             wave_mode = 'fast'
             call solve_disp_nx_vs_ny_nz(ray_dispersion_model, wave_mode, k0_sign, ny, nz, nx)            
-            profile_vec(6) = k0*real(nx)
+            profile_vec(6) = k0*real(nx, KIND=rkind)
             profile_vec(7) = k0*aimag(nx)
             
             wave_mode = 'slow'
             call solve_disp_nx_vs_ny_nz(ray_dispersion_model, wave_mode, k0_sign, ny, nz, nx)            
-            profile_vec(8) = k0*real(nx)
+            profile_vec(8) = k0*real(nx, KIND=rkind)
             profile_vec(9) = k0*aimag(nx)
 
             write(kx_profile_unit,*) profile_vec
