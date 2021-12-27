@@ -236,8 +236,9 @@
 
   subroutine write_eq_profiles
 ! Writes equilibrium profiles and other stuff for plotting
+! For ease of reading these are re-cast to single precision before writing
 
-    use constants_m, only : rkind, pi
+    use constants_m, only : rkind, skind, pi
     use diagnostics_m, only : run_label
     use equilibrium_m, only : equilibrium, bmag, bunit, ns, omgc, omgp2, alpha, gamma
     use slab_eq_m, only : xmin, xmax
@@ -251,7 +252,7 @@
     integer, parameter :: n_xpoints = 101 ! Number of x points in scan
     integer :: iray, ix
     real(KIND=rkind) :: x, dx
-    real(KIND=rkind), dimension(9) :: profile_vec
+    real(KIND=skind), dimension(9) :: profile_vec
     character(len = 9), dimension(9) :: prof_name
     character(len = 10), parameter  :: b10 = '          '
     character(len = 9), parameter  ::   b9 = '         '
@@ -273,18 +274,18 @@
     x_loop: do ix = 0, n_xpoints-1
 
         x = xmin + ix*dx
-        profile_vec(1) = x
         
         call equilibrium( (/real(x, KIND=rkind), real(0., KIND=rkind), real(0., KIND=rkind)/) )
         
-        profile_vec(2) = ns(0) ! electron density
-        profile_vec(3) = bmag ! total B field
-        profile_vec(4) = abs(omgc(0))/(2.*pi) ! electron cyclotron frequency
-        profile_vec(5) = sqrt(omgp2(0))/(2.*pi) ! electron plasma frequency
-        profile_vec(6) = sqrt(alpha(0)) ! f_pe/f_rf
-        profile_vec(7) = abs(gamma(0)) ! f_ce/f_rf
-        profile_vec(8) = alpha(0) ! (f_pe/f_rf)^2
-        profile_vec(9) = gamma(0)**2 ! (f_ce/f_rf)^2
+        profile_vec(1) = real(x, KIND=skind)
+        profile_vec(2) = real(ns(0), KIND=skind) ! electron density
+        profile_vec(3) = real(bmag, KIND=skind) ! total B field
+        profile_vec(4) = real(abs(omgc(0))/(2.*pi), KIND=skind) ! electron cyclotron frequency
+        profile_vec(5) = real(sqrt(omgp2(0))/(2.*pi), KIND=skind) ! electron plasma frequency
+        profile_vec(6) = real(sqrt(alpha(0)), KIND=skind) ! f_pe/f_rf
+        profile_vec(7) = real(abs(gamma(0)), KIND=skind) ! f_ce/f_rf
+        profile_vec(8) = real(alpha(0), KIND=skind) ! (f_pe/f_rf)^2
+        profile_vec(9) = real(gamma(0)**2, KIND=skind) ! (f_ce/f_rf)^2
 
         write(eq_profile_unit,*) profile_vec
 
@@ -298,9 +299,10 @@
 !*************************************************************************     
 
   subroutine write_kx_profiles
-! Writes equilibrium profiles and other stuff for plotting
+! Writes kx roots versus x.
+! For ease of reading these are re-cast to single precision before writing
 
-    use constants_m, only : rkind, pi
+    use constants_m, only : rkind, skind, pi
     use diagnostics_m, only : run_label
     use equilibrium_m, only : equilibrium, bmag, bunit, ns, omgc, omgp2, alpha, gamma
     use slab_eq_m, only : xmin, xmax
@@ -317,25 +319,26 @@
     integer :: iray, ix
     real(KIND=rkind) :: x, dx
     real(KIND=rkind) :: ny, nz
-    real(KIND=rkind), dimension(9) :: profile_vec
-    character(len = 15), dimension(9) :: profile_name_vec
+    real(KIND=skind), dimension(9) :: profile_vec
+    character(len = 17), dimension(9) :: profile_name_vec
     complex(KIND=rkind) :: nx
+    complex(KIND=skind) :: nx_sngl
 
     write(*,*)  'Start writing kx profile vectors'  
 
-    profile_name_vec = (/'x              ', 'kx_real_plus   ', 'kx_im_plus     ',&
-                         'kx_real_minus  ', 'kx_im_minus    ', 'kx_real_fast   ',&
-                         'kx_im_fast     ', 'kx_real_slow   ', 'kx_im_slow     '/)
+    profile_name_vec = (/'x                ', 'kx_real_plus     ', 'kx_im_plus       ',&
+                         'kx_real_minus    ', 'kx_im_minus      ', 'kx_real_fast     ',&
+                         'kx_im_fast       ', 'kx_real_slow     ', 'kx_im_slow       '/)
                               
     open(unit = kx_profile_unit, file = 'kx_profiles_slab.'//trim(run_label))
    
-    write(kx_profile_unit,*) profile_name_vec
 
     dx = (xmax - xmin)/(n_xpoints-1)
 
     ray_loop: do iray = 1, nray
         write(*,*) 'ray ', iray
         write(kx_profile_unit,*) 'ray ', iray
+        write(kx_profile_unit,*) profile_name_vec
 
     
         ny = rindex_vec0(2, iray)
@@ -343,31 +346,36 @@
  
         x_loop: do ix = 0, n_xpoints-1
             x = xmin + ix*dx
-            profile_vec(1) = x
-            
+             
             call equilibrium( (/real(x, KIND=rkind), real(0., KIND=rkind), real(0., KIND=rkind)/) )
-            
+
+            profile_vec(1) = real(x, KIND=skind)
+           
             ! kx vs x for fast and slow cold plasma roots
             wave_mode = 'plus'
             call solve_disp_nx_vs_ny_nz(ray_dispersion_model, wave_mode, k0_sign, ny, nz, nx)            
-            profile_vec(2) = k0*real(nx, KIND=rkind)
-            profile_vec(3) = k0*aimag(nx)
+            nx_sngl = cmplx(nx, KIND=skind)
+            profile_vec(2) = k0*real(nx_sngl)
+            profile_vec(3) = k0*aimag(nx_sngl)
             
             wave_mode = 'minus'
             call solve_disp_nx_vs_ny_nz(ray_dispersion_model, wave_mode, k0_sign, ny, nz, nx)            
-            profile_vec(4) = k0*real(nx, KIND=rkind)
-            profile_vec(5) = k0*aimag(nx)
+            nx_sngl = cmplx(nx, KIND=skind)
+            profile_vec(4) = k0*real(nx_sngl)
+            profile_vec(5) = k0*aimag(nx_sngl)
             ! kx vs x for fast and slow cold plasma roots
 
             wave_mode = 'fast'
             call solve_disp_nx_vs_ny_nz(ray_dispersion_model, wave_mode, k0_sign, ny, nz, nx)            
-            profile_vec(6) = k0*real(nx, KIND=rkind)
-            profile_vec(7) = k0*aimag(nx)
+            nx_sngl = cmplx(nx, KIND=skind)
+            profile_vec(6) = k0*real(nx_sngl)
+            profile_vec(7) = k0*aimag(nx_sngl)
             
             wave_mode = 'slow'
             call solve_disp_nx_vs_ny_nz(ray_dispersion_model, wave_mode, k0_sign, ny, nz, nx)            
-            profile_vec(8) = k0*real(nx, KIND=rkind)
-            profile_vec(9) = k0*aimag(nx)
+            nx_sngl = cmplx(nx, KIND=skind)
+            profile_vec(8) = k0*real(nx_sngl)
+            profile_vec(9) = k0*aimag(nx_sngl)
 
             write(kx_profile_unit,*) profile_vec
 
