@@ -22,15 +22,17 @@
 !   dielectric_tensor
 !   dielectric_cold
 
+    use constants_m, only : rkind
+    
     implicit none   
 
-!   Susceptibility tensor for each species [complex :: chis_cold(3,3,0:nspec), chis(3,3,0:nspec)].
+!   Susceptibility tensor for each species [complex(KIND=rkind) :: chis_cold(3,3,0:nspec), chis(3,3,0:nspec)].
 
-    complex, allocatable :: chis(:,:,:), chis_cold(:,:,:)
+    complex(KIND=rkind), allocatable :: chis(:,:,:), chis_cold(:,:,:)
        
 !   Dielectric tensor eps.
 
-    complex :: eps(3,3), eps_cold(3,3)
+    complex(KIND=rkind) :: eps(3,3), eps_cold(3,3)
     
 ! ********************************************************************************
 
@@ -69,7 +71,7 @@ contains
     implicit none
 
     integer, intent(in) :: is
-    real :: alphas, gammas
+    real(KIND=rkind) :: alphas, gammas
 
 !   alpha = (omgp/omgrf)^2, gamma = (omgc/omgrf).
 
@@ -106,7 +108,7 @@ contains
     implicit none
 
     integer, intent(in) :: is
-    real :: alphas, gammas
+    real(KIND=rkind) :: alphas, gammas
 
 !   alpha = (omgp/omgrf)^2, gamma = (omgc/omgrf).
 

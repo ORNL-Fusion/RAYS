@@ -20,6 +20,7 @@
 !        dsd_ray_param = |v group| == vg0 for ray_param = 'time'
  
 
+    use constants_m, only : rkind
     use diagnostics_m, only : integrate_eq_gradients, verbosity, message_unit,&
                             & message, equib_err, stop_ode, ray_stop_flag
     use equilibrium_m
@@ -30,16 +31,14 @@
     
      implicit none
      
-    real, intent(in) :: s
-!    real, allocatable, intent(in) :: v(:)
-    real, intent(in) :: v(nv)
-!    real, intent(out) :: dvds(size(v)) 
-    real, intent(out) :: dvds(nv) 
+    real(KIND=rkind), intent(in) :: s
+    real(KIND=rkind), intent(in) :: v(nv)
+    real(KIND=rkind), intent(out) :: dvds(nv) 
 
-    real :: rvec(3)
-    real :: dddx(3), dddk(3), dddw, vg(3), vg0, vg_unit(3)
-    real :: ksi(0:nspec), ki
-    real :: dsd_ray_param
+    real(KIND=rkind) :: rvec(3)
+    real(KIND=rkind) :: dddx(3), dddk(3), dddw, vg(3), vg0, vg_unit(3)
+    real(KIND=rkind) :: ksi(0:nspec), ki
+    real(KIND=rkind) :: dsd_ray_param
     integer :: nv0
 
     integer :: is
@@ -48,7 +47,8 @@
  
     interface deriv_cold
        subroutine deriv_cold(dddx, dddk, dddw)
-          real, intent(out) :: dddx(3), dddk(3), dddw
+          use constants_m, only : rkind
+          real(KIND=rkind), intent(out) :: dddx(3), dddk(3), dddw
        end subroutine deriv_cold
     end interface deriv_cold
 
@@ -116,10 +116,10 @@
 !         Integrate with respect to the arclength along the ray.
           if ( any(dddk/=0.) ) then
 !            dr/ds:
-             dvds(1:3) = -sign(1.,dddw) * dddk / sqrt(sum(dddk**2)) 
+             dvds(1:3) = -sign(real(1.,KIND=rkind),dddw) * dddk / sqrt(sum(dddk**2)) 
 
 !            dk/ds:
-             dvds(4:6) =  sign(1.,dddw) * dddx / sqrt(sum(dddk**2))
+             dvds(4:6) =  sign(real(1.,KIND=rkind),dddw) * dddx / sqrt(sum(dddk**2))
 
 !            ds/d(ray parameter)
              dsd_ray_param = 1.

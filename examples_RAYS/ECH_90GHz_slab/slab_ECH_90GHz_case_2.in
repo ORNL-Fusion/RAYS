@@ -76,8 +76,8 @@
   s_max = 1.0
 /
  &SG_ode_list
- rel_err0=1.e-4,
- abs_err0=1.e-4
+ rel_err0=1.e-8,
+ abs_err0=1.e-8
  SG_error_limit = 0.1
 / 
  NSTX

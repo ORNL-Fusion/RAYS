@@ -1,10 +1,12 @@
  module species_m
 !   contains species data.
 
+    use constants_m, only : rkind
+    
     implicit none
 
-!   Electron density at reference point (e.g. at magnetic axis or peak electorn density)
-    real :: n0
+!   Electron density at reference point (e.g. at magnetic axis or peak electron density)
+    real(KIND=rkind) :: n0
     
 !   Maximum No. of ion species: nspec0;
 !   Actual No. of ion species: nspec
@@ -24,25 +26,25 @@
 
     character(len=9), dimension(0:5) :: spec_name0 = &
       & (/ 'electron ', 'hydrogen ', 'deuterium', 'tritium  ', '3He      ', 'alpha    '/)
-    real, dimension(0:5) :: qs0 = (/-1., 1., 1., 1., 2., 2. /) ! units of electron charge
-    real, dimension(0:5) :: ms0 = (/1., 1836., 3670., 5497., 5496., 7294. /) ! in units of me
+    real(KIND=rkind), dimension(0:5) :: qs0 = (/-1., 1., 1., 1., 2., 2. /) ! units of electron charge
+    real(KIND=rkind), dimension(0:5) :: ms0 = (/1., 1836., 3670., 5497., 5496., 7294. /) ! in units of me
 
 !   Criterion for checking charge neutrality.
-    real :: neutrality = 1.e-10
+    real(KIND=rkind) :: neutrality = 1.e-10
 
 !   Actual species parameters to be obtained from datain()
 
     character(len=12), dimension(0:nspec0) :: spec_name = ''
-    real, dimension(0:nspec0) :: qs = 0.
-    real, dimension(0:nspec0) :: ms = 0.
-    real, dimension(0:nspec0) :: eta = 0.
-    real, dimension(0:nspec0) :: n0s = 0.
-    real, dimension(0:nspec0) :: nseps = 0.
-    real, dimension(0:nspec0) :: t0s = 0.
-    real, dimension(0:nspec0) :: tseps = 0.
-    real, dimension(0:nspec0) :: alfas = 0.
-    real, dimension(0:nspec0) :: v0s = 0.
-    real, dimension(0:nspec0) :: nus = 0.
+    real(KIND=rkind), dimension(0:nspec0) :: qs = 0.
+    real(KIND=rkind), dimension(0:nspec0) :: ms = 0.
+    real(KIND=rkind), dimension(0:nspec0) :: eta = 0.
+    real(KIND=rkind), dimension(0:nspec0) :: n0s = 0.
+    real(KIND=rkind), dimension(0:nspec0) :: nseps = 0.
+    real(KIND=rkind), dimension(0:nspec0) :: t0s = 0.
+    real(KIND=rkind), dimension(0:nspec0) :: tseps = 0.
+    real(KIND=rkind), dimension(0:nspec0) :: alfas = 0.
+    real(KIND=rkind), dimension(0:nspec0) :: v0s = 0.
+    real(KIND=rkind), dimension(0:nspec0) :: nus = 0.
     
 !   An array indicating which plasma model is to be used for each species
 !   spec_model(is) = 'cold' susceptibility model is cold plasma
@@ -78,7 +80,7 @@ contains
         implicit none
 
         integer :: is, j
-        real :: charge
+        real(KIND=rkind) :: charge
 
 ! Read and write input namelist
 

@@ -7,6 +7,8 @@
 !   n12 = square of perpendicular component of nvec
 !   n3 = parallel component of kvec (nvec).
 
+    use constants_m, only : rkind
+    
     implicit none
 
 !****************************************************************************
@@ -19,7 +21,7 @@ contains
   subroutine solve_disp_nx_vs_ny_nz(dispersion_model, wave_mode, k_sign, ny, nz, nx)    
 ! N.B. This requires that the magnetic field be in the y-z plane, otherwise n_parallel 
 !      has a component along nx.  Complicates dispersion relation.
-! N.B. nx is complex
+! N.B. nx is complex(KIND=rkind)
 
     use diagnostics_m, only : message, text_message
     use equilibrium_m, only : bunit
@@ -33,11 +35,11 @@ contains
     character(len=15), intent(in) :: wave_mode
     
     integer, intent(in) :: k_sign
-    real, intent(in) :: ny, nz
-    complex, intent(out) :: nx
+    real(KIND=rkind), intent(in) :: ny, nz
+    complex(KIND=rkind), intent(out) :: nx
 
-   real :: n3  ! n parallel
-   complex :: n12(4) !n perp square
+   real(KIND=rkind) :: n3  ! n parallel
+   complex(KIND=rkind) :: n12(4) !n perp square
    integer :: i_mode  ! plus mode -> 1, minus mode -> 2, fast mode -> 3, slow mode -> 3
 
    n3 = ny*bunit(2) + nz*bunit(3)
@@ -68,7 +70,7 @@ contains
        case ('cold')
           ! Solve for n-perp squared
           call disp_solve_cold_nxsq_vs_nz(n3, n12) 
-          nx = k_sign*csqrt(n12(i_mode))
+          nx = k_sign*sqrt(n12(i_mode))
 
        case default
           write(0,*) 'solve_disp: unimplemented dispersion_model =', trim(dispersion_model)

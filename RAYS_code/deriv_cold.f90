@@ -3,6 +3,8 @@
 !   v(1:3) = (x,y,z); v(4:6) = (kx, ky, kz),
 !   dddx = dD/dx, dddk = dD/dk, dddw = dD/d(omega).
 
+
+    use constants_m, only : rkind
     use equilibrium_m, only : bunit, gradbunit, bmag, gradbmag, ns, gradns, &
       & alpha, gamma
     use rf_m, only : omgrf, k0,  nvec, n1, n3
@@ -11,20 +13,20 @@
 
     implicit none
 
-    real, intent(out) :: dddx(3), dddk(3), dddw
+    real(KIND=rkind), intent(out) :: dddx(3), dddk(3), dddw
 
-    real :: p, t, dtdg(0:nspec)
-    real :: q,  dqda(0:nspec),  dqdg(0:nspec)
-    real :: q1, dq1da(0:nspec), dq1dg(0:nspec)
-    real :: q2, dq2da(0:nspec), dq2dg(0:nspec)
-    real :: u,  duda(0:nspec),  dudg(0:nspec)
+    real(KIND=rkind) :: p, t, dtdg(0:nspec)
+    real(KIND=rkind) :: q,  dqda(0:nspec),  dqdg(0:nspec)
+    real(KIND=rkind) :: q1, dq1da(0:nspec), dq1dg(0:nspec)
+    real(KIND=rkind) :: q2, dq2da(0:nspec), dq2dg(0:nspec)
+    real(KIND=rkind) :: u,  duda(0:nspec),  dudg(0:nspec)
 
-    real :: dddn12, dddn3, ddda(0:nspec), dddg(0:nspec)
-    real :: dn3dk(3), dn12dk(3)
-    real :: dn3dx(3), dn12dx(3), dadx(3,0:nspec), dgdx(3,0:nspec)
-    real :: dn3dw, dn12dw, dadw(0:nspec), dgdw(0:nspec)
+    real(KIND=rkind) :: dddn12, dddn3, ddda(0:nspec), dddg(0:nspec)
+    real(KIND=rkind) :: dn3dk(3), dn12dk(3)
+    real(KIND=rkind) :: dn3dx(3), dn12dx(3), dadx(3,0:nspec), dgdx(3,0:nspec)
+    real(KIND=rkind) :: dn3dw, dn12dw, dadw(0:nspec), dgdw(0:nspec)
 
-    real, dimension(0:nspec,0:nspec) :: gp, gm, gpm
+    real(KIND=rkind), dimension(0:nspec,0:nspec) :: gp, gm, gpm
 
     integer :: is, is1, is2, ivec
 

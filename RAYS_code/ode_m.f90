@@ -1,6 +1,8 @@
  module ode_m
 !   contains parameters for initial value ODE solver.
 
+    use constants_m, only : rkind
+    
     implicit none
 
 !   Switch to select ODE solvers for ray tracing.  Presently supported solvers are:
@@ -12,13 +14,13 @@
     integer :: nv 
  
 !   v: Vector to be integrated by ode solver
-    real, allocatable :: v(:)
+    real(KIND=rkind), allocatable :: v(:)
     
 ! Maximum length of ray
-     real :: s_max
+     real(KIND=rkind) :: s_max
 
 !   ODE step size.
-    real :: ds
+    real(KIND=rkind) :: ds
 
 !   Maximum no. of steps allowed.
     integer :: nstep_max
@@ -129,9 +131,9 @@
     implicit none
 
     integer, intent(in) :: nv
-    real, intent(inout) :: v(nv)
-    real, intent(inout) :: s
-    real, intent(inout) :: sout
+    real(KIND=rkind), intent(inout) :: v(nv)
+    real(KIND=rkind), intent(inout) :: s
+    real(KIND=rkind), intent(inout) :: sout
     
     external eqn_ray
     

@@ -1,21 +1,25 @@
 module slab_eq_m
 
+    use constants_m, only : rkind
+    
+    implicit none
+
 ! data for slab magnetics
     character(len=12) :: bx_prof_model, by_prof_model, bz_prof_model
-    real :: bx0, by0, bz0
-    real :: Ln_scale, LT_scale, LBy_shear_scale, LBz_scale
+    real(KIND=rkind) :: bx0, by0, bz0
+    real(KIND=rkind) :: Ln_scale, LT_scale, LBy_shear_scale, LBz_scale
 
 ! data for slab density and temperature
     character(len=15) :: dens_prof_model
-    real :: rmaj, rmin
-    real :: alphan1
-    real :: alphan2  
+    real(KIND=rkind) :: rmaj, rmin
+    real(KIND=rkind) :: alphan1
+    real(KIND=rkind) :: alphan2  
     character(len=15), allocatable :: t_prof_model(:)
-    real, allocatable :: alphat1(:)
-    real, allocatable :: alphat2(:)
+    real(KIND=rkind), allocatable :: alphat1(:)
+    real(KIND=rkind), allocatable :: alphat2(:)
     
 ! data for boundary    
-    real :: xmin, xmax, ymin, ymax, zmin, zmax
+    real(KIND=rkind) :: xmin, xmax, ymin, ymax, zmin, zmax
 
  namelist /slab_eq_list/ &
      & bx_prof_model, by_prof_model, bz_prof_model, bx0, by0, bz0,                    &
@@ -71,12 +75,12 @@ contains
     
     implicit none
 
-    real, intent(in) :: rvec(3) 
-    real, intent(out) :: bvec(3), gradbtensor(3,3)
-    real, intent(out) :: ns(0:nspec), gradns(3,0:nspec)
-    real, intent(out) :: ts(0:nspec), gradts(3,0:nspec)
+    real(KIND=rkind), intent(in) :: rvec(3) 
+    real(KIND=rkind), intent(out) :: bvec(3), gradbtensor(3,3)
+    real(KIND=rkind), intent(out) :: ns(0:nspec), gradns(3,0:nspec)
+    real(KIND=rkind), intent(out) :: ts(0:nspec), gradts(3,0:nspec)
 
-    real :: x, y, z
+    real(KIND=rkind) :: x, y, z
     integer :: is
 
     equib_err = ''
@@ -232,11 +236,11 @@ contains
 
     implicit none
     
-    real :: dx, x
-    real :: rvec(3) 
-    real :: bvec(3), gradbtensor(3,3)
-    real :: ns(0:nspec), gradns(3,0:nspec)
-    real :: ts(0:nspec), gradts(3,0:nspec)
+    real(KIND=rkind) :: dx, x
+    real(KIND=rkind) :: rvec(3) 
+    real(KIND=rkind) :: bvec(3), gradbtensor(3,3)
+    real(KIND=rkind) :: ns(0:nspec), gradns(3,0:nspec)
+    real(KIND=rkind) :: ts(0:nspec), gradts(3,0:nspec)
 
     integer, parameter :: nx_points = 51
     integer :: ip, i
@@ -245,13 +249,13 @@ contains
     character (len = *), parameter :: b10 = '          '
     character (len = *), parameter :: b12 = '            '
     
-    dx = 2*rmin/(nx_points-1)
+    dx = 2.*rmin/(nx_points-1)
     
     write (message_unit,*) '    x', b9,'ne', b12, 'bx', b9, 'by', b9, 'bz', b9, 'Te',b9, 'Ti(s)'
 
     do ip = 1, nx_points
         x = -rmin + (ip-1)*dx
-        rvec( : ) = (/ x, 0., 0. /)
+        rvec( : ) = (/ x, real(0.,KIND=rkind), real(0.,KIND=rkind) /)
         call slab_eq(rvec, bvec, gradbtensor, ns, gradns, ts, gradts)
         write (message_unit,'(f11.5, a, e12.5, 3f11.5, 7f11.5)') &
                & x,'  ', ns(0), bvec, (ts(i), i=0, nspec)

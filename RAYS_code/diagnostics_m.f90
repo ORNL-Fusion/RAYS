@@ -202,7 +202,7 @@ contains
     end subroutine logical_message 
     
 
-! Print message with real value  ************************************
+! Print message with default real value  ************************************
     subroutine r_message (mess, value, threshold)
 
     implicit none
@@ -224,7 +224,7 @@ contains
     end subroutine r_message 
 
 
-! Print message with complex value  *****************************************
+! Print message with default complex value  *****************************************
     subroutine c_message (mess, value, threshold)
 
     implicit none
@@ -283,7 +283,7 @@ contains
 
 
 
-!   print messsage with real n-vector value  *****************************************
+!   print messsage with default real n-vector value  *****************************************
     subroutine rvn_message (mess, value, length_n, threshold)
 
     implicit none
@@ -329,7 +329,7 @@ contains
     end subroutine rvn_message  
 
 
-!   print messsage with complex n-vector value  ************************************
+!   print messsage with default complex n-vector value  ************************************
     subroutine cvn_message (mess, value, length_n, threshold)
 
     implicit none

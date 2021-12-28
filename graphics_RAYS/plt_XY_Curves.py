@@ -230,6 +230,7 @@ class XY_Curves_Fig:
             print('figsize = ', self.figsize)
         
         fig = plt.figure(figsize=self.figsize) # the first figure
+        plt.axes([0.15, 0.1, 0.6, 0.75])
 
         if 'xlim' in kwargs:
             self.xlim = kwargs['xlim']

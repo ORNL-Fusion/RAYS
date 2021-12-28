@@ -1,10 +1,13 @@
  module post_processing_m
+
+    use constants_m, only : rkind
+
     implicit none
     
 ! Calculated below from data in input files
     integer :: npoints_max
     integer, allocatable :: npoints(:)
-    real, allocatable :: s_vec(:,:), v_vec(:,:,:)
+    real(KIND=rkind), allocatable :: s_vec(:,:), v_vec(:,:,:)
 
 ! Switch to select specific post processor
     character(len=80) :: processor = ''
@@ -22,8 +25,8 @@
     implicit none
 
     integer :: nray, nv, iray, ipoint
-    real :: s
-    real, allocatable :: v(:)
+    real(KIND=rkind) :: s
+    real(KIND=rkind), allocatable :: v(:)
     character(len = 20), allocatable :: ray_stop(:)
 
 ! Read and write input namelist

@@ -1,5 +1,6 @@
 subroutine ode ( f, neqn, y, t, tout, relerr, abserr, iflag, work, iwork )
 
+! (DBB 12/2021) Converted to use KIND = rkind for all reals.
 ! (DBB 10/28/2021)  Added error return 'stop_ode' to trap error conditions in 
 ! derivative subroutine (referred to as f() here, is deriv() in RAYS code)
 !
@@ -95,22 +96,22 @@ subroutine ode ( f, neqn, y, t, tout, relerr, abserr, iflag, work, iwork )
 !
 !    Input, external F, the name of a user-supplied routine of the form
 !      subroutine f ( t, y, yp )
-!      real ( kind = 4 ) t
-!      real ( kind = 4 ) y(neqn)
-!      real ( kind = 4 ) yp(neqn)
+!      real(KIND=rkind) t
+!      real(KIND=rkind) y(neqn)
+!      real(KIND=rkind) yp(neqn)
 !    which accepts input values T and Y(1:NEQN), evaluates the right hand
 !    sides of the ODE, and stores the result in YP(1:NEQN).
 !
 !    Input, integer ( kind = 4 ) NEQN, the number of equations.
 !
-!    Input/output, real ( kind = 4 ) Y(NEQN), the current solution.
+!    Input/output, real(KIND=rkind) Y(NEQN), the current solution.
 !
-!    Input/output, real ( kind = 4 ) T, the current value of the independent
+!    Input/output, real(KIND=rkind) T, the current value of the independent
 !    variable.
 !
-!    Input, real ( kind = 4 ) TOUT, the desired value of T on output.
+!    Input, real(KIND=rkind) TOUT, the desired value of T on output.
 !
-!    Input, real ( kind = 4 ) RELERR, ABSERR, the relative and absolute error
+!    Input, real(KIND=rkind) RELERR, ABSERR, the relative and absolute error
 !    tolerances.  At each step, the code requires
 !      abs ( local error ) <= abs ( y ) * relerr + abserr
 !    for each component of the local error and solution vectors.
@@ -129,18 +130,21 @@ subroutine ode ( f, neqn, y, t, tout, relerr, abserr, iflag, work, iwork )
 !    The value of IFLAG is returned negative when the input value is
 !    negative and the integration does not reach TOUT.
 !
-!    Input/output, real ( kind = 4 ) WORK(100+21*NEQN), workspace.
+!    Input/output, real(KIND=rkind) WORK(100+21*NEQN), workspace.
 !
 !    Input/output, integer ( kind = 4 ) IWORK(5), workspace.
 !
 
-  use diagnostics_m, only : stop_ode
   
+
+  use constants_m, only : rkind
+  use diagnostics_m, only : stop_ode
+    
   implicit none
 
   integer ( kind = 4 ) neqn
 
-  real ( kind = 4 ) abserr
+  real(KIND=rkind) abserr
   external f
   integer ( kind = 4 ), parameter :: ialpha = 1
   integer ( kind = 4 ), parameter :: ibeta = 13
@@ -166,12 +170,12 @@ subroutine ode ( f, neqn, y, t, tout, relerr, abserr, iflag, work, iwork )
   integer ( kind = 4 ) iwork(5)
   logical nornd
   logical phase1
-  real ( kind = 4 ) relerr
+  real(KIND=rkind) relerr
   logical start
-  real ( kind = 4 ) t
-  real ( kind = 4 ) tout
-  real ( kind = 4 ) work(100+21*neqn)
-  real ( kind = 4 ) y(neqn)
+  real(KIND=rkind) t
+  real(KIND=rkind) tout
+  real(KIND=rkind) work(100+21*neqn)
+  real(KIND=rkind) y(neqn)
 
   iwt = iyy + neqn
   ip = iwt + neqn
@@ -256,22 +260,22 @@ subroutine de ( f, neqn, y, t, tout, relerr, abserr, iflag, yy, wt, p, yp, &
 !
 !    Input, external F, the name of a user-supplied routine of the form
 !      subroutine f ( t, y, yp )
-!      real ( kind = 4 ) t
-!      real ( kind = 4 ) y(neqn)
-!      real ( kind = 4 ) yp(neqn)
+!      real(KIND=rkind) t
+!      real(KIND=rkind) y(neqn)
+!      real(KIND=rkind) yp(neqn)
 !    which accepts input values T and Y(1:NEQN), evaluates the right hand
 !    sides of the ODE, and stores the result in YP(1:NEQN).
 !
 !    Input, integer ( kind = 4 ) NEQN, the number of equations.
 !
-!    Input/output, real ( kind = 4 ) Y(NEQN), the current solution.
+!    Input/output, real(KIND=rkind) Y(NEQN), the current solution.
 !
-!    Input/output, real ( kind = 4 ) T, the current value of the independent
+!    Input/output, real(KIND=rkind) T, the current value of the independent
 !    variable.
 !
-!    Input, real ( kind = 4 ) TOUT, the desired value of T on output.
+!    Input, real(KIND=rkind) TOUT, the desired value of T on output.
 !
-!    Input, real ( kind = 4 ) RELERR, ABSERR, the relative and absolute error
+!    Input, real(KIND=rkind) RELERR, ABSERR, the relative and absolute error
 !    tolerances.  At each step, the code requires
 !      abs ( local error ) <= abs ( Y ) * RELERR + ABSERR
 !    for each component of the local error and solution vectors.
@@ -290,45 +294,45 @@ subroutine de ( f, neqn, y, t, tout, relerr, abserr, iflag, yy, wt, p, yp, &
 !    The value of IFLAG is returned negative when the input value is negative
 !    and the integration does not reach TOUT.
 !
-!    Workspace, real ( kind = 4 ) YY(NEQN), used to hold old solution data.
+!    Workspace, real(KIND=rkind) YY(NEQN), used to hold old solution data.
 !
-!    Input, real ( kind = 4 ) WT(NEQN), the error weight vector.
+!    Input, real(KIND=rkind) WT(NEQN), the error weight vector.
 !
-!    Workspace, real ( kind = 4 ) P(NEQN).
+!    Workspace, real(KIND=rkind) P(NEQN).
 !
-!    Workspace, real ( kind = 4 ) YP(NEQN), used to hold values of the
+!    Workspace, real(KIND=rkind) YP(NEQN), used to hold values of the
 !    solution derivative.
 !
-!    Workspace, real ( kind = 4 ) YPOUT(NEQN), used to hold values of the
+!    Workspace, real(KIND=rkind) YPOUT(NEQN), used to hold values of the
 !    solution derivative.
 !
-!    Workspace, real ( kind = 4 ) PHI(NEQN,16), contains divided difference
+!    Workspace, real(KIND=rkind) PHI(NEQN,16), contains divided difference
 !    information about the polynomial interpolant to the solution.
 !
-!    Workspace, real ( kind = 4 ) ALPHA(12), BETA(12), SIG(13).
+!    Workspace, real(KIND=rkind) ALPHA(12), BETA(12), SIG(13).
 !
-!    Workspace, real ( kind = 4 ) V(12), W(12), G(13).
+!    Workspace, real(KIND=rkind) V(12), W(12), G(13).
 !
 !    Input/output, logical PHASE1, indicates whether the program is in the
 !    first phase, when it always wants to increase the ODE method order.
 !
-!    Workspace, real ( kind = 4 ) PSI(12), contains information about
+!    Workspace, real(KIND=rkind) PSI(12), contains information about
 !    the polynomial interpolant to the solution.
 !
-!    Input/output, real ( kind = 4 ) X, a "working copy" of T, the current value
+!    Input/output, real(KIND=rkind) X, a "working copy" of T, the current value
 !    of the independent variable, which is adjusted as the code attempts
 !    to take a step.
 !
-!    Input/output, real ( kind = 4 ) H, the current stepsize.
+!    Input/output, real(KIND=rkind) H, the current stepsize.
 !
-!    Input/output, real ( kind = 4 ) HOLD, the last successful stepsize.
+!    Input/output, real(KIND=rkind) HOLD, the last successful stepsize.
 !
 !    Input/output, logical START, is TRUE on input for the first step.
 !    The program initializes data, and sets START to FALSE.
 !
-!    Input/output, real ( kind = 4 ) TOLD, the previous value of T.
+!    Input/output, real(KIND=rkind) TOLD, the previous value of T.
 !
-!    Input/output, real ( kind = 4 ) DELSGN, the sign (+1 or -1) of
+!    Input/output, real(KIND=rkind) DELSGN, the sign (+1 or -1) of
 !    TOUT - T.
 !
 !    Input/output, integer ( kind = 4 ) NS, the number of steps taken with 
@@ -350,26 +354,27 @@ subroutine de ( f, neqn, y, t, tout, relerr, abserr, iflag, yy, wt, p, yp, &
 !    call to DE.
 !
 
+  use constants_m, only : rkind
   use diagnostics_m, only : stop_ode
   
   implicit none
 
   integer ( kind = 4 ) neqn
 
-  real ( kind = 4 ) absdel
-  real ( kind = 4 ) abseps
-  real ( kind = 4 ) abserr
-  real ( kind = 4 ) alpha(12)
-  real ( kind = 4 ) beta(12)
+  real(KIND=rkind) absdel
+  real(KIND=rkind) abseps
+  real(KIND=rkind) abserr
+  real(KIND=rkind) alpha(12)
+  real(KIND=rkind) beta(12)
   logical crash
-  real ( kind = 4 ) del
-  real ( kind = 4 ) delsgn
-  real ( kind = 4 ) eps
+  real(KIND=rkind) del
+  real(KIND=rkind) delsgn
+  real(KIND=rkind) eps
   external f
-  real ( kind = 4 ) fouru
-  real ( kind = 4 ) g(13)
-  real ( kind = 4 ) h
-  real ( kind = 4 ) hold
+  real(KIND=rkind) fouru
+  real(KIND=rkind) g(13)
+  real(KIND=rkind) h
+  real(KIND=rkind) hold
   integer ( kind = 4 ) iflag
   integer ( kind = 4 ) isn
   integer ( kind = 4 ) isnold
@@ -380,27 +385,27 @@ subroutine de ( f, neqn, y, t, tout, relerr, abserr, iflag, yy, wt, p, yp, &
   logical nornd
   integer ( kind = 4 ) nostep
   integer ( kind = 4 ) ns
-  real ( kind = 4 ) p(neqn)
-  real ( kind = 4 ) phi(neqn,16)
+  real(KIND=rkind) p(neqn)
+  real(KIND=rkind) phi(neqn,16)
   logical phase1
-  real ( kind = 4 ) psi(12)
-  real ( kind = 4 ) releps
-  real ( kind = 4 ) relerr
-  real ( kind = 4 ) sig(13)
+  real(KIND=rkind) psi(12)
+  real(KIND=rkind) releps
+  real(KIND=rkind) relerr
+  real(KIND=rkind) sig(13)
   logical start
   logical stiff
-  real ( kind = 4 ) t
-  real ( kind = 4 ) tend
-  real ( kind = 4 ) told
-  real ( kind = 4 ) tout
-  real ( kind = 4 ) v(12)
-  real ( kind = 4 ) w(12)
-  real ( kind = 4 ) wt(neqn)
-  real ( kind = 4 ) x
-  real ( kind = 4 ) y(neqn)
-  real ( kind = 4 ) yp(neqn)
-  real ( kind = 4 ) ypout(neqn)
-  real ( kind = 4 ) yy(neqn)
+  real(KIND=rkind) t
+  real(KIND=rkind) tend
+  real(KIND=rkind) told
+  real(KIND=rkind) tout
+  real(KIND=rkind) v(12)
+  real(KIND=rkind) w(12)
+  real(KIND=rkind) wt(neqn)
+  real(KIND=rkind) x
+  real(KIND=rkind) y(neqn)
+  real(KIND=rkind) yp(neqn)
+  real(KIND=rkind) ypout(neqn)
+  real(KIND=rkind) yy(neqn)
 !
 !  Test for improper parameters.
 !
@@ -477,7 +482,7 @@ subroutine de ( f, neqn, y, t, tout, relerr, abserr, iflag, yy, wt, p, yp, &
     start = .true.
     x = t
     yy(1:neqn) = y(1:neqn)
-    delsgn = sign ( 1.0e+00, del )
+    delsgn = sign ( real(1.,KIND=rkind), del )
     h = sign ( max ( abs ( tout - x ), fouru * abs ( x ) ), tout - x )
 
   end if
@@ -668,31 +673,31 @@ subroutine step ( x, y, f, neqn, h, eps, wt, start, hold, k, kold, crash, &
 !
 !  Parameters:
 !
-!    Input/output, real ( kind = 4 ) X, the value of the independent variable.
+!    Input/output, real(KIND=rkind) X, the value of the independent variable.
 !
-!    Input/output, real ( kind = 4 ) Y(NEQN), the approximate solution at the
+!    Input/output, real(KIND=rkind) Y(NEQN), the approximate solution at the
 !    current value of the independent variable.
 !
 !    Input, external F, the name of a user-supplied routine of the form
 !      subroutine f ( t, y, yp )
-!      real ( kind = 4 ) t
-!      real ( kind = 4 ) y(neqn)
-!      real ( kind = 4 ) yp(neqn)
+!      real(KIND=rkind) t
+!      real(KIND=rkind) y(neqn)
+!      real(KIND=rkind) yp(neqn)
 !    which accepts input values T and Y(1:NEQN), evaluates the right hand
 !    sides of the ODE, and stores the result in YP(1:NEQN).
 !
 !    Input, integer ( kind = 4 ) NEQN, the number of equations.
 !
-!    Input/output, real ( kind = 4 ) H, the suggested stepsize.
+!    Input/output, real(KIND=rkind) H, the suggested stepsize.
 !
-!    Input/output, real ( kind = 4 ) EPS, the local error tolerance.
+!    Input/output, real(KIND=rkind) EPS, the local error tolerance.
 !
-!    Input, real ( kind = 4 ) WT(NEQN), the vector of error weights.
+!    Input, real(KIND=rkind) WT(NEQN), the vector of error weights.
 !
 !    Input/output, logical START, is set to TRUE before the first step.
 !    The program initializes data, and resets START to FALSE.
 !
-!    Input/output, real ( kind = 4 ) HOLD, the step size used on the last
+!    Input/output, real(KIND=rkind) HOLD, the step size used on the last
 !    successful step.
 !
 !    Input/output, integer ( kind = 4 ) K, the appropriate order for the 
@@ -703,20 +708,20 @@ subroutine step ( x, y, f, neqn, h, eps, wt, start, hold, k, kold, crash, &
 !
 !    Output, logical CRASH, is set to TRUE if no step can be taken.
 !
-!    Workspace, real ( kind = 4 ) PHI(NEQN,16), contains divided difference
+!    Workspace, real(KIND=rkind) PHI(NEQN,16), contains divided difference
 !    information about the polynomial interpolant to the solution.
 !
-!    Workspace, real ( kind = 4 ) P(NEQN).
+!    Workspace, real(KIND=rkind) P(NEQN).
 !
-!    Workspace, real ( kind = 4 ) YP(NEQN), used to hold values of the
+!    Workspace, real(KIND=rkind) YP(NEQN), used to hold values of the
 !    solution derivative.
 !
-!    Workspace, real ( kind = 4 ) PSI(12), contains information about
+!    Workspace, real(KIND=rkind) PSI(12), contains information about
 !    the polynomial interpolant to the solution.
 !
-!    Workspace, real ( kind = 4 ) ALPHA(12), BETA(12), SIG(13).
+!    Workspace, real(KIND=rkind) ALPHA(12), BETA(12), SIG(13).
 !
-!    Workspace, real ( kind = 4 ) V(12), W(12), G(13).
+!    Workspace, real(KIND=rkind) V(12), W(12), G(13).
 !
 !    Input/output, logical PHASE1, indicates whether the program is in the
 !    first phase, when it always wants to increase the ODE method order.
@@ -727,32 +732,33 @@ subroutine step ( x, y, f, neqn, h, eps, wt, start, hold, k, kold, crash, &
 !    Input/output, logical NORND, ?
 !
 
+  use constants_m, only : rkind
   use diagnostics_m, only : stop_ode
   
   implicit none
 
   integer ( kind = 4 ) neqn
 
-  real ( kind = 4 ) absh
-  real ( kind = 4 ) alpha(12)
-  real ( kind = 4 ) beta(12)
+  real(KIND=rkind) absh
+  real(KIND=rkind) alpha(12)
+  real(KIND=rkind) beta(12)
   logical crash
-  real ( kind = 4 ) eps
-  real ( kind = 4 ) erk
-  real ( kind = 4 ) erkm1
-  real ( kind = 4 ) erkm2
-  real ( kind = 4 ) erkp1
-  real ( kind = 4 ) err
+  real(KIND=rkind) eps
+  real(KIND=rkind) erk
+  real(KIND=rkind) erkm1
+  real(KIND=rkind) erkm2
+  real(KIND=rkind) erkp1
+  real(KIND=rkind) err
   external f
-  real ( kind = 4 ) fouru
-  real ( kind = 4 ) g(13)
-  real ( kind = 4 ), dimension ( 13 ) :: gstr = (/ &
+  real(KIND=rkind) fouru
+  real(KIND=rkind) g(13)
+  real(KIND=rkind), dimension ( 13 ) :: gstr = (/ &
     0.50e+00,    0.0833e+00,  0.0417e+00,  0.0264e+00,  0.0188e+00, &
     0.0143e+00,  0.0114e+00,  0.00936e+00, 0.00789e+00, 0.00679e+00, &
     0.00592e+00, 0.00524e+00, 0.00468e+00 /)
-  real ( kind = 4 ) h
-  real ( kind = 4 ) hnew
-  real ( kind = 4 ) hold
+  real(KIND=rkind) h
+  real(KIND=rkind) hnew
+  real(KIND=rkind) hold
   integer ( kind = 4 ) i
   integer ( kind = 4 ) ifail
   integer ( kind = 4 ) iq
@@ -768,32 +774,32 @@ subroutine step ( x, y, f, neqn, h, eps, wt, start, hold, k, kold, crash, &
   logical nornd
   integer ( kind = 4 ) ns
   integer ( kind = 4 ) nsp1
-  real ( kind = 4 ) p(neqn)
-  real ( kind = 4 ) p5eps
+  real(KIND=rkind) p(neqn)
+  real(KIND=rkind) p5eps
   logical phase1
-  real ( kind = 4 ) phi(neqn,16)
-  real ( kind = 4 ) psi(12)
-  real ( kind = 4 ) r
-  real ( kind = 4 ) rho
-  real ( kind = 4 ) round
-  real ( kind = 4 ) sig(13)
+  real(KIND=rkind) phi(neqn,16)
+  real(KIND=rkind) psi(12)
+  real(KIND=rkind) r
+  real(KIND=rkind) rho
+  real(KIND=rkind) round
+  real(KIND=rkind) sig(13)
   logical start
-  real ( kind = 4 ) total
-  real ( kind = 4 ) tau
-  real ( kind = 4 ) temp1
-  real ( kind = 4 ) temp2
-  real ( kind = 4 ), dimension ( 13 ) :: two = (/ &
+  real(KIND=rkind) total
+  real(KIND=rkind) tau
+  real(KIND=rkind) temp1
+  real(KIND=rkind) temp2
+  real(KIND=rkind), dimension ( 13 ) :: two = (/ &
        2.0e+00,    4.0e+00,    8.0e+00,  16.0e+00,   32.0e+00, &
       64.0e+00,  128.0e+00,  256.0e+00, 512.0e+00, 1024.0e+00, &
     2048.0e+00, 4096.0e+00, 8192.0e+00/)
-  real ( kind = 4 ) twou
-  real ( kind = 4 ) v(12)
-  real ( kind = 4 ) w(12)
-  real ( kind = 4 ) wt(neqn)
-  real ( kind = 4 ) x
-  real ( kind = 4 ) xold
-  real ( kind = 4 ) y(neqn)
-  real ( kind = 4 ) yp(neqn)
+  real(KIND=rkind) twou
+  real(KIND=rkind) v(12)
+  real(KIND=rkind) w(12)
+  real(KIND=rkind) wt(neqn)
+  real(KIND=rkind) x
+  real(KIND=rkind) xold
+  real(KIND=rkind) y(neqn)
+  real(KIND=rkind) yp(neqn)
 
   twou = 2.0e+00 * epsilon ( twou )
   fouru = 2.0e+00 * twou
@@ -886,8 +892,8 @@ subroutine step ( x, y, f, neqn, h, eps, wt, start, hold, k, kold, crash, &
     if ( ns <= k ) then
 
       beta(ns) = 1.0e+00
-      alpha(ns) = 1.0e+00 / real ( ns, kind = 4 )
-      temp1 = h * real ( ns, kind = 4 )
+      alpha(ns) = 1.0e+00 / real ( ns, kind = rkind )
+      temp1 = h * real ( ns, kind = rkind )
       sig(nsp1) = 1.0e+00
 
       do i = nsp1, k
@@ -896,7 +902,7 @@ subroutine step ( x, y, f, neqn, h, eps, wt, start, hold, k, kold, crash, &
         beta(i) = beta(i-1) * psi(i-1) / temp2
         temp1 = temp2 + h
         alpha(i) = h / temp1
-        sig(i+1) = real ( i, kind = 4 ) * alpha(i) * sig(i)
+        sig(i+1) = real ( i, kind = rkind ) * alpha(i) * sig(i)
       end do
 
       psi(k) = temp1
@@ -908,7 +914,7 @@ subroutine step ( x, y, f, neqn, h, eps, wt, start, hold, k, kold, crash, &
       if ( ns <= 1 ) then
 
         do iq = 1, k
-          v(iq) = 1.0e+00 / real ( iq * ( iq + 1 ), kind = 4 )
+          v(iq) = 1.0e+00 / real ( iq * ( iq + 1 ), kind = rkind )
           w(iq) = v(iq)
         end do
 !
@@ -918,7 +924,7 @@ subroutine step ( x, y, f, neqn, h, eps, wt, start, hold, k, kold, crash, &
 
         if ( kold < k ) then
 
-          v(k) = 1.0e+00 / real ( k * kp1, kind = 4 )
+          v(k) = 1.0e+00 / real ( k * kp1, kind = rkind )
 
           do j = 1, ns - 2
             i = k - j
@@ -1185,9 +1191,9 @@ subroutine step ( x, y, f, neqn, h, eps, wt, start, hold, k, kold, crash, &
       hnew = h
 
       if ( p5eps < erk ) then
-        temp2 = real ( k + 1, kind = 4 )
+        temp2 = real ( k + 1, kind = rkind )
         r = ( p5eps / erk )**( 1.0e+00 / temp2 )
-        hnew = absh * max ( 0.5e+00, min ( 0.9e+00, r ) )
+        hnew = absh * max ( real(0.5, KIND=rkind), min ( real(0.9, KIND=rkind), r ) )
         hnew = sign ( max ( hnew, fouru * abs ( x ) ), h )
       end if
 
@@ -1236,15 +1242,15 @@ subroutine intrp ( x, y, xout, yout, ypout, neqn, kold, phi, psi )
 !
 !  Parameters:
 !
-!    Input, real ( kind = 4 ) X, the point where the solution has been computed.
+!    Input, real(KIND=rkind) X, the point where the solution has been computed.
 !
-!    Input, real ( kind = 4 ) Y(NEQN), the computed solution at X.
+!    Input, real(KIND=rkind) Y(NEQN), the computed solution at X.
 !
-!    Input, real ( kind = 4 ) XOUT, the point at which the solution is desired.
+!    Input, real(KIND=rkind) XOUT, the point at which the solution is desired.
 !
-!    Output, real ( kind = 4 ) YOUT(NEQN), the solution at XOUT.
+!    Output, real(KIND=rkind) YOUT(NEQN), the solution at XOUT.
 !
-!    Output, real ( kind = 4 ) YPOUT(NEQN), the derivative of the solution
+!    Output, real(KIND=rkind) YPOUT(NEQN), the derivative of the solution
 !    at XOUT.
 !
 !    Input, integer ( kind = 4 ) NEQN, the number of equations.
@@ -1252,35 +1258,38 @@ subroutine intrp ( x, y, xout, yout, ypout, neqn, kold, phi, psi )
 !    Input, integer ( kind = 4 ) KOLD, the order used for the last
 !    successful step.
 !
-!    Input, real ( kind = 4 ) PHI(NEQN,16), contains information about the
+!    Input, real(KIND=rkind) PHI(NEQN,16), contains information about the
 !    interpolating polynomial.
 !
-!    Input, real ( kind = 4 ) PSI(12), contains information about the
+!    Input, real(KIND=rkind) PSI(12), contains information about the
 !    interpolating polynomial.
 !
+
+  use constants_m, only : rkind
+
   implicit none
 
   integer ( kind = 4 ) neqn
 
-  real ( kind = 4 ) eta
-  real ( kind = 4 ) g(13)
-  real ( kind = 4 ) gamma
-  real ( kind = 4 ) hi
+  real(KIND=rkind) eta
+  real(KIND=rkind) g(13)
+  real(KIND=rkind) gamma
+  real(KIND=rkind) hi
   integer ( kind = 4 ) i
   integer ( kind = 4 ) j
   integer ( kind = 4 ) ki
   integer ( kind = 4 ) kold
-  real ( kind = 4 ) phi(neqn,16)
-  real ( kind = 4 ) psi(12)
-  real ( kind = 4 ) psijm1
-  real ( kind = 4 ) rho(13)
-  real ( kind = 4 ) term
-  real ( kind = 4 ) w(13)
-  real ( kind = 4 ) x
-  real ( kind = 4 ) xout
-  real ( kind = 4 ) y(neqn)
-  real ( kind = 4 ) yout(neqn)
-  real ( kind = 4 ) ypout(neqn)
+  real(KIND=rkind) phi(neqn,16)
+  real(KIND=rkind) psi(12)
+  real(KIND=rkind) psijm1
+  real(KIND=rkind) rho(13)
+  real(KIND=rkind) term
+  real(KIND=rkind) w(13)
+  real(KIND=rkind) x
+  real(KIND=rkind) xout
+  real(KIND=rkind) y(neqn)
+  real(KIND=rkind) yout(neqn)
+  real(KIND=rkind) ypout(neqn)
 
   hi = xout - x
   ki = kold + 1
@@ -1288,7 +1297,7 @@ subroutine intrp ( x, y, xout, yout, ypout, neqn, kold, phi, psi )
 !  Initialize W for computing G.
 !
   do i = 1, ki
-    w(i) = 1.0e+00 / real ( i, kind = 4 )
+    w(i) = 1.0e+00 / real ( i, kind = rkind )
   end do
 !
 !  Compute G.

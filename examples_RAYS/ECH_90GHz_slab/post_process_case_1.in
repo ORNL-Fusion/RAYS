@@ -3,7 +3,7 @@
 /
  &slab_processor_list
   processor = 'slab_processor'
-  num_plot_k_vectors = 30
+  num_plot_k_vectors = 15
   scale_k_vec = 'False' 
   set_XY_lim = 'False'
 /
