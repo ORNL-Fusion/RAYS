@@ -323,6 +323,7 @@
     character(len = 17), dimension(9) :: profile_name_vec
     complex(KIND=rkind) :: nx
     complex(KIND=skind) :: nx_sngl
+    real(KIND=skind) :: ny_sngl, nz_sngl
 
     write(*,*)  'Start writing kx profile vectors'  
 
@@ -336,13 +337,15 @@
     dx = (xmax - xmin)/(n_xpoints-1)
 
     ray_loop: do iray = 1, nray
-        write(*,*) 'ray ', iray
-        write(kx_profile_unit,*) 'ray ', iray
-        write(kx_profile_unit,*) profile_name_vec
-
-    
         ny = rindex_vec0(2, iray)
         nz = rindex_vec0(3, iray)
+        ny_sngl = real(ny, KIND=skind)
+        nz_sngl = real(nz, KIND=skind)
+
+        write(*,*) 'ray ', iray, ' ny ', ny_sngl, ' nz ', nz_sngl
+        write(kx_profile_unit,*) 'ray ', iray, ' ny ', ny_sngl, ' nz ', nz_sngl
+        write(kx_profile_unit,*) profile_name_vec
+
  
         x_loop: do ix = 0, n_xpoints-1
             x = xmin + ix*dx
