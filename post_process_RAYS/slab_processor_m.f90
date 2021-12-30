@@ -308,7 +308,7 @@
     use slab_eq_m, only : xmin, xmax
     use suscep_m, only : dielectric_cold, eps_cold
     use ray_init_m, only : nray, rindex_vec0
-    use rf_m, only : ray_dispersion_model, k0, k0_sign
+    use rf_m, only : ray_dispersion_model, k0
     use dispersion_solvers_m, only : solve_disp_nx_vs_ny_nz    
     implicit none
 
@@ -354,28 +354,28 @@
 
             profile_vec(1) = real(x, KIND=skind)
            
-            ! kx vs x for fast and slow cold plasma roots
+            ! kx vs x for fast and slow cold plasma roots.  Always use +1 for k0_sign
             wave_mode = 'plus'
-            call solve_disp_nx_vs_ny_nz(ray_dispersion_model, wave_mode, k0_sign, ny, nz, nx)            
+            call solve_disp_nx_vs_ny_nz(ray_dispersion_model, wave_mode, +1, ny, nz, nx)            
             nx_sngl = cmplx(nx, KIND=skind)
             profile_vec(2) = k0*real(nx_sngl)
             profile_vec(3) = k0*aimag(nx_sngl)
             
             wave_mode = 'minus'
-            call solve_disp_nx_vs_ny_nz(ray_dispersion_model, wave_mode, k0_sign, ny, nz, nx)            
+            call solve_disp_nx_vs_ny_nz(ray_dispersion_model, wave_mode, +1, ny, nz, nx)            
             nx_sngl = cmplx(nx, KIND=skind)
             profile_vec(4) = k0*real(nx_sngl)
             profile_vec(5) = k0*aimag(nx_sngl)
             ! kx vs x for fast and slow cold plasma roots
 
             wave_mode = 'fast'
-            call solve_disp_nx_vs_ny_nz(ray_dispersion_model, wave_mode, k0_sign, ny, nz, nx)            
+            call solve_disp_nx_vs_ny_nz(ray_dispersion_model, wave_mode, +1, ny, nz, nx)            
             nx_sngl = cmplx(nx, KIND=skind)
             profile_vec(6) = k0*real(nx_sngl)
             profile_vec(7) = k0*aimag(nx_sngl)
             
             wave_mode = 'slow'
-            call solve_disp_nx_vs_ny_nz(ray_dispersion_model, wave_mode, k0_sign, ny, nz, nx)            
+            call solve_disp_nx_vs_ny_nz(ray_dispersion_model, wave_mode, +1, ny, nz, nx)            
             nx_sngl = cmplx(nx, KIND=skind)
             profile_vec(8) = k0*real(nx_sngl)
             profile_vec(9) = k0*aimag(nx_sngl)
