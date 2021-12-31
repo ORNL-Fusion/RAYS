@@ -24,7 +24,7 @@ explanation is given in the IEEE paper.
 Cases 3 and 4 are for constant density and linearly increasing Bz.  The cyclotron resonance
 is at x = 0.  nz = 0.1, 0.4, 0.7.  Case 3 is extraordinary mode launched below the right hand
 cutoff for all rays.  Case 4 is extraordinary mode launched above the cyclotron resonance.
-The rays propagate freely through the fundamental resonance and travel up to the upper hybrid
+The rays propagate freely through the fundamental resonance and travel down to the upper hybrid
 resonance independent of nz.
 
 ![Screenshot](Cases_3_and_4.png)
