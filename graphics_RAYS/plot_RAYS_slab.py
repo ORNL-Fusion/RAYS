@@ -55,11 +55,110 @@ def  n_evenly_spaced_integers(n, Length):
     else:
         return [int((i)*float(Length-1)/(n-1)) for i in range(n)]        
 
+
+# get the command line
+ray_file_list = []
+n_arg = len(sys.argv)
+if n_arg == 1: # No arg, get run_label from graphics description file
+    n_ray_files = 1
+    ray_file_list.append('ray_out.' + run_label)
+
+if n_arg > 1: # Get ray file names from command line
+    n_ray_files = n_arg-1
+    ray_file_list = sys.argv[1:]
+
+print ('ray files = ', ray_file_list)
+
+nray = 0
+rays_s_list = []
+rays_x_list = []
+rays_y_list = []
+rays_z_list = []
+rays_kx_list = []
+rays_ky_list = []
+rays_kz_list = []
+rays_knorm_list = []
+rays_npoints_list =[]
+
 #----------------------------------------------------------------------------------------------
-# Get description data needed for the plot
+# Cycle through ray file list
 #----------------------------------------------------------------------------------------------
 
-# Graphics description input file
+for file in ray_file_list:
+
+    print('file = ', file)
+    # Ray data input file
+    lines = get_lines(file) 
+
+    lines.append('0.0\n')  # Tack on an extra zero line to signal the end of file
+
+
+    k_max = 0.
+
+    for i in range(len(lines)-1):
+        line = lines[i]
+        split_line = line.split()
+        if debug > 3: print('split_line = ', split_line)    
+        num_line = [float(x) for x in split_line]
+        if debug > 2: print('num_line = ', num_line)
+    
+        next_line = lines[i+1]
+        split_next_line = next_line.split()
+        num_next_line = [float(x) for x in split_next_line]
+
+        if num_line[0] == 0:  # This is a new ray
+
+            nray = nray+1   # Increment ray counter
+            s_list = []     # Reinitialize for new ray
+            x_list = []
+            y_list = []
+            z_list = []
+            kx_list = []
+            ky_list = []
+            kz_list = []        
+            knorm_list = []        
+            npoints = 0
+    
+        s_list.append(num_line[0])
+        x_list.append(num_line[1])
+        y_list.append(num_line[2])
+        z_list.append(num_line[3])
+        kx_list.append(num_line[4])
+        ky_list.append(num_line[5])
+        kz_list.append(num_line[6])
+    
+        kmag = math.sqrt(pow(num_line[4],2) + pow(num_line[5],2) +pow(num_line[6],2))
+        knorm_list.append(kmag)
+        if kmag > k_max: k_max = kmag
+
+        npoints = npoints +1        # Increment points counter
+        
+        # Test to see if this is last line of a ray
+        if num_next_line[0] == 0:  # This is last line of this ray. Add lists to rays_lists
+           rays_s_list.append(s_list)
+           rays_x_list.append(x_list)
+           rays_y_list.append(y_list)
+           rays_z_list.append(z_list)
+           rays_kx_list.append(kx_list)
+           rays_ky_list.append(ky_list)
+           rays_kz_list.append(kz_list)
+           rays_knorm_list.append(knorm_list)
+           rays_npoints_list.append(npoints)
+ 
+    if debug > 1: print('\n', 'rays_x_list[0] = ', rays_x_list[0],'\n')
+    if debug > 1: print('rays_z_list[1] = ', rays_z_list[0])
+    if debug > 0: print('\n', 'rays_kx_list[0] = ', rays_kx_list[0],'\n')
+    if debug > 0: print('rays_kz_list[0] = ', rays_kz_list[0])
+
+    print('nray = ', nray)
+    print('k_max = ', k_max)
+    print ('len(rays_s_list) = ', len(rays_s_list))
+
+#----------------------------------------------------------------------------------------------
+# Generate Z-X ray plot
+#----------------------------------------------------------------------------------------------
+
+# Get data from graphics description input file
 graphics_variable_dict = input_file_to_variable_dict('graphics_description_slab.dat')
 if debug > 1: print('graphics_variable_dict = ', graphics_variable_dict)
 
@@ -86,98 +185,18 @@ print('num_plot_k_vectors = ', num_plot_k_vectors)
 print('scale_k_vec = ', scale_k_vec)
 print('set_XY_lim = ', set_XY_lim)
 
-#----------------------------------------------------------------------------------------------
-# Get all the ray data
-#----------------------------------------------------------------------------------------------
-
-# Ray data input file
-lines = get_lines('ray_out.' + run_label) 
-
-lines.append('0.0\n')  # Tack on an extra zero line to signal the end
-
-nray = 0
-rays_s_list = []
-rays_x_list = []
-rays_y_list = []
-rays_z_list = []
-rays_kx_list = []
-rays_ky_list = []
-rays_kz_list = []
-rays_knorm_list = []
-rays_npoints_list =[]
-
-k_max = 0.
-
-for i in range(len(lines)):
-    line = lines[i]
-    split_line = line.split()
-    if debug > 3: print('split_line = ', split_line)
-    
-    num_line = [float(x) for x in split_line]
-    if debug > 2: print('num_line = ', num_line)
-    
-    if num_line[0] == 0:  # This is a new ray
-        if nray >= 1: #    Add lists to rays_lists
-            rays_s_list.append(s_list)
-            rays_x_list.append(x_list)
-            rays_y_list.append(y_list)
-            rays_z_list.append(z_list)
-            rays_kx_list.append(kx_list)
-            rays_ky_list.append(ky_list)
-            rays_kz_list.append(kz_list)
-            rays_knorm_list.append(knorm_list)
-            rays_npoints_list.append(npoints)
-            
-            if i == len(lines)-1: break  # That was the last ray, exit loop
-
-        nray = nray+1   # Increment ray counter
-        s_list = []     # Reinitialize for new ray
-        x_list = []
-        y_list = []
-        z_list = []
-        kx_list = []
-        ky_list = []
-        kz_list = []        
-        knorm_list = []        
-        npoints = 0
-    
-    s_list.append(num_line[0])
-    x_list.append(num_line[1])
-    y_list.append(num_line[2])
-    z_list.append(num_line[3])
-    kx_list.append(num_line[4])
-    ky_list.append(num_line[5])
-    kz_list.append(num_line[6])
-    
-    kmag = math.sqrt(pow(num_line[4],2) + pow(num_line[5],2) +pow(num_line[6],2))
-    knorm_list.append(kmag)
-    if kmag > k_max: k_max = kmag
-
-    npoints = npoints +1        # Increment points counter
-
-if debug > 1: print('\n', 'rays_x_list[0] = ', rays_x_list[0],'\n')
-if debug > 1: print('rays_z_list[1] = ', rays_z_list[0])
-if debug > 0: print('\n', 'rays_kx_list[0] = ', rays_kx_list[0],'\n')
-if debug > 0: print('rays_kz_list[0] = ', rays_kz_list[0])
-
-print('nray = ', nray)
-print('k_max = ', k_max)
 
 #----------------------------------------------------------------------------------------------
-# Set up the plot
+# Generate plot using calls to plot_XY_Curves.py
 #----------------------------------------------------------------------------------------------
+ 
 
-# Graphics output file
+# Open graphics output file.  N.B. run_label comes from graphics description file.
+# Edit that if you want to customize the run label for multiple ray files.
+ 
 open_file_XY_Curves_Fig('ray_plots.' + run_label + '.pdf')
-
-max_size = 8.0
-
+max_size = 8.
 title = run_description + '  ' + run_label
-
-#----------------------------------------------------------------------------------------------
-# Z-X plot
-#----------------------------------------------------------------------------------------------
-# 
 
 xz_ratio = (xmax-xmin)/(zmax-zmin)
 z_size = max_size
@@ -211,7 +230,7 @@ if num_plot_k_vectors > 0:
             else:
                 kx = k_vec_base_length*diagonal*rays_kx_list[i_ray][i]/rays_knorm_list[i_ray][i]
                 kz = k_vec_base_length*diagonal*rays_kz_list[i_ray][i]/rays_knorm_list[i_ray][i]
-            
+        
             if debug > 1: print('kx = ', kx, ' kz = ', kz)
             plt.arrow(rays_z_list[i_ray][i], rays_x_list[i_ray][i],\
               kz, kx, shape='full', head_width = 0.01)
