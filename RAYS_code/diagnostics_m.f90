@@ -364,10 +364,10 @@ contains
     if (length_n <= 5 ) then
     
         if ((v_max < 1.e4) .and. (v_min > 1.e-3)) then
-            write (message_unit, '(a, " = (", 5(2f12.5,5x),")")') &
+            write (message_unit, '(a, " = ", 5(2f12.5,5x),")")') &
             & mess, (value(i), i=1, length_n)
         else
-            write (message_unit, '(a, " = (", 5(1pe12.4,1x,1pe12.4,4x),")")') &
+            write (message_unit, '(a, " = ", 5(1pe12.4,1x,1pe12.4,4x),")")') &
             & mess, (value(i), i=1, length_n) 
         end if
     
@@ -424,10 +424,10 @@ contains
     if (length_n <= 5 ) then
     
         if ((v_max < 1.e4) .and. (v_min > 1.e-3)) then
-            write (message_unit, '(a, " = (", 5(2f12.5,5x),")")') &
+            write (message_unit, '(a, " = ", 5(2f12.5,5x),")")') &
             & mess, (value(i), i=1, length_n)
         else
-            write (message_unit, '(a, " = (", 5(1pe12.4,1x,1pe12.4,4x),")")') &
+            write (message_unit, '(a, " = ", 5(1pe12.4,1x,1pe12.4,4x),")")') &
             & mess, (value(i), i=1, length_n) 
         end if
     
@@ -543,10 +543,10 @@ contains
     end do
 
     if ((v_max < 1.e4) .and. (v_min > 1.e-3)) then
-        write (message_unit, '(a, " = (", 10f12.4,")")') &
+        write (message_unit, '(a, " = ", 10f12.4,")")') &
         & mess, (value(i), i=1, length_n)
     else
-        write (message_unit, '(a, " = (", 10(1pe12.4),")")') &
+        write (message_unit, '(a, " = ", 10(1pe12.4),")")') &
         & mess, (value(i), i=1, length_n) 
     end if
 
