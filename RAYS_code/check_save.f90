@@ -91,7 +91,7 @@
           end if
        end if
        
-       call message('check_save: Vg',vg, 1)
+       call message('check_save: Vg',vg, 3, 1)
        
     else
        write(*,*) 'CHECK_SAVE: dddw = ', dddw

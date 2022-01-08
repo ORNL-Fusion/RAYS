@@ -101,6 +101,9 @@
     if ( dddw /= 0. ) then
        vg = -dddk / dddw
        vg0 = sqrt(sum(vg**2))
+!      Unit vector along the group velocity.
+	   vg_unit = vg / vg0
+!      write(6,'(a,1p3e12.4)') 'EQN_RAY: vg/|vg| =', vg_unit
     else
        write(*,*) 'EQN_RAY: infinite group velocity, dddw = ', dddw
        stop_ode = .true.
