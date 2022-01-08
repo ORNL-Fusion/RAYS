@@ -101,6 +101,9 @@
     if ( dddw /= 0. ) then
        vg = -dddk / dddw
        vg0 = sqrt(sum(vg**2))
+!      Unit vector along the group velocity.
+	   vg_unit = vg / vg0
+!      write(6,'(a,1p3e12.4)') 'EQN_RAY: vg/|vg| =', vg_unit
     else
        write(*,*) 'EQN_RAY: infinite group velocity, dddw = ', dddw
        stop_ode = .true.
@@ -185,6 +188,7 @@
     if (integrate_eq_gradients .eqv..true.) then
 
 !       Check if grad(B) is consistent with B.
+        write(*,*) 'dsd_ray_param = ', dsd_ray_param, 'vg_unit = ', vg_unit,  'gradbtensor(:,:) = ', gradbtensor(:,:)
         dvds(nv0+1)  = sum(dsd_ray_param*vg_unit*gradbtensor(:,1))
         dvds(nv0+2) = sum(dsd_ray_param*vg_unit*gradbtensor(:,2))
         dvds(nv0+3) = sum(dsd_ray_param*vg_unit*gradbtensor(:,3))

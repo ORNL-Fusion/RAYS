@@ -91,7 +91,7 @@
           end if
        end if
        
-       call message('check_save: Vg',vg, 1)
+       call message('check_save: Vg',vg, 3, 1)
        
     else
        write(*,*) 'CHECK_SAVE: dddw = ', dddw
@@ -127,6 +127,7 @@
 !      Check if grad(B) is consistent with B.
         diff_vec= (v(nv0+1:nv0+3) - bvec(1:3))/b0
         call message ('check_save: B relative error', diff_vec, 1)
+       write(*,*) 'diff_vec = ', diff_vec
 
 !       Check if grad(Te) and grad(ne) are consistent with Te and ne.
         call message('check_save: ne relative error', v(nv0+4)*ns(0)/n0s(0) - 1., 1)
