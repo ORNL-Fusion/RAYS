@@ -1,7 +1,7 @@
  subroutine initialize
 !   reads input file and initializes variables.  Called from main program RAYS.
 
-    use constants_m, only : input_unit, ray_list_unit, output_unit, initialize_constants_m, eps0
+    use constants_m, only : ray_list_unit, output_unit, initialize_constants_m, eps0
     use diagnostics_m, only : initialize_diagnostics, date_v, message_unit, message,&
         & text_message, run_description, run_label
     use equilibrium_m, only : equilib_model, initialize_equilibrium, equilibrium, b0
@@ -10,7 +10,7 @@
     use rf_m, only : omgrf, initialize_rf, frf, k0
     use damping_m, only : initialize_damping
     use species_m, only : initialize_species_m, nspec, spec_name, qs, ms, eta, &
-      & n0s, nseps, t0s, tseps, alfas, spec_model
+      & n0s, t0s, spec_model
     use suscep_m, only : initialize_suscep
     implicit none
 

@@ -3,7 +3,6 @@
 !   v(1:3) = (x,y,z); v(4:6) = (kx, ky, kz),
 !   dddx = dD/dx, dddk = dD/dk, dddw = dD/d(omega).
 
-
     use constants_m, only : rkind
     use equilibrium_m, only : bunit, gradbunit, bmag, gradbmag, ns, gradns, &
       & alpha, gamma
@@ -45,13 +44,13 @@
         do is = 0, nspec
 
            if (verbosity > 4) then
-				write(*,*) 'ivec = ', ivec, 'is = ', is
-				write(*,*) 'alpha(is) = ', alpha(is)
-				write(*,*) 'gradns(ivec,is) = ', gradns(ivec,is)
-				write(*,*) 'ns(is) = ', ns(is)
-				write(*,*) 'gamma(is) = ', gamma(is)
-				write(*,*) 'gradbmag(ivec) = ', gradbmag(ivec)
-			end if
+                write(*,*) 'ivec = ', ivec, 'is = ', is
+                write(*,*) 'alpha(is) = ', alpha(is)
+                write(*,*) 'gradns(ivec,is) = ', gradns(ivec,is)
+                write(*,*) 'ns(is) = ', ns(is)
+                write(*,*) 'gamma(is) = ', gamma(is)
+                write(*,*) 'gradbmag(ivec) = ', gradbmag(ivec)
+            end if
 
            dadx(ivec,is) = alpha(is) * gradns(ivec,is)/ns(is)
            dgdx(ivec,is) = gamma(is) * gradbmag(ivec)/bmag

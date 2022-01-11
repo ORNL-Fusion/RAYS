@@ -10,7 +10,6 @@
                      & dispersion_resid_limit
     use damping_m, only : damping_model, damping, multi_spec_damping, total_damping_limit
     use species_m, only : nspec, n0s
-    use suscep_m, only : eps
 
     implicit none
 
@@ -22,8 +21,7 @@
     real(KIND=rkind) :: dddx(3), dddk(3), dddw, vg(3), vg0
     real(KIND=rkind) :: ksi(0:nspec), ki
     real(KIND=rkind) :: total_absorption, total_species_absorption
-    complex(KIND=rkind) :: eps_h(3,3), eps_a(3,3)
-    real(KIND=rkind) :: ah, diff_vec(3), r 
+    real(KIND=rkind) :: diff_vec(3), r 
   
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!  
  
