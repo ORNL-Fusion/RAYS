@@ -111,7 +111,6 @@ contains
     
   end subroutine initialize_diagnostics
 
-!!******************************
 
 ! Print blank line  i.e. skip a line 
     subroutine blank_message()
