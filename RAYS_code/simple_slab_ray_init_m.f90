@@ -122,6 +122,7 @@ contains
     nray = count
     call message('simple_slab_ray_init: nray', nray)
     if (nray == 0) stop 'No successful ray initializations' 
+
     end  subroutine simple_slab_ray_init 
 
 end module simple_slab_ray_init_m
