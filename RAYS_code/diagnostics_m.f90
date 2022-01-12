@@ -82,13 +82,11 @@
     namelist /diagnostics_list/ message_unit, verbosity, run_description, &
            & run_label, integrate_eq_gradients
 
-!!******************************!******************************!******************************!******************************!******************************!**************************************
-    
+!******************************    
     
 contains
 
-!!******************************!******************************!******************************!******************************!******************************!**************************************
-
+!******************************
   subroutine initialize_diagnostics
 
     use constants_m, only : input_unit
@@ -113,10 +111,9 @@ contains
     
   end subroutine initialize_diagnostics
 
-!!******************************!******************************!******************************!******************************!******************************!******************************!************************************
+!!******************************
 
-
-! Print blank line  i.e. skip a line !******************************!******************************!**********************************
+! Print blank line  i.e. skip a line 
     subroutine blank_message()
 
     implicit none
@@ -128,7 +125,7 @@ contains
 
 
 
-! Print text line if threshold greater than verbosity *********
+! Print text line if threshold greater than verbosity
     subroutine text_message(text, threshold)
 
         implicit none
@@ -147,7 +144,7 @@ contains
     end subroutine text_message
  
 
-! Print text line with 2 character inputs e.g. a string and a character variable ********
+! Print text line with 2 character inputs e.g. a string and a character variable 
     subroutine two_texts_message(text1,text2, threshold)
 
         implicit none
@@ -166,7 +163,7 @@ contains
     end subroutine two_texts_message
  
 
-! Print message with integer value  !******************************!***************************************
+! Print message with integer value 
     subroutine i_message (mess, value, threshold)
 
     implicit none
@@ -192,7 +189,7 @@ contains
     end subroutine i_message
  
 
-! Print message with logical value  !******************************!******************************!*********************************
+! Print message with logical value
     subroutine logical_message (mess, value, threshold)
 
     implicit none
@@ -219,7 +216,7 @@ contains
     end subroutine logical_message 
     
 
-! Print message with default real value  !******************************!******************************!************************************
+! Print message with default real value
     subroutine r_message (mess, value, threshold)
 
     implicit none
@@ -246,7 +243,7 @@ contains
     end subroutine r_message 
 
 
-! Print message with default complex value  !******************************!******************************!******************************!*******************************
+! Print message with default complex value
     subroutine c_message (mess, value, threshold)
 
     implicit none
@@ -273,7 +270,7 @@ contains
 
 
 
-!   print messsage with integer n-vector value  !******************************!******************************!*********************************
+!   print messsage with integer n-vector value
     subroutine ivn_message (mess, value, length_n, threshold)
 
     implicit none
@@ -313,7 +310,7 @@ contains
 
 
 
-!   print messsage with default real n-vector value  !******************************!******************************!******************************!*******************************
+!   print messsage with default real n-vector value  
     subroutine rvn_message (mess, value, length_n, threshold)
 
     implicit none
@@ -364,7 +361,7 @@ contains
     end subroutine rvn_message  
 
 
-!   print messsage with default complex n-vector value  !******************************!******************************!************************************
+!   print messsage with default complex n-vector value  
     subroutine cvn_message (mess, value, length_n, threshold)
 
     implicit none
@@ -429,7 +426,7 @@ contains
 
 
 
-!   print messsage with complex double precision n-vector value  !*******************************
+!   print messsage with complex double precision n-vector value
     subroutine cvndbl_message (mess, value, length_n, threshold)
 
     implicit none
@@ -549,7 +546,7 @@ contains
     
     
 
-! Print message with real double precision value  !******************************!******************************!************************************
+! Print message with real double precision value  
 
     subroutine rdbl_message (mess, value, threshold)
 
@@ -578,7 +575,7 @@ contains
     end subroutine rdbl_message 
 
 
-!   print messsage with real double precision n-vector value  !******************************!********************************
+!   print messsage with real double precision n-vector value
 
     subroutine rvndbl_message (mess, value, length_n, threshold)
 
@@ -622,7 +619,7 @@ contains
 
 
 
-!   print messsage with real double precision mxn matrix value  !******************************!********************************
+!   print messsage with real double precision mxn matrix value
 
     subroutine rmatrixdbl_message (mess, value, m_dim, n_dim, threshold)
 
@@ -679,7 +676,7 @@ contains
 
 
 
-!   print messsage with complex mxn matrix value  !******************************!********************************
+!   print messsage with complex mxn matrix value
 
     subroutine cmatrix_message (mess, value, m_dim, n_dim, threshold)
 
@@ -732,7 +729,7 @@ contains
     return
     end subroutine cmatrix_message 
 
-!   print messsage with complex double precision mxn matrix value  !******************************!********************************
+!   print messsage with complex double precision mxn matrix value
 
     subroutine cmatrixdbl_message (mess, value, m_dim, n_dim, threshold)
 
