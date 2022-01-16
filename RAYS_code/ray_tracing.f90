@@ -124,13 +124,13 @@
 
             if (ray_stop_flag .ne. '') then
                 ray_stop(iray) = ray_stop_flag
-                write(message_unit, *) 'ray ', iray, ' stoped. ', ray_stop_flag
+                write(message_unit, *) 'ray ', iray, ' stopped. ', ray_stop_flag
                 
-                write (*, '( "ray ",i3, " stopped  s=", f12.4, "   nstep=", i4, /, &
+                write (*, '( "ray ",i3, " stopped  s=", g12.4, "   nstep=", i4, /, &
                 &  "  (x,y,z)=", 3(f10.4),/,  "  (kx,ky,kz)=", 3(f10.4) )') iray, s, nstep, &
                 & v(1:3), v(4:6)
                 
-                write (message_unit, '( "ray ",i3, " stopped  s=", f12.4, "   nstep=", i4, /, &
+                write (message_unit, '( "ray ",i3, " stopped  s=", g12.4, "   nstep=", i4, /, &
                 &  "  (x,y,z)=", 3(f10.4),/,  "  (kx,ky,kz)=", 3(f10.4) )') iray, s, nstep, &
                 & v(1:3), v(4:6)
                 exit trajectory
