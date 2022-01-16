@@ -29,8 +29,8 @@
     write (message_unit,fmt="(i2,'-',i2,'-',i4,'   ',i2,':',i2,':',i2,'.',i3)") &
      & date_v(2), date_v(3), date_v(1), date_v(5), date_v(6), date_v(7), date_v(8)
     call message()
-    call text_message(trim(run_description),0)
-    call text_message(trim(run_label), 0)
+    call text_message(trim(run_description))
+    call text_message(trim(run_label))
     call message()
    
     write(*,*) trim(run_description)

@@ -134,11 +134,10 @@ contains
         if (present(threshold)) then
            if (verbosity < threshold) then
              return
-           else             
-             write (message_unit, '(a)') text
            end if
         end if
-
+ 
+        write (message_unit, '(a)') text
         return
     end subroutine text_message
  
@@ -153,11 +152,10 @@ contains
         if (present(threshold)) then
            if (verbosity < threshold) then
              return
-           else             
-             write (message_unit, '(a," ", a)') text1, text2
            end if
         end if
 
+        write (message_unit, '(a," ", a)') text1, text2
         return
     end subroutine two_texts_message
  
@@ -170,19 +168,19 @@ contains
     integer, intent (in) :: value
     integer, optional, intent (in) :: threshold
 
-         if (present(threshold)) then
+        if (present(threshold)) then
            if (verbosity < threshold) then
              return
-           else             
-                if (abs(value) < 1.e4) then
-                    write (message_unit, '(a, " = ", I6)') &
-                &    mess, value
-                else
-                    write (message_unit, '(a, " = ", 1pe11.4)') &
-                &    mess, real(value)
-                end if
            end if
         end if
+
+		if (abs(value) < 1.e4) then
+			write (message_unit, '(a, " = ", I6)') &
+			&    mess, value
+		else
+			write (message_unit, '(a, " = ", 1pe11.4)') &
+			&    mess, real(value)
+		end if
  
         return
     end subroutine i_message
@@ -196,21 +194,19 @@ contains
     logical, intent (in) :: value
     integer, optional, intent (in) :: threshold
 
-         if (present(threshold)) then
+        if (present(threshold)) then
            if (verbosity < threshold) then
              return
-           else             
-                if ( value ) then
-                    write (message_unit, '(a, " = .true. ")') &
-                    & mess
-                else
-                    write (message_unit, '(a, " = .false.")') &
-                    & mess
-            end if
            end if
         end if
 
-
+		if ( value ) then
+			write (message_unit, '(a, " = .true. ")') &
+			& mess
+		else
+			write (message_unit, '(a, " = .false.")') &
+			& mess
+		end if
     return
     end subroutine logical_message 
     
@@ -223,21 +219,19 @@ contains
     real, intent (in) :: value
     integer, optional, intent (in) :: threshold
 
-      if (present(threshold)) then
-       if (verbosity < threshold) then
-         return
-       else             
-            if ( (abs(value) <  1.e4) .and. (abs(value) > 1.e-3) ) then
-                write (message_unit, '(a, " = ", f11.4)') &
-                & mess, value
-            else
-                write (message_unit, '(a, " = ", 1pe11.4)') &
-                & mess, value 
-            end if
-       end if
-     end if
+        if (present(threshold)) then
+           if (verbosity < threshold) then
+             return
+           end if
+        end if
 
-
+        if ( (abs(value) <  1.e4) .and. (abs(value) > 1.e-3) ) then
+            write (message_unit, '(a, " = ", f11.4)') &
+            & mess, value
+        else
+            write (message_unit, '(a, " = ", 1pe11.4)') &
+            & mess, value 
+        end if
     return
     end subroutine r_message 
 
@@ -250,20 +244,18 @@ contains
     integer, optional, intent (in) :: threshold 
     complex, intent (in) :: value
 
-     if (present(threshold)) then
-       if (verbosity < threshold) then
-         return
-       else             
-            if ( (abs(value) <  1.e4) .and. (abs(value) > 1.e-3) ) then
-                write (message_unit, '(a, " = (", f11.4,", ",f11.4,")")')&
-                & mess, value
-            else
-                write (message_unit, '(a, " = (", 1pe11.4,", ",1pe11.4,")")')&
-                & mess, value   
-            end if
-       end if
-     end if
- 
+        if (present(threshold)) then
+           if (verbosity < threshold) then
+             return
+           end if
+        end if
+        if ( (abs(value) <  1.e4) .and. (abs(value) > 1.e-3) ) then
+            write (message_unit, '(a, " = (", f11.4,", ",f11.4,")")')&
+            & mess, value
+        else
+            write (message_unit, '(a, " = (", 1pe11.4,", ",1pe11.4,")")')&
+            & mess, value   
+        end if
     return
     end subroutine c_message 
 
@@ -282,27 +274,25 @@ contains
     real :: v_max
     integer :: i
 
-     if (present(threshold)) then
-       if (verbosity < threshold) then
-         return
-       else             
-            v_max = 0
-    
-            do i = 1, length_n
-                if (abs(value(i)) > v_max ) v_max = abs(value(i))
-            end do
+        if (present(threshold)) then
+           if (verbosity < threshold) then
+             return
+           end if
+        end if
+        v_max = 0
 
-            if ((v_max < 1.e5)) then
-                write (message_unit, '(a, " = ")') mess
-                write (message_unit, '(10i8)') (value(i), i=1, length_n)
+        do i = 1, length_n
+            if (abs(value(i)) > v_max ) v_max = abs(value(i))
+        end do
 
-            else
-                write (message_unit, '(a, " = ")') mess
-                write (message_unit, '(10(1pe12.4))') (value(i), i=1, length_n)
-            end if
-       end if
-     end if
-    
+        if ((v_max < 1.e5)) then
+            write (message_unit, '(a, " = ")') mess
+            write (message_unit, '(10i8)') (value(i), i=1, length_n)
+
+        else
+            write (message_unit, '(a, " = ")') mess
+            write (message_unit, '(10(1pe12.4))') (value(i), i=1, length_n)
+        end if
     return
     end subroutine ivn_message  
 
@@ -321,43 +311,40 @@ contains
     real :: v_min, v_max
     integer :: i
 
-     if (present(threshold)) then
-       if (verbosity < threshold) then
-         return
-       else             
-            v_min = huge(v_min)
-            v_max = tiny(v_max)
-            do i = 1, length_n
-                if ((abs(value(i)) > 0.).and.(abs(value(i)) < v_min)) v_min = abs(value(i))
-                if (abs(value(i)) > v_max ) v_max = abs(value(i))
-            end do
+        if (present(threshold)) then
+           if (verbosity < threshold) then
+             return
+           end if
+        end if
 
-            if (length_n <= 10 ) then
-    
-                if ((v_max < 1.e4) .and. (v_min > 1.e-3)) then
-                    write (message_unit, '(a, " = ", 10f12.4,")")') &
-                    & mess, (value(i), i=1, length_n)
-                else
-                    write (message_unit, '(a, " = ", 10(1pe12.4),")")') &
-                    & mess, (value(i), i=1, length_n) 
-                end if
+        v_min = huge(v_min)
+        v_max = tiny(v_max)
+        do i = 1, length_n
+            if ((abs(value(i)) > 0.).and.(abs(value(i)) < v_min)) v_min = abs(value(i))
+            if (abs(value(i)) > v_max ) v_max = abs(value(i))
+        end do
+
+        if (length_n <= 10 ) then
+
+            if ((v_max < 1.e4) .and. (v_min > 1.e-3)) then
+                write (message_unit, '(a, " = ", 10f12.4,")")') &
+                & mess, (value(i), i=1, length_n)
             else
-    
-                if ((v_max < 1.e4) .and. (v_min > 1.e-3)) then
-                    write (message_unit, '(10f12.4)') (value(i), i=1, length_n)
-                else
-                    write (message_unit, '(a, " = ")') mess
-                    write (message_unit, '(10(1pe12.4))') (value(i), i=1, length_n) 
-                end if
-        
+                write (message_unit, '(a, " = ", 10(1pe12.4),")")') &
+                & mess, (value(i), i=1, length_n) 
             end if
-       end if
-    end if
+        else
+
+            if ((v_max < 1.e4) .and. (v_min > 1.e-3)) then
+                write (message_unit, '(10f12.4)') (value(i), i=1, length_n)
+            else
+                write (message_unit, '(a, " = ")') mess
+                write (message_unit, '(10(1pe12.4))') (value(i), i=1, length_n) 
+            end if
     
-
-
-    return
-    end subroutine rvn_message  
+        end if
+     return
+     end subroutine rvn_message  
 
 
 !   print messsage with default complex n-vector value  
@@ -372,54 +359,52 @@ contains
     real :: Re_min, Re_max, Im_min, Im_max, absRe, absIm, v_min, v_max
     integer :: i
 
-    if (present(threshold)) then
-       if (verbosity < threshold) then
-         return
-       else             
+        if (present(threshold)) then
+           if (verbosity < threshold) then
+             return
+           end if
+        end if
 !****************************** 
-            Re_min = huge(v_min)
-            Im_min = huge(v_min)
-            Re_max = tiny(v_min)
-            Im_max = tiny(v_min)
-    
-            do i = 1, length_n
-                absRe = abs(real(value(i)))
-                absIm = abs(aimag(value(i)))
+        Re_min = huge(v_min)
+        Im_min = huge(v_min)
+        Re_max = tiny(v_min)
+        Im_max = tiny(v_min)
 
-                if ((absRe > 0.).and.(absRe < Re_min)) Re_min = absRe
-                if ((absIm > 0.).and.(absIm < Im_min)) Im_min = absIm
-                if (absRe > Re_max ) Re_max = absRe
-                if (absIm > Im_max ) Im_max = absIm
-            end do
-    
-            v_min = min(Re_min, Im_min)
-            v_max = max(Re_max, Im_max)
-    
-            if (length_n <= 5 ) then
-    
-                if ((v_max < 1.e4) .and. (v_min > 1.e-3)) then
-                    write (message_unit, '(a, " = ", 5(2f12.5,5x),")")') &
-                    & mess, (value(i), i=1, length_n)
-                else
-                    write (message_unit, '(a, " = ", 5(1pe12.4,1x,1pe12.4,4x),")")') &
-                    & mess, (value(i), i=1, length_n) 
-                end if
-    
+        do i = 1, length_n
+            absRe = abs(real(value(i)))
+            absIm = abs(aimag(value(i)))
+
+            if ((absRe > 0.).and.(absRe < Re_min)) Re_min = absRe
+            if ((absIm > 0.).and.(absIm < Im_min)) Im_min = absIm
+            if (absRe > Re_max ) Re_max = absRe
+            if (absIm > Im_max ) Im_max = absIm
+        end do
+
+        v_min = min(Re_min, Im_min)
+        v_max = max(Re_max, Im_max)
+
+        if (length_n <= 5 ) then
+
+            if ((v_max < 1.e4) .and. (v_min > 1.e-3)) then
+                write (message_unit, '(a, " = ", 5(2f12.5,5x),")")') &
+                & mess, (value(i), i=1, length_n)
             else
-    
-                if ((v_max < 1.e4) .and. (v_min > 1.e-3)) then
-                    write (message_unit, '(a, " = ")') mess
-                    write (message_unit, '(5(2f10.4,5x))') (value(i), i=1, length_n)
-                else
-                    write (message_unit, '(a, " = ")') mess
-                    write (message_unit, '(5(2(1pe11.4),5x))') (value(i), i=1, length_n) 
-                end if
-    
+                write (message_unit, '(a, " = ", 5(1pe12.4,1x,1pe12.4,4x),")")') &
+                & mess, (value(i), i=1, length_n) 
             end if
+
+        else
+
+            if ((v_max < 1.e4) .and. (v_min > 1.e-3)) then
+                write (message_unit, '(a, " = ")') mess
+                write (message_unit, '(5(2f10.4,5x))') (value(i), i=1, length_n)
+            else
+                write (message_unit, '(a, " = ")') mess
+                write (message_unit, '(5(2(1pe11.4),5x))') (value(i), i=1, length_n) 
+            end if
+
+        end if
 !******************************
-       end if
-     end if
-    
     return
     end subroutine cvn_message  
 
@@ -438,54 +423,52 @@ contains
         & v_min, v_max
     integer :: i
 
-      if (present(threshold)) then
-       if (verbosity < threshold) then
-         return
-       else             
+        if (present(threshold)) then
+           if (verbosity < threshold) then
+             return
+           end if
+        end if
 !******************************    
-            Re_min = huge(v_min)
-            Im_min = huge(v_min)
-            Re_max = tiny(v_min)
-            Im_max = tiny(v_min)
-    
-            do i = 1, length_n
-                absRe = abs(real(value(i)))
-                absIm = abs(aimag(value(i)))
+        Re_min = huge(v_min)
+        Im_min = huge(v_min)
+        Re_max = tiny(v_min)
+        Im_max = tiny(v_min)
 
-                if ((absRe > 0.).and.(absRe < Re_min)) Re_min = absRe
-                if ((absIm > 0.).and.(absIm < Im_min)) Im_min = absIm
-                if (absRe > Re_max ) Re_max = absRe
-                if (absIm > Im_max ) Im_max = absIm
-            end do
-    
-            v_min = min(Re_min, Im_min)
-            v_max = max(Re_max, Im_max)
-    
-            if (length_n <= 5 ) then
-    
-                if ((v_max < 1.e4) .and. (v_min > 1.e-3)) then
-                    write (message_unit, '(a, " = ", 5(2f12.5,5x),")")') &
-                    & mess, (value(i), i=1, length_n)
-                else
-                    write (message_unit, '(a, " = ", 5(1pe12.4,1x,1pe12.4,4x),")")') &
-                    & mess, (value(i), i=1, length_n) 
-                end if
-    
+        do i = 1, length_n
+            absRe = abs(real(value(i)))
+            absIm = abs(aimag(value(i)))
+
+            if ((absRe > 0.).and.(absRe < Re_min)) Re_min = absRe
+            if ((absIm > 0.).and.(absIm < Im_min)) Im_min = absIm
+            if (absRe > Re_max ) Re_max = absRe
+            if (absIm > Im_max ) Im_max = absIm
+        end do
+
+        v_min = min(Re_min, Im_min)
+        v_max = max(Re_max, Im_max)
+
+        if (length_n <= 5 ) then
+
+            if ((v_max < 1.e4) .and. (v_min > 1.e-3)) then
+                write (message_unit, '(a, " = ", 5(2f12.5,5x),")")') &
+                & mess, (value(i), i=1, length_n)
             else
-    
-                if ((v_max < 1.e4) .and. (v_min > 1.e-3)) then
-                    write (message_unit, '(a, " = ")') mess
-                    write (message_unit, '(5(2f10.4,5x))') (value(i), i=1, length_n)
-                else
-                    write (message_unit, '(a, " = ")') mess
-                    write (message_unit, '(5(2(1pe11.4),5x))') (value(i), i=1, length_n) 
-                end if
-    
+                write (message_unit, '(a, " = ", 5(1pe12.4,1x,1pe12.4,4x),")")') &
+                & mess, (value(i), i=1, length_n) 
             end if
+
+        else
+
+            if ((v_max < 1.e4) .and. (v_min > 1.e-3)) then
+                write (message_unit, '(a, " = ")') mess
+                write (message_unit, '(5(2f10.4,5x))') (value(i), i=1, length_n)
+            else
+                write (message_unit, '(a, " = ")') mess
+                write (message_unit, '(5(2(1pe11.4),5x))') (value(i), i=1, length_n) 
+            end if
+
+        end if
 !******************************
-       end if
-    end if
-    
     return
     end subroutine cvndbl_message  
 
@@ -502,44 +485,41 @@ contains
     real :: v_min, v_max
     integer :: i, j
 
-      if (present(threshold)) then
-       if (verbosity < threshold) then
-         return
-       else             
+        if (present(threshold)) then
+           if (verbosity < threshold) then
+             return
+           end if
+        end if
 !******************************
-            v_min = huge(v_min)
-            v_max = tiny(v_max)
-    
-            do i = 1, m_dim
-                do j = 1, n_dim
-    
-                    if ((abs(value(i,j)) > 0.).and.(abs(value(i,j)) < v_min)) &
-                        & v_min = abs(value(i,j))
-                    if (abs(value(i,j)) > v_max ) v_max = abs(value(i,j))
-                end do
+        v_min = huge(v_min)
+        v_max = tiny(v_max)
+
+        do i = 1, m_dim
+            do j = 1, n_dim
+
+                if ((abs(value(i,j)) > 0.).and.(abs(value(i,j)) < v_min)) &
+                    & v_min = abs(value(i,j))
+                if (abs(value(i,j)) > v_max ) v_max = abs(value(i,j))
             end do
+        end do
 
 
-            if ((v_max < 1.e4) .and. (v_min > 1.e-3)) then
-    
-                write (message_unit, '(a, " = ")' ) mess
-                do i = 1, m_dim
-                    write (message_unit, '(10f12.5)' )  (value(i, j), j=1, n_dim)
-                end do
-            
-            else
-    
-                write (message_unit, '(a, " = ")' ) mess
-                do i = 1, m_dim
-                    write (message_unit, '(10(1pe12.4))' )  (value(i, j), j=1, n_dim)
-                end do
-            
-            end if
+        if ((v_max < 1.e4) .and. (v_min > 1.e-3)) then
+
+            write (message_unit, '(a, " = ")' ) mess
+            do i = 1, m_dim
+                write (message_unit, '(10f12.5)' )  (value(i, j), j=1, n_dim)
+            end do
+        
+        else
+
+            write (message_unit, '(a, " = ")' ) mess
+            do i = 1, m_dim
+                write (message_unit, '(10(1pe12.4))' )  (value(i, j), j=1, n_dim)
+            end do
+        
+        end if
 !******************************
-       end if
-    end if
-    
-
     return
     end subroutine rmatrix_message 
     
@@ -554,22 +534,20 @@ contains
     real(kind=kind(1.D0)), intent (in) :: value
     integer, optional, intent (in) :: threshold
 
-      if (present(threshold)) then
-       if (verbosity < threshold) then
-         return
-       else             
+        if (present(threshold)) then
+           if (verbosity < threshold) then
+             return
+           end if
+        end if
 !******************************
-            if ( (abs(value) <  1.e4) .and. (abs(value) > 1.e-3) ) then
-                write (message_unit, '(a, " = ", f11.4)') &
-                & mess, value
-            else
-                write (message_unit, '(a, " = ", 1pe11.4)') &
-                & mess, value 
-            end if
+        if ( (abs(value) <  1.e4) .and. (abs(value) > 1.e-3) ) then
+            write (message_unit, '(a, " = ", f11.4)') &
+            & mess, value
+        else
+            write (message_unit, '(a, " = ", 1pe11.4)') &
+            & mess, value 
+        end if
 !******************************
-       end if
-    end if
-
     return
     end subroutine rdbl_message 
 
@@ -588,31 +566,28 @@ contains
     real(kind=kind(1.D0)) :: v_min, v_max
     integer :: i
 
-      if (present(threshold)) then
-       if (verbosity < threshold) then
-         return
-       else             
+        if (present(threshold)) then
+           if (verbosity < threshold) then
+             return
+           end if
+        end if
 !******************************
-            v_min = huge(v_min)
-            v_max = tiny(v_max)
-    
-            do i = 1, length_n
-                if ((abs(value(i)) > 0.).and.(abs(value(i)) < v_min)) v_min = abs(value(i))
-                if (abs(value(i)) > v_max ) v_max = abs(value(i))
-            end do
+        v_min = huge(v_min)
+        v_max = tiny(v_max)
 
-            if ((v_max < 1.e4) .and. (v_min > 1.e-3)) then
-                write (message_unit, '(a, " = ", 10f12.4,")")') &
-                & mess, (value(i), i=1, length_n)
-            else
-                write (message_unit, '(a, " = ", 10(1pe12.4),")")') &
-                & mess, (value(i), i=1, length_n) 
-            end if
+        do i = 1, length_n
+            if ((abs(value(i)) > 0.).and.(abs(value(i)) < v_min)) v_min = abs(value(i))
+            if (abs(value(i)) > v_max ) v_max = abs(value(i))
+        end do
+
+        if ((v_max < 1.e4) .and. (v_min > 1.e-3)) then
+            write (message_unit, '(a, " = ", 10f12.4,")")') &
+            & mess, (value(i), i=1, length_n)
+        else
+            write (message_unit, '(a, " = ", 10(1pe12.4),")")') &
+            & mess, (value(i), i=1, length_n) 
+        end if
 !******************************
-       end if
-    end if
-    
-
     return
     end subroutine rvndbl_message  
 
@@ -631,44 +606,41 @@ contains
     real(kind=kind(1.D0)) :: v_min, v_max
     integer :: i, j
 
-      if (present(threshold)) then
-       if (verbosity < threshold) then
-         return
-       else             
+        if (present(threshold)) then
+           if (verbosity < threshold) then
+             return
+           end if
+        end if
 !******************************
-            v_min = huge(v_min)
-            v_max = tiny(v_max)
-    
-            do i = 1, m_dim
-                do j = 1, n_dim
-    
-                    if ((abs(value(i,j)) > 0.).and.(abs(value(i,j)) < v_min)) &
-                        & v_min = abs(value(i,j))
-                    if (abs(value(i,j)) > v_max ) v_max = abs(value(i,j))
-                end do
+        v_min = huge(v_min)
+        v_max = tiny(v_max)
+
+        do i = 1, m_dim
+            do j = 1, n_dim
+
+                if ((abs(value(i,j)) > 0.).and.(abs(value(i,j)) < v_min)) &
+                    & v_min = abs(value(i,j))
+                if (abs(value(i,j)) > v_max ) v_max = abs(value(i,j))
             end do
+        end do
 
 
-            if ((v_max < 1.e4) .and. (v_min > 1.e-3)) then
-    
-                write (message_unit, '(a, " = ")' ) mess
-                do i = 1, m_dim
-                    write (message_unit, '(10f12.5)' )  (value(i, j), j=1, n_dim)
-                end do
-            
-            else
-    
-                write (message_unit, '(a, " = ")' ) mess
-                do i = 1, m_dim
-                    write (message_unit, '(10(1pe12.4))' )  (value(i, j), j=1, n_dim)
-                end do
-            
-            end if
+        if ((v_max < 1.e4) .and. (v_min > 1.e-3)) then
+
+            write (message_unit, '(a, " = ")' ) mess
+            do i = 1, m_dim
+                write (message_unit, '(10f12.5)' )  (value(i, j), j=1, n_dim)
+            end do
+        
+        else
+
+            write (message_unit, '(a, " = ")' ) mess
+            do i = 1, m_dim
+                write (message_unit, '(10(1pe12.4))' )  (value(i, j), j=1, n_dim)
+            end do
+        
+        end if
 !******************************
-       end if
-    end if
-    
-
     return
     end subroutine rmatrixdbl_message 
 
@@ -689,44 +661,43 @@ contains
     real :: v_min, v_max
     integer :: i, j
 
-      if (present(threshold)) then
-       if (verbosity < threshold) then
-         return
-       else             
+        if (present(threshold)) then
+           if (verbosity < threshold) then
+             return
+           end if
+        end if
 !******************************
-            v_min = huge(v_min)
-            v_max = tiny(v_max)
-    
-            do i = 1, m_dim
-                do j = 1, n_dim 
-                    if ((abs(value(i,j)) > 0.).and.(abs(value(i,j)) < v_min)) &
-                        & v_min = abs(value(i,j))
-                    if (abs(value(i,j)) > v_max ) v_max = abs(value(i,j))
-                end do
+        v_min = huge(v_min)
+        v_max = tiny(v_max)
+
+        do i = 1, m_dim
+            do j = 1, n_dim 
+                if ((abs(value(i,j)) > 0.).and.(abs(value(i,j)) < v_min)) &
+                    & v_min = abs(value(i,j))
+                if (abs(value(i,j)) > v_max ) v_max = abs(value(i,j))
             end do
+        end do
 
 
-            if ((v_max < 1.e4) .and. (v_min > 1.e-3)) then
-    
-                write (message_unit, '(a, " = ")' ) mess
-                do i = 1, m_dim
-                    write (message_unit, '(i3,8(3x,2f10.4))' )  i, (value(i, j), j=1, n_dim)
-                end do
-            
-            else
-    
-                write (message_unit, '(a, " = ")' ) mess
-                do i = 1, m_dim
-                    write (message_unit, '(i3,8(2x,2(1pe12.4)))' )  i, (value(i, j), j=1, n_dim)
-                end do
-            
-            end if
+        if ((v_max < 1.e4) .and. (v_min > 1.e-3)) then
+
+            write (message_unit, '(a, " = ")' ) mess
+            do i = 1, m_dim
+                write (message_unit, '(i3,8(3x,2f10.4))' )  i, (value(i, j), j=1, n_dim)
+            end do
+        
+        else
+
+            write (message_unit, '(a, " = ")' ) mess
+            do i = 1, m_dim
+                write (message_unit, '(i3,8(2x,2(1pe12.4)))' )  i, (value(i, j), j=1, n_dim)
+            end do
+        
+        end if
 !******************************
-       end if
-    end if
-    
     return
     end subroutine cmatrix_message 
+
 
 !   print messsage with complex double precision mxn matrix value
 
@@ -736,48 +707,46 @@ contains
     character (len=*), intent (in) :: mess 
     integer, intent (in) :: m_dim, n_dim
     complex(kind=kind(1.D0)), intent (in) :: value(m_dim, n_dim)
-   integer, optional, intent (in) :: threshold
+    integer, optional, intent (in) :: threshold
 
     real(kind=kind(1.D0)) :: v_min, v_max
     integer :: i, j
 
-      if (present(threshold)) then
-       if (verbosity < threshold) then
-         return
-       else             
+        if (present(threshold)) then
+           if (verbosity < threshold) then
+             return
+           end if
+        end if
 !******************************
-            v_min = huge(v_min)
-            v_max = tiny(v_max)
-    
-            do i = 1, m_dim
-                do j = 1, n_dim
-    
-                    if ((abs(value(i,j)) > 0.).and.(abs(value(i,j)) < v_min)) &
-                        & v_min = abs(value(i,j))
-                    if (abs(value(i,j)) > v_max ) v_max = abs(value(i,j))
-                end do
+        v_min = huge(v_min)
+        v_max = tiny(v_max)
+
+        do i = 1, m_dim
+            do j = 1, n_dim
+
+                if ((abs(value(i,j)) > 0.).and.(abs(value(i,j)) < v_min)) &
+                    & v_min = abs(value(i,j))
+                if (abs(value(i,j)) > v_max ) v_max = abs(value(i,j))
             end do
+        end do
 
 
-            if ((v_max < 1.e4) .and. (v_min > 1.e-3)) then
-    
-                write (message_unit, '(a, " = ")' ) mess
-                do i = 1, m_dim
-                    write (message_unit, '(i3,2x,8(3x,2f10.4))' )  i, (value(i, j), j=1, n_dim)
-                end do
-            
-            else
-    
-                write (message_unit, '(a, " = ")' ) mess
-                do i = 1, m_dim
-                    write (message_unit, '(i3,2x,8(3x,2(1pe11.4)))' )  i, (value(i, j), j=1, n_dim)
-                end do
-            
-            end if
+        if ((v_max < 1.e4) .and. (v_min > 1.e-3)) then
+
+            write (message_unit, '(a, " = ")' ) mess
+            do i = 1, m_dim
+                write (message_unit, '(i3,2x,8(3x,2f10.4))' )  i, (value(i, j), j=1, n_dim)
+            end do
+        
+        else
+
+            write (message_unit, '(a, " = ")' ) mess
+            do i = 1, m_dim
+                write (message_unit, '(i3,2x,8(3x,2(1pe11.4)))' )  i, (value(i, j), j=1, n_dim)
+            end do
+        
+        end if
 !******************************
-       end if
-    end if
-    
     return
     end subroutine cmatrixdbl_message 
     
