@@ -4,14 +4,13 @@
     use constants_m, only : ray_list_unit, output_unit, initialize_constants_m, eps0
     use diagnostics_m, only : initialize_diagnostics, date_v, message_unit, message,&
         & text_message, run_description, run_label
-    use equilibrium_m, only : equilib_model, initialize_equilibrium, equilibrium, b0
+    use equilibrium_m, only : equilib_model, initialize_equilibrium, b0
     use ode_m, only : initialize_ode_solver
     use ray_init_m, only : initialize_ray_init
     use rf_m, only : omgrf, initialize_rf, frf, k0
     use damping_m, only : initialize_damping
     use species_m, only : initialize_species_m, nspec, spec_name, qs, ms, eta, &
       & n0s, t0s, spec_model
-    use suscep_m, only : initialize_suscep
     implicit none
 
     integer :: is 
@@ -24,8 +23,8 @@
 
 !   Find date and time
     call date_and_time (values=date_v)
- 
-    call text_message('starting simple_RAYS')
+
+    call text_message('starting RAYS')
     write (message_unit,fmt="(i2,'-',i2,'-',i4,'   ',i2,':',i2,':',i2,'.',i3)") &
      & date_v(2), date_v(3), date_v(1), date_v(5), date_v(6), date_v(7), date_v(8)
     call message()
@@ -42,9 +41,6 @@
     call message()
 
     call initialize_species_m
-    call message()
-
-    call initialize_suscep
     call message()
     
     call initialize_rf
