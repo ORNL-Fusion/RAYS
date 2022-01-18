@@ -17,7 +17,7 @@
     integer :: is 
 !************* read input data and set up for messages and diagnostic output  **************
 
-    write(*,*) 'starting simple_RAYS'
+    write(*,*) 'starting RAYS'
 
 !   Read data to set up diagnostic output
     call initialize_diagnostics
