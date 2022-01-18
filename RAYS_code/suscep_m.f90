@@ -187,7 +187,7 @@ contains
 !   The routine suscep_cold... stores the susceptibility tensor for
 !   each species, "is", in chis_cold
 
-    use species_m, only : nspec, spec_model
+    use species_m, only : nspec
 
     implicit none
 

@@ -25,7 +25,7 @@
 !   Find date and time
     call date_and_time (values=date_v)
  
-    call text_message('starting simple_RAYS')
+    call text_message('starting RAYS')
     write (message_unit,fmt="(i2,'-',i2,'-',i4,'   ',i2,':',i2,':',i2,'.',i3)") &
      & date_v(2), date_v(3), date_v(1), date_v(5), date_v(6), date_v(7), date_v(8)
     call message()
