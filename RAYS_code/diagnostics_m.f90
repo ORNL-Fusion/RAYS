@@ -174,13 +174,13 @@ contains
            end if
         end if
 
-		if (abs(value) < 1.e4) then
-			write (message_unit, '(a, " = ", I6)') &
-			&    mess, value
-		else
-			write (message_unit, '(a, " = ", 1pe11.4)') &
-			&    mess, real(value)
-		end if
+        if (abs(value) < 1.e4) then
+            write (message_unit, '(a, " = ", I6)') &
+            &    mess, value
+        else
+            write (message_unit, '(a, " = ", 1pe11.4)') &
+            &    mess, real(value)
+        end if
  
         return
     end subroutine i_message
@@ -200,13 +200,13 @@ contains
            end if
         end if
 
-		if ( value ) then
-			write (message_unit, '(a, " = .true. ")') &
-			& mess
-		else
-			write (message_unit, '(a, " = .false.")') &
-			& mess
-		end if
+        if ( value ) then
+            write (message_unit, '(a, " = .true. ")') &
+            & mess
+        else
+            write (message_unit, '(a, " = .false.")') &
+            & mess
+        end if
     return
     end subroutine logical_message 
     

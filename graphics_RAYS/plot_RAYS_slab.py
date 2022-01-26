@@ -55,6 +55,12 @@ def  n_evenly_spaced_integers(n, Length):
     else:
         return [int((i)*float(Length-1)/(n-1)) for i in range(n)]        
 
+# Get data from graphics description input file
+graphics_variable_dict = input_file_to_variable_dict('graphics_description_slab.dat')
+if debug > 1: print('graphics_variable_dict = ', graphics_variable_dict)
+
+run_description = graphics_variable_dict['run_description'] 
+run_label = graphics_variable_dict['run_label'] 
 
 # get the command line
 ray_file_list = []
@@ -158,12 +164,6 @@ for file in ray_file_list:
 # Generate Z-X ray plot
 #----------------------------------------------------------------------------------------------
 
-# Get data from graphics description input file
-graphics_variable_dict = input_file_to_variable_dict('graphics_description_slab.dat')
-if debug > 1: print('graphics_variable_dict = ', graphics_variable_dict)
-
-run_description = graphics_variable_dict['run_description'] 
-run_label = graphics_variable_dict['run_label'] 
 
 xmin = float(graphics_variable_dict['xmin'])
 xmax = float(graphics_variable_dict['xmax'])

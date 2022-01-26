@@ -96,12 +96,13 @@
     use diagnostics_m, only : run_label
     use equilibrium_m, only : equilibrium, bunit, alpha, gamma
     use slab_eq_m, only : xmin, xmax
-    use suscep_m, only : dielectric_cold, eps_cold
+    use suscep_m, only : dielectric_cold
     use ray_init_m, only : nray, rindex_vec0
     
     implicit none
 
     integer, parameter :: n_xpoints = 1000 ! Number of x points in scan
+    complex(KIND=rkind) :: eps_cold(3,3)
     real(KIND=rkind) :: v_ce_0, v_ce_1, v_2ce_0, v_2ce_1, v_hybrid_0, v_hybrid_1
     real(KIND=rkind) :: v_P_cut_0, v_P_cut_1,  v_H_cut_0, v_H_cut_1
     real(KIND=rkind) :: a, b, c, v_det_0, v_det_1 ! parameters for calculating determinant
@@ -110,8 +111,8 @@
     complex :: vH
 
 
-	open(unit = res_and_cut_unit, file = 'res_and_cut.'//trim(run_label), &
-			& action='write', status='replace', form='formatted')
+    open(unit = res_and_cut_unit, file = 'res_and_cut.'//trim(run_label), &
+            & action='write', status='replace', form='formatted')
 
     dx = (xmax - xmin)/(n_xpoints-1)
 
@@ -141,7 +142,7 @@
             x = xmin + ix*dx
         
             call equilibrium( (/real(x, KIND=rkind), real(0., KIND=rkind), real(0., KIND=rkind)/) )
-            call dielectric_cold
+            call dielectric_cold(eps_cold)
             v_ce_1 = gamma(0)+1. ! remember gamma(0) is negative
             v_2ce_1 = gamma(0)+0.5
             v_hybrid_1 = real(eps_cold(1,1), KIND=rkind)
@@ -149,13 +150,13 @@
             v_H_cut_1 = real(( eps_cold(1,1)**2+eps_cold(1,2)**2 - 2.*eps_cold(1,1)*nz**2 &
                     & + nz**4 ), KIND=rkind)
  
-		   a = real( eps_cold(1,1), KIND=rkind )
-		   b = real( -(eps_cold(1,1)**2+eps_cold(1,2)**2+eps_cold(1,1)*eps_cold(3,3)) &
-			  & + (eps_cold(1,1)+eps_cold(3,3))*nz**2, KIND=rkind )
-		   c = real( ( eps_cold(1,1)**2+eps_cold(1,2)**2 - 2.*eps_cold(1,1)*nz**2 &
-			  & + nz**4 ) *	 eps_cold(3,3), KIND=rkind )
-		  
-		   v_det_1 = b**2-4.*a*c
+           a = real( eps_cold(1,1), KIND=rkind )
+           b = real( -(eps_cold(1,1)**2+eps_cold(1,2)**2+eps_cold(1,1)*eps_cold(3,3)) &
+              & + (eps_cold(1,1)+eps_cold(3,3))*nz**2, KIND=rkind )
+           c = real( ( eps_cold(1,1)**2+eps_cold(1,2)**2 - 2.*eps_cold(1,1)*nz**2 &
+              & + nz**4 ) *  eps_cold(3,3), KIND=rkind )
+          
+           v_det_1 = b**2-4.*a*c
            
 !             vH = eps_cold(1,1)**2+eps_cold(1,2)**2 - 2.*eps_cold(1,1)*nz**2 + nz**4
 !             write(*,*) 'x = ', x, ' eps_cold(1,1 ) = ', eps_cold(1,1), ' v_P_cut_1 = ',&
@@ -240,9 +241,8 @@
 
     use constants_m, only : rkind, skind, pi
     use diagnostics_m, only : run_label
-    use equilibrium_m, only : equilibrium, bmag, bunit, ns, omgc, omgp2, alpha, gamma
+    use equilibrium_m, only : equilibrium, bmag, ns, omgc, omgp2, alpha, gamma
     use slab_eq_m, only : xmin, xmax
-    use suscep_m, only : dielectric_cold, eps_cold
     use dispersion_solvers_m, only : solve_disp_nx_vs_ny_nz    
     implicit none
 
@@ -306,7 +306,6 @@
     use diagnostics_m, only : run_label
     use equilibrium_m, only : equilibrium, bmag, bunit, ns, omgc, omgp2, alpha, gamma
     use slab_eq_m, only : xmin, xmax
-    use suscep_m, only : dielectric_cold, eps_cold
     use ray_init_m, only : nray, rindex_vec0
     use rf_m, only : ray_dispersion_model, k0
     use dispersion_solvers_m, only : solve_disp_nx_vs_ny_nz    
@@ -358,27 +357,27 @@
             wave_mode = 'plus'
             call solve_disp_nx_vs_ny_nz(ray_dispersion_model, wave_mode, +1, ny, nz, nx)            
             nx_sngl = cmplx(nx, KIND=skind)
-            profile_vec(2) = k0*real(nx_sngl)
-            profile_vec(3) = k0*aimag(nx_sngl)
+            profile_vec(2) = real(k0, KIND=skind)*real(nx_sngl)
+            profile_vec(3) = real(k0, KIND=skind)*aimag(nx_sngl)
             
             wave_mode = 'minus'
             call solve_disp_nx_vs_ny_nz(ray_dispersion_model, wave_mode, +1, ny, nz, nx)            
             nx_sngl = cmplx(nx, KIND=skind)
-            profile_vec(4) = k0*real(nx_sngl)
-            profile_vec(5) = k0*aimag(nx_sngl)
+            profile_vec(4) = real(k0, KIND=skind)*real(nx_sngl)
+            profile_vec(5) = real(k0, KIND=skind)*aimag(nx_sngl)
             ! kx vs x for fast and slow cold plasma roots
 
             wave_mode = 'fast'
             call solve_disp_nx_vs_ny_nz(ray_dispersion_model, wave_mode, +1, ny, nz, nx)            
             nx_sngl = cmplx(nx, KIND=skind)
-            profile_vec(6) = k0*real(nx_sngl)
-            profile_vec(7) = k0*aimag(nx_sngl)
+            profile_vec(6) = real(k0, KIND=skind)*real(nx_sngl)
+            profile_vec(7) = real(k0, KIND=skind)*aimag(nx_sngl)
             
             wave_mode = 'slow'
             call solve_disp_nx_vs_ny_nz(ray_dispersion_model, wave_mode, +1, ny, nz, nx)            
             nx_sngl = cmplx(nx, KIND=skind)
-            profile_vec(8) = k0*real(nx_sngl)
-            profile_vec(9) = k0*aimag(nx_sngl)
+            profile_vec(8) = real(k0, KIND=skind)*real(nx_sngl)
+            profile_vec(9) = real(k0, KIND=skind)*aimag(nx_sngl)
 
             write(kx_profile_unit,*) profile_vec
 

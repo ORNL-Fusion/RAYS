@@ -13,7 +13,7 @@
 
     use constants_m, only : rkind
     use diagnostics_m, only : message
-    use suscep_m, only : dielectric_cold, eps_cold
+    use suscep_m, only : dielectric_cold
 
        implicit none 
 
@@ -26,8 +26,9 @@
 
 
 !      Calculate cold plasma dielectric tensor.
-       call dielectric_cold
-       eps = eps_cold
+       call dielectric_cold(eps)
+
+ !    write(*,*) 'eps = ', eps
 
 !      Coefficients for A(nz)*(nxsq)^2 + B(nz)*nxsq + C(nz) = 0.
        a = real(eps(1,1), KIND=rkind)

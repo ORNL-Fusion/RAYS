@@ -151,13 +151,13 @@ contains
 !      get dielectric tensor from module suscep_m
 
 
-       use suscep_m, only :  dielectric_cold, eps, eps_cold
+       use suscep_m, only :  dielectric_cold
 
        implicit none 
 
        real(KIND=rkind) :: k1, k3
 
-       complex(KIND=rkind) :: eps_h(3,3), epsn(3,3), ctmp
+       complex(KIND=rkind) :: eps(3,3), eps_h(3,3), epsn(3,3), ctmp
        complex(KIND=rkind) :: eps_norm(3,3)
        real(KIND=rkind) :: n(3)
 
@@ -167,8 +167,7 @@ contains
 !   have already been calculated.  If ray_model = "cold" must calculate eps.
 
     if (ray_dispersion_model == "cold") then
-        call dielectric_cold
-        eps = eps_cold
+        call dielectric_cold(eps)
     end if
 
 !      Hermitian part.
