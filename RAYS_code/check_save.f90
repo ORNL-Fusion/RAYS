@@ -170,7 +170,11 @@ contains
 !   have already been calculated.  If ray_model = "cold" must calculate eps.
 
     if (ray_dispersion_model == "cold") then
+<<<<<<< HEAD
         call dielectric_cold(eq, eps)
+=======
+        call dielectric_cold(eps)
+>>>>>>> 81d149686991a7a627cf4774ae35b1c31dbfb19e
     end if
 
 !      Hermitian part.
