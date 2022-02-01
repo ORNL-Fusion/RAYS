@@ -151,7 +151,7 @@ contains
 !      calculates the residual for given k1 and k3.
 !      get dielectric tensor from module suscep_m
 
-
+       use species_m, only : nspec, n0s
        use suscep_m, only :  dielectric_cold
 
        implicit none 
@@ -170,11 +170,7 @@ contains
 !   have already been calculated.  If ray_model = "cold" must calculate eps.
 
     if (ray_dispersion_model == "cold") then
-<<<<<<< HEAD
         call dielectric_cold(eq, eps)
-=======
-        call dielectric_cold(eps)
->>>>>>> 81d149686991a7a627cf4774ae35b1c31dbfb19e
     end if
 
 !      Hermitian part.

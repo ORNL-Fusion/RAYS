@@ -58,7 +58,7 @@ contains
 
 !********************************************************************
 
- subroutine slab_eq(rvec, bvec, gradbtensor, ns, gradns, ts, gradts)
+ subroutine slab_eq(rvec, bvec, gradbtensor, ns, gradns, ts, gradts, equib_err)
 !   A simple slab plasma equilibrium with B(x) = By(x)*ey + Bz(x)*ez, 
 !   where ey and ez are unit vectors along y and z.
 !   Note that bvec = B and gradbtensor(i,j) = d[B(j)]/d[x(i)].
@@ -71,7 +71,7 @@ contains
 !   stop.
 
     use species_m, only : nspec, n0s, t0s
-    use diagnostics_m, only : message_unit, message, equib_err
+    use diagnostics_m, only : message_unit, message
     
     implicit none
 
@@ -79,6 +79,7 @@ contains
     real(KIND=rkind), intent(out) :: bvec(3), gradbtensor(3,3)
     real(KIND=rkind), intent(out) :: ns(0:nspec), gradns(3,0:nspec)
     real(KIND=rkind), intent(out) :: ts(0:nspec), gradts(3,0:nspec)
+    character(len=20), intent(out) :: equib_err
 
     real(KIND=rkind) :: x, y, z
     integer :: is
@@ -241,6 +242,7 @@ contains
     real(KIND=rkind) :: bvec(3), gradbtensor(3,3)
     real(KIND=rkind) :: ns(0:nspec), gradns(3,0:nspec)
     real(KIND=rkind) :: ts(0:nspec), gradts(3,0:nspec)
+    character(len=20) :: equib_err
 
     integer, parameter :: nx_points = 51
     integer :: ip, i
@@ -256,7 +258,7 @@ contains
     do ip = 1, nx_points
         x = -rmin + (ip-1)*dx
         rvec( : ) = (/ x, real(0.,KIND=rkind), real(0.,KIND=rkind) /)
-        call slab_eq(rvec, bvec, gradbtensor, ns, gradns, ts, gradts)
+        call slab_eq(rvec, bvec, gradbtensor, ns, gradns, ts, gradts, equib_err)
         write (message_unit,'(f11.5, a, e12.5, 3f11.5, 7f11.5)') &
                & x,'  ', ns(0), bvec, (ts(i), i=0, nspec)
     end do

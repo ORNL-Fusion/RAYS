@@ -42,8 +42,9 @@ contains
 !      the successful initializations and sets number of rays, nray, to that.
 
     use constants_m, only : input_unit
-    use diagnostics_m, only: message_unit, message, text_message, equib_err
-    use equilibrium_m, only : equilibrium
+    use diagnostics_m, only: message_unit, message, text_message
+    use species_m, only : nspec
+    use equilibrium_m, only : equilibrium, eq_point
     use dispersion_solvers_m, only: solve_disp_nx_vs_ny_nz
     use rf_m, only : ray_dispersion_model,wave_mode, k0_sign
 
@@ -51,6 +52,7 @@ contains
     
     integer, intent(in) :: nray_max
     integer, intent(out) :: nray
+    type(eq_point(nspec=nspec)) :: eq
     real(KIND=rkind), allocatable, intent(out) :: rvec0(:, :), rindex_vec0(:, :)
     
     integer :: ix, iy, iz, iky, ikz, count
@@ -98,9 +100,9 @@ contains
                                   
                 rindex_z = rindex_z0 + (ikz-1) * delta_rindex_z0  
 
-                call equilibrium(rvec)
-                   if (trim(equib_err) /= '') cycle kzloop
-                call solve_disp_nx_vs_ny_nz(ray_dispersion_model, wave_mode, k0_sign,&
+                call equilibrium(rvec, eq)
+                   if (trim(eq%equib_err) /= '') cycle kzloop
+                call solve_disp_nx_vs_ny_nz(eq, ray_dispersion_model, wave_mode, k0_sign,&
                      &  rindex_y, rindex_z, rindex_x)
                 if (aimag(rindex_x) /= 0.) then
                     write(message_unit, *) 'slab_init: evanescent ray x = ', x, &
@@ -122,7 +124,6 @@ contains
     nray = count
     call message('simple_slab_ray_init: nray', nray)
     if (nray == 0) stop 'No successful ray initializations' 
-
     end  subroutine simple_slab_ray_init 
 
 end module simple_slab_ray_init_m

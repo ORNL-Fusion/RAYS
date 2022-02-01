@@ -69,6 +69,7 @@ contains
     
             case ('simple_slab')
                 call simple_slab_ray_init(nray_max, nray, rvec0, rindex_vec0)
+        
             case default
                 write(0,*) 'initialize_ray_init: invalid ray_init_model = ', trim(ray_init_model)
                 call text_message('initialize_ray_init: invalid ray_init_model = ', trim(ray_init_model),0)
