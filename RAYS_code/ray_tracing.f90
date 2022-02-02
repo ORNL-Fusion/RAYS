@@ -92,7 +92,7 @@
 ! check for stop condition inside ode solver. Step failed.
             if (stop_ode .eqv. .true.) then 
                 ray_stop(iray) = ray_stop_flag
-                write(message_unit, *) 'ray ', iray, ' stoped in ODE solver. ', ray_stop_flag
+                write(message_unit, *) 'ray ', iray, ' stopped in ODE solver. ', ray_stop_flag
                 
                 write (*, '( "ray ",i3, " stopped  s=", f12.4, "   nstep=", i4, /, &
                 &  "  (x,y,z)=", 3(f10.4),/,  "  (kx,ky,kz)=", 3(f10.4) )') iray, s, nstep, &
