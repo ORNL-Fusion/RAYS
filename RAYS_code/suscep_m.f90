@@ -38,7 +38,6 @@ contains
 !   calculates the cold plasma susceptibility tensor chi for a single species species, s.
 
     use constants_m, only : rkind, zi=>i
-    use species_m, only : nspec
     use equilibrium_m, only : eq_point
 
     implicit none

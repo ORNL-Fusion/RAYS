@@ -21,12 +21,11 @@
  
 
     use constants_m, only : rkind
-    use diagnostics_m, only : integrate_eq_gradients, verbosity, message_unit,&
-                            & message, stop_ode, ray_stop_flag
+    use diagnostics_m, only : integrate_eq_gradients, verbosity, message_unit, message
     use species_m, only : nspec, n0s
     use equilibrium_m, only : equilibrium, eq_point
-    use ode_m, only : nv
-    use rf_m, only : k0, nvec, n1, n3, kvec, k1, k3, ray_dispersion_model, ray_param
+    use ode_m, only : nv, ode_stop
+    use rf_m, only : k0, ray_dispersion_model, ray_param
     use damping_m, only : damping_model, damping, multi_spec_damping
     
      implicit none
@@ -36,9 +35,12 @@
     real(KIND=rkind), intent(out) :: dvds(nv) 
 
     real(KIND=rkind) :: rvec(3)
+    real(KIND=rkind) :: kvec(3), k1, k3
+    real(KIND=rkind) :: nvec(3) 
 
 !   Derived type containing equilibrium data for a spatial point in the plasma
     type(eq_point) :: eq
+    type(ode_stop)  :: ray_stop
 
     real(KIND=rkind) :: dddx(3), dddk(3), dddw, vg(3), vg0, vg_unit(3)
     real(KIND=rkind) :: ksi(0:nspec), ki
@@ -50,10 +52,11 @@
 !***********************************
  
     interface deriv_cold
-       subroutine deriv_cold(eq, dddx, dddk, dddw)
+       subroutine deriv_cold(eq, nvec, dddx, dddk, dddw)
           use constants_m, only : rkind
           use equilibrium_m, only : equilibrium, b0, eq_point
           type(eq_point), intent(in) :: eq
+          real(KIND=rkind), intent(in) :: nvec(3)
           real(KIND=rkind), intent(out) :: dddx(3), dddk(3), dddw
        end subroutine deriv_cold
     end interface deriv_cold
@@ -66,11 +69,11 @@
 
 ! Check if equib_err has been set in equilibrium
     if (trim(eq%equib_err) /= '') then
-        stop_ode = .true.
+        ray_stop%stop_ode = .true.
         write (*,*) 'eqn_ray: s = ', s, '  equib_err = ', eq%equib_err
         write (message_unit,*) 'eqn_ray: s = ', s, '  equib_err = ', eq%equib_err, &
               & 'r_end = ', rvec
-        ray_stop_flag = eq%equib_err
+        ray_stop%ode_stop_flag = eq%equib_err
         return
     end if
 
@@ -81,8 +84,6 @@
     k1 = sqrt( sum((kvec-k3*eq%bunit)**2) )
 
     nvec = kvec/k0
-    n1 = k1/k0
-    n3 = k3/k0
 
 !   Calculate dD/dk, dD/dx, and dD/d(omega) 
 
@@ -90,7 +91,7 @@
 
         case ('cold' )
     !      Derivatives of D for a cold plasma.
-         call deriv_cold(eq, dddx, dddk, dddw)
+         call deriv_cold(eq, nvec, dddx, dddk, dddw)
 
         case default
            write(*,*) 'EQN_RAY: invalid value, ray_dispersion_model = ', ray_dispersion_model
@@ -108,12 +109,12 @@
        vg = -dddk / dddw
        vg0 = sqrt(sum(vg**2))
 !      Unit vector along the group velocity.
-	   vg_unit = vg / vg0
+       vg_unit = vg / vg0
 !      write(6,'(a,1p3e12.4)') 'EQN_RAY: vg/|vg| =', vg_unit
     else
        write(*,*) 'EQN_RAY: infinite group velocity, dddw = ', dddw
-       stop_ode = .true.
-       ray_stop_flag = 'infinite Vg'
+       ray_stop%stop_ode = .true.
+       ray_stop%ode_stop_flag = 'infinite Vg'
        return
     end if
 
@@ -139,8 +140,8 @@
           else
              write(0,*) 'EQN_RAY: ray stalled, dddk = ', dddk
              write(message_unit,*) 'EQN_RAY: ray stalled, dddk = ', dddk
-             stop_ode = .true.
-             ray_stop_flag = 'ray stalled'
+             ray_stop%stop_ode = .true.
+             ray_stop%ode_stop_flag = 'ray stalled'
              return
           end if
 

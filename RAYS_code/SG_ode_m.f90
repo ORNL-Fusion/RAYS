@@ -1,8 +1,13 @@
- module SG_ode_m
+ submodule (ode_m) SG_ode_m
 !   contains parameters specific to SG_ode ODE solver.
 
     use constants_m, only : rkind
 
+!   Access type definition ode_stop should be available by host association from ode_m.
+!   But it confuses make not to use ode_m since it thinks SG_ode_m doesn't depend on it.
+!   Therefore:
+    use ode_m, only : ode_stop
+    
     implicit none
 
 !   Target relative and absolute errors for the ODE solver.
@@ -26,7 +31,7 @@ contains
 
 !********************************************************************
 
-  subroutine initialize_SG_ode
+  module subroutine initialize_SG_ode
 
     use constants_m, only : input_unit
     use diagnostics_m, only : message_unit
@@ -50,7 +55,7 @@ contains
 
 !********************************************************************
 
-  subroutine ray_init_SG_ode
+  module subroutine ray_init_SG_ode
   ! Resets SG_ode solver to appropriate state for start of ray.
   ! This is nothing but resetting rel_err and abs_err
 
@@ -62,19 +67,22 @@ contains
 
 !********************************************************************
 
-  subroutine SG_ode(eqn_ray, nv, v, s, sout)
+  module subroutine SG_ode(eqn_ray, nv, v, s, sout)
   ! Implements generic interface for SG_ode solver (i.e. Shampine & Gordon ode.f90)
   ! Takes one step from s to sout.  SG_ode may take intermediate steps to get to sout
   ! as indicated by iflag=3.  So call to ode is in a do loop.  See comments in ode()
   ! for details.
 
-    use diagnostics_m, only : message_unit, message, verbosity, stop_ode, ray_stop_flag
+    use diagnostics_m, only : message_unit, message, verbosity
+    use constants_m, only : rkind
 
   ! Arguments of ODE
     external eqn_ray
     integer, intent(in) :: nv
     real(KIND=rkind), intent(inout) :: v(nv)
     real(KIND=rkind), intent(inout) :: s, sout
+
+    type(ode_stop)  :: ray_stop
 
     real(KIND=rkind) :: work(100+21*nv)
     integer :: iwork(5)
@@ -85,13 +93,13 @@ contains
 
        iflag = 1
        call ode(eqn_ray, nv, v, s, sout, rel_err, abs_err, &
-            & iflag, work, iwork)
+            & iflag, work, iwork, ray_stop)
 
        if (verbosity > 2) write(message_unit,'(/,1(a,i4),2(a,f10.4),2(a,1pe10.4))') &
             & ' iflag =', iflag,'  s=', s, '  sout=',sout,  &
             & '  rel_err= ', rel_err,' abs_err = ', abs_err
 
-         if (stop_ode) then  ! stop_ode has been set in eqn_ray or ode itself
+         if (ray_stop%stop_ode) then  ! stop_ode has been set in eqn_ray or ode itself
             sout=s
             exit odeloop
          end if
@@ -103,16 +111,16 @@ contains
              total_error = abs(rel_err) + abs(abs_err)
              if (total_error > SG_error_limit) then
                call message('SG_ode: Total error too big', total_error, 0)
-               ray_stop_flag = 'ODE total error'
-               stop_ode = .true.
+               ray_stop%ode_stop_flag = 'ODE total error'
+               ray_stop%stop_ode = .true.
                exit odeloop
              end if
              
              cycle odeloop
          else ! error return
-              stop_ode = .true.
+              ray_stop%stop_ode = .true.
               call message('SG_ode: Error return: iflag', iflag, 0)
-              ray_stop_flag = 'ODE iflag error'
+              ray_stop%ode_stop_flag = 'ODE iflag error'
               exit odeloop
          end if
 
@@ -120,5 +128,5 @@ contains
     return
   end subroutine SG_ode
 
- end module SG_ode_m
+ end submodule SG_ode_m
 

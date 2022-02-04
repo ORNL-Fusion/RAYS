@@ -1,4 +1,4 @@
- subroutine deriv_cold(eq, dddx, dddk, dddw)
+ subroutine deriv_cold(eq, nvec, dddx, dddk, dddw)
 !   calculates the derivatives of D with respect to k, r, omega.
 !   v(1:3) = (x,y,z); v(4:6) = (kx, ky, kz),
 !   dddx = dD/dx, dddk = dD/dk, dddw = dD/d(omega).
@@ -7,16 +7,17 @@
     use species_m, only : nspec
 
     use equilibrium_m, only : eq_point
-    use rf_m, only : omgrf, k0,  nvec, n1, n3
+    use rf_m, only : omgrf, k0
     use species_m, only : nspec
     use diagnostics_m, only : message_unit, verbosity
 
     implicit none
 
     type(eq_point), intent(in) :: eq
-
+    real(KIND=rkind), intent(in) :: nvec(3)
     real(KIND=rkind), intent(out) :: dddx(3), dddk(3), dddw
-
+    
+    real(KIND=rkind) :: n1, n3
     real(KIND=rkind) :: p, t, dtdg(0:nspec)
     real(KIND=rkind) :: q,  dqda(0:nspec),  dqdg(0:nspec)
     real(KIND=rkind) :: q1, dq1da(0:nspec), dq1dg(0:nspec)
@@ -32,6 +33,8 @@
 
     integer :: is, is1, is2, ivec
 
+    n1 = nvec(1)
+    n3 = nvec(3)
 
 !   Derivatives with respect to k.
 !   dn3dk = d(n3)/dk; dn12dk = d(n1^2)/dk

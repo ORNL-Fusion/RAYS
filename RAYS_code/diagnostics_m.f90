@@ -67,10 +67,6 @@
 
 !   Error returns
     character(len=20) :: equib_err = ''
-    character(len=20) :: ray_stop_flag = ''
-
-!   Abort ode integration on error condition
-    logical :: stop_ode = .false.
     
 !   Counter for general use, mostly for use in debugging
     integer :: diag_count = 0

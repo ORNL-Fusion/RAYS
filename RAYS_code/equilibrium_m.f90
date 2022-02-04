@@ -58,7 +58,6 @@ contains
 
     use constants_m, only : input_unit    
     use diagnostics_m, only : message_unit, message, text_message
-    use species_m, only : nspec
     use slab_eq_m, only : initialize_slab_eq
 
     implicit none
