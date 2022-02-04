@@ -1,4 +1,4 @@
- subroutine eqn_ray(s, v, dvds)
+ subroutine eqn_ray(s, v, dvds, ray_stop)
 
 !   Calculates the RHS of the ray's equation.
 !   By default there are seven equations; three for r(s), three for k(s) and one for s
@@ -33,6 +33,7 @@
     real(KIND=rkind), intent(in) :: s
     real(KIND=rkind), intent(in) :: v(nv)
     real(KIND=rkind), intent(out) :: dvds(nv) 
+    type(ode_stop), intent(out)  :: ray_stop
 
     real(KIND=rkind) :: rvec(3)
     real(KIND=rkind) :: kvec(3), k1, k3
@@ -40,7 +41,6 @@
 
 !   Derived type containing equilibrium data for a spatial point in the plasma
     type(eq_point) :: eq
-    type(ode_stop)  :: ray_stop
 
     real(KIND=rkind) :: dddx(3), dddk(3), dddw, vg(3), vg0, vg_unit(3)
     real(KIND=rkind) :: ksi(0:nspec), ki

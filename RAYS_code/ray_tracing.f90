@@ -53,7 +53,7 @@
          call message ('ray_tracing: initial (kx,ky,kz)', v(4:6), 3, 1)
 
     !    Do some checking and save initial values.
-         call check_save(sout, nv, v)
+         call check_save(sout, nv, v, ray_stop)
          if (ray_stop%ode_stop_flag .ne. '') then  ! Ray didn't get started, initial conditions bad
             ray_stop_flag(iray) = ray_stop%ode_stop_flag
             npoints(iray) = 1 ! i.e. initial point
@@ -91,7 +91,7 @@
             call message ('trace_rays: sout', sout, 2)
 
 ! Integrate from s to sout
-            call ode_solver(eqn_ray, nv, v, s, sout)
+            call ode_solver(eqn_ray, nv, v, s, sout, ray_stop)
 
 ! check for stop condition inside ode solver. Step failed.
             if (ray_stop%stop_ode .eqv. .true.) then 
@@ -125,7 +125,7 @@
             end if damping
  
 ! Do some checking and save output from step
-            call check_save(s, nv, v)
+            call check_save(s, nv, v, ray_stop)
 
             if (ray_stop%ode_stop_flag .ne. '') then
                 ray_stop_flag(iray) = ray_stop%ode_stop_flag

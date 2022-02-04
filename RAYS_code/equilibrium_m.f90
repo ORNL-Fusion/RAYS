@@ -146,7 +146,10 @@ contains
     end select equilibria
                            
 !   If equilibrium subroutine has set equib_err return for outside handling. Does not crash.
-    if (equib_err /= '') return
+    if (equib_err /= '') then
+        eq%equib_err = equib_err        
+        return
+    end if
 
 ! Load up eq values
     eq%bvec = bvec
@@ -155,7 +158,6 @@ contains
     eq%gradns = gradns
     eq%ts = ts
     eq%gradts = gradts
-    eq%equib_err = equib_err
 
 !   bmag = |B|, and bunit = B/|B|.
     bmag = sqrt( sum(bvec**2) )

@@ -67,7 +67,7 @@ contains
 
 !********************************************************************
 
-  module subroutine SG_ode(eqn_ray, nv, v, s, sout)
+  module subroutine SG_ode(eqn_ray, nv, v, s, sout, ray_stop)
   ! Implements generic interface for SG_ode solver (i.e. Shampine & Gordon ode.f90)
   ! Takes one step from s to sout.  SG_ode may take intermediate steps to get to sout
   ! as indicated by iflag=3.  So call to ode is in a do loop.  See comments in ode()
@@ -81,8 +81,7 @@ contains
     integer, intent(in) :: nv
     real(KIND=rkind), intent(inout) :: v(nv)
     real(KIND=rkind), intent(inout) :: s, sout
-
-    type(ode_stop)  :: ray_stop
+    type(ode_stop), intent(out)  :: ray_stop
 
     real(KIND=rkind) :: work(100+21*nv)
     integer :: iwork(5)
@@ -92,6 +91,7 @@ contains
     odeloop: do
 
        iflag = 1
+ 
        call ode(eqn_ray, nv, v, s, sout, rel_err, abs_err, &
             & iflag, work, iwork, ray_stop)
 

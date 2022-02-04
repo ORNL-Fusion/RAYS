@@ -39,11 +39,7 @@
     end interface ray_init_SG_ode
 
     interface SG_ode
-      module subroutine SG_ode(eqn_ray, nv, v, s, sout)
-      ! Implements generic interface for SG_ode solver (i.e. Shampine & Gordon ode.f90)
-      ! Takes one step from s to sout.  SG_ode may take intermediate steps to get to sout
-      ! as indicated by iflag=3.  So call to ode is in a do loop.  See comments in ode()
-      ! for details.
+      module subroutine SG_ode(eqn_ray, nv, v, s, sout, ray_stop)
         use diagnostics_m, only : message_unit, message, verbosity
         use constants_m, only : rkind
       ! Arguments of ODE
@@ -51,6 +47,7 @@
         integer, intent(in) :: nv
         real(KIND=rkind), intent(inout) :: v(nv)
         real(KIND=rkind), intent(inout) :: s, sout
+        type(ode_stop), intent(out)  :: ray_stop
       end subroutine SG_ode
     end interface SG_ode
    
@@ -146,7 +143,7 @@
     
 !********************************************************************
 
-  subroutine ode_solver(eqn_ray, nv, v, s, sout)
+  subroutine ode_solver(eqn_ray, nv, v, s, sout, ray_stop)
 ! Generic wrapper for various ODE solvers. Takes one step integrating from s to sout.
 
 !Presently supported solvers are:
@@ -160,6 +157,7 @@
     real(KIND=rkind), intent(inout) :: v(nv)
     real(KIND=rkind), intent(inout) :: s
     real(KIND=rkind), intent(inout) :: sout
+    type(ode_stop), intent(out)  :: ray_stop
     
     external eqn_ray
     
@@ -167,7 +165,8 @@
     solver: select case (trim(ode_solver_name))
 
        case ('SG_ODE')
-          call SG_ode(eqn_ray, nv, v, s, sout)
+
+          call SG_ode(eqn_ray, nv, v, s, sout, ray_stop)
 
        case default
           write(0,*) 'ode_solver, invalid ode solver = ', trim(ode_solver_name)

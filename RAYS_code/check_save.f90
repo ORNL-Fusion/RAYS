@@ -1,4 +1,4 @@
- subroutine check_save(s, nv, v)
+ subroutine check_save(s, nv, v, ray_stop)
 !   does some checking and saves output for plotting after each step.
 
     use constants_m, only : rkind, output_unit
@@ -14,9 +14,9 @@
     real(KIND=rkind), intent(in) :: s
     integer, intent(in) :: nv
     real(KIND=rkind), intent(in) :: v(nv)
+    type(ode_stop), intent(out)  :: ray_stop
 
     type(eq_point(nspec=nspec)) :: eq
-    type(ode_stop)  :: ray_stop
    
     real(KIND=rkind) :: kvec(3), k1, k3
     real(KIND=rkind) :: nvec(3), n1, n3  
@@ -133,7 +133,6 @@
         call message('check_save: ne relative error', v(nv0+4)*eq%ns(0)/n0s(0) - 1., 1)
         call message('check_save: Te difference',  v(nv0+5)-eq%ts(0),1)
     end if integrate_gradients
-
 
     
 !****** write step ray vector to output file *********************************    
