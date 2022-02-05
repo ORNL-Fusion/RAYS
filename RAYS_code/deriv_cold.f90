@@ -1,19 +1,23 @@
- subroutine deriv_cold(dddx, dddk, dddw)
+ subroutine deriv_cold(eq, nvec, dddx, dddk, dddw)
 !   calculates the derivatives of D with respect to k, r, omega.
 !   v(1:3) = (x,y,z); v(4:6) = (kx, ky, kz),
 !   dddx = dD/dx, dddk = dD/dk, dddw = dD/d(omega).
 
     use constants_m, only : rkind
-    use equilibrium_m, only : bunit, gradbunit, bmag, gradbmag, ns, gradns, &
-      & alpha, gamma
-    use rf_m, only : omgrf, k0,  nvec, n1, n3
+    use species_m, only : nspec
+
+    use equilibrium_m, only : eq_point
+    use rf_m, only : omgrf, k0
     use species_m, only : nspec
     use diagnostics_m, only : message_unit, verbosity
 
     implicit none
 
+    type(eq_point), intent(in) :: eq
+    real(KIND=rkind), intent(in) :: nvec(3)
     real(KIND=rkind), intent(out) :: dddx(3), dddk(3), dddw
-
+    
+    real(KIND=rkind) :: n1, n3
     real(KIND=rkind) :: p, t, dtdg(0:nspec)
     real(KIND=rkind) :: q,  dqda(0:nspec),  dqdg(0:nspec)
     real(KIND=rkind) :: q1, dq1da(0:nspec), dq1dg(0:nspec)
@@ -29,15 +33,17 @@
 
     integer :: is, is1, is2, ivec
 
+    n1 = nvec(1)
+    n3 = nvec(3)
 
 !   Derivatives with respect to k.
 !   dn3dk = d(n3)/dk; dn12dk = d(n1^2)/dk
-    dn3dk = bunit / k0
-    dn12dk = (2./k0) * (nvec-n3*bunit)
+    dn3dk = eq%bunit / k0
+    dn12dk = (2./k0) * (nvec-n3*eq%bunit)
 
 !   Derivatives with respect to space coordinates.
     do ivec = 1, 3
-       dn3dx(ivec) = sum( gradbunit(ivec,:) * nvec )
+       dn3dx(ivec) = sum( eq%gradbunit(ivec,:) * nvec )
     end do
     dn12dx = -2.*n3*dn3dx
     do ivec = 1, 3
@@ -45,15 +51,15 @@
 
            if (verbosity > 4) then
                 write(*,*) 'ivec = ', ivec, 'is = ', is
-                write(*,*) 'alpha(is) = ', alpha(is)
-                write(*,*) 'gradns(ivec,is) = ', gradns(ivec,is)
-                write(*,*) 'ns(is) = ', ns(is)
-                write(*,*) 'gamma(is) = ', gamma(is)
-                write(*,*) 'gradbmag(ivec) = ', gradbmag(ivec)
+                write(*,*) 'alpha(is) = ', eq%alpha(is)
+                write(*,*) 'gradns(ivec,is) = ', eq%gradns(ivec,is)
+                write(*,*) 'ns(is) = ', eq%ns(is)
+                write(*,*) 'gamma(is) = ', eq%gamma(is)
+                write(*,*) 'gradbmag(ivec) = ', eq%gradbmag(ivec)
             end if
 
-           dadx(ivec,is) = alpha(is) * gradns(ivec,is)/ns(is)
-           dgdx(ivec,is) = gamma(is) * gradbmag(ivec)/bmag
+           dadx(ivec,is) = eq%alpha(is) * eq%gradns(ivec,is)/eq%ns(is)
+           dgdx(ivec,is) = eq%gamma(is) * eq%gradbmag(ivec)/eq%bmag
         end do
     end do
 
@@ -62,12 +68,12 @@
 !   dadw = d(alpha)/d(omega); dgdw = d(gamma)/d(omega)
     dn3dw = -n3/omgrf
     dn12dw = (-2./omgrf) * n1**2
-    dadw = -2./omgrf * alpha
-    dgdw = -1./omgrf * gamma
+    dadw = -2./omgrf * eq%alpha
+    dgdw = -1./omgrf * eq%gamma
 
 !   Over species.
-    p = 1. - sum(alpha)
-    t = product(1.-gamma**2)
+    p = 1. - sum(eq%alpha)
+    t = product(1.-eq%gamma**2)
 
 !   Derivatives with respect to alpha.
 !   dQ1/d(alpha) & dQ2/d(alpha):
@@ -75,18 +81,18 @@
     do is1 = 0, nspec
        do is = 0, nspec
           if ( is /= is1 ) then
-             dq1da(is1) = dq1da(is1) * (1.+gamma(is))
-             dq2da(is1) = dq2da(is1) * (1.-gamma(is))
+             dq1da(is1) = dq1da(is1) * (1.+eq%gamma(is))
+             dq2da(is1) = dq2da(is1) * (1.-eq%gamma(is))
           end if
        end do
     end do
 
 !   Q1 & Q2:
-    q1 = sum(alpha * dq1da)
-    q2 = sum(alpha * dq2da)
+    q1 = sum(eq%alpha * dq1da)
+    q2 = sum(eq%alpha * dq2da)
 
 !   U = TS = T - ...
-    u = t - sum(alpha*dq1da*dq2da)
+    u = t - sum(eq%alpha*dq1da*dq2da)
 
 !   Q = 2U - T + Q1*Q2.
     q = 2.*u - t + q1*q2
@@ -108,33 +114,33 @@
     do is1 = 0, nspec; do is2 = 0, nspec
        do is = 0, nspec
           if ( is /= is1 .and. is /= is2 ) then
-             gp(is1,is2) = gp(is1,is2) * (1.+gamma(is))
-             gm(is1,is2) = gm(is1,is2) * (1.-gamma(is))
+             gp(is1,is2) = gp(is1,is2) * (1.+eq%gamma(is))
+             gm(is1,is2) = gm(is1,is2) * (1.-eq%gamma(is))
           end if
        end do
     end do; end do
     gpm = gp * gm
 
 !   dT/d(gamma):
-    dtdg = 2.*gamma*duda
+    dtdg = 2.*eq%gamma*duda
 
 !   dU/d(gamma):
     do is = 0, nspec
-       dudg(is) = sum(alpha*gpm(:,is)) 
+       dudg(is) = sum(eq%alpha*gpm(:,is)) 
     end do
-    dudg = dtdg + 2.*gamma*(dudg+alpha*duda)
+    dudg = dtdg + 2.*eq%gamma*(dudg+eq%alpha*duda)
 
 !   dQ1/d(gamma):
     do is = 0, nspec
-       dq1dg(is) = sum(alpha*gp(:,is)) 
+       dq1dg(is) = sum(eq%alpha*gp(:,is)) 
     end do
-    dq1dg = dq1dg - alpha*dq1da
+    dq1dg = dq1dg - eq%alpha*dq1da
 
 !   dQ2/d(gamma):
     do is = 0, nspec
-       dq2dg(is) = sum(alpha*gm(:,is)) 
+       dq2dg(is) = sum(eq%alpha*gm(:,is)) 
     end do
-    dq2dg = -dq2dg + alpha*dq2da
+    dq2dg = -dq2dg + eq%alpha*dq2da
 
 !   dQd(gamma):
     dqdg = 2.*dudg - dtdg + dq1dg*q2 + q1*dq2dg

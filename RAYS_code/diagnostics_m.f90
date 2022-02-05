@@ -8,6 +8,8 @@
 !   unit number over to std I/O (i.e. unit=6) and back.
 !   'set_message_unit_stdio' and 'reset_message_unit_file'
 
+!   External procedures: cpu_time (intrinsic)
+
 ! Specifications
 
     implicit none
@@ -67,10 +69,6 @@
 
 !   Error returns
     character(len=20) :: equib_err = ''
-    character(len=20) :: ray_stop_flag = ''
-
-!   Abort ode integration on error condition
-    logical :: stop_ode = .false.
     
 !   Counter for general use, mostly for use in debugging
     integer :: diag_count = 0

@@ -1,5 +1,11 @@
-subroutine ode ( f, neqn, y, t, tout, relerr, abserr, iflag, work, iwork )
+subroutine ode ( f, neqn, y, t, tout, relerr, abserr, iflag, work, iwork, ray_stop)
+! A fortran 90 implementation of the vemnerable Shampine and Gordon ODE package, 
+! subsequently modified to support ray (integration) termination conditions from the
+! derivative subroutine f()
 
+! Working notes:
+! (DBB 2/4/2022) To allow thread safety removed 'stop_ode' from module ode_m and made
+! a derived type 'ode_stop', made 'ray_stop' and argument of all subroutines.
 ! (DBB 12/2021) Converted to use KIND = rkind for all reals.
 ! (DBB 10/28/2021)  Added error return 'stop_ode' to trap error conditions in 
 ! derivative subroutine (referred to as f() here, is deriv() in RAYS code)
@@ -138,7 +144,7 @@ subroutine ode ( f, neqn, y, t, tout, relerr, abserr, iflag, work, iwork )
   
 
   use constants_m, only : rkind
-  use diagnostics_m, only : stop_ode
+  use ode_m, only : ode_stop
     
   implicit none
 
@@ -146,6 +152,9 @@ subroutine ode ( f, neqn, y, t, tout, relerr, abserr, iflag, work, iwork )
 
   real(KIND=rkind) abserr
   external f
+  
+  type(ode_stop)  :: ray_stop
+
   integer ( kind = 4 ), parameter :: ialpha = 1
   integer ( kind = 4 ), parameter :: ibeta = 13
   integer ( kind = 4 ), parameter :: idelsn = 93
@@ -194,10 +203,10 @@ subroutine ode ( f, neqn, y, t, tout, relerr, abserr, iflag, work, iwork )
     work(ialpha), work(ibeta), work(isig), work(iv), work(iw), work(ig), &
     phase1, work(ipsi), work(ix), work(ih), work(ihold), start, &
     work(itold), work(idelsn), iwork(1), nornd, iwork(3), iwork(4), &
-    iwork(5) )
+    iwork(5), ray_stop)
 
 ! Error return (DBB)
-  if (stop_ode .eqv. .true.) return
+  if (ray_stop%stop_ode .eqv. .true.) return
 !
   if ( start ) then
     work(istart) = 1.0e+00
@@ -222,7 +231,7 @@ end
 
 subroutine de ( f, neqn, y, t, tout, relerr, abserr, iflag, yy, wt, p, yp, &
   ypout, phi, alpha, beta, sig, v, w, g, phase1, psi, x, h, hold, start, &
-  told, delsgn, ns, nornd, k, kold, isnold )
+  told, delsgn, ns, nornd, k, kold, isnold, ray_stop)
 
 !*****************************************************************************80
 !
@@ -355,11 +364,13 @@ subroutine de ( f, neqn, y, t, tout, relerr, abserr, iflag, yy, wt, p, yp, &
 !
 
   use constants_m, only : rkind
-  use diagnostics_m, only : stop_ode
+  use ode_m, only : ode_stop
   
   implicit none
 
   integer ( kind = 4 ) neqn
+  
+  type(ode_stop), intent(out)  :: ray_stop
 
   real(KIND=rkind) absdel
   real(KIND=rkind) abseps
@@ -505,7 +516,7 @@ subroutine de ( f, neqn, y, t, tout, relerr, abserr, iflag, yy, wt, p, yp, &
 !
     if ( isn <= 0 .and. abs ( tout - x ) < fouru * abs ( x ) ) then
       h = tout - x
-      call f ( x, yy, yp )
+      call f ( x, yy, yp, ray_stop )
       y(1:neqn) = yy(1:neqn) + h * yp(1:neqn)
       iflag = 2
       t = tout
@@ -533,12 +544,12 @@ subroutine de ( f, neqn, y, t, tout, relerr, abserr, iflag, yy, wt, p, yp, &
     h = sign ( min ( abs ( h ), abs ( tend - x ) ), h )
     wt(1:neqn) = releps * abs ( yy(1:neqn) ) + abseps
 
-    call step ( x, yy, f, neqn, h, eps, wt, start, &
+     call step ( x, yy, f, neqn, h, eps, wt, start, &
       hold, k, kold, crash, phi, p, yp, psi, &
-      alpha, beta, sig, v, w, g, phase1, ns, nornd )
+      alpha, beta, sig, v, w, g, phase1, ns, nornd, ray_stop)
 
 ! Error return (DBB)
-    if (stop_ode .eqv. .true.) return
+    if (ray_stop%stop_ode .eqv. .true.) return
 !
 
 !
@@ -574,7 +585,7 @@ subroutine de ( f, neqn, y, t, tout, relerr, abserr, iflag, yy, wt, p, yp, &
 end
 
 subroutine step ( x, y, f, neqn, h, eps, wt, start, hold, k, kold, crash, &
-  phi, p, yp, psi, alpha, beta, sig, v, w, g, phase1, ns, nornd )
+  phi, p, yp, psi, alpha, beta, sig, v, w, g, phase1, ns, nornd, ray_stop)
 
 !*****************************************************************************80
 !
@@ -733,11 +744,13 @@ subroutine step ( x, y, f, neqn, h, eps, wt, start, hold, k, kold, crash, &
 !
 
   use constants_m, only : rkind
-  use diagnostics_m, only : stop_ode
+  use ode_m, only : ode_stop
   
   implicit none
 
   integer ( kind = 4 ) neqn
+  
+  type(ode_stop)  :: ray_stop
 
   real(KIND=rkind) absh
   real(KIND=rkind) alpha(12)
@@ -835,10 +848,11 @@ subroutine step ( x, y, f, neqn, h, eps, wt, start, hold, k, kold, crash, &
 !  Initialize.  Compute an appropriate step size for the first step.
 !
   if ( start ) then
-    call f ( x, y, yp )
+  
+     call f ( x, y, yp, ray_stop)
 
 ! Error return (DBB)
-    if (stop_ode .eqv. .true.) return
+     if (ray_stop%stop_ode .eqv. .true.) return
 !  
     phi(1:neqn,1) = yp(1:neqn)
     phi(1:neqn,2) = 0.0e+00
@@ -991,10 +1005,11 @@ subroutine step ( x, y, f, neqn, h, eps, wt, start, hold, k, kold, crash, &
     xold = x
     x = x + h
     absh = abs ( h )
-    call f ( x, p, yp )
+
+    call f ( x, p, yp, ray_stop )
 
 ! Error return (DBB)
-    if (stop_ode .eqv. .true.) return
+    if (ray_stop%stop_ode .eqv. .true.) return
 !
 
 !
@@ -1116,8 +1131,12 @@ subroutine step ( x, y, f, neqn, h, eps, wt, start, hold, k, kold, crash, &
   else
     y(1:neqn) = p(1:neqn) + h * g(kp1) * ( yp(1:neqn) - phi(1:neqn,1) )
   end if
-
-  call f ( x, y, yp )
+  call f ( x, y, yp, ray_stop)
+ 
+! Error return (DBB)
+    if (ray_stop%stop_ode .eqv. .true.) return
+!
+  
 !
 !  Update differences for the next step.
 !
@@ -1333,6 +1352,8 @@ subroutine intrp ( x, y, xout, yout, ypout, neqn, kold, phi, psi )
 
   return
 end
+
+
 subroutine timestamp ( )
 
 !*****************************************************************************80

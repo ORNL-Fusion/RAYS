@@ -1,4 +1,4 @@
- subroutine disp_solve_cold_nxsq_vs_nz(nz, nxsq)
+ subroutine disp_solve_cold_nxsq_vs_nz(eq, nz, nxsq)
 ! calculates cold plasma perpendicular refractive index squared versus parallel 
 ! refractive index. It may be <0 in which case nx is complex(KIND=rkind).  It's the users responsibility
 ! to handle that properly.
@@ -13,20 +13,25 @@
 
     use constants_m, only : rkind
     use diagnostics_m, only : message
-    use suscep_m, only : dielectric_cold
+    use equilibrium_m, only : eq_point
+    use suscep_m, only :  dielectric_cold
 
        implicit none 
+       
+!      Derived type containing equilibrium data for a spatial point in the plasma
+       type(eq_point), intent(in) :: eq
 
        real(KIND=rkind), intent(in) :: nz
        complex(KIND=rkind), intent(out) :: nxsq(4)
 
        complex(KIND=rkind) :: eps(3,3)
+
        real(KIND=rkind) :: a, b, c, sgn_b
        complex(KIND=rkind) :: sqrt_d
 
 
 !      Calculate cold plasma dielectric tensor.
-       call dielectric_cold(eps)
+       call dielectric_cold(eq, eps)
 
  !    write(*,*) 'eps = ', eps
 

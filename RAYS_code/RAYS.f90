@@ -7,6 +7,8 @@
 !   D. Batchelor at Fusion Energy Division, Oak Ridge National Lab
 !   between 6/95 - 9/95.  MORAYS was based on the RAYS code (1982).
 
+!   External procedures: initialize (initialize.f90), trace_rays (trace_rays.f90)
+!                        finalize (finalize.f90)
     implicit none 
 
 !   Read input file and initialize variables.

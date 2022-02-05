@@ -4,10 +4,10 @@
     use constants_m, only : input_unit, output_unit, ray_list_unit, initialize_constants_m, eps0
     use diagnostics_m, only : initialize_diagnostics, date_v, message_unit, message,&
         & text_message, run_description, run_label
-    use equilibrium_m, only : equilib_model, initialize_equilibrium, equilibrium
+    use equilibrium_m, only : equilib_model, initialize_equilibrium, equilibrium, b0
     use ode_m, only : initialize_ode_solver
     use ray_init_m, only : initialize_ray_init
-    use rf_m, only : omgrf, initialize_rf
+    use rf_m, only : omgrf, initialize_rf, frf, k0
     use damping_m, only : initialize_damping
     use species_m, only : initialize_species_m
     use post_processing_m, only : initialize_post_processing_m

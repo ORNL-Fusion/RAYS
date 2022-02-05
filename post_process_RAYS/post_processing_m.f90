@@ -124,7 +124,7 @@
 
   subroutine post_process
 
-    use diagnostics_m, only : message_unit, message, text_message, stop_ode, verbosity
+    use diagnostics_m, only : message_unit, message, text_message, verbosity
     use slab_processor_m, only : slab_processor
 
     implicit none

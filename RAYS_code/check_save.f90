@@ -1,21 +1,26 @@
- subroutine check_save(s, nv, v)
-!   does some checking and saves output for plotting after each step.
+ subroutine check_save(s, nv, v, ray_stop)
+!   Does checking for ray stop criteria and saves output after each step.
+!   External routines: deriv_cold (deriv_cold.f90)
 
     use constants_m, only : rkind, output_unit
-    use diagnostics_m, only : integrate_eq_gradients, message, text_message, equib_err, &
-                            & ray_stop_flag
-    use equilibrium_m, only : equilibrium, b0, bmag, bunit, bvec, ns, ts, alpha, gamma
-    use ode_m, only : ds
-    use rf_m, only : ray_dispersion_model, ray_param, k0, kvec, k1, k3, nvec, n1, n3,&
-                     & dispersion_resid_limit
-    use damping_m, only : damping_model, damping, multi_spec_damping, total_damping_limit
+    use diagnostics_m, only : integrate_eq_gradients, message, text_message
     use species_m, only : nspec, n0s
+    use equilibrium_m, only : equilibrium, b0,  eq_point
+    use ode_m, only : ds, ode_stop
+    use rf_m, only : ray_dispersion_model, ray_param, k0, dispersion_resid_limit
+    use damping_m, only : damping_model, damping, multi_spec_damping, total_damping_limit
 
     implicit none
 
     real(KIND=rkind), intent(in) :: s
     integer, intent(in) :: nv
     real(KIND=rkind), intent(in) :: v(nv)
+    type(ode_stop), intent(out)  :: ray_stop
+
+    type(eq_point(nspec=nspec)) :: eq
+   
+    real(KIND=rkind) :: kvec(3), k1, k3
+    real(KIND=rkind) :: nvec(3), n1, n3  
 
     integer :: nv0
     real(KIND=rkind) :: dddx(3), dddk(3), dddw, vg(3), vg0
@@ -26,22 +31,21 @@
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!  
  
 !   Calculate the plasma equilibrium.
-    equib_err = ''
-    call equilibrium(v(1:3))
-    if (equib_err .ne. '') then
-        ray_stop_flag = equib_err
+    call equilibrium(v(1:3), eq)
+    if (eq%equib_err .ne. '') then
+        ray_stop%ode_stop_flag = eq%equib_err
     end if
 
-    call message ('check_save: ne', ns(0), 1)
-    call message ('check_save: B(tesla)', bmag, 1)
-    call message ('check_save: alpha s', alpha(0:nspec), nspec+1, 1)
-    call message ('check_save: gamma s', gamma(0:nspec), nspec+1, 1)
+    call message ('check_save: ne', eq%ns(0), 1)
+    call message ('check_save: B(tesla)', eq%bmag, 1)
+    call message ('check_save: alpha s', eq%alpha(0:nspec), nspec+1, 1)
+    call message ('check_save: gamma s', eq%gamma(0:nspec), nspec+1, 1)
 
 
 !   Parallel and perpendicular components of nvec.
     kvec = v(4:6)
-    k3 = sum(kvec*bunit)
-    k1 = sqrt( sum((kvec-k3*bunit)**2) )
+    k3 = sum(kvec*eq%bunit)
+    k1 = sqrt( sum((kvec-k3*eq%bunit)**2) )
 
     nvec = kvec/k0; n1 = k1/k0; n3 = k3/k0
 
@@ -50,10 +54,10 @@
 
 !   Calculate the residual.
     
-    r = residual(k1,k3)
+    r = residual(eq, k1,k3)
     call message ('check_save: residual', r, 1)
     if (r > dispersion_resid_limit) then
-        ray_stop_flag = 'dispersion residual'
+        ray_stop%ode_stop_flag = 'dispersion residual'
     end if
         
 
@@ -69,7 +73,7 @@
     if ( ray_dispersion_model == 'cold' ) then
 
 !      Derivatives of D for a cold plasma.
-       call deriv_cold(dddx, dddk, dddw)      
+       call deriv_cold(eq, nvec, dddx, dddk, dddw)      
     else
        write(*,*) 'CHECK_SAVE: ray_dispersion_model = ', ray_dispersion_model
        stop 'check_save: unimplemented ray_dispersion_model'
@@ -94,7 +98,7 @@
     else
        write(*,*) 'CHECK_SAVE: dddw = ', dddw
        call text_message('check_save: infinite group velocity, dddw = 0')
-       ray_stop_flag = 'infinite Vg'       
+       ray_stop%ode_stop_flag = 'infinite Vg'       
     end if
 
 ! Start counting length of v(:) i.e. nv0
@@ -107,7 +111,7 @@
         total_absorption = v(nv0)
         call message ('check_save: Total absorption', total_absorption, 1)
         if (total_absorption > total_damping_limit) then
-            ray_stop_flag = 'total_absorption'
+            ray_stop%ode_stop_flag = 'total_absorption'
         end if
 
 !       Check if the sum of all by species absorption is equal to the total.        
@@ -123,14 +127,13 @@
 
     integrate_gradients : if (integrate_eq_gradients .eqv. .true.) then
 !      Check if grad(B) is consistent with B.
-        diff_vec= (v(nv0+1:nv0+3) - bvec(1:3))/b0
+        diff_vec= (v(nv0+1:nv0+3) - eq%bvec(1:3))/b0
         call message ('check_save: B relative error', diff_vec, 1)
 
 !       Check if grad(Te) and grad(ne) are consistent with Te and ne.
-        call message('check_save: ne relative error', v(nv0+4)*ns(0)/n0s(0) - 1., 1)
-        call message('check_save: Te difference',  v(nv0+5)-ts(0),1)
+        call message('check_save: ne relative error', v(nv0+4)*eq%ns(0)/n0s(0) - 1., 1)
+        call message('check_save: Te difference',  v(nv0+5)-eq%ts(0),1)
     end if integrate_gradients
-
 
     
 !****** write step ray vector to output file *********************************    
@@ -146,15 +149,17 @@
 
 contains
  
-    real(KIND=rkind) function residual(k1, k3)
+    real(KIND=rkind) function residual(eq, k1, k3)
 !      calculates the residual for given k1 and k3.
 !      get dielectric tensor from module suscep_m
 
-
+       use species_m, only : nspec, n0s
        use suscep_m, only :  dielectric_cold
 
        implicit none 
-
+       
+       type(eq_point(nspec=nspec)), intent(in) :: eq
+ 
        real(KIND=rkind) :: k1, k3
 
        complex(KIND=rkind) :: eps(3,3), eps_h(3,3), epsn(3,3), ctmp
@@ -167,7 +172,7 @@ contains
 !   have already been calculated.  If ray_model = "cold" must calculate eps.
 
     if (ray_dispersion_model == "cold") then
-        call dielectric_cold(eps)
+        call dielectric_cold(eq, eps)
     end if
 
 !      Hermitian part.

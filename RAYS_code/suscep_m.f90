@@ -34,14 +34,15 @@ contains
 !       SUSCEPTIBILITY ROUTINES
 ! ********************************************************************************
 
- subroutine suscep_cold(is, chi) 
+ subroutine suscep_cold(eq, is, chi) 
 !   calculates the cold plasma susceptibility tensor chi for a single species species, s.
 
-    use constants_m, only : zi=>i
-    use equilibrium_m, only : alpha, gamma
+    use constants_m, only : rkind, zi=>i
+    use equilibrium_m, only : eq_point
 
     implicit none
 
+    type(eq_point), intent(in) :: eq
     integer, intent(in) :: is
     complex(KIND=rkind), intent(out) :: chi(3,3)
 
@@ -49,16 +50,16 @@ contains
 
 !   alpha = (omgp/omgrf)^2, gamma = (omgc/omgrf).
 
-    alphas= alpha(is)
-    gammas= gamma(is)
+    alphas= eq%alpha(is)
+    gammas= eq%gamma(is)
 
-    chi(1,1) = -alphas / (1.-gammas**2)
-    chi(2,2) = chi(1,1)
-    chi(3,3) = -alphas
-    chi(1,2) = -zi*alphas*gammas / (1.-gammas**2)
+    chi(1,1) = cmplx(-alphas / (1.-gammas**2), kind=rkind)
+    chi(2,2) = cmplx(chi(1,1), kind=rkind)
+    chi(3,3) = cmplx(-alphas, kind=rkind)
+    chi(1,2) = cmplx(-zi*alphas*gammas / (1.-gammas**2), kind=rkind)
 
-    chi(1,3) = 0.
-    chi(2,3) = 0.
+    chi(1,3) = cmplx(0., kind=rkind)
+    chi(2,3) = cmplx(0., kind=rkind)
      
     chi(2,1) = -chi(1,2)
     chi(3,1) = chi(1,3)
@@ -73,20 +74,26 @@ contains
 !       Dielectric tensor ROUTINES
 ! ********************************************************************************
 
- subroutine dielectric(eps)
+ subroutine dielectric(eq, eps)
  
 !   calculates the plasma dielectric tensor eps from each species susceptibility, chi.
 !   Output eps is derived type dielectric_tensor defined above.  Different species can have
 !   different susceptibility models.
 
     use species_m, only : nspec, spec_model
+    use equilibrium_m, only : eq_point
 
     implicit none
     
+!   Derived type containing equilibrium data for a spatial point in the plasma
+    type(eq_point(nspec=nspec)), intent(in) :: eq
+
     complex(KIND=rkind), intent(out) :: eps(3,3)   
     complex(KIND=rkind) :: chi(3,3)
 
     integer :: is, i
+    
+    eps = 0.0_rkind
     
 !   Get susceptibility tensor for each species.
     do is = 0, nspec
@@ -94,7 +101,7 @@ contains
           plasma_model: select case (spec_model(is) )
     
               case ('cold')
-                call suscep_cold(is, chi)
+                call suscep_cold(eq, is, chi)
         
               case default
                 write (0,*) 'dielectric_tensor: unimplemented species model =', spec_model(is)
@@ -116,13 +123,17 @@ contains
 
 ! ********************************************************************************
 
- subroutine dielectric_cold(eps)
- 
+ subroutine dielectric_cold(eq, eps)
 !   calculates the cold plasma dielectric tensor eps for each species using suscep_cold().
+!   Output eps is derived type dielectric_tensor defined above.  
 
     use species_m, only : nspec, spec_model
+    use equilibrium_m, only : eq_point
 
     implicit none
+    
+!   Derived type containing equilibrium data for a spatial point in the plasma
+    type(eq_point), intent(in) :: eq
 
     complex(KIND=rkind), intent(out) :: eps(3,3)
     
@@ -134,7 +145,7 @@ contains
     
 !   Get susceptibility tensor for each species.
     do is = 0, nspec
-        call suscep_cold(is, chi)
+        call suscep_cold(eq, is, chi)
         eps = eps + chi
         
     end do

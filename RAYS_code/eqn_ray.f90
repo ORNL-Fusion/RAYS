@@ -1,4 +1,4 @@
- subroutine eqn_ray(s, v, dvds)
+ subroutine eqn_ray(s, v, dvds, ray_stop)
 
 !   Calculates the RHS of the ray's equation.
 !   By default there are seven equations; three for r(s), three for k(s) and one for s
@@ -19,23 +19,30 @@
 !        to arc length, so introduce parameter, dsd_ray_param = 1 for ray_param = 'arcl',
 !        dsd_ray_param = |v group| == vg0 for ray_param = 'time'
  
+!   External procedures: deriv_cold (deriv_cold)
 
     use constants_m, only : rkind
-    use diagnostics_m, only : integrate_eq_gradients, verbosity, message_unit,&
-                            & message, equib_err, stop_ode, ray_stop_flag
-    use equilibrium_m
-    use ode_m, only : nv
-    use rf_m, only : k0, nvec, n1, n3, kvec, k1, k3, ray_dispersion_model, ray_param
-    use damping_m, only : damping_model, damping, multi_spec_damping
+    use diagnostics_m, only : integrate_eq_gradients, verbosity, message_unit, message
     use species_m, only : nspec, n0s
+    use equilibrium_m, only : equilibrium, eq_point
+    use ode_m, only : nv, ode_stop
+    use rf_m, only : k0, ray_dispersion_model, ray_param
+    use damping_m, only : damping_model, damping, multi_spec_damping
     
      implicit none
      
     real(KIND=rkind), intent(in) :: s
     real(KIND=rkind), intent(in) :: v(nv)
     real(KIND=rkind), intent(out) :: dvds(nv) 
+    type(ode_stop), intent(out)  :: ray_stop
 
     real(KIND=rkind) :: rvec(3)
+    real(KIND=rkind) :: kvec(3), k1, k3
+    real(KIND=rkind) :: nvec(3) 
+
+!   Derived type containing equilibrium data for a spatial point in the plasma
+    type(eq_point) :: eq
+
     real(KIND=rkind) :: dddx(3), dddk(3), dddw, vg(3), vg0, vg_unit(3)
     real(KIND=rkind) :: ksi(0:nspec), ki
     real(KIND=rkind) :: dsd_ray_param
@@ -46,8 +53,11 @@
 !***********************************
  
     interface deriv_cold
-       subroutine deriv_cold(dddx, dddk, dddw)
+       subroutine deriv_cold(eq, nvec, dddx, dddk, dddw)
           use constants_m, only : rkind
+          use equilibrium_m, only : equilibrium, b0, eq_point
+          type(eq_point), intent(in) :: eq
+          real(KIND=rkind), intent(in) :: nvec(3)
           real(KIND=rkind), intent(out) :: dddx(3), dddk(3), dddw
        end subroutine deriv_cold
     end interface deriv_cold
@@ -56,27 +66,25 @@
     rvec = v(1:3); kvec = v(4:6)
 
 !   Calculate the plasma equilibrium.
-    call equilibrium(rvec)
+    call equilibrium(rvec, eq)
 
 ! Check if equib_err has been set in equilibrium
-    if (trim(equib_err) /= '') then
-        stop_ode = .true.
-        write (*,*) 'eqn_ray: s = ', s, '  equib_err = ', equib_err
-        write (message_unit,*) 'eqn_ray: s = ', s, '  equib_err = ', equib_err, &
+    if (trim(eq%equib_err) /= '') then
+        ray_stop%stop_ode = .true.
+        write (*,*) 'eqn_ray: s = ', s, '  equib_err = ', eq%equib_err
+        write (message_unit,*) 'eqn_ray: s = ', s, '  equib_err = ', eq%equib_err, &
               & 'r_end = ', rvec
-        ray_stop_flag = equib_err
+        ray_stop%ode_stop_flag = eq%equib_err
         return
     end if
 
 
 !   k1 (n1) = perpedicular component of kvec (nvec) (magnitude).
 !   k3 (n3) = parallel component of kvec (nvec).  
-    k3 = sum(kvec*bunit)
-    k1 = sqrt( sum((kvec-k3*bunit)**2) )
+    k3 = sum(kvec*eq%bunit)
+    k1 = sqrt( sum((kvec-k3*eq%bunit)**2) )
 
     nvec = kvec/k0
-    n1 = k1/k0
-    n3 = k3/k0
 
 !   Calculate dD/dk, dD/dx, and dD/d(omega) 
 
@@ -84,7 +92,7 @@
 
         case ('cold' )
     !      Derivatives of D for a cold plasma.
-         call deriv_cold(dddx, dddk, dddw)
+         call deriv_cold(eq, nvec, dddx, dddk, dddw)
 
         case default
            write(*,*) 'EQN_RAY: invalid value, ray_dispersion_model = ', ray_dispersion_model
@@ -106,8 +114,8 @@
 !      write(6,'(a,1p3e12.4)') 'EQN_RAY: vg/|vg| =', vg_unit
     else
        write(*,*) 'EQN_RAY: infinite group velocity, dddw = ', dddw
-       stop_ode = .true.
-       ray_stop_flag = 'infinite Vg'
+       ray_stop%stop_ode = .true.
+       ray_stop%ode_stop_flag = 'infinite Vg'
        return
     end if
 
@@ -133,8 +141,8 @@
           else
              write(0,*) 'EQN_RAY: ray stalled, dddk = ', dddk
              write(message_unit,*) 'EQN_RAY: ray stalled, dddk = ', dddk
-             stop_ode = .true.
-             ray_stop_flag = 'ray stalled'
+             ray_stop%stop_ode = .true.
+             ray_stop%ode_stop_flag = 'ray stalled'
              return
           end if
 
@@ -188,14 +196,14 @@
     if (integrate_eq_gradients .eqv..true.) then
 
 !       Check if grad(B) is consistent with B.
-        dvds(nv0+1)  = sum(dsd_ray_param*vg_unit*gradbtensor(:,1))
-        dvds(nv0+2) = sum(dsd_ray_param*vg_unit*gradbtensor(:,2))
-        dvds(nv0+3) = sum(dsd_ray_param*vg_unit*gradbtensor(:,3))
+        dvds(nv0+1)  = sum(dsd_ray_param*vg_unit*eq%gradbtensor(:,1))
+        dvds(nv0+2) = sum(dsd_ray_param*vg_unit*eq%gradbtensor(:,2))
+        dvds(nv0+3) = sum(dsd_ray_param*vg_unit*eq%gradbtensor(:,3))
 
 !       Check if grad(ne) and grad(Te) are consistent with ne and Te.
 !       ne normalized to peak electron density 
-        dvds(nv0+4) = sum(dsd_ray_param*vg_unit*gradns(:,0))/n0s(0)
-        dvds(nv0+5) = sum(dsd_ray_param*vg_unit*gradts(:,0))
+        dvds(nv0+4) = sum(dsd_ray_param*vg_unit*eq%gradns(:,0))/n0s(0)
+        dvds(nv0+5) = sum(dsd_ray_param*vg_unit*eq%gradts(:,0))
      
     end if
 

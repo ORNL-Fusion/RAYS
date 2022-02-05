@@ -12,9 +12,6 @@
     
 !   nv: No. of ODEs to be solved.
     integer :: nv 
- 
-!   v: Vector to be integrated by ode solver
-    real(KIND=rkind), allocatable :: v(:)
     
 ! Maximum length of ray
      real(KIND=rkind) :: s_max
@@ -24,6 +21,35 @@
 
 !   Maximum no. of steps allowed.
     integer :: nstep_max
+   
+! Derived type containing information on terminating ode integration
+    type ode_stop    
+        logical :: stop_ode = .false.
+        character(len=20) :: ode_stop_flag = ''
+    end type ode_stop
+
+    interface initialize_SG_ode
+        module subroutine initialize_SG_ode
+        end subroutine initialize_SG_ode
+    end interface initialize_SG_ode
+
+    interface ray_init_SG_ode
+         module subroutine ray_init_SG_ode
+         end subroutine ray_init_SG_ode
+    end interface ray_init_SG_ode
+
+    interface SG_ode
+      module subroutine SG_ode(eqn_ray, nv, v, s, sout, ray_stop)
+        use diagnostics_m, only : message_unit, message, verbosity
+        use constants_m, only : rkind
+      ! Arguments of ODE
+        external eqn_ray
+        integer, intent(in) :: nv
+        real(KIND=rkind), intent(inout) :: v(nv)
+        real(KIND=rkind), intent(inout) :: s, sout
+        type(ode_stop), intent(out)  :: ray_stop
+      end subroutine SG_ode
+    end interface SG_ode
    
     namelist /ode_list/ ode_solver_name, nstep_max, s_max, ds
 
@@ -36,7 +62,6 @@
   subroutine initialize_ode_solver
 
     use constants_m, only : input_unit
-    use SG_ode_m, only : initialize_SG_ode
     use damping_m, only : damping_model, multi_spec_damping
     use diagnostics_m, only : message_unit, message, text_message, integrate_eq_gradients
     use species_m, only : nspec
@@ -82,7 +107,7 @@
     
     call message ('initialize_ode_solver: ODE vector length nv', nv)
 
-    allocate( v(nv) )
+!    allocate( v(nv) )
 
     return
   end subroutine initialize_ode_solver
@@ -96,7 +121,6 @@
 !Presently supported solvers are:
 ! ode_solver = SG_ode: subroutine ODE developed by by L. F. Shampine and M. K. Gordon.
 
-    use SG_ode_m, only : ray_init_SG_ode
     use diagnostics_m, only : message, text_message
 
       
@@ -119,13 +143,12 @@
     
 !********************************************************************
 
-  subroutine ode_solver(eqn_ray, nv, v, s, sout)
+  subroutine ode_solver(eqn_ray, nv, v, s, sout, ray_stop)
 ! Generic wrapper for various ODE solvers. Takes one step integrating from s to sout.
 
 !Presently supported solvers are:
 ! ode_solver = SG_ode: subroutine ODE developed by by L. F. Shampine and M. K. Gordon.
 
-    use SG_ode_m, only : SG_ode
     use diagnostics_m, only : message, text_message
      
     implicit none
@@ -134,6 +157,7 @@
     real(KIND=rkind), intent(inout) :: v(nv)
     real(KIND=rkind), intent(inout) :: s
     real(KIND=rkind), intent(inout) :: sout
+    type(ode_stop), intent(out)  :: ray_stop
     
     external eqn_ray
     
@@ -141,7 +165,8 @@
     solver: select case (trim(ode_solver_name))
 
        case ('SG_ODE')
-          call SG_ode(eqn_ray, nv, v, s, sout)
+
+          call SG_ode(eqn_ray, nv, v, s, sout, ray_stop)
 
        case default
           write(0,*) 'ode_solver, invalid ode solver = ', trim(ode_solver_name)
