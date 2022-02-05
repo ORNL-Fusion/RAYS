@@ -28,6 +28,7 @@
         character(len=20) :: ode_stop_flag = ''
     end type ode_stop
 
+! Interfaces for Shampine and Gordon ODE 
     interface initialize_SG_ode
         module subroutine initialize_SG_ode
         end subroutine initialize_SG_ode
@@ -50,7 +51,32 @@
         type(ode_stop), intent(out)  :: ray_stop
       end subroutine SG_ode
     end interface SG_ode
-   
+
+! Interfaces for RK4 ODE 
+    interface initialize_RK4_ode
+        module subroutine initialize_RK4_ode
+        end subroutine initialize_RK4_ode
+    end interface initialize_RK4_ode
+
+    interface ray_init_RK4_ode
+         module subroutine ray_init_RK4_ode
+         end subroutine ray_init_RK4_ode
+    end interface ray_init_RK4_ode
+
+    interface RK4_ode
+      module subroutine RK4_ode(eqn_ray, nv, v, s, sout, ray_stop)
+        use diagnostics_m, only : message_unit, message, verbosity
+        use constants_m, only : rkind
+      ! Arguments of ODE
+        external eqn_ray
+        integer, intent(in) :: nv
+        real(KIND=rkind), intent(inout) :: v(nv)
+        real(KIND=rkind), intent(inout) :: s, sout
+        type(ode_stop), intent(out)  :: ray_stop
+      end subroutine RK4_ode
+    end interface RK4_ode
+
+! Namelist   
     namelist /ode_list/ ode_solver_name, nstep_max, s_max, ds
 
 !********************************************************************
@@ -79,6 +105,9 @@
 
        case ('SG_ODE')
           call initialize_SG_ode
+
+       case ('RK4_ODE')
+          call initialize_RK4_ode
 
        case default
           write(0,*) 'read_ode_namelists, invalid ode solver = ', trim(ode_solver_name)
@@ -130,8 +159,10 @@
     solver: select case (trim(ode_solver_name))
 
        case ('SG_ODE')
-
           call ray_init_SG_ode
+
+       case ('RK4_ODE')
+          call ray_init_RK4_ode
 
        case default  ! By this point there has to be a solver
            stop 2
@@ -165,8 +196,10 @@
     solver: select case (trim(ode_solver_name))
 
        case ('SG_ODE')
-
           call SG_ode(eqn_ray, nv, v, s, sout, ray_stop)
+
+       case ('RK4_ODE')
+          call RK_ode(eqn_ray, nv, v, s, sout, ray_stop)
 
        case default
           write(0,*) 'ode_solver, invalid ode solver = ', trim(ode_solver_name)
