@@ -8,6 +8,8 @@
 !   unit number over to std I/O (i.e. unit=6) and back.
 !   'set_message_unit_stdio' and 'reset_message_unit_file'
 
+!   External procedures: cpu_time (intrinsic)
+
 ! Specifications
 
     implicit none

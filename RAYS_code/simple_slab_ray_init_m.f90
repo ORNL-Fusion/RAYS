@@ -5,6 +5,7 @@
 ! which generates initial positions, rvec0 = (x0, 0., 0 : nray), and initial refractive
 ! index vector, rindex_vec0 = (nx0, ny0, nz0 : nray).
 
+! External procedures: solve_disp_nx_vs_ny_nz (solve_disp_nx_vs_ny_nz.f90)
     use constants_m, only : rkind
     
     implicit none

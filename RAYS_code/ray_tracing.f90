@@ -1,4 +1,8 @@
  subroutine trace_rays
+! Does all ray tracing.  Outer loop iterates over different rays.  Inner loop iterates
+! over ray parameter step, s, to calculate ray trajectory.  Output is saved after each step/
+
+! External procedures: cpu_time (intrinsic), check_save (check_save.f90)
 
     use constants_m, only : rkind, ray_list_unit
     use diagnostics_m, only : message_unit, message, verbosity, &

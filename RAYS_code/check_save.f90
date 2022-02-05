@@ -1,5 +1,6 @@
  subroutine check_save(s, nv, v, ray_stop)
-!   does some checking and saves output for plotting after each step.
+!   Does checking for ray stop criteria and saves output after each step.
+!   External routines: deriv_cold (deriv_cold.f90)
 
     use constants_m, only : rkind, output_unit
     use diagnostics_m, only : integrate_eq_gradients, message, text_message

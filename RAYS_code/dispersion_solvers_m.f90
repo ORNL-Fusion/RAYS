@@ -7,6 +7,8 @@
 !   n12 = square of perpendicular component of nvec
 !   n3 = parallel component of kvec (nvec).
 
+! External procedures: disp_solve_cold_nxsq_vs_nz (disp_solve_cold_nxsq_vs_nz.f90)
+
     use constants_m, only : rkind
     
     implicit none

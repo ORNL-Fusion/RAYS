@@ -1,7 +1,7 @@
  subroutine initialize_ode_vector(iray, nv, v)
 
-! Initializes ode vector v. 
-! Called from subroutine ray_tracing before integrating each ray.
+! Initializes ode vector v before integrating each ray. 
+! Called from subroutine ray_tracing
 
     use constants_m, only : rkind
     use diagnostics_m, only : integrate_eq_gradients, message

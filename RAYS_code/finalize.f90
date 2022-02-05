@@ -1,6 +1,8 @@
  subroutine finalize
 !   Finish up, do post processing if any
 
+!   External procedures: cpu_time (intrinsic)
+
     use diagnostics_m, only : message_unit, message, text_message, t_start_rays, &
            & t_finish_rays, t_start_tracing, t_finish_tracing
 

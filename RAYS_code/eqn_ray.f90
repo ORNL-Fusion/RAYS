@@ -19,6 +19,7 @@
 !        to arc length, so introduce parameter, dsd_ray_param = 1 for ray_param = 'arcl',
 !        dsd_ray_param = |v group| == vg0 for ray_param = 'time'
  
+!   External procedures: deriv_cold (deriv_cold)
 
     use constants_m, only : rkind
     use diagnostics_m, only : integrate_eq_gradients, verbosity, message_unit, message
