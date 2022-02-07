@@ -1,4 +1,4 @@
-subroutine rk4_RAYS ( dydt, tspan, y0, n, m, t, y, ray_stop )
+subroutine rk4_RAYS(eqn_ray, nv, v, s, sout, ray_stop)
 
 ! Modified for use in RAYS DBB 2/4/2022
 
@@ -40,42 +40,39 @@ subroutine rk4_RAYS ( dydt, tspan, y0, n, m, t, y, ray_stop )
 
   implicit none
 
-  real (  kind = rkind ), intent(inout) :: t(n+1)
-  real (  kind = rkind ), intent(in) :: tspan(2)
-  real (  kind = rkind ) y(n+1,m)
-  real (  kind = rkind ) y0(m)
+  integer, intent(in) :: nv
+  real (  kind = rkind ), intent(inout) :: v(nv)
 
-  integer, intent(in) :: m
-  integer, intent(in) :: n
+  real (  kind = rkind ), intent(inout) :: s, sout
 
   type(ode_stop), intent(out)  :: ray_stop
   
-  external dydt ! N.B. here dydt is passed in from RK4_ode_m as eqn_ray 
+  external eqn_ray 
 
-  real (  kind = rkind )::  dt
+  real (  kind = rkind )::  ds  
+  real (  kind = rkind ) :: f1(nv)
+  real (  kind = rkind ) :: f2(nv)
+  real (  kind = rkind ) :: f3(nv)
+  real (  kind = rkind ) :: f4(nv)
   
-  real (  kind = rkind ) :: f1(m)
-  real (  kind = rkind ) :: f2(m)
-  real (  kind = rkind ) :: f3(m)
-  real (  kind = rkind ) :: f4(m)
-  integer :: i
-  
-  dt = ( tspan(2) - tspan(1) ) / real ( n,  kind = rkind )
+  ds = sout-s
 
-  t(1) = tspan(1)
-  y(1,1:m) = y0(1:m)
+    call eqn_ray ( s, v(:), f1(:), ray_stop )
+! write(*,*) 'f1 = ', f1
+    if (ray_stop%stop_ode .eqv. .true.) return
+    call eqn_ray ( s + ds/2.0, v(:)+ ds*f1(:)/2.0, f2, ray_stop )
+! write(*,*) 'f2 = ', f2
+    call eqn_ray ( s + ds/2.0, v(:)+ ds*f2(:)/2.0, f3, ray_stop )
+! write(*,*) 'f3 = ', f3
+    if (ray_stop%stop_ode .eqv. .true.) return
+    call eqn_ray ( s+ds, v(:)+ ds*f3(:), f4, ray_stop )
+! write(*,*) 'f4 = ', f4
+    if (ray_stop%stop_ode .eqv. .true.) return
 
-  do i = 1, n
+    sout = s+ds
+    v = v + ds * ( f1 + 2.0 * f2 + 2.0 * f3 + f4 ) / 6.0
 
-    call dydt ( t(i),            y(i,1:m),                 f1, ray_stop )
-    call dydt ( t(i) + dt / 2.0, y(i,1:m) + dt * f1 / 2.0, f2, ray_stop )
-    call dydt ( t(i) + dt / 2.0, y(i,1:m) + dt * f2 / 2.0, f3, ray_stop )
-    call dydt ( t(i) + dt,       y(i,1:m) + dt * f3,       f4, ray_stop )
-
-    t(i+1) = t(i) + dt
-    y(i+1,1:m) = y(i,1:m) + dt * ( f1 + 2.0 * f2 + 2.0 * f3 + f4 ) / 6.0
-
-  end do
+! write(*,*) ' v = ', v
 
   return
 end

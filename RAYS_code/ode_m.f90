@@ -199,7 +199,7 @@
           call SG_ode(eqn_ray, nv, v, s, sout, ray_stop)
 
        case ('RK4_ODE')
-          call RK_ode(eqn_ray, nv, v, s, sout, ray_stop)
+          call RK4_ode(eqn_ray, nv, v, s, sout, ray_stop)
 
        case default
           write(0,*) 'ode_solver, invalid ode solver = ', trim(ode_solver_name)

@@ -41,14 +41,14 @@ contains
 
   module subroutine ray_init_RK4_ode
   ! Resets RK4_ode solver to appropriate state for start of ray.
-  ! N.B. RK4 has no parameters so there is noting to set. 
+  ! N.B. RK4 has no parameters so there is nothing to set. 
     implicit none
     return
   end subroutine ray_init_RK4_ode
 
 !********************************************************************
-
-  module subroutine RK4_ode(eqn_ray, nv, v, s, sout, ray_stop)
+ 
+   module subroutine RK4_ode(eqn_ray, nv, v, s, sout, ray_stop)
   ! Implements generic interface for RK4_ode solver (i.e. Shampine & Gordon ode.f90)
   ! Takes one step from s to sout.  RK4_ode may take intermediate steps to get to sout
   ! as indicated by iflag=3.  So call to ode is in a do loop.  See comments in ode()
@@ -66,17 +66,17 @@ contains
     real(KIND=rkind), intent(inout) :: s, sout
     type(ode_stop), intent(out)  :: ray_stop
 
-    real(KIND=rkind) : tspan(2), t(2)
-    real(KIND=rkind) : y0(nv)
+    real(KIND=rkind) :: tspan(2), t(2)
+    real(KIND=rkind) :: y0(nv)
     integer :: n, m
     
     tspan(1) = s
-    tspan(1) = sout
-    t = tspan
+    tspan(2) = sout
+    t(:) = tspan(:)
     n = 1
     m = nv
-    call subroutine rk4_RAYS ( eqn_ray, tspan, y0, n, m, t, v, ray_stop)
-    
+    y0(:) = v(:)
+    call rk4_RAYS(eqn_ray, nv, v, s, sout, ray_stop)
     return
   end subroutine RK4_ode
 
