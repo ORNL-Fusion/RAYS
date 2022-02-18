@@ -73,7 +73,7 @@ contains
   ! as indicated by iflag=3.  So call to ode is in a do loop.  See comments in ode()
   ! for details.
 
-    use diagnostics_m, only : message_unit, message, verbosity
+    use diagnostics_m, only : message_unit, message, text_message, verbosity
     use constants_m, only : rkind
 
   ! Arguments of ODE
@@ -95,7 +95,7 @@ contains
        call ode(eqn_ray, nv, v, s, sout, rel_err, abs_err, &
             & iflag, work, iwork, ray_stop)
 
-       if (verbosity > 2) write(message_unit,'(/,1(a,i4),2(a,f10.4),2(a,1pe10.4))') &
+       if (verbosity > 2) write(message_unit,'(/,1(a,i4),2(a,g12.6),2(a,1pe10.4))') &
             & ' iflag =', iflag,'  s=', s, '  sout=',sout,  &
             & '  rel_err= ', rel_err,' abs_err = ', abs_err
 
@@ -120,6 +120,8 @@ contains
          else ! error return
               ray_stop%stop_ode = .true.
               call message('SG_ode: Error return: iflag', iflag, 0)
+              if (iflag == 5) call text_message('Equation is stiff', 0)
+              call message()
               ray_stop%ode_stop_flag = 'ODE iflag error'
               exit odeloop
          end if

@@ -72,8 +72,8 @@
     if (trim(eq%equib_err) /= '') then
         ray_stop%stop_ode = .true.
         write (*,*) 'eqn_ray: s = ', s, '  equib_err = ', eq%equib_err
-        write (message_unit,*) 'eqn_ray: s = ', s, '  equib_err = ', eq%equib_err, &
-              & 'r_end = ', rvec
+        write (message_unit,'(a,g12.4,3a,3g12.4)') 'eqn_ray: s = ', s, '  equib_err = ', eq%equib_err, &
+              & '  r_end = ', rvec
         ray_stop%ode_stop_flag = eq%equib_err
         return
     end if
@@ -202,7 +202,7 @@
 
 !       Check if grad(ne) and grad(Te) are consistent with ne and Te.
 !       ne normalized to peak electron density 
-        dvds(nv0+4) = sum(dsd_ray_param*vg_unit*eq%gradns(:,0))/n0s(0)
+        dvds(nv0+4) = sum(dsd_ray_param*vg_unit*eq%gradns(:,0))
         dvds(nv0+5) = sum(dsd_ray_param*vg_unit*eq%gradts(:,0))
      
     end if

@@ -48,7 +48,7 @@
        v(nv0+1:nv0+3) = eq%bvec(1:3)
  
 !      For checking if grad(ne) and grad(Te) are consistent with ne and Te.
-       v(nv0+4) = eq%ns(0)/n0s(0)
+       v(nv0+4) = eq%ns(0)
        v(nv0+5) = eq%ts(0)
      
     end if gradients

@@ -54,6 +54,10 @@ def  n_evenly_spaced_integers(n, Length):
         return [-1]
     else:
         return [int((i)*float(Length-1)/(n-1)) for i in range(n)]        
+#
+#----------------------------------------------------------------------------------------------
+# Main program
+#----------------------------------------------------------------------------------------------
 
 # Get data from graphics description input file
 graphics_variable_dict = input_file_to_variable_dict('graphics_description_slab.dat')

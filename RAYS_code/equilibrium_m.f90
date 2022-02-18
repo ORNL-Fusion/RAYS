@@ -2,6 +2,10 @@
 ! namelist /equilibrium_list/ equilib_model.
 !
 ! Working notes:
+! 2/15/2022 (DBB) For use with toroidal equilibria added to eq_point type psi at plasma 
+! boundary <=> psiB and normalized psi = psi(r)/psiB <=> psiN(r).  Some geometries don't 
+! have meaningful flux functions (e.g. slab) buyt many do so include it.
+!
 ! 1/10/2022 (DBB) converted magnetic and species data at a spatial pint  to derived 
 ! type -> eq_point so we can have multiple instances of equilibrium data in memory at
 ! the same time.
@@ -30,6 +34,12 @@
     
     ! Flux function psi
         real(KIND=rkind) :: psi, gradpsi(3)
+    
+    ! Flux function psi at plasma boundary
+        real(KIND=rkind) :: psiB
+    
+    ! Normalized lux function psi/psiB
+        real(KIND=rkind) :: psiN
 
     !   Density.
         real(KIND=rkind), allocatable :: ns(:), gradns(:,:)
@@ -59,6 +69,7 @@ contains
     use constants_m, only : input_unit    
     use diagnostics_m, only : message_unit, message, text_message
     use slab_eq_m, only : initialize_slab_eq
+    use solovev_eq_m, only : initialize_solovev_eq
 
     implicit none
     
@@ -73,8 +84,13 @@ contains
     equilibria: select case (trim(equilib_model))
 
        case ('slab')
-!         A 1-D slab equilibrium.
+!         A 1-D slab equilibrium with stratification in x
           call initialize_slab_eq
+
+
+       case ('solovev')
+!         A 1-D slab equilibrium with stratification in x
+          call initialize_solovev_eq
 
        case default
           write(0,*) 'initialize_equilibrium: improper equilib_model =', equilib_model
@@ -104,6 +120,7 @@ contains
     use diagnostics_m, only : message
     
     use slab_eq_m, only : slab_eq
+    use solovev_eq_m, only : solovev_eq
  
     implicit none
 
@@ -116,8 +133,8 @@ contains
 !   gradbtensor(i,j) = d[B(j)]/d[x(i)].
     real(KIND=rkind) :: bvec(3), bmag, gradbmag(3), bunit(3), gradbunit(3,3), gradbtensor(3,3)
 
-! Flux function psi
-    real(KIND=rkind) :: psi, gradpsi(3)
+! Flux function psi etc.
+    real(KIND=rkind) :: psi, gradpsi(3), psiB, psiN
 
 !   Density.
     real(KIND=rkind) :: ns(0:nspec), gradns(3, 0:nspec)
@@ -136,8 +153,18 @@ contains
     equilibria: select case (trim(equilib_model))
 
        case ('slab')
-!         A 1-D slab equilibrium.
+!         A 1-D slab equilibrium with stratification in x
           call slab_eq(rvec, bvec, gradbtensor, ns, gradns, ts, gradts, equib_err)
+          psi = 0.
+          gradpsi = 0.
+
+       case ('solovev')
+          call solovev_eq(rvec, bvec, gradbtensor, ns, gradns, ts, gradts, psi, gradpsi, &
+                & psiB, psiN, equib_err)
+          eq%psi = psi
+          eq%gradpsi = gradpsi
+          eq%psiB = psiB
+          eq%psiN = psiN
 
        case default
           write(0,*) 'equilibrium_m: invalid equilibrium model = ', trim(equilib_model)

@@ -1,10 +1,12 @@
  module dispersion_solvers_m
 ! Contains routines to solve various forms of the plasma dispersion relation
-! N.B. These routines require that the plasma magnetic and species quantities
-! have been set by a previous call to subroutine equilibrium(rvec)
+
+! N.B. The plasma magnetic and species quantities come in through argument 'eq' which
+! is a derived type 'eq_point'
+
 ! N.B. remember convention
 !   n1 = perpedicular component of nvec.
-!   n12 = square of perpendicular component of nvec
+!   n1sq = square of perpendicular component of nvec
 !   n3 = parallel component of kvec (nvec).
 
 ! External procedures: disp_solve_cold_nxsq_vs_nz (disp_solve_cold_nxsq_vs_nz.f90)
@@ -21,9 +23,11 @@ contains
 
     
   subroutine solve_disp_nx_vs_ny_nz(eq, dispersion_model, wave_mode, k_sign, ny, nz, nx)    
+
 ! N.B. This requires that the magnetic field be in the y-z plane, otherwise n_parallel 
 !      has a component along nx.  Complicates dispersion relation.
-! N.B. nx is complex(KIND=rkind)
+
+! N.B. nx output is complex(KIND=rkind).  Calling program must account for that.
 
     use diagnostics_m, only : message, text_message
     use species_m, only : nspec
@@ -45,7 +49,7 @@ contains
     complex(KIND=rkind), intent(out) :: nx
 
     real(KIND=rkind) :: n3  ! n parallel
-    complex(KIND=rkind) :: n12(4) !n perp square
+    complex(KIND=rkind) :: n1sq(4) !n perp square
     integer :: i_mode  ! plus mode -> 1, minus mode -> 2, fast mode -> 3, slow mode -> 3
 
     n3 = ny*eq%bunit(2) + nz*eq%bunit(3)
@@ -75,8 +79,8 @@ contains
 
        case ('cold')
           ! Solve for n-perp squared
-          call disp_solve_cold_nxsq_vs_nz(eq, n3, n12) 
-          nx = k_sign*sqrt(n12(i_mode))
+          call disp_solve_cold_nxsq_vs_nz(eq, n3, n1sq) 
+          nx = k_sign*sqrt(n1sq(i_mode)-ny**2)
 
        case default
           write(0,*) 'solve_disp: unimplemented dispersion_model =', trim(dispersion_model)

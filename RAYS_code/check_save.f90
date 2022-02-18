@@ -131,7 +131,7 @@
         call message ('check_save: B relative error', diff_vec, 1)
 
 !       Check if grad(Te) and grad(ne) are consistent with Te and ne.
-        call message('check_save: ne relative error', v(nv0+4)*eq%ns(0)/n0s(0) - 1., 1)
+        call message('check_save: ne relative error', (v(nv0+4)-eq%ns(0))/n0s(0), 1)
         call message('check_save: Te difference',  v(nv0+5)-eq%ts(0),1)
     end if integrate_gradients
 
@@ -153,7 +153,7 @@ contains
 !      calculates the residual for given k1 and k3.
 !      get dielectric tensor from module suscep_m
 
-       use species_m, only : nspec, n0s
+       use species_m, only : nspec
        use suscep_m, only :  dielectric_cold
 
        implicit none 
@@ -174,6 +174,8 @@ contains
     if (ray_dispersion_model == "cold") then
         call dielectric_cold(eq, eps)
     end if
+    
+!    write(*,*) 'eps = ', eps
 
 !      Hermitian part.
        eps_h = .5 * ( eps + conjg(transpose(eps)) )

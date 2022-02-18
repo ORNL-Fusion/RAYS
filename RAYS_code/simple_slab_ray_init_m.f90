@@ -67,13 +67,15 @@ contains
     close(unit=input_unit)
     write(message_unit, simple_slab_ray_init_list)
 
-! allocate space for the initial condition vectors rvec0, rindex_vec0
+! allocate maximum space for the initial condition vectors rvec0, rindex_vec0
+! N.B. Not all of these may successfully initialize because of errors.  So count successful
+!      initializations.  That's the final value of nray.
     nray = n_x_launch * n_ky_launch * n_kz_launch
 
-        if (nray > 0) then
+		if ((nray > 0) .and. (nray <= nray_max)) then
             allocate (rvec0(3, nray), rindex_vec0(3, nray))
         else
-            write (6,*) 'ray_init_slab: invalid number of rays  nray=', nray
+            write (*,*) 'ray_init_slab: invalid number of rays  nray=', nray
             stop 1
         end if  
 
@@ -107,8 +109,7 @@ contains
                      &  rindex_y, rindex_z, rindex_x)
                 if (aimag(rindex_x) /= 0.) then
                     write(message_unit, *) 'slab_init: evanescent ray x = ', x, &
-                    & ' ny = ', rindex_y, ' nz = ', rindex_z
-               
+                    & ' ny = ', rindex_y, ' nz = ', rindex_z               
                     cycle kzloop
                 end if
 

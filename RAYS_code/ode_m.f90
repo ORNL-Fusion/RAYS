@@ -7,6 +7,7 @@
 
 !   Switch to select ODE solvers for ray tracing.  Presently supported solvers are:
 !   ode_solver= SG_ode: subroutine ODE developed by L. F. Shampine and M. K. Gordon.
+!   ode_solver = RK4_ode: Simple Runge-Kutta 4th order integrator.
 
     character (len = 15) :: ode_solver_name  
     
@@ -149,6 +150,8 @@
 
 !Presently supported solvers are:
 ! ode_solver = SG_ode: subroutine ODE developed by by L. F. Shampine and M. K. Gordon.
+! ode_solver = RK4_ode: Simple Runge-Kutta 4th order integrator.  The initialization
+!              routine ray_init_RK4_ode does nothing since RK4 has no state to be reset.
 
     use diagnostics_m, only : message, text_message
 

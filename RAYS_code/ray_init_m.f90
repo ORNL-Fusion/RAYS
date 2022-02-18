@@ -56,6 +56,7 @@ contains
         use constants_m, only : input_unit
         use diagnostics_m, only : message_unit, message, text_message
         use simple_slab_ray_init_m, only : simple_slab_ray_init
+        use toroid_ray_init_m, only : ray_init_toroid_kphi_ktheta
  
         implicit none
 
@@ -69,6 +70,9 @@ contains
     
             case ('simple_slab')
                 call simple_slab_ray_init(nray_max, nray, rvec0, rindex_vec0)
+
+             case ('toroid')
+                call ray_init_toroid_kphi_ktheta(nray_max, nray, rvec0, rindex_vec0)
         
             case default
                 write(0,*) 'initialize_ray_init: invalid ray_init_model = ', trim(ray_init_model)
