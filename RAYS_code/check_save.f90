@@ -5,7 +5,7 @@
     use constants_m, only : rkind, output_unit
     use diagnostics_m, only : integrate_eq_gradients, message, text_message
     use species_m, only : nspec, n0s
-    use equilibrium_m, only : equilibrium, b0,  eq_point
+    use equilibrium_m, only : equilibrium, eq_point
     use ode_m, only : ds, ode_stop
     use rf_m, only : ray_dispersion_model, ray_param, k0, dispersion_resid_limit
     use damping_m, only : damping_model, damping, multi_spec_damping, total_damping_limit
@@ -26,7 +26,7 @@
     real(KIND=rkind) :: dddx(3), dddk(3), dddw, vg(3), vg0
     real(KIND=rkind) :: ksi(0:nspec), ki
     real(KIND=rkind) :: total_absorption, total_species_absorption
-    real(KIND=rkind) :: diff_vec(3), r 
+    real(KIND=rkind) :: resid, bmod, diff_vec(3)
   
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!  
  
@@ -54,9 +54,9 @@
 
 !   Calculate the residual.
     
-    r = residual(eq, k1,k3)
-    call message ('check_save: residual', r, 1)
-    if (r > dispersion_resid_limit) then
+    resid = residual(eq, k1,k3)
+    call message ('check_save: residual', resid, 1)
+    if (resid > dispersion_resid_limit) then
         ray_stop%ode_stop_flag = 'dispersion residual'
     end if
         
@@ -127,7 +127,8 @@
 
     integrate_gradients : if (integrate_eq_gradients .eqv. .true.) then
 !      Check if grad(B) is consistent with B.
-        diff_vec= (v(nv0+1:nv0+3) - eq%bvec(1:3))/b0
+        bmod = sqrt(sum(eq%bvec(1:3)))
+        diff_vec= (v(nv0+1:nv0+3) - eq%bvec(1:3))/bmod
         call message ('check_save: B relative error', diff_vec, 1)
 
 !       Check if grad(Te) and grad(ne) are consistent with Te and ne.

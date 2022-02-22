@@ -55,7 +55,7 @@
     interface deriv_cold
        subroutine deriv_cold(eq, nvec, dddx, dddk, dddw)
           use constants_m, only : rkind
-          use equilibrium_m, only : equilibrium, b0, eq_point
+          use equilibrium_m, only : equilibrium, eq_point
           type(eq_point), intent(in) :: eq
           real(KIND=rkind), intent(in) :: nvec(3)
           real(KIND=rkind), intent(out) :: dddx(3), dddk(3), dddw

@@ -1,4 +1,6 @@
 module solovev_eq_m
+! A simple Solovev equilibrium model based on notes from Cai-Ye Wang of 1995 and DBB 2/12/2022.
+!
 
     use constants_m, only : rkind
     
@@ -7,6 +9,11 @@ module solovev_eq_m
 ! data for magnetics
     real(KIND=rkind) :: rmaj, kappa, bphi0, iota0
     real(KIND=rkind) :: inner_bound, outer_bound, vert_bound, r_Zmax
+
+    ! Flux function psi at plasma boundary
+    real(KIND=rkind) :: psiB
+! Normalized lux function psi/psiB
+    real(KIND=rkind) :: psiN
 
 ! data for slab density and temperature
     character(len=15) :: dens_prof_model
@@ -37,6 +44,8 @@ contains
     use diagnostics_m, only : message, message_unit, verbosity
     
     implicit none
+
+    real(KIND=rkind) :: bp0
     
     allocate( t_prof_model(0:nspec) )
     allocate( alphat1(0:nspec), alphat2(0:nspec) )
@@ -52,13 +61,21 @@ contains
         call message('Inner boundary complex, outer_bound >=  sqrt2) rmaj = ', outer_bound)
         write(*,*) 'Inner boundary complex, outer_bound >=  sqrt2) rmaj = ', outer_bound
     end if
-    
+
+!   Define
+    bp0 = bphi0*iota0
+  
+!   Flux at plasma boundary
+    psiB = .5*bp0 * (outer_bound**2-rmaj**2)**2/rmaj**2/4.
+   
     inner_bound = sqrt(2.*rmaj**2 -outer_bound**2 )
     
     ! radius of maximum in z
     r_Zmax = (2.*outer_bound**2 * rmaj**2 - outer_bound**4)**0.25
+    ! z at r_Zmax
     vert_bound = sqrt(kappa)/(2.*r_Zmax)*sqrt(outer_bound**4 - r_Zmax**4 +2.*r_Zmax**2*rmaj**2- &
               &  2.*outer_bound**2*rmaj**2)
+
     call message('Inner boundary = ', inner_bound)
     call message('Outer boundary = ', outer_bound)
     call message('Vertical boundary = ', vert_bound)
@@ -78,8 +95,7 @@ contains
 
 !********************************************************************
 
-  subroutine solovev_eq(rvec, bvec, gradbtensor, ns, gradns, ts, gradts, psi, gradpsi, &
-                & psiB , psiN, equib_err)
+  subroutine solovev_eq(rvec, bvec, gradbtensor, ns, gradns, ts, gradts, equib_err)
 !   Simple solovev equilibrium model originally based on notes from 7/28/1995 by Cai-ye Wang.
 !   Reworked extensively by DBB.  See notes of 2-12-2022. 
 !
@@ -95,12 +111,12 @@ contains
     real(KIND=rkind), intent(out) :: bvec(3), gradbtensor(3,3)
     real(KIND=rkind), intent(out) :: ns(0:nspec), gradns(3,0:nspec)
     real(KIND=rkind), intent(out) :: ts(0:nspec), gradts(3,0:nspec)
-    real(KIND=rkind), intent(out) :: psi, gradpsi(3), psiB, psiN
     character(len=20), intent(out) :: equib_err
 
 
     real(KIND=rkind) :: x, y, z, r
     real(KIND=rkind) :: br, bz, bphi, bp0
+    real(KIND=rkind) :: psi, gradpsi(3), psiN, gradpsiN(3)
     real(KIND=rkind) :: dd_psi, dbrdr, dbrdz, dbzdr, dbzdz, dbphidr
     integer :: is
 
@@ -117,15 +133,9 @@ contains
 
 !   Define
     bp0 = bphi0*iota0
- 
-!   Flux function x, y, z normalized to one at last surface (z=0, r=outer_bound)
-    psi = .5*bp0 * ( (r*z/(rmaj*kappa))**2 + ((r**2-rmaj**2)**2)/rmaj**2/4. )
- 
-!   Flux at plasma boundary
-    psiB = .5*bp0 * (outer_bound**2-rmaj**2)**2/rmaj**2/4.
 
-!   Normalized Flux function x, y, z normalized to one at last surface (z=0, r=outer_bound)
-    psiN = .5*bp0 * ( (r*z/(rmaj*kappa))**2 + ((r**2-rmaj**2)**2)/rmaj**2/4. )/psiB
+! Get poloidal flux
+    call solovev_psi(rvec, psi, gradpsi, psiN, gradpsiN)     
 
 ! Check that we are in the plasma
     if (psiN > 1.) equib_err = 'psi >1 out_of_plasma'
@@ -138,12 +148,12 @@ contains
 !   Magnetic field and its derivatives.
     br = -bp0*r*z/(rmaj*kappa)**2
     bz = bp0 * ( (z/(rmaj*kappa))**2 + .5*((r/rmaj)**2-1.) )
-    bphi = bphi0*rmaj / r
+    bphi = bphi0*rmaj/r
 
 
 !   dbrdr = d(Br)/dr, dbrdz = d(Br)/dz.
     dbrdr = br/r
-    dbrdz = -bp0*r / (rmaj*kappa)**2
+    dbrdz = -bp0*r/(rmaj*kappa)**2
     
 !   dbzdr = d(Bz)/dr, dbzdz = d(Bz)/dz.
     dbzdr = bp0*r/rmaj**2
@@ -151,9 +161,6 @@ contains
     
 !   dbphidr = d(Bphi)/dr.
     dbphidr = -bphi/r
-    
-!   grad normalized Flux at x, y, z
-    gradpsi = (/x*bz, y*bz, -r*br/)/psiB
 
 !   B field in the fixed (x,y,z) coordinates.
     bvec(1) = br*x/r - bphi*y/r
@@ -191,9 +198,9 @@ contains
                 ns(0:nspec) = n0s(0:nspec) * (1.-psiN**(alphan2))**alphan1
                 dd_psi = -alphan1*alphan2*psiN**(alphan2 - 1.)*(1.-psiN**(alphan2))&
                         & **(alphan1 - 1.)
-                gradns(1, 0:nspec) = n0s(0:nspec)*dd_psi*gradpsi(1)
-                gradns(2, 0:nspec) = n0s(0:nspec)*dd_psi*gradpsi(2)
-                gradns(3, 0:nspec) = n0s(0:nspec)*dd_psi*gradpsi(3)
+                gradns(1, 0:nspec) = n0s(0:nspec)*dd_psi*gradpsiN(1)
+                gradns(2, 0:nspec) = n0s(0:nspec)*dd_psi*gradpsiN(2)
+                gradns(3, 0:nspec) = n0s(0:nspec)*dd_psi*gradpsiN(3)
             end if
 
         case default
@@ -227,9 +234,9 @@ contains
               ts(is) = t0s(is) * (1.-psiN**(alphat2(is)))**alphat1(is)
               dd_psi = -alphat1(is)*alphat2(is)*psiN**(alphat2(is) - 1.)* &
                       & (1.-psiN**(alphat2(is)))**alphat1(is)
-              gradts(1,is) = t0s(is)*dd_psi*gradpsi(1)
-              gradts(2,is) = t0s(is)*dd_psi*gradpsi(2)
-              gradts(3,is) = t0s(is)*dd_psi*gradpsi(3)
+              gradts(1,is) = t0s(is)*dd_psi*gradpsiN(1)
+              gradts(2,is) = t0s(is)*dd_psi*gradpsiN(2)
+              gradts(3,is) = t0s(is)*dd_psi*gradpsiN(3)
           end if
 
        case default
@@ -247,7 +254,53 @@ contains
     return
  end subroutine solovev_eq
 
+!********************************************************************
 
+  subroutine solovev_psi(rvec, psi, gradpsi, psiN, gradpsiN)
+!   Simple solovev equilibrium model originally based on notes from 7/28/1995 by Cai-ye Wang.
+!   Reworked extensively by DBB.  See notes of 2-12-2022. 
+!
+!   Checks for some error conditions and sets equib_err for outside handling.  Does not
+!   stop.
+
+    use species_m, only : nspec, n0s, t0s
+    use diagnostics_m, only : message_unit, message
+    
+    implicit none
+
+    real(KIND=rkind), intent(in) :: rvec(3) 
+    real(KIND=rkind), intent(out) :: psi, gradpsi(3), psiN, gradpsiN(3)
+
+
+    real(KIND=rkind) :: x, y, z, R
+    real(KIND=rkind) :: br, bz, bphi, bp0
+
+    x = rvec(1)
+    y = rvec(2)
+    z = rvec(3)
+    R = sqrt(x**2+y**2)
+ 
+!   Define
+    bp0 = bphi0*iota0
+ 
+!   Flux function x, y, z normalized to one at last surface (z=0, r=outer_bound)
+    psi = .5*bp0 * ( (R*z/(rmaj*kappa))**2 + ((R**2-rmaj**2)**2)/rmaj**2/4. )
+
+
+!   Magnetic field
+    br = -bp0*R*z/(rmaj*kappa)**2
+    bz = bp0 * ( (z/(rmaj*kappa))**2 + .5*((R/rmaj)**2-1.) )
+    gradpsi = (/x*bz, y*bz, -R*br/)
+
+!   Normalized Flux function x, y, z normalized to 1.0 at last surface (z=0, R=outer_bound)
+    psiN = psi/psiB
+    gradpsiN = gradpsi/psiB
+    
+    return
+  
+  end subroutine solovev_psi
+
+!***********************************************************************
  subroutine write_solovev_profiles
     use species_m, only : nspec
     use diagnostics_m, only : message_unit
@@ -280,8 +333,7 @@ contains
     do ip = 1, nx_points
         x = inner_bound + (ip-1)*dx
         rvec( : ) = (/ x, real(0.,KIND=rkind), real(0.,KIND=rkind) /)
-        call solovev_eq(rvec, bvec, gradbtensor, ns, gradns, ts, gradts, psi, gradpsi, &
-                & psiB, psiN, equib_err)
+        call solovev_eq(rvec, bvec, gradbtensor, ns, gradns, ts, gradts, equib_err)
         write (message_unit,'(f11.5, a, e12.5, 3f11.5, f11.5, f11.5,  7f11.5)') &
                & x,'  ', ns(0), bvec, psi, psi/psiB, (ts(i), i=0, nspec)
     end do
