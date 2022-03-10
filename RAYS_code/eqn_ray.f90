@@ -77,6 +77,7 @@
 
 !   kvec (nvec) = k (k/k0) in xyz coordinates (vector)
     rvec = v(1:3); kvec = v(4:6)
+    nvec = kvec/k0
 
 !   Calculate the plasma equilibrium.
     call equilibrium(rvec, eq)
@@ -91,8 +92,6 @@
         return
     end if
 
-    nvec = kvec/k0
-
 !   Calculate dD/dk, dD/dx, and dD/d(omega) 
 
     dispersion_model: select case (trim(ray_deriv_name))
@@ -105,7 +104,10 @@
     !      Numerical differentiation.
     !      N.B. Must be called with v(), not just nvec.  Evaluates eq at other positions so v(1:3)
     !           is needed
+
+! write(*,*) 'About to call deriv_num'
          call deriv_num(eq, v, dddx, dddk, dddw)
+! write(*,*) 'Back from deriv_num'
 
         case default
            write(*,*) 'EQN_RAY: invalid value, ray_deriv_name = ', ray_deriv_name
@@ -193,8 +195,8 @@
     
 !   k1 (n1) = perpedicular component of kvec (nvec) (magnitude).
 !   k3 (n3) = parallel component of kvec (nvec).  
-		k3 = sum(kvec*eq%bunit)
-		k1 = sqrt( sum((kvec-k3*eq%bunit)**2) )
+        k3 = sum(kvec*eq%bunit)
+        k1 = sqrt( sum((kvec-k3*eq%bunit)**2) )
         call damping (v, k1, k3, ksi, ki, vg)
 
 !       Differential equation for total power absorption.
