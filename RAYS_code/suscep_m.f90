@@ -102,7 +102,7 @@ contains
     
               case ('cold')
                 call suscep_cold(eq, is, chi)
-        
+       
               case default
                 write (0,*) 'dielectric_tensor: unimplemented species model =', spec_model(is)
         

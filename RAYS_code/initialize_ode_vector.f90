@@ -5,7 +5,7 @@
 
     use constants_m, only : rkind
     use diagnostics_m, only : integrate_eq_gradients, message
-    use species_m, only : nspec, n0s
+    use species_m, only : nspec
     use equilibrium_m, only : equilib_model, equilibrium, eq_point
     use rf_m, only : k0
     use ray_init_m, only : rvec0, rindex_vec0

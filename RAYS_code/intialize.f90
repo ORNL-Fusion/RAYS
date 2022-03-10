@@ -1,19 +1,18 @@
  subroutine initialize
 !   reads input file and initializes variables.  Called from main program RAYS.
 
-    use constants_m, only : ray_list_unit, output_unit, initialize_constants_m, eps0
+    use constants_m, only : ray_list_unit, output_unit, initialize_constants_m
     use diagnostics_m, only : initialize_diagnostics, date_v, message_unit, message,&
         & text_message, run_description, run_label
     use equilibrium_m, only : equilib_model, initialize_equilibrium
     use ode_m, only : initialize_ode_solver
     use ray_init_m, only : initialize_ray_init
-    use rf_m, only : omgrf, initialize_rf, frf, k0
+    use rf_m, only : initialize_rf, frf
     use damping_m, only : initialize_damping
-    use species_m, only : initialize_species_m, nspec, spec_name, qs, ms, eta, &
-      & n0s, t0s, spec_model
+    use species_m, only : initialize_species_m
+
     implicit none
 
-    integer :: is 
 !************* read input data and set up for messages and diagnostic output  **************
 
     write(*,*) 'starting RAYS'

@@ -38,7 +38,7 @@
 
          write (*,'(/,a,i4)') 'ray #', iray
          call message()
-         call message ('ray_tracing: ray #', iray, 0)
+         call message ('trace_rays: ray #', iray, 0)
 
          nstep=0
          s = 0. 
@@ -53,8 +53,8 @@
          call initialize_ode_vector(iray, nv, v)
  
          call message()
-         call message ('ray_tracing: initial (x,y,z)', v(1:3), 3, 1)
-         call message ('ray_tracing: initial (kx,ky,kz)', v(4:6), 3, 1)
+         call message ('trace_rays: initial (x,y,z)', v(1:3), 3, 1)
+         call message ('trace_rays: initial (kx,ky,kz)', v(4:6), 3, 1)
 
     !    Do some checking and save initial values.
          call check_save(sout, nv, v, ray_stop)
@@ -72,7 +72,12 @@
             s = sout
             sout = sout + ds
             nstep=nstep+1
-            
+
+            call message()
+            call message ('trace_rays: start step', nstep, 1)
+            call message ('trace_rays: s', s, 1)
+            call message ('trace_rays: sout', sout, 1)
+          
 ! check limits on s
             if(sout > s_max) then
                 call message ('trace_rays: terminate ray, sout > s_max, s',s,0)
@@ -91,9 +96,6 @@
                exit trajectory
             end if
           
-            call message ('trace_rays: nstep', nstep, 2)
-            call message ('trace_rays: sout', sout, 2)
-
 ! Integrate from s to sout
             call ode_solver(eqn_ray, nv, v, s, sout, ray_stop)
 
@@ -101,6 +103,8 @@
             if (ray_stop%stop_ode .eqv. .true.) then 
                 ray_stop_flag(iray) = ray_stop%ode_stop_flag
                 write(message_unit, *) 'ray ', iray, ' stopped in ODE solver. ', &
+                    & ray_stop%ode_stop_flag
+                write(*, *) 'ray ', iray, ' stopped in ODE solver. ', &
                     & ray_stop%ode_stop_flag
                 
                 write (*, '( "ray ",i3, " stopped  s=", f12.4, "   nstep=", i4, /, &
@@ -113,9 +117,6 @@
                 exit trajectory
             end if    
 
-            call message()
-            call message ('trace_rays: nstep', nstep, 1)
-            call message ('trace_rays: s', s, 1)
             call message ('trace_rays: (x,y,z)', v(1:3), 3, 1)
             call message ('trace_rays: (kx,ky,kz)', v(4:6), 3, 1)
             call message ('trace_rays: integrated path length s', v(7), 1)
@@ -134,13 +135,14 @@
             if (ray_stop%ode_stop_flag .ne. '') then
                 ray_stop_flag(iray) = ray_stop%ode_stop_flag
                 write(message_unit, *) 'ray ', iray, ' stopped. ', ray_stop%ode_stop_flag
+                write(*, *) 'ray ', iray, ' stopped. ', ray_stop%ode_stop_flag
                 
-                write (*, '( "ray ",i3, " stopped  s=", g12.4, "   nstep=", i4, /, &
-                &  "  (x,y,z)=", 3(f10.4),/,  "  (kx,ky,kz)=", 3(f10.4) )') iray, s, nstep, &
+                write (*, '( " s=", g12.4, "   nstep=", i4, /, &
+                &  "  (x,y,z)=", 3(f10.4),/,  "  (kx,ky,kz)=", 3(f10.4) )') s, nstep, &
                 & v(1:3), v(4:6)
                 
-                write (message_unit, '( "ray ",i3, " stopped  s=", g12.4, "   nstep=", i4, /, &
-                &  "  (x,y,z)=", 3(f10.4),/,  "  (kx,ky,kz)=", 3(f10.4) )') iray, s, nstep, &
+                write (message_unit, '( " s=", g12.4, "   nstep=", i4, /, &
+                &  "  (x,y,z)=", 3(f10.4),/,  "  (kx,ky,kz)=", 3(f10.4) )') s, nstep, &
                 & v(1:3), v(4:6)
                 exit trajectory
             end if

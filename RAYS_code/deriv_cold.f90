@@ -4,8 +4,6 @@
 !   dddx = dD/dx, dddk = dD/dk, dddw = dD/d(omega).
 
     use constants_m, only : rkind
-    use species_m, only : nspec
-
     use equilibrium_m, only : eq_point
     use rf_m, only : omgrf, k0
     use species_m, only : nspec
@@ -33,8 +31,10 @@
 
     integer :: is, is1, is2, ivec
 
-    n1 = nvec(1)
-    n3 = nvec(3)
+!     n1 = nvec(1)
+!     n3 = nvec(3)
+   n3 = dot_product(nvec, eq%bunit)
+   n1 = sqrt( sum((nvec-n3*eq%bunit)**2) )
 
 !   Derivatives with respect to k.
 !   dn3dk = d(n3)/dk; dn12dk = d(n1^2)/dk
@@ -169,51 +169,51 @@
 
     verb: if (verbosity > 4) then
       write(*,*) ''
-      write (*,*) 'dn3dk = ',  dn3dk
-      write (*,*) 'dn12dk = ',  dn12dk
-      write (*,*) 'dn3dx = ',  dn3dx
-      write (*,*) 'dadx = ',  dadx
-      write (*,*) 'dgdx = ',  dgdx
-       
-       write (*,*) 'dn3dw = ',  dn3dw
-       write (*,*) 'dn12dw = ',  dn12dw
-       write (*,*) 'dn12dw = ',  dn12dw
-       write (*,*) 'dn12dw = ',  dn12dw
-
-       write (*,*) 'p = ',  p
-       write (*,*) 't = ',  t
-
-       write (*,*) 'dq1da = ',  dq1da
-       write (*,*) 'dq2da = ',  dq2da
-
-       write (*,*) 'q1 = ',  q1
-       write (*,*) 'q2 = ',  q2
-       write (*,*) 'u = ',  u
-       write (*,*) 'q = ',  q
-
-       write (*,*) 'duda = ',  duda
-       write (*,*) 'dqda = ',  dqda
-       write (*,*) 'ddda = ',  ddda
-       write (*,*) 'gp = ',  gp
-       write (*,*) 'gm = ',  gm
-       write (*,*) 'gpm = ',  gpm
-       write (*,*) 'dtdg = ',  dtdg
-       write (*,*) 'dudg = ',  dudg
-       write (*,*) 'dq1dg = ',  dq1dg
-       write (*,*) 'dq2dg = ',  dq2dg
-       write (*,*) 'dqdg = ',  dqdg
-
-       write(*,'(a,1p3e12.4)') 'dddn3 =', dddn3
-       write(*,'(a,1p3e12.4)') 'dn3dw =', dn3dw
-       write(*,'(a,1p3e12.4)') 'dddn12 =', dddn12
-       write(*,'(a,1p3e12.4)') 'dn12dw =', dn12dw
-       write(*,'(a,1p3e12.4)') 'ddda =', ddda
-       write(*,'(a,1p3e12.4)') 'dddg =', dddg
-       write(*,'(a,1p3e12.4)') 'dadw =', dadw
-       write(*,'(a,1p3e12.4)') 'dgdw =', dgdw
-
-       write(*,'(a,1p3e12.4)') 'dn3dk =', dn3dk
-       write(*,'(a,1p3e12.4)') 'dn12dk =', dn12dk
+!       write (*,*) 'dn3dk = ',  dn3dk
+!       write (*,*) 'dn12dk = ',  dn12dk
+!       write (*,*) 'dn3dx = ',  dn3dx
+!       write (*,*) 'dadx = ',  dadx
+!       write (*,*) 'dgdx = ',  dgdx
+!        
+!        write (*,*) 'dn3dw = ',  dn3dw
+!        write (*,*) 'dn12dw = ',  dn12dw
+!        write (*,*) 'dn12dw = ',  dn12dw
+!        write (*,*) 'dn12dw = ',  dn12dw
+! 
+!        write (*,*) 'p = ',  p
+!        write (*,*) 't = ',  t
+! 
+!        write (*,*) 'dq1da = ',  dq1da
+!        write (*,*) 'dq2da = ',  dq2da
+! 
+!        write (*,*) 'q1 = ',  q1
+!        write (*,*) 'q2 = ',  q2
+!        write (*,*) 'u = ',  u
+!        write (*,*) 'q = ',  q
+! 
+!        write (*,*) 'duda = ',  duda
+!        write (*,*) 'dqda = ',  dqda
+!        write (*,*) 'ddda = ',  ddda
+!        write (*,*) 'gp = ',  gp
+!        write (*,*) 'gm = ',  gm
+!        write (*,*) 'gpm = ',  gpm
+!        write (*,*) 'dtdg = ',  dtdg
+!        write (*,*) 'dudg = ',  dudg
+!        write (*,*) 'dq1dg = ',  dq1dg
+!        write (*,*) 'dq2dg = ',  dq2dg
+!        write (*,*) 'dqdg = ',  dqdg
+! 
+!        write(*,'(a,1p3e12.4)') 'dddn3 =', dddn3
+!        write(*,'(a,1p3e12.4)') 'dn3dw =', dn3dw
+!        write(*,'(a,1p3e12.4)') 'dddn12 =', dddn12
+!        write(*,'(a,1p3e12.4)') 'dn12dw =', dn12dw
+!        write(*,'(a,1p3e12.4)') 'ddda =', ddda
+!        write(*,'(a,1p3e12.4)') 'dddg =', dddg
+!        write(*,'(a,1p3e12.4)') 'dadw =', dadw
+!        write(*,'(a,1p3e12.4)') 'dgdw =', dgdw
+! 
+!        write(*,'(a,1p3e12.4)') 'dn3dk =', dn3dk
+!        write(*,'(a,1p3e12.4)') 'dn12dk =', dn12dk
 
        write(*,'(a,1p3e12.4)') 'dddx =', dddx
        write(*,'(a,1p3e12.4)') 'dddk =', dddk

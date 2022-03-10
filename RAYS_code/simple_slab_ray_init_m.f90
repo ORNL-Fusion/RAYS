@@ -5,7 +5,9 @@
 ! which generates initial positions, rvec0 = (x0, 0., 0 : nray), and initial refractive
 ! index vector, rindex_vec0 = (nx0, ny0, nz0 : nray).
 
-! External procedures: solve_disp_nx_vs_ny_nz (solve_disp_nx_vs_ny_nz.f90)
+! External procedures: 
+! solve_disp_nx_vs_ny_nz in solve_disp_nx_vs_ny_nz.f90
+
     use constants_m, only : rkind
     
     implicit none
@@ -46,7 +48,7 @@ contains
     use diagnostics_m, only: message_unit, message, text_message
     use species_m, only : nspec
     use equilibrium_m, only : equilibrium, eq_point
-    use dispersion_solvers_m, only: solve_disp_nx_vs_ny_nz
+    use dispersion_solvers_m, only: solve_nx_vs_ny_nz_by_bz
     use rf_m, only : ray_dispersion_model,wave_mode, k0_sign
 
     implicit none
@@ -72,7 +74,7 @@ contains
 !      initializations.  That's the final value of nray.
     nray = n_x_launch * n_ky_launch * n_kz_launch
 
-		if ((nray > 0) .and. (nray <= nray_max)) then
+        if ((nray > 0) .and. (nray <= nray_max)) then
             allocate (rvec0(3, nray), rindex_vec0(3, nray))
         else
             write (*,*) 'ray_init_slab: invalid number of rays  nray=', nray
@@ -105,7 +107,7 @@ contains
 
                 call equilibrium(rvec, eq)
                    if (trim(eq%equib_err) /= '') cycle kzloop
-                call solve_disp_nx_vs_ny_nz(eq, ray_dispersion_model, wave_mode, k0_sign,&
+                call solve_nx_vs_ny_nz_by_bz(eq, ray_dispersion_model, wave_mode, k0_sign,&
                      &  rindex_y, rindex_z, rindex_x)
                 if (aimag(rindex_x) /= 0.) then
                     write(message_unit, *) 'slab_init: evanescent ray x = ', x, &

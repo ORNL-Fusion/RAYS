@@ -12,8 +12,6 @@ module solovev_eq_m
 
     ! Flux function psi at plasma boundary
     real(KIND=rkind) :: psiB
-! Normalized lux function psi/psiB
-    real(KIND=rkind) :: psiN
 
 ! data for slab density and temperature
     character(len=15) :: dens_prof_model
@@ -76,15 +74,16 @@ contains
     vert_bound = sqrt(kappa)/(2.*r_Zmax)*sqrt(outer_bound**4 - r_Zmax**4 +2.*r_Zmax**2*rmaj**2- &
               &  2.*outer_bound**2*rmaj**2)
 
+    call message('PsiB = ', psiB)
     call message('Inner boundary = ', inner_bound)
     call message('Outer boundary = ', outer_bound)
     call message('Vertical boundary = ', vert_bound)
     call message('radius of z_max = ', r_Zmax)
 
+    write(*,*) 'PsiB = ', psiB
     write(*,*) 'Inner boundary = ', inner_bound
     write(*,*) 'Outer boundary = ', outer_bound
-    call message('Vertical boundary = ', vert_bound)
-    call message('radius of z_max = ', r_Zmax)
+    write(*,*) 'Vertical boundary = ', vert_bound
 
     if (verbosity > 2)  then
         call write_solovev_profiles
@@ -312,7 +311,7 @@ contains
     real(KIND=rkind) :: bvec(3), gradbtensor(3,3)
     real(KIND=rkind) :: ns(0:nspec), gradns(3,0:nspec)
     real(KIND=rkind) :: ts(0:nspec), gradts(3,0:nspec)
-    real(KIND=rkind) :: psi, gradpsi(3), psiB, psiN
+    real(KIND=rkind) :: psi, gradpsi(3), psiN, gradpsiN(3)
     character(len=20) :: equib_err
 
     integer, parameter :: nx_points = 51
@@ -334,8 +333,11 @@ contains
         x = inner_bound + (ip-1)*dx
         rvec( : ) = (/ x, real(0.,KIND=rkind), real(0.,KIND=rkind) /)
         call solovev_eq(rvec, bvec, gradbtensor, ns, gradns, ts, gradts, equib_err)
+        call solovev_psi(rvec, psi, gradpsi, psiN, gradpsiN)  
         write (message_unit,'(f11.5, a, e12.5, 3f11.5, f11.5, f11.5,  7f11.5)') &
                & x,'  ', ns(0), bvec, psi, psi/psiB, (ts(i), i=0, nspec)
+!        write(*,*) 'x = ', x, '  gradpsi = ', gradpsi
+!        write(*,*) 'gradbtensor = ', gradbtensor
     end do
         
  end subroutine write_solovev_profiles

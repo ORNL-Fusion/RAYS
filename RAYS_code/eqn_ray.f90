@@ -23,9 +23,9 @@
 
     use constants_m, only : rkind
     use diagnostics_m, only : integrate_eq_gradients, verbosity, message_unit, message
-    use species_m, only : nspec, n0s
+    use species_m, only : nspec
     use equilibrium_m, only : equilibrium, eq_point
-    use ode_m, only : nv, ode_stop
+    use ode_m, only : nv, ray_deriv_name, ode_stop
     use rf_m, only : k0, ray_dispersion_model, ray_param
     use damping_m, only : damping_model, damping, multi_spec_damping
     
@@ -61,6 +61,19 @@
           real(KIND=rkind), intent(out) :: dddx(3), dddk(3), dddw
        end subroutine deriv_cold
     end interface deriv_cold
+ 
+    interface deriv_num
+       subroutine deriv_num(eq, v, dddx, dddk, dddw)
+            use constants_m, only : rkind, clight
+            use equilibrium_m, only : equilibrium, eq_point, write_eq_point
+            use rf_m, only : omgrf, k0, ray_dispersion_model
+            use ode_m, only : nv
+            use diagnostics_m, only : message_unit, verbosity
+            type(eq_point), intent(in) :: eq
+            real(KIND=rkind), intent(in) :: v(nv)
+            real(KIND=rkind), intent(out) :: dddx(3), dddk(3), dddw
+       end subroutine deriv_num
+    end interface deriv_num
 
 !   kvec (nvec) = k (k/k0) in xyz coordinates (vector)
     rvec = v(1:3); kvec = v(4:6)
@@ -78,29 +91,31 @@
         return
     end if
 
-
-!   k1 (n1) = perpedicular component of kvec (nvec) (magnitude).
-!   k3 (n3) = parallel component of kvec (nvec).  
-    k3 = sum(kvec*eq%bunit)
-    k1 = sqrt( sum((kvec-k3*eq%bunit)**2) )
-
     nvec = kvec/k0
 
 !   Calculate dD/dk, dD/dx, and dD/d(omega) 
 
-    dispersion_model: select case (trim(ray_dispersion_model))
+    dispersion_model: select case (trim(ray_deriv_name))
 
         case ('cold' )
     !      Derivatives of D for a cold plasma.
          call deriv_cold(eq, nvec, dddx, dddk, dddw)
 
+        case ('numerical' )
+    !      Numerical differentiation.
+    !      N.B. Must be called with v(), not just nvec.  Evaluates eq at other positions so v(1:3)
+    !           is needed
+         call deriv_num(eq, v, dddx, dddk, dddw)
+
         case default
-           write(*,*) 'EQN_RAY: invalid value, ray_dispersion_model = ', ray_dispersion_model
+           write(*,*) 'EQN_RAY: invalid value, ray_deriv_name = ', ray_deriv_name
            stop 1
     end select dispersion_model
        
    if (verbosity > 3) then  ! Debugging diagnostics
+       write (*,*) 'eqn_ray: rvec = ', rvec, '  kvec = ', kvec
        write (message_unit,*) 'eqn_ray: dddx = ', dddx, 'dddk = ', dddk, 'dddw = ', dddw
+       write (*,*) 'eqn_ray: dddx = ', dddx, 'dddk = ', dddk, 'dddw = ', dddw
    end if
 
 
@@ -175,6 +190,11 @@
 
 ! Damping Calculate ksi and ki.
     damp : if (damping_model /= 'no_damp') then    
+    
+!   k1 (n1) = perpedicular component of kvec (nvec) (magnitude).
+!   k3 (n3) = parallel component of kvec (nvec).  
+		k3 = sum(kvec*eq%bunit)
+		k1 = sqrt( sum((kvec-k3*eq%bunit)**2) )
         call damping (v, k1, k3, ksi, ki, vg)
 
 !       Differential equation for total power absorption.
@@ -208,7 +228,7 @@
     end if
 
     if (verbosity > 3) then  ! Debugging diagnostics
-        write (*, *) 'ray_eqn: dvds = ', dvds
+        write (*, *) 'eqn_ray: dvds = ', dvds
     end if
                 
     return
