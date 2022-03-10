@@ -21,6 +21,7 @@
     use diagnostics_m, only : message_unit, message, text_message, verbosity
     use constants_m, only : input_unit, output_unit, ray_list_unit
     use slab_processor_m, only : initialize_slab_processor
+    use solovev_processor_m, only : initialize_solovev_processor
     use ray_init_m, only : nray_ray_init => nray
     implicit none
 
@@ -38,8 +39,10 @@
     select case (trim(processor))
 
        case ('slab')
-!         A 1-D slab equilibrium.
           call initialize_slab_processor
+
+       case ('solovev')
+          call initialize_solovev_processor
 
        case default
           write(*,*) 'post_process_rays: unimplemented post_processor =', trim(processor)
@@ -65,9 +68,9 @@
 ! Check for consistency between nray and the value obtained in ray_init.  This is a weak 
 ! check that the rays.in and the ray_list.bin file are from the same run.
     If (nray .ne. nray_ray_init) then
-        write (*,*) 'initialize_slab_processor: nray = ', nray,&
+        write (*,*) 'initialize_post_processing: nray = ', nray,&
         & ' inconsistent with nray_ray_init = ', nray_ray_init
-        write (message_unit,*) 'initialize_slab_processor: nray = ', nray,&
+        write (message_unit,*) 'initialize_post_processing: nray = ', nray,&
         & ' inconsistent with nray_ray_init = ', nray_ray_init
         !stop 1
     end if
@@ -126,15 +129,19 @@
 
     use diagnostics_m, only : message_unit, message, text_message, verbosity
     use slab_processor_m, only : slab_processor
+    use solovev_processor_m, only : solovev_processor
 
     implicit none
 
     select case (trim(processor))
 
        case ('slab')
-!         A 1-D slab equilibrium.
           write(*,*) 'calling slab_processor'
           call slab_processor
+
+       case ('solovev')
+          write(*,*) 'calling solovev_processor'
+          call solovev_processor
 
        case default
           write(0,*) 'post_process_rays: unimplemented post_processor =', trim(processor)
