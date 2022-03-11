@@ -68,9 +68,9 @@ subroutine rk4_RAYS(eqn_ray, nv, v, s, sout, ray_stop)
     call eqn_ray ( s+ds, v(:)+ ds*f3(:), f4, ray_stop )
 ! write(*,*) 'f4 = ', f4
     if (ray_stop%stop_ode .eqv. .true.) return
-
-    sout = s+ds
     v = v + ds * ( f1 + 2.0 * f2 + 2.0 * f3 + f4 ) / 6.0
+
+    s = sout
 
 ! write(*,*) ' v = ', v
 

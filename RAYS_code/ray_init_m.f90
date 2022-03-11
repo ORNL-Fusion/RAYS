@@ -71,7 +71,7 @@ contains
             case ('simple_slab')
                 call simple_slab_ray_init(nray_max, nray, rvec0, rindex_vec0)
 
-             case ('toroid')
+             case ('solovev')
                 call ray_init_solovev_nphi_ntheta(nray_max, nray, rvec0, rindex_vec0)
         
             case default

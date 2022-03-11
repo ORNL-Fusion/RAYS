@@ -105,9 +105,7 @@
     !      N.B. Must be called with v(), not just nvec.  Evaluates eq at other positions so v(1:3)
     !           is needed
 
-! write(*,*) 'About to call deriv_num'
          call deriv_num(eq, v, dddx, dddk, dddw)
-! write(*,*) 'Back from deriv_num'
 
         case default
            write(*,*) 'EQN_RAY: invalid value, ray_deriv_name = ', ray_deriv_name
