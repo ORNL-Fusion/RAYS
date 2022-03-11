@@ -75,10 +75,10 @@ contains
         call eqn_ray ( s, v(:), f1(:), ray_stop )
         if (ray_stop%stop_ode .eqv. .true.) return
         call eqn_ray ( s + ds/2.0, v(:)+ ds*f1(:)/2.0, f2, ray_stop )
+        if (ray_stop%stop_ode .eqv. .true.) return
         call eqn_ray ( s + ds/2.0, v(:)+ ds*f2(:)/2.0, f3, ray_stop )
         if (ray_stop%stop_ode .eqv. .true.) return
         call eqn_ray ( s+ds, v(:)+ ds*f3(:), f4, ray_stop )
-
         if (ray_stop%stop_ode .eqv. .true.) return
 
         v = v + ds * ( f1 + 2.0 * f2 + 2.0 * f3 + f4 ) / 6.0

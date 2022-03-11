@@ -142,8 +142,6 @@
     
     call message ('initialize_ode_solver: ODE vector length nv', nv)
 
-!    allocate( v(nv) )
-
     return
   end subroutine initialize_ode_solver
     

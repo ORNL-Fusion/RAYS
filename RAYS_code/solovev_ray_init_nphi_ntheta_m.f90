@@ -96,7 +96,7 @@ contains
 ! N.B. Not all of these may successfully initialize because of errors.  So count successful
 !      initializations.  That's the final value of nray.
     
-        nray = n_r_launch * n_theta_launch * n_rindex_theta * n_rindex_theta
+        nray = n_r_launch * n_theta_launch * n_rindex_theta * n_rindex_phi
 
         if ((nray > 0) .and. (nray <= nray_max)) then
         allocate ( rvec0(3, nray), rindex_vec0(3, nray) )

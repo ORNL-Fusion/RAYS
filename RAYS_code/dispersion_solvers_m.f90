@@ -78,8 +78,6 @@ contains
           call solve_cold_n1sq_vs_n3(eq, n3, nperp_sq) 
           n1 = real(k_sign, kind=rkind) * sqrt(nperp_sq(i_mode)-n2**2)
 
- write(*,*) 'wave_mode = ',trim(wave_mode),  '  i_mode = ', i_mode, '  n1 = ', n1, '  nperp_sq = ', nperp_sq
-
        case default
           write(0,*) 'solve_disp: unimplemented dispersion_model =', trim(dispersion_model)
           call text_message('solve_disp: unimplemented dispersion_model ',trim(dispersion_model),0)
