@@ -49,35 +49,41 @@ contains
 !********************************************************************
  
    module subroutine RK4_ode(eqn_ray, nv, v, s, sout, ray_stop)
-  ! Implements generic interface for RK4_ode solver (i.e. Shampine & Gordon ode.f90)
-  ! Takes one step from s to sout.  RK4_ode may take intermediate steps to get to sout
-  ! as indicated by iflag=3.  So call to ode is in a do loop.  See comments in ode()
-  ! for details.
+  ! Simple RK4_ode solver
 
-    use diagnostics_m, only : message_unit, message, verbosity
-    use constants_m, only : rkind
+        use diagnostics_m, only : message_unit, message, verbosity
+        use constants_m, only : rkind
+        use ode_m, only : ode_stop
 
-    implicit none
+        implicit none
 
-  ! Arguments of ODE
-    external eqn_ray
-    integer, intent(in) :: nv
-    real(KIND=rkind), intent(inout) :: v(nv)
-    real(KIND=rkind), intent(inout) :: s, sout
-    type(ode_stop), intent(out)  :: ray_stop
+      ! Arguments of ODE
+        external eqn_ray
+        integer, intent(in) :: nv
+        real(KIND=rkind), intent(inout) :: v(nv)
+        real(KIND=rkind), intent(inout) :: s, sout
+        type(ode_stop), intent(out)  :: ray_stop
+  
+        real (  kind = rkind )::  ds  
+        real (  kind = rkind ) :: f1(nv)
+        real (  kind = rkind ) :: f2(nv)
+        real (  kind = rkind ) :: f3(nv)
+        real (  kind = rkind ) :: f4(nv)
+  
+        ds = sout-s
 
-    real(KIND=rkind) :: tspan(2), t(2)
-    real(KIND=rkind) :: y0(nv)
-    integer :: n, m
-    
-    tspan(1) = s
-    tspan(2) = sout
-    t(:) = tspan(:)
-    n = 1
-    m = nv
-    y0(:) = v(:)
-    call rk4_RAYS(eqn_ray, nv, v, s, sout, ray_stop)
-    return
+        call eqn_ray ( s, v(:), f1(:), ray_stop )
+        if (ray_stop%stop_ode .eqv. .true.) return
+        call eqn_ray ( s + ds/2.0, v(:)+ ds*f1(:)/2.0, f2, ray_stop )
+        call eqn_ray ( s + ds/2.0, v(:)+ ds*f2(:)/2.0, f3, ray_stop )
+        if (ray_stop%stop_ode .eqv. .true.) return
+        call eqn_ray ( s+ds, v(:)+ ds*f3(:), f4, ray_stop )
+
+        if (ray_stop%stop_ode .eqv. .true.) return
+
+        v = v + ds * ( f1 + 2.0 * f2 + 2.0 * f3 + f4 ) / 6.0
+        s = sout
+        return
   end subroutine RK4_ode
 
  end submodule RK4_ode_m
