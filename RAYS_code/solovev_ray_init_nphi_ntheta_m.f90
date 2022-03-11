@@ -101,7 +101,7 @@ contains
         if ((nray > 0) .and. (nray <= nray_max)) then
         allocate ( rvec0(3, nray), rindex_vec0(3, nray) )
         else
-        write (*,*) 'ray_init_toroid: improper number of rays  nray=', nray
+        write (*,*) 'solovev ray init: improper number of rays  nray=', nray
         stop 1
         end if  
 
