@@ -53,14 +53,19 @@ contains
 !****************************************************************************
 
                                              
-    subroutine ray_init_solovev_nphi_ntheta(nray_max, nray, rvec0, rindex_vec0)
+    subroutine ray_init_solovev_nphi_ntheta(nray_max, nray, rvec0, rindex_vec0, ray_pwr_wt)
     
 ! Specify a range of initial launch positions (r,theta) and at each launch position
 ! an initial poloidal wave number, rindex_theta0, and toroidal wave number, rindex_phi0.
 !
+! ray_pwr_wt(i) = fraction of total power carried by ray i.  Should provide a ray weight
+!                 subroutine as part of antenna model.  But for now al wights are just 1/nray.
+!
 ! N.B. Some of the ray initializations may fail (e.g. initial point is outside plasma or 
 !      wave mode is evanescent).  This does not cause the program to stop.  It counts
 !      the successful initializations and sets number of rays, nray, to that.
+!
+! External procedures: Only from module use.
 
     use constants_m, only : input_unit
     use diagnostics_m, only: message_unit, message, text_message
@@ -76,6 +81,7 @@ contains
     integer, intent(out) :: nray
     type(eq_point(nspec=nspec)) :: eq
     real(KIND=rkind), allocatable, intent(out) :: rvec0(:, :), rindex_vec0(:, :)
+    real(KIND=rkind), allocatable, intent(out) :: ray_pwr_wt(:)
     
     integer :: iray, itheta, i_ntheta, i_nphi, count
     real(KIND=rkind) :: x, z, rmin_launch, theta, rindex_theta, rindex_phi, n2, n3
@@ -100,6 +106,7 @@ contains
 
         if ((nray > 0) .and. (nray <= nray_max)) then
         allocate ( rvec0(3, nray), rindex_vec0(3, nray) )
+        allocate ( ray_pwr_wt(nray) )
         else
         write (*,*) 'solovev ray init: improper number of rays  nray=', nray
         stop 1
@@ -179,11 +186,22 @@ contains
     end do rindex_phi_loop
     end do rindex_theta_loop
     end do theta_loop
+    
+    ray_pwr_wt(count) = 1.
+
     end do ray_loop
 
     nray = count
     call message('toroid_ray_init: nray', nray)
-    if (nray == 0) stop 'No successful ray initializations' 
+    nray = count
+    call message('simple_slab_ray_init: nray', nray)
+
+    if (nray == 0) then
+        stop 'No successful ray initializations'
+    else
+        ray_pwr_wt = ray_pwr_wt/nray
+    end if
+        
 
     end subroutine ray_init_solovev_nphi_ntheta
 

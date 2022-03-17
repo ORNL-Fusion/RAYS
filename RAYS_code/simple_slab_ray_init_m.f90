@@ -34,15 +34,20 @@ contains
 !****************************************************************************
 
     
-    subroutine simple_slab_ray_init(nray_max, nray, rvec0, rindex_vec0)     
+    subroutine simple_slab_ray_init(nray_max, nray, rvec0, rindex_vec0, ray_pwr_wt)     
 ! initializer for slab geometry
 
 ! Choose initial y and z refractive indices (rindex_y0, delta_rindex_y0) and
-! solve dispersion relation for rindex_x0)
+! solve dispersion relation for rindex_x0).
+!
+! ray_pwr_wt(i) = fraction of total power carried by ray i.  Should provide a ray weight
+!                 subroutine as part of antenna model.  But for now al wights are just 1/nray.
 !
 ! N.B. Some of the ray initializations may fail (e.g. initial point is outside plasma or 
 !      wave mode is evanescent).  This does not cause the program to stop.  It counts
 !      the successful initializations and sets number of rays, nray, to that.
+!
+! External procedures: Only from module use.
 
     use constants_m, only : input_unit
     use diagnostics_m, only: message_unit, message, text_message
@@ -57,6 +62,7 @@ contains
     integer, intent(out) :: nray
     type(eq_point(nspec=nspec)) :: eq
     real(KIND=rkind), allocatable, intent(out) :: rvec0(:, :), rindex_vec0(:, :)
+    real(KIND=rkind), allocatable, intent(out) :: ray_pwr_wt(:)
     
     integer :: ix, iy, iz, iky, ikz, count
     real(KIND=rkind) :: x, y, z, rindex_y, rindex_z
@@ -76,8 +82,9 @@ contains
 
         if ((nray > 0) .and. (nray <= nray_max)) then
             allocate (rvec0(3, nray), rindex_vec0(3, nray))
+            allocate ( ray_pwr_wt(nray) )
         else
-            write (*,*) 'ray_init_slab: invalid number of rays  nray=', nray
+            write (*,*) 'ray_init_slab: invalid number of rays  nray=', nray, ' > nray_max'
             stop 1
         end if  
 
@@ -118,6 +125,7 @@ contains
                 count = count +1
                 rvec0( : , count) = rvec
                 rindex_vec0( : , count) = (/ real(rindex_x, KIND=rkind), rindex_y, rindex_z /)
+                ray_pwr_wt(count) = 1.
 
             end do kzloop 
         end do kyloop
@@ -127,7 +135,13 @@ contains
 
     nray = count
     call message('simple_slab_ray_init: nray', nray)
-    if (nray == 0) stop 'No successful ray initializations' 
+    
+    if (nray == 0) then
+        stop 'No successful ray initializations'
+    else
+        ray_pwr_wt = ray_pwr_wt/nray
+    end if
+        
     end  subroutine simple_slab_ray_init 
 
 end module simple_slab_ray_init_m

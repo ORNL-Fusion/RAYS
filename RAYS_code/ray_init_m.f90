@@ -22,6 +22,9 @@
 !
 !The action of the ray_init modules is to fill nray, rvec0(:,:) and rindex_vec0(:,:)
 !
+! ray_pwr_wt(i) = fraction of total power carried by ray i.  Should provide a ray weight
+!                 subroutine as part of antenna model.  But for now al wights are just 1/nray.
+!
 ! This module is called from main program.
 
     use constants_m, only : rkind
@@ -42,6 +45,7 @@
 
     real(KIND=rkind), allocatable :: rvec0(:,:)
     real(KIND=rkind), allocatable :: rindex_vec0(:,:)
+    real(KIND=rkind), allocatable :: ray_pwr_wt(:)
 
     namelist /ray_init_list/ ray_init_model, nray_max
 
@@ -69,10 +73,10 @@ contains
         init_model: select case (trim(ray_init_model))
     
             case ('simple_slab')
-                call simple_slab_ray_init(nray_max, nray, rvec0, rindex_vec0)
+                call simple_slab_ray_init(nray_max, nray, rvec0, rindex_vec0, ray_pwr_wt)
 
              case ('solovev')
-                call ray_init_solovev_nphi_ntheta(nray_max, nray, rvec0, rindex_vec0)
+                call ray_init_solovev_nphi_ntheta(nray_max, nray, rvec0, rindex_vec0, ray_pwr_wt)
         
             case default
                 write(0,*) 'initialize_ray_init: invalid ray_init_model = ', trim(ray_init_model)

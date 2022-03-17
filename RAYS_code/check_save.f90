@@ -127,9 +127,9 @@
 
     integrate_gradients : if (integrate_eq_gradients .eqv. .true.) then
 !      Check if grad(B) is consistent with B.
-        bmod = sqrt(sum(eq%bvec(1:3)))
+        bmod = sqrt(sum(eq%bvec(1:3))**2)
         diff_vec= (v(nv0+1:nv0+3) - eq%bvec(1:3))/bmod
-        call message ('check_save: B relative error', diff_vec, 1)
+        call message ('check_save: B relative error', diff_vec, 3, 1)
 
 !       Check if grad(Te) and grad(ne) are consistent with Te and ne.
         call message('check_save: ne relative error', (v(nv0+4)-eq%ns(0))/n0s(0), 1)
