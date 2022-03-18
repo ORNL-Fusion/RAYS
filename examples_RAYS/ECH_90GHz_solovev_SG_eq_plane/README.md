@@ -5,7 +5,8 @@ The poloidal field is taken very small so that the rays lay in the Z = 0 equator
 For this situation the trajectories can largely understood from plots of the dispersion roots in
 slab geometry.  The file kx_plots_Solovev_90GHz_ECH.pdf shows such roots. 
 
-Case 1 is for $n0 = 0.5 \times 10^20 m^-3$ with n_\phi = (0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.35, 0.4)
+Case 1 is for $n0 = 0.5 \times 10^20 m^-3$ with n_\phi = (0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 
+0.35, 0.4)
 
 The plus root is ordinary mode, minus is extraordinary mode
 ![Screenshot](ray_plots.plus_root.png)
