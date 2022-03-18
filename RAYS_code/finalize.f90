@@ -3,8 +3,8 @@
 
 !   External procedures: cpu_time (intrinsic)
 
-    use diagnostics_m, only : message_unit, message, text_message, t_start_rays, &
-           & t_finish_rays, t_start_tracing, t_finish_tracing
+    use diagnostics_m, only : message_unit, message, text_message, run_label,&
+           & t_start_rays, t_finish_rays, t_start_tracing, t_finish_tracing
 
     implicit none
 
@@ -27,7 +27,7 @@
     close(message_unit)
 
 ! Copy messages file to log.RAYS so it won't get clobbered by post processing
-    call system('mv messages log.RAYS') 
+    call system('mv messages log.RAYS_'//trim(run_label)) 
 
     write(*,*) ' '
     write(*,*) 'RAYS finished'

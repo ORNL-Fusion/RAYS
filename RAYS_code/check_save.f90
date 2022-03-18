@@ -1,4 +1,4 @@
- subroutine check_save(s, nv, v, ray_stop)
+ subroutine check_save(s, nv, v, resid, ray_stop)
 !   Does checking for ray stop criteria and saves output after each step.
 !   External routines: deriv_cold (deriv_cold.f90)
 
@@ -15,6 +15,7 @@
     real(KIND=rkind), intent(in) :: s
     integer, intent(in) :: nv
     real(KIND=rkind), intent(in) :: v(nv)
+    real(KIND=rkind), intent(out) :: resid
     type(ode_stop), intent(out)  :: ray_stop
 
     type(eq_point(nspec=nspec)) :: eq
@@ -26,7 +27,7 @@
     real(KIND=rkind) :: dddx(3), dddk(3), dddw, vg(3), vg0
     real(KIND=rkind) :: ksi(0:nspec), ki
     real(KIND=rkind) :: total_absorption, total_species_absorption
-    real(KIND=rkind) :: resid, bmod, diff_vec(3)
+    real(KIND=rkind) :: bmod, diff_vec(3)
   
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!  
  

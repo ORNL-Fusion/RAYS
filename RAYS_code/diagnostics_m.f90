@@ -90,8 +90,21 @@ contains
     use constants_m, only : input_unit
     
     implicit none
+    integer :: n_args ! number of command line arguments
+    character(len=80) :: namelist_file = ''
 
     call cpu_time(t_start_rays)
+
+! Default filename is 'rays.in'.  Optionally get input file name from command line. then
+! copy that file to 'ray.in'
+    n_args = command_argument_count()
+    if(n_args > 1) then
+        write(*,*) 'RAYS takes zero or one command line argument -> namelist filename'
+        stop 'incorrect command line arguments'
+    else if (n_args == 1) then
+        call get_command_argument(1,namelist_file)
+        call system('cp '//trim(namelist_file)//' rays.in')
+    end if
     
 ! Read input namelist
     open(unit=input_unit, file='rays.in',action='read', status='old', form='formatted')

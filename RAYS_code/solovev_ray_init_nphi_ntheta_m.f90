@@ -159,7 +159,7 @@ contains
              &  n2, n3, npsi_cmplx)
 
         if (npsi_cmplx%im /= 0.) then
-            write(message_unit, *) 'toroid_ray_init: evanescent ray, rvec = ', rvec, &
+            write(message_unit, *) 'solovev_ray_init: evanescent ray, rvec = ', rvec, &
             & ' n2 = ', n2, ' n3 = ', n3
             cycle rindex_phi_loop
         end if
@@ -192,9 +192,7 @@ contains
     end do ray_loop
 
     nray = count
-    call message('toroid_ray_init: nray', nray)
-    nray = count
-    call message('simple_slab_ray_init: nray', nray)
+    call message('solovev_ray_init: nray', nray)
 
     if (nray == 0) then
         stop 'No successful ray initializations'

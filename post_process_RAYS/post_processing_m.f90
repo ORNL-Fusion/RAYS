@@ -28,6 +28,7 @@
     integer :: nray, nv, iray, ipoint
     real(KIND=rkind) :: s
     real(KIND=rkind), allocatable :: v(:)
+    real(KIND=rkind), allocatable :: residuals(:) 
     character(len = 20), allocatable :: ray_stop(:)
 
 ! Read and write input namelist
@@ -64,6 +65,8 @@
 
     read(ray_list_unit, *) nray
     allocate(npoints(nray))
+    read(ray_list_unit, *) nv
+    allocate(v(nv))    
 
 ! Check for consistency between nray and the value obtained in ray_init.  This is a weak 
 ! check that the rays.in and the ray_list.bin file are from the same run.
@@ -77,8 +80,8 @@
 
     read(ray_list_unit, *) npoints
     npoints_max = maxval(npoints)
-    read(ray_list_unit, *) nv
-    allocate(v(nv))    
+    allocate(residuals(nray))
+    read(ray_list_unit, *) residuals
     allocate(ray_stop(nray))
     read(ray_list_unit, *) ray_stop
 

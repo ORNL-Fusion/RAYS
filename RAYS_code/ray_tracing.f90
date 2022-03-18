@@ -15,6 +15,7 @@
     implicit none
 
     integer :: iray, nstep, npoints(nray)
+    real(KIND=rkind) :: residuals(nray) 
     character(len = 20) :: ray_stop_flag(nray)
     real(KIND=rkind) :: s, sout
  
@@ -57,7 +58,7 @@
          call message ('trace_rays: initial (kx,ky,kz)', v(4:6), 3, 1)
 
     !    Do some checking and save initial values.
-         call check_save(sout, nv, v, ray_stop)
+         call check_save(sout, nv, v, residuals(iray), ray_stop)
          if (ray_stop%ode_stop_flag .ne. '') then  ! Ray didn't get started, initial conditions bad
             ray_stop_flag(iray) = ray_stop%ode_stop_flag
             npoints(iray) = 1 ! i.e. initial point
@@ -130,7 +131,7 @@
             end if damping
  
 ! Do some checking and save output from step
-            call check_save(s, nv, v, ray_stop)
+            call check_save(s, nv, v, residuals(iray), ray_stop)
 
             if (ray_stop%ode_stop_flag .ne. '') then
                 ray_stop_flag(iray) = ray_stop%ode_stop_flag
@@ -161,8 +162,9 @@
 
 !   Write ray file description
      write(ray_list_unit, *) nray
-     write(ray_list_unit, *) npoints
      write(ray_list_unit, *) nv
+     write(ray_list_unit, *) npoints
+     write(ray_list_unit, *) residuals
      write(ray_list_unit, *) ray_stop_flag
 
 ! Below are writes for binary file.  For now use formatted
