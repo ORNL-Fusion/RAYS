@@ -18,7 +18,7 @@ The extraordinary mode is much more interesting.  To get some idea of what is go
 out the plot for Case 1 in the pdf file.
 
 Case 2 shows extraordinary mode launched from two locations.
-At higher densityn0 = 0.9 x 10^20 m^-3 and n_phi = 0.4 Ray 1, launched from the 
+At higher density n0 = 0.9 x 10^20 m^-3 and n_phi = 0.4 Ray 1, launched from the 
 outside plasma edge encounters the right-hand cutoff and reflects back out.  Ray 2 is
 launched from inside the plasma in a region where propagation in radially bounded.  The 
 plot for Case 2 in the pdf file demonstrates this.  In ionospheric wave propagation this 
