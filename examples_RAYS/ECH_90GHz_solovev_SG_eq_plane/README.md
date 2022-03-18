@@ -8,14 +8,11 @@ slab geometry.  The file kx_plots_Solovev_90GHz_ECH.pdf shows such roots.
 Case 1 is for n0 = 0.5x10**20/m**3 with n_phi = (0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.35, 0.4)
 
 The plus root is ordinary mode, minus is extraordinary mode
-
 ![Screenshot](ray_plots.plus_root.png)
-
 The RF frequency is well above the plasma frequency to the ordinary mode (plus root) passes 
 through with little bending.
 
-![Screenshot](ray_plots.plus_root.png)
-
+![Screenshot](ray_plots.minus_root.png)
 The extraordinary mode is much more interesting.  To get some idea of what is going on check
 out the plot for Case 1 in the pdf file.
 
@@ -24,6 +21,7 @@ outside plasma edge encounters the right-hand cutoff and reflects back out.  Ray
 launched from inside the plasma in a region where propagation in radially bounded.  The 
 plot for Case 2 in the pdf file demonstrates this.  In ionospheric wave propagation this 
 id commonly called a ducted wave.
+![Screenshot](ray_plots.minus_root_2.png)
 
 Included are the input files needed to reproduce these cases.
 
