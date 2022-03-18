@@ -1,0 +1,9 @@
+ &post_process_list
+  processor = 'solovev'
+/
+ &solovev_processor_list
+  processor = 'solovev_processor'
+  num_plot_k_vectors = 10
+  scale_k_vec = 'True' 
+  set_XY_lim = 'True'
+/

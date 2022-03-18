@@ -1,0 +1,85 @@
+ &diagnostics_list
+  message_unit=11,
+  verbosity=3,
+  run_description='ECH in solovev geometry 90Ghz'
+  run_label='minus_root'
+  integrate_eq_gradients=.true.
+/
+ &species_list
+ n0=0.5e20,
+ spec_name(0) = 'electron',
+ spec_model(0) = 'cold',
+ t0s(0)=5.0e3 ,
+ spec_name(1) = 'deuterium',
+ spec_model(1) = 'cold',
+ t0s(1)=1.0e2 ,
+ eta(1)=1.
+/
+ &rf_list
+  frf=90.e9,
+  k0_sign = 1
+  wave_mode='minus'
+  ray_dispersion_model='cold',
+  ray_param='time',
+  dispersion_resid_limit = 0.001
+/
+ &damping_list
+  damping_model='no_damp'
+  multi_spec_damping = .false.
+  total_damping_limit = 0.99
+/
+ &equilibrium_list
+ equilib_model='solovev',
+/
+ &solovev_eq_list
+ rmaj=1.,
+ outer_bound=1.4,
+ kappa=1.1, 
+ bphi0=1.0,
+ iota0=.01,
+ dens_prof_model = 'parabolic',
+ alphan1 = 1.0
+ alphan2 = 1.0
+ t_prof_model=2*'zero'
+ box_rmin = 0.1
+ box_rmax = 1.5
+ box_zmin = -0.7
+ box_zmax = 0.7
+/
+ &ray_init_list
+ ray_init_model = 'solovev',
+ nray_max = 100
+/
+ &solovev_ray_init_nphi_ktheta_list
+ n_r_launch = 1
+ r_launch0 = 0.35
+ dr_launch = 0.
+ dr_launch = 0.
+ 
+ n_theta_launch = 1
+ theta_launch0 = 0.2
+ dtheta_launch = 0.
+ 
+ n_rindex_theta = 1
+ rindex_theta0 = 0.1
+ delta_rindex_theta = 0.
+ 
+ n_rindex_phi = 1
+ rindex_phi0 = 0.1
+ delta_rindex_phi = 0.2
+ /
+ &ode_list
+  ode_solver_name='SG_ODE',
+  ray_deriv_name='cold'
+  nstep_max=1000,
+  ds=1.e-9,
+  s_max = 1.0
+/
+ &SG_ode_list
+ rel_err0=1.e-9,
+ abs_err0=1.e-9
+ SG_error_limit = 0.1
+/
+
+
+
