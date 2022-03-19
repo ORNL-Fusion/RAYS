@@ -2,7 +2,22 @@
 ! namelist /equilibrium_list/ equilib_model.
 !
 ! Working notes:
-! 1/10/2022 (DBB) converted magnetic and species data at a spatial pint  to derived 
+! 2/21/2022 (DBB) Organizational decision: The purpose of this module is to provide the 
+! equilibrium data needed for ray tracing for any plasma geometry.  So I have decided to 
+! eliminate any data that is geometry specific, most notably flux functions.  Specific
+! equilibrium modules are required to provide all data for type eq_point, but are free
+! to provide other data and services in their own module structure such as flux functions
+! or boundary data that make sense for that particular geometry.  The hope is that this
+! module will therefore never require modification other than addition of new equilibrium
+! models to the case constructs below. 
+! N.B. A consequence is that the specific geometries must be provided by modules, not 
+! submodules, so that their entities are accessible outside the equilibrium_m module.
+!
+! 2/15/2022 (DBB) For use with toroidal equilibria added to eq_point type psi at plasma 
+! boundary <=> psiB and normalized psi = psi(r)/psiB <=> psiN(r).  Some geometries don't 
+! have meaningful flux functions (e.g. slab) buyt many do so include it.
+!
+! 1/10/2022 (DBB) converted magnetic and species data at a spatial pint to derived 
 ! type -> eq_point so we can have multiple instances of equilibrium data in memory at
 ! the same time.
 
@@ -16,9 +31,6 @@
 
 !   Switch to select specific equilibrium model.
     character(len = 15) :: equilib_model
-    
-!   B field at reference point (e.g. magnetic axis)    
-    real(KIND=rkind) :: b0
 
 ! Derived type containing equilibrium data for a spatial point in the plasma
     type eq_point
@@ -27,9 +39,6 @@
     !   bunit = B/|B|, and gradbunit(i,j) = d[B(j)/bmag]/d[x(i)],
     !   gradbtensor(i,j) = d[B(j)]/d[x(i)].
         real(KIND=rkind) :: bvec(3), bmag, gradbmag(3), bunit(3), gradbunit(3,3), gradbtensor(3,3)
-    
-    ! Flux function psi
-        real(KIND=rkind) :: psi, gradpsi(3)
 
     !   Density.
         real(KIND=rkind), allocatable :: ns(:), gradns(:,:)
@@ -46,7 +55,7 @@
 
     end type eq_point
           
-    namelist /equilibrium_list/ equilib_model, b0
+    namelist /equilibrium_list/ equilib_model
     
 !********************************************************************
 
@@ -59,10 +68,9 @@ contains
     use constants_m, only : input_unit    
     use diagnostics_m, only : message_unit, message, text_message
     use slab_eq_m, only : initialize_slab_eq
+    use solovev_eq_m, only : initialize_solovev_eq
 
     implicit none
-    
-    real(KIND=rkind) :: bmag
 
 ! Read and write input namelist
     open(unit=input_unit, file='rays.in',action='read', status='old', form='formatted')
@@ -73,8 +81,13 @@ contains
     equilibria: select case (trim(equilib_model))
 
        case ('slab')
-!         A 1-D slab equilibrium.
+!         A 1-D slab equilibrium with stratification in x
           call initialize_slab_eq
+
+
+       case ('solovev')
+!         A 1-D slab equilibrium with stratification in x
+          call initialize_solovev_eq
 
        case default
           write(0,*) 'initialize_equilibrium: improper equilib_model =', equilib_model
@@ -104,6 +117,7 @@ contains
     use diagnostics_m, only : message
     
     use slab_eq_m, only : slab_eq
+    use solovev_eq_m, only : solovev_eq
  
     implicit none
 
@@ -115,9 +129,6 @@ contains
 !   bunit = B/|B|, and gradbunit(i,j) = d[B(j)/bmag]/d[x(i)],
 !   gradbtensor(i,j) = d[B(j)]/d[x(i)].
     real(KIND=rkind) :: bvec(3), bmag, gradbmag(3), bunit(3), gradbunit(3,3), gradbtensor(3,3)
-
-! Flux function psi
-    real(KIND=rkind) :: psi, gradpsi(3)
 
 !   Density.
     real(KIND=rkind) :: ns(0:nspec), gradns(3, 0:nspec)
@@ -136,8 +147,11 @@ contains
     equilibria: select case (trim(equilib_model))
 
        case ('slab')
-!         A 1-D slab equilibrium.
+!         A 1-D slab equilibrium with stratification in x
           call slab_eq(rvec, bvec, gradbtensor, ns, gradns, ts, gradts, equib_err)
+
+       case ('solovev')
+          call solovev_eq(rvec, bvec, gradbtensor, ns, gradns, ts, gradts, equib_err)
 
        case default
           write(0,*) 'equilibrium_m: invalid equilibrium model = ', trim(equilib_model)
@@ -145,7 +159,7 @@ contains
 
     end select equilibria
                            
-!   If equilibrium subroutine has set equib_err return for outside handling. Does not crash.
+!   If equilibrium subroutine has set equib_err then return for outside handling. Do not crash.
     if (equib_err /= '') then
         eq%equib_err = equib_err        
         return
@@ -196,5 +210,46 @@ contains
     return
  end subroutine equilibrium
 
+!********************************************************************
+
+ subroutine write_eq_point(eq, unit)
+! Writes all element of eq_point type to stdout, unless optional arg 'unit' is
+! present, in which case it writes to 'unit'
+
+    use, intrinsic :: iso_fortran_env, only : stdout=>output_unit
+    
+    implicit none
+    
+    type(eq_point), intent(in) :: eq
+    integer, intent(in), optional :: unit
+    integer :: out_unit 
+    
+    out_unit = stdout
+    if (present(unit)) out_unit = unit
+    
+    write(out_unit, *) ' '
+    write(out_unit, *) 'eq_point = '
+    write(out_unit, *) 'bvec = ', eq%bvec
+    write(out_unit, *) 'gradbtensor = ', eq%gradbtensor
+    write(out_unit, *) 'ns = ', eq%ns
+    write(out_unit, *) 'gradns = ', eq%gradns
+    write(out_unit, *) 'ts = ', eq%ts
+    write(out_unit, *) 'gradts = ', eq%gradts
+    write(out_unit, *) 'bmag = ', eq%bmag
+    write(out_unit, *) 'bunit = ', eq%bunit
+    write(out_unit, *) 'gradbmag = ', eq%gradbmag
+    write(out_unit, *) 'radbunit = ', eq%gradbunit
+    write(out_unit, *) 'omgc = ', eq%omgc
+    write(out_unit, *) 'omgp2 = ', eq%omgp2
+    write(out_unit, *) 'alpha = ', eq%omgp2
+    write(out_unit, *) 'gamma = ', eq%gamma
+    write(out_unit, *) 'omgc = ', eq%omgc
+    write(out_unit, *) 'omgp2 = ', eq%omgp2
+    write(out_unit, *) 'alpha = ', eq%alpha
+    write(out_unit, *) 'gamma = ', eq%gamma
+
+ end  subroutine write_eq_point
+    
+!********************************************************************
 
  end module equilibrium_m

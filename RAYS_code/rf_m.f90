@@ -61,6 +61,8 @@ contains
 !   Wave number in vacuum.
     k0 = omgrf/clight 
     call message ('initialize_rf: k0', k0, 1)
+    
+    write(*,*) 'wave_mode = ', wave_mode
 
     return
   end subroutine initialize_rf

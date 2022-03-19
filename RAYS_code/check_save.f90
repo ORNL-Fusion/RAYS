@@ -1,11 +1,11 @@
- subroutine check_save(s, nv, v, ray_stop)
+ subroutine check_save(s, nv, v, resid, ray_stop)
 !   Does checking for ray stop criteria and saves output after each step.
 !   External routines: deriv_cold (deriv_cold.f90)
 
     use constants_m, only : rkind, output_unit
     use diagnostics_m, only : integrate_eq_gradients, message, text_message
     use species_m, only : nspec, n0s
-    use equilibrium_m, only : equilibrium, b0,  eq_point
+    use equilibrium_m, only : equilibrium, eq_point
     use ode_m, only : ds, ode_stop
     use rf_m, only : ray_dispersion_model, ray_param, k0, dispersion_resid_limit
     use damping_m, only : damping_model, damping, multi_spec_damping, total_damping_limit
@@ -15,6 +15,7 @@
     real(KIND=rkind), intent(in) :: s
     integer, intent(in) :: nv
     real(KIND=rkind), intent(in) :: v(nv)
+    real(KIND=rkind), intent(out) :: resid
     type(ode_stop), intent(out)  :: ray_stop
 
     type(eq_point(nspec=nspec)) :: eq
@@ -26,7 +27,7 @@
     real(KIND=rkind) :: dddx(3), dddk(3), dddw, vg(3), vg0
     real(KIND=rkind) :: ksi(0:nspec), ki
     real(KIND=rkind) :: total_absorption, total_species_absorption
-    real(KIND=rkind) :: diff_vec(3), r 
+    real(KIND=rkind) :: bmod, diff_vec(3)
   
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!  
  
@@ -54,9 +55,9 @@
 
 !   Calculate the residual.
     
-    r = residual(eq, k1,k3)
-    call message ('check_save: residual', r, 1)
-    if (r > dispersion_resid_limit) then
+    resid = residual(eq, k1,k3)
+    call message ('check_save: residual', resid, 1)
+    if (resid > dispersion_resid_limit) then
         ray_stop%ode_stop_flag = 'dispersion residual'
     end if
         
@@ -127,11 +128,12 @@
 
     integrate_gradients : if (integrate_eq_gradients .eqv. .true.) then
 !      Check if grad(B) is consistent with B.
-        diff_vec= (v(nv0+1:nv0+3) - eq%bvec(1:3))/b0
-        call message ('check_save: B relative error', diff_vec, 1)
+        bmod = sqrt(sum(eq%bvec(1:3))**2)
+        diff_vec= (v(nv0+1:nv0+3) - eq%bvec(1:3))/bmod
+        call message ('check_save: B relative error', diff_vec, 3, 1)
 
 !       Check if grad(Te) and grad(ne) are consistent with Te and ne.
-        call message('check_save: ne relative error', v(nv0+4)*eq%ns(0)/n0s(0) - 1., 1)
+        call message('check_save: ne relative error', (v(nv0+4)-eq%ns(0))/n0s(0), 1)
         call message('check_save: Te difference',  v(nv0+5)-eq%ts(0),1)
     end if integrate_gradients
 
@@ -153,7 +155,7 @@ contains
 !      calculates the residual for given k1 and k3.
 !      get dielectric tensor from module suscep_m
 
-       use species_m, only : nspec, n0s
+       use species_m, only : nspec
        use suscep_m, only :  dielectric_cold
 
        implicit none 
@@ -174,6 +176,8 @@ contains
     if (ray_dispersion_model == "cold") then
         call dielectric_cold(eq, eps)
     end if
+    
+!    write(*,*) 'eps = ', eps
 
 !      Hermitian part.
        eps_h = .5 * ( eps + conjg(transpose(eps)) )

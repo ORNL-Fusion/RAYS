@@ -5,7 +5,9 @@
 ! which generates initial positions, rvec0 = (x0, 0., 0 : nray), and initial refractive
 ! index vector, rindex_vec0 = (nx0, ny0, nz0 : nray).
 
-! External procedures: solve_disp_nx_vs_ny_nz (solve_disp_nx_vs_ny_nz.f90)
+! External procedures: 
+! solve_disp_nx_vs_ny_nz in solve_disp_nx_vs_ny_nz.f90
+
     use constants_m, only : rkind
     
     implicit none
@@ -32,21 +34,26 @@ contains
 !****************************************************************************
 
     
-    subroutine simple_slab_ray_init(nray_max, nray, rvec0, rindex_vec0)     
+    subroutine simple_slab_ray_init(nray_max, nray, rvec0, rindex_vec0, ray_pwr_wt)     
 ! initializer for slab geometry
 
 ! Choose initial y and z refractive indices (rindex_y0, delta_rindex_y0) and
-! solve dispersion relation for rindex_x0)
+! solve dispersion relation for rindex_x0).
+!
+! ray_pwr_wt(i) = fraction of total power carried by ray i.  Should provide a ray weight
+!                 subroutine as part of antenna model.  But for now al wights are just 1/nray.
 !
 ! N.B. Some of the ray initializations may fail (e.g. initial point is outside plasma or 
 !      wave mode is evanescent).  This does not cause the program to stop.  It counts
 !      the successful initializations and sets number of rays, nray, to that.
+!
+! External procedures: Only from module use.
 
     use constants_m, only : input_unit
     use diagnostics_m, only: message_unit, message, text_message
     use species_m, only : nspec
     use equilibrium_m, only : equilibrium, eq_point
-    use dispersion_solvers_m, only: solve_disp_nx_vs_ny_nz
+    use dispersion_solvers_m, only: solve_nx_vs_ny_nz_by_bz
     use rf_m, only : ray_dispersion_model,wave_mode, k0_sign
 
     implicit none
@@ -55,6 +62,7 @@ contains
     integer, intent(out) :: nray
     type(eq_point(nspec=nspec)) :: eq
     real(KIND=rkind), allocatable, intent(out) :: rvec0(:, :), rindex_vec0(:, :)
+    real(KIND=rkind), allocatable, intent(out) :: ray_pwr_wt(:)
     
     integer :: ix, iy, iz, iky, ikz, count
     real(KIND=rkind) :: x, y, z, rindex_y, rindex_z
@@ -67,13 +75,16 @@ contains
     close(unit=input_unit)
     write(message_unit, simple_slab_ray_init_list)
 
-! allocate space for the initial condition vectors rvec0, rindex_vec0
+! allocate maximum space for the initial condition vectors rvec0, rindex_vec0
+! N.B. Not all of these may successfully initialize because of errors.  So count successful
+!      initializations.  That's the final value of nray.
     nray = n_x_launch * n_ky_launch * n_kz_launch
 
-        if (nray > 0) then
+        if ((nray > 0) .and. (nray <= nray_max)) then
             allocate (rvec0(3, nray), rindex_vec0(3, nray))
+            allocate ( ray_pwr_wt(nray) )
         else
-            write (6,*) 'ray_init_slab: invalid number of rays  nray=', nray
+            write (*,*) 'ray_init_slab: invalid number of rays  nray=', nray, ' > nray_max'
             stop 1
         end if  
 
@@ -103,18 +114,18 @@ contains
 
                 call equilibrium(rvec, eq)
                    if (trim(eq%equib_err) /= '') cycle kzloop
-                call solve_disp_nx_vs_ny_nz(eq, ray_dispersion_model, wave_mode, k0_sign,&
+                call solve_nx_vs_ny_nz_by_bz(eq, ray_dispersion_model, wave_mode, k0_sign,&
                      &  rindex_y, rindex_z, rindex_x)
                 if (aimag(rindex_x) /= 0.) then
                     write(message_unit, *) 'slab_init: evanescent ray x = ', x, &
-                    & ' ny = ', rindex_y, ' nz = ', rindex_z
-               
+                    & ' ny = ', rindex_y, ' nz = ', rindex_z               
                     cycle kzloop
                 end if
 
                 count = count +1
                 rvec0( : , count) = rvec
                 rindex_vec0( : , count) = (/ real(rindex_x, KIND=rkind), rindex_y, rindex_z /)
+                ray_pwr_wt(count) = 1.
 
             end do kzloop 
         end do kyloop
@@ -124,7 +135,13 @@ contains
 
     nray = count
     call message('simple_slab_ray_init: nray', nray)
-    if (nray == 0) stop 'No successful ray initializations' 
+    
+    if (nray == 0) then
+        stop 'No successful ray initializations'
+    else
+        ray_pwr_wt = ray_pwr_wt/nray
+    end if
+        
     end  subroutine simple_slab_ray_init 
 
 end module simple_slab_ray_init_m

@@ -5,7 +5,7 @@
 
     use constants_m, only : rkind
     use diagnostics_m, only : integrate_eq_gradients, message
-    use species_m, only : nspec, n0s
+    use species_m, only : nspec
     use equilibrium_m, only : equilib_model, equilibrium, eq_point
     use rf_m, only : k0
     use ray_init_m, only : rvec0, rindex_vec0
@@ -48,7 +48,7 @@
        v(nv0+1:nv0+3) = eq%bvec(1:3)
  
 !      For checking if grad(ne) and grad(Te) are consistent with ne and Te.
-       v(nv0+4) = eq%ns(0)/n0s(0)
+       v(nv0+4) = eq%ns(0)
        v(nv0+5) = eq%ts(0)
      
     end if gradients

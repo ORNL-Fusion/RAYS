@@ -251,7 +251,6 @@
     use diagnostics_m, only : run_label
     use equilibrium_m, only : equilibrium, eq_point
     use slab_eq_m, only : xmin, xmax
-    use dispersion_solvers_m, only : solve_disp_nx_vs_ny_nz    
     implicit none
 
 !   fast, slow etc
@@ -323,7 +322,7 @@
     use slab_eq_m, only : xmin, xmax
     use ray_init_m, only : nray, rindex_vec0
     use rf_m, only : ray_dispersion_model, k0
-    use dispersion_solvers_m, only : solve_disp_nx_vs_ny_nz    
+    use dispersion_solvers_m, only : solve_nx_vs_ny_nz_by_bz    
     implicit none
 
 !   fast, slow etc
@@ -374,26 +373,26 @@
            
             ! kx vs x for fast and slow cold plasma roots.  Always use +1 for k0_sign
             wave_mode = 'plus'
-            call solve_disp_nx_vs_ny_nz(eq, ray_dispersion_model, wave_mode, +1, ny, nz, nx)            
+            call solve_nx_vs_ny_nz_by_bz(eq, ray_dispersion_model, wave_mode, +1, ny, nz, nx)            
             nx_sngl = cmplx(nx, KIND=skind)
             profile_vec(2) = real(k0, KIND=skind)*real(nx_sngl)
             profile_vec(3) = real(k0, KIND=skind)*aimag(nx_sngl)
             
             wave_mode = 'minus'
-            call solve_disp_nx_vs_ny_nz(eq, ray_dispersion_model, wave_mode, +1, ny, nz, nx)            
+            call solve_nx_vs_ny_nz_by_bz(eq, ray_dispersion_model, wave_mode, +1, ny, nz, nx)            
             nx_sngl = cmplx(nx, KIND=skind)
             profile_vec(4) = real(k0, KIND=skind)*real(nx_sngl)
             profile_vec(5) = real(k0, KIND=skind)*aimag(nx_sngl)
             ! kx vs x for fast and slow cold plasma roots
 
             wave_mode = 'fast'
-            call solve_disp_nx_vs_ny_nz(eq, ray_dispersion_model, wave_mode, +1, ny, nz, nx)            
+            call solve_nx_vs_ny_nz_by_bz(eq, ray_dispersion_model, wave_mode, +1, ny, nz, nx)            
             nx_sngl = cmplx(nx, KIND=skind)
             profile_vec(6) = real(k0, KIND=skind)*real(nx_sngl)
             profile_vec(7) = real(k0, KIND=skind)*aimag(nx_sngl)
             
             wave_mode = 'slow'
-            call solve_disp_nx_vs_ny_nz(eq, ray_dispersion_model, wave_mode, +1, ny, nz, nx)            
+            call solve_nx_vs_ny_nz_by_bz(eq, ray_dispersion_model, wave_mode, +1, ny, nz, nx)            
             nx_sngl = cmplx(nx, KIND=skind)
             profile_vec(8) = real(k0, KIND=skind)*real(nx_sngl)
             profile_vec(9) = real(k0, KIND=skind)*aimag(nx_sngl)
