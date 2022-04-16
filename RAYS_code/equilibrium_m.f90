@@ -52,8 +52,32 @@
 
     !   Error returns
         character(len=20) :: equib_err = ''
-
+ 
     end type eq_point
+
+    abstract interface
+        subroutine specific_eq_model(rvec, bvec, gradbtensor, ns, gradns, ts, gradts, equib_err)
+            use constants_m, only : input_unit, rkind
+            use species_m, only : nspec
+            use diagnostics_m, only : message_unit, verbosity
+            real(KIND=rkind), intent(in) :: rvec(3) 
+            real(KIND=rkind), intent(out) :: bvec(3), gradbtensor(3,3)
+            real(KIND=rkind), intent(out) :: ns(0:nspec), gradns(3,0:nspec)
+            real(KIND=rkind), intent(out) :: ts(0:nspec), gradts(3,0:nspec)
+            character(len=20), intent(out) :: equib_err
+     end subroutine specific_eq_model
+    end interface
+
+    abstract interface
+        subroutine specific_eq_init
+            use constants_m, only : input_unit
+            use species_m, only : nspec
+            use diagnostics_m, only : message, message_unit, verbosity
+        end subroutine specific_eq_init
+    end interface
+
+    procedure(specific_eq_model), pointer :: eq_calculate => Null()
+    procedure(specific_eq_init), pointer :: eq_init => Null()
           
     namelist /equilibrium_list/ equilib_model
     
@@ -67,8 +91,8 @@ contains
 
     use constants_m, only : input_unit    
     use diagnostics_m, only : message_unit, message, text_message
-    use slab_eq_m, only : initialize_slab_eq
-    use solovev_eq_m, only : initialize_solovev_eq
+    use slab_eq_m, only : initialize_slab_eq, slab_eq
+    use solovev_eq_m, only : initialize_solovev_eq, solovev_eq
 
     implicit none
 
@@ -80,14 +104,19 @@ contains
     
     equilibria: select case (trim(equilib_model))
 
-       case ('slab')
+          case ('slab')
 !         A 1-D slab equilibrium with stratification in x
-          call initialize_slab_eq
+              eq_calculate => slab_eq
+              eq_init => initialize_slab_eq
+              call eq_init
+!              call initialize_slab_eq
 
-
-       case ('solovev')
-!         A 1-D slab equilibrium with stratification in x
-          call initialize_solovev_eq
+          case ('solovev')
+!         A toroidal equilibrium with simple Solovev model
+              eq_calculate => solovev_eq
+!              eq_init => initialize_solovev_eq
+!              call eq_init
+              call initialize_solovev_eq
 
        case default
           write(0,*) 'initialize_equilibrium: improper equilib_model =', equilib_model
@@ -144,20 +173,7 @@ contains
 
     integer :: ivec, ivec1, ivec2
 
-    equilibria: select case (trim(equilib_model))
-
-       case ('slab')
-!         A 1-D slab equilibrium with stratification in x
-          call slab_eq(rvec, bvec, gradbtensor, ns, gradns, ts, gradts, equib_err)
-
-       case ('solovev')
-          call solovev_eq(rvec, bvec, gradbtensor, ns, gradns, ts, gradts, equib_err)
-
-       case default
-          write(0,*) 'equilibrium_m: invalid equilibrium model = ', trim(equilib_model)
-          stop 1
-
-    end select equilibria
+    call eq_calculate(rvec, bvec, gradbtensor, ns, gradns, ts, gradts, equib_err)
                            
 !   If equilibrium subroutine has set equib_err then return for outside handling. Do not crash.
     if (equib_err /= '') then

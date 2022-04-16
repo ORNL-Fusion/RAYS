@@ -70,6 +70,7 @@ contains
 !   Checks for some error conditions and sets equib_err for outside handling.  Does not
 !   stop.
 
+    use constants_m, only : rkind
     use species_m, only : nspec, n0s, t0s
     use diagnostics_m, only : message_unit, message
     
