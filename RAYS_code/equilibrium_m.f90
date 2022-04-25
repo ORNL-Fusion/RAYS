@@ -2,6 +2,14 @@
 ! namelist /equilibrium_list/ equilib_model.
 !
 ! Working notes:
+! 4/25/2022 (DBB) This applies to the pointers github branch only:  Did an experiment
+! comparing runtimes between the version in main (with select case constructs) vs the
+! pointers branch which sets pointers to the specific equilibrium routines at init.  The
+! pointers version ran about 3% faster so decided not to convert any other routines.  Also
+! considered merging the pointers branch with main but decided not to now because of mystery
+! where using pointers for the init routines failed to compile.  The commented out coding 
+! that fails is still below at about lines 115.
+!
 ! 2/21/2022 (DBB) Organizational decision: The purpose of this module is to provide the 
 ! equilibrium data needed for ray tracing for any plasma geometry.  So I have decided to 
 ! eliminate any data that is geometry specific, most notably flux functions.  Specific
