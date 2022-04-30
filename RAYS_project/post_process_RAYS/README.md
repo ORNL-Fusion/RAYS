@@ -8,6 +8,6 @@ files, *graphics_description_slab.dat* and *graphics_description_solovev.dat* th
 by the graphics code plot\_RAYS\_slab.py and plot\_RAYS\_solovev.py respectively to show 
 ray trajectories.
 
-See the examples in */examples_RAYS/ECH_90GHz_slab*
+See the examples in */examples_RAYS/*
 
 This code links to the RAYS\_lib static library.
