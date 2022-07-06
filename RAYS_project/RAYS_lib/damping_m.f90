@@ -32,18 +32,21 @@
 
 !********************************************************************
 
-  subroutine initialize_damping
+  subroutine initialize_damping(read_input)
  
     use constants_m, only : input_unit
     use diagnostics_m, only : message_unit
     
     implicit none
+    logical, intent(in) :: read_input
 
-! Read and write input namelist
-    open(unit=input_unit, file='rays.in',action='read', status='old', form='formatted')
-    read(input_unit, damping_list)
-    close(unit=input_unit)
-    write(message_unit, damping_list)
+    if (read_input .eqv. .true.) then
+    ! Read and write input namelist
+        open(unit=input_unit, file='rays.in',action='read', status='old', form='formatted')
+        read(input_unit, damping_list)
+        close(unit=input_unit)
+        write(message_unit, damping_list)
+    end if
 
     return
   end subroutine initialize_damping

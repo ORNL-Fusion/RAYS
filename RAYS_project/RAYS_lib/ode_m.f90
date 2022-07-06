@@ -36,7 +36,8 @@
 
 ! Interfaces for Shampine and Gordon ODE 
     interface initialize_SG_ode
-        module subroutine initialize_SG_ode
+        module subroutine initialize_SG_ode(read_input)
+          logical, intent(in) :: read_input
         end subroutine initialize_SG_ode
     end interface initialize_SG_ode
 
@@ -91,7 +92,7 @@
 
 !********************************************************************
 
-  subroutine initialize_ode_solver
+  subroutine initialize_ode_solver(read_input)
 
     use constants_m, only : input_unit
     use damping_m, only : damping_model, multi_spec_damping
@@ -99,18 +100,21 @@
     use species_m, only : nspec
     
     implicit none
+    logical, intent(in) :: read_input
 
-! Read and write input namelist
-    open(unit=input_unit, file='rays.in',action='read', status='old', form='formatted')
-    read(input_unit, ode_list)
-    close(unit=input_unit)
-    write(message_unit, ode_list)
+    if (read_input .eqv. .true.) then    
+    ! Read and write input namelist
+        open(unit=input_unit, file='rays.in',action='read', status='old', form='formatted')
+        read(input_unit, ode_list)
+        close(unit=input_unit)
+        write(message_unit, ode_list)
+    end if
 
 !   Select ode solver.
     solver: select case (trim(ode_solver_name))
 
        case ('SG_ODE')
-          call initialize_SG_ode
+          call initialize_SG_ode(read_input)
 
        case ('RK4_ODE')
           call initialize_RK4_ode

@@ -13,10 +13,6 @@
 ! N.B. A consequence is that the specific geometries must be provided by modules, not 
 ! submodules, so that their entities are accessible outside the equilibrium_m module.
 !
-! 2/15/2022 (DBB) For use with toroidal equilibria added to eq_point type psi at plasma 
-! boundary <=> psiB and normalized psi = psi(r)/psiB <=> psiN(r).  Some geometries don't 
-! have meaningful flux functions (e.g. slab) buyt many do so include it.
-!
 ! 1/10/2022 (DBB) converted magnetic and species data at a spatial pint to derived 
 ! type -> eq_point so we can have multiple instances of equilibrium data in memory at
 ! the same time.
@@ -63,7 +59,7 @@ contains
 
 !********************************************************************
 
-  subroutine initialize_equilibrium
+  subroutine initialize_equilibrium(read_input)
 
     use constants_m, only : input_unit    
     use diagnostics_m, only : message_unit, message, text_message
@@ -71,23 +67,30 @@ contains
     use solovev_eq_m, only : initialize_solovev_eq
 
     implicit none
+    logical, intent(in) :: read_input
 
-! Read and write input namelist
-    open(unit=input_unit, file='rays.in',action='read', status='old', form='formatted')
-    read(input_unit, equilibrium_list)
-    close(unit=input_unit)
-    write(message_unit, equilibrium_list)
+    if (read_input .eqv. .true.) then    
+    ! Read and write input namelist
+        open(unit=input_unit, file='rays.in',action='read', status='old', form='formatted')
+        read(input_unit, equilibrium_list)
+        close(unit=input_unit)
+        write(message_unit, equilibrium_list)
+    end if
     
     equilibria: select case (trim(equilib_model))
 
        case ('slab')
 !         A 1-D slab equilibrium with stratification in x
-          call initialize_slab_eq
-
+          call initialize_slab_eq(read_input)
 
        case ('solovev')
 !         A 1-D slab equilibrium with stratification in x
-          call initialize_solovev_eq
+          call initialize_solovev_eq(read_input)
+
+
+       case ('axisym_toroid')
+!         A 1-D slab equilibrium with stratification in x
+          call initialize_solovev_eq(read_input)
 
        case default
           write(0,*) 'initialize_equilibrium: improper equilib_model =', equilib_model
@@ -151,6 +154,9 @@ contains
           call slab_eq(rvec, bvec, gradbtensor, ns, gradns, ts, gradts, equib_err)
 
        case ('solovev')
+          call solovev_eq(rvec, bvec, gradbtensor, ns, gradns, ts, gradts, equib_err)
+
+       case ('axisym_toroid')
           call solovev_eq(rvec, bvec, gradbtensor, ns, gradns, ts, gradts, equib_err)
 
        case default

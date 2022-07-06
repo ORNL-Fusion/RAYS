@@ -13,7 +13,7 @@ module solovev_eq_m
     ! Flux function psi at plasma boundary
     real(KIND=rkind) :: psiB
 
-! data for slab density and temperature
+! data for density and temperature
     character(len=15) :: dens_prof_model
     real(KIND=rkind) :: alphan1
     real(KIND=rkind) :: alphan2
@@ -35,23 +35,26 @@ contains
 
 !********************************************************************
 
-  subroutine initialize_solovev_eq
+  subroutine initialize_solovev_eq(read_input)
 
     use constants_m, only : input_unit
     use species_m, only : nspec
     use diagnostics_m, only : message, message_unit, verbosity
     
     implicit none
+    logical, intent(in) :: read_input
 
     real(KIND=rkind) :: bp0
     
     allocate( t_prof_model(0:nspec) )
     allocate( alphat1(0:nspec), alphat2(0:nspec) )
 
-    open(unit=input_unit, file='rays.in',action='read', status='old', form='formatted')
-    read(input_unit, solovev_eq_list)
-    close(unit=input_unit)
-    write(message_unit, solovev_eq_list)
+    if (read_input .eqv. .true.) then    
+        open(unit=input_unit, file='rays.in',action='read', status='old', form='formatted')
+        read(input_unit, solovev_eq_list)
+        close(unit=input_unit)
+        write(message_unit, solovev_eq_list)
+    end if
     
 ! Calculate inner and boundary
      ! Check that inner boundary is real number

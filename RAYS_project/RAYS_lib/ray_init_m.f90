@@ -55,7 +55,7 @@ contains
 
 !****************************************************************************
 
-    subroutine initialize_ray_init
+    subroutine initialize_ray_init(read_input)
 
         use constants_m, only : input_unit
         use diagnostics_m, only : message_unit, message, text_message
@@ -63,12 +63,15 @@ contains
         use solovev_ray_init_nphi_ntheta_m, only : ray_init_solovev_nphi_ntheta
  
         implicit none
-
-! Read and write input namelist
-        open(unit=input_unit, file='rays.in',action='read', status='old', form='formatted')
-        read(input_unit, ray_init_list)
-        close(unit=input_unit)
-        write(message_unit, ray_init_list)
+        logical, intent(in) :: read_input
+     
+        if (read_input .eqv. .true.) then    
+        ! Read and write input namelist
+            open(unit=input_unit, file='rays.in',action='read', status='old', form='formatted')
+            read(input_unit, ray_init_list)
+            close(unit=input_unit)
+            write(message_unit, ray_init_list)
+        end if
 
         init_model: select case (trim(ray_init_model))
     

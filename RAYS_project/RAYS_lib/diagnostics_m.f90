@@ -85,11 +85,13 @@
 contains
 
 !******************************
-  subroutine initialize_diagnostics
+  subroutine initialize_diagnostics(read_input)
 
     use constants_m, only : input_unit
     
     implicit none
+    logical, intent(in) :: read_input
+
     integer :: n_args ! number of command line arguments
     character(len=80) :: namelist_file = ''
 
@@ -105,11 +107,13 @@ contains
         call get_command_argument(1,namelist_file)
         call system('cp '//trim(namelist_file)//' rays.in')
     end if
-    
-! Read input namelist
-    open(unit=input_unit, file='rays.in',action='read', status='old', form='formatted')
-    read(input_unit, diagnostics_list)
-    close(unit=input_unit)
+
+    if (read_input .eqv. .true.) then    
+    ! Read input namelist
+        open(unit=input_unit, file='rays.in',action='read', status='old', form='formatted')
+        read(input_unit, diagnostics_list)
+        close(unit=input_unit)
+    end if
 
 !   Open file for output messages 
     open(unit=message_unit, file=trim(message_file),                    &

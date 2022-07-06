@@ -38,18 +38,21 @@ contains
 
 !********************************************************************
 
-  subroutine initialize_rf
+  subroutine initialize_rf(read_input)
  
     use constants_m, only : input_unit, pi, clight
     use diagnostics_m, only : message_unit, message
     
     implicit none
+    logical, intent(in) :: read_input
 
-! Read and write input namelist
-    open(unit=input_unit, file='rays.in',action='read', status='old', form='formatted')
-    read(input_unit, rf_list)
-    close(unit=input_unit)
-    write(message_unit, rf_list)
+    if (read_input .eqv. .true.) then    
+		! Read and write input namelist
+			open(unit=input_unit, file='rays.in',action='read', status='old', form='formatted')
+			read(input_unit, rf_list)
+			close(unit=input_unit)
+			write(message_unit, rf_list)
+    end if
 
     if ( frf <= 0. ) then
        write (0,*) 'initialize_rf: frf =', frf

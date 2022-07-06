@@ -70,7 +70,7 @@ contains
 
 !********************************************************************
 
-    subroutine initialize_species_m
+    subroutine initialize_species_m(read_input)
 !   Loads charge and mass values for common plasma species from species names in namelist file
 !   Called from initialize()
  
@@ -78,16 +78,18 @@ contains
         use diagnostics_m, only : message_unit, message
         
         implicit none
-
+        logical, intent(in) :: read_input
+    
         integer :: is, j
         real(KIND=rkind) :: charge
 
 ! Read and write input namelist
-
-        open(unit=input_unit, file='rays.in',action='read', status='old', form='formatted')
-        read(input_unit, species_list)    
-        close(unit=input_unit)
-        write(message_unit, species_list)
+        if (read_input .eqv. .true.) then    
+            open(unit=input_unit, file='rays.in',action='read', status='old', form='formatted')
+            read(input_unit, species_list)    
+            close(unit=input_unit)
+            write(message_unit, species_list)
+        end if
     
 ! Electrons:   
         spec_name(0) = 'electron'

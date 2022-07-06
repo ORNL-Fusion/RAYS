@@ -1,4 +1,4 @@
- subroutine initialize_post_process_RAYS
+ subroutine initialize_post_process_RAYS(read_input)
 !   reads input file and initializes variables.  Called from main program RAYS.
 
     use constants_m, only : input_unit, output_unit, ray_list_unit, initialize_constants_m, eps0
@@ -11,7 +11,9 @@
     use damping_m, only : initialize_damping
     use species_m, only : initialize_species_m
     use post_processing_m, only : initialize_post_processing_m
+
     implicit none
+    logical, intent(in) :: read_input
 
     integer :: is 
 !************* read input data and set up for messages and diagnostic output  **************
@@ -20,7 +22,7 @@
     write(*,*) 'Starting post_processing_RAYS'
 
 !   Read data to set up diagnostic output
-    call initialize_diagnostics
+    call initialize_diagnostics(read_input)
 
     call message()
     call text_message('Starting post_processing_RAYS')
@@ -57,25 +59,25 @@
     call initialize_constants_m
     call message()
 
-    call initialize_species_m
+    call initialize_species_m(read_input)
     call message()
     
-    call initialize_rf
+    call initialize_rf(read_input)
     call message()
     
-    call initialize_damping
+    call initialize_damping(read_input)
     call message()
 
-    call initialize_equilibrium
+    call initialize_equilibrium(read_input)
     call message()
 
-    call initialize_ray_init
+    call initialize_ray_init(read_input)
     call message()
 
-    call initialize_ode_solver
+    call initialize_ode_solver(read_input)
     call message()
     
-    call initialize_post_processing_m
+    call initialize_post_processing_m(read_input)
     call message()
     
 

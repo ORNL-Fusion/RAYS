@@ -33,21 +33,24 @@ contains
 
 !********************************************************************
 
-  subroutine initialize_slab_eq
+  subroutine initialize_slab_eq(read_input)
 
     use constants_m, only : input_unit
     use species_m, only : nspec
     use diagnostics_m, only : message_unit, verbosity
     
     implicit none
+    logical, intent(in) :: read_input
 
     allocate( t_prof_model(0:nspec) )
     allocate( alphat1(0:nspec), alphat2(0:nspec) )
 
-    open(unit=input_unit, file='rays.in',action='read', status='old', form='formatted')
-    read(input_unit, slab_eq_list)
-    close(unit=input_unit)
-    write(message_unit, slab_eq_list)
+    if (read_input .eqv. .true.) then    
+        open(unit=input_unit, file='rays.in',action='read', status='old', form='formatted')
+        read(input_unit, slab_eq_list)
+        close(unit=input_unit)
+        write(message_unit, slab_eq_list)
+    end if
 
     if (verbosity > 2)  then
         call write_slab_profiles

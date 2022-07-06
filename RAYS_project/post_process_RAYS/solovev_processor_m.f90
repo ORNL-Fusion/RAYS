@@ -21,19 +21,22 @@
 
  contains
 
- subroutine initialize_solovev_processor
+ subroutine initialize_solovev_processor(read_input)
 
     use diagnostics_m, only : message_unit, message, text_message
     use constants_m, only : input_unit
 
     implicit none
-
-! Read and write input namelist
-    open(unit=input_unit, file='post_process_rays.in',action='read', status='old', form='formatted')
-    read(input_unit, solovev_processor_list)
-    close(unit=input_unit)
-    write(message_unit, solovev_processor_list)
-    call text_message('Finished initialize_solovev_processor ', processor)
+    logical, intent(in) :: read_input
+ 
+    if (read_input .eqv. .true.) then    
+    ! Read and write input namelist
+        open(unit=input_unit, file='post_process_rays.in',action='read', status='old', form='formatted')
+        read(input_unit, solovev_processor_list)
+        close(unit=input_unit)
+        write(message_unit, solovev_processor_list)
+        call text_message('Finished initialize_solovev_processor ', processor)
+    end if
     
     return
  end subroutine initialize_solovev_processor

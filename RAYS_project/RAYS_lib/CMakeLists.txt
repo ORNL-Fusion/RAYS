@@ -22,6 +22,7 @@ list (APPEND lib_sources
 	rf_m.f90
 	simple_slab_ray_init_m.f90
 	slab_eq_m.f90
+	axisym_toroid_eq_m.f90
 	solovev_eq_m.f90
 	solovev_ray_init_nphi_ntheta_m.f90
 	species_m.f90

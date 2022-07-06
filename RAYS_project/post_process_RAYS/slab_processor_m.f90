@@ -38,19 +38,22 @@
 
  contains
 
- subroutine initialize_slab_processor
+ subroutine initialize_slab_processor(read_input)
 
     use diagnostics_m, only : message_unit, message, text_message
     use constants_m, only : input_unit
 
     implicit none
+    logical, intent(in) :: read_input
 
-! Read and write input namelist
-    open(unit=input_unit, file='post_process_rays.in',action='read', status='old', form='formatted')
-    read(input_unit, slab_processor_list)
-    close(unit=input_unit)
-    write(message_unit, slab_processor_list)
-    call text_message('Finished initialize_slab_processor ', processor)
+    if (read_input .eqv. .true.) then    
+    ! Read and write input namelist
+        open(unit=input_unit, file='post_process_rays.in',action='read', status='old', form='formatted')
+        read(input_unit, slab_processor_list)
+        close(unit=input_unit)
+        write(message_unit, slab_processor_list)
+        call text_message('Finished initialize_slab_processor ', processor)
+    end if
     
     return
  end subroutine initialize_slab_processor

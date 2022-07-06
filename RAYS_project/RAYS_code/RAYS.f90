@@ -10,9 +10,10 @@
 !   External procedures: initialize (initialize.f90), trace_rays (trace_rays.f90)
 !                        finalize (finalize.f90)
     implicit none 
+    logical :: read_input = .true.
 
 !   Read input file and initialize variables.
-    call initialize
+    call initialize(read_input)
 
 !   Trace the rays.
     call trace_rays

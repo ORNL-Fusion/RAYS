@@ -31,18 +31,21 @@ contains
 
 !********************************************************************
 
-  module subroutine initialize_SG_ode
+  module subroutine initialize_SG_ode(read_input)
 
     use constants_m, only : input_unit
     use diagnostics_m, only : message_unit
     
     implicit none
-    
-! Read and write input namelist
-    open(unit=input_unit, file='rays.in',action='read', status='old', form='formatted')
-    read(input_unit, SG_ode_list)
-    close(unit=input_unit)
-    write(message_unit, SG_ode_list)
+    logical, intent(in) :: read_input
+
+	if (read_input .eqv. .true.) then        
+	! Read and write input namelist
+		open(unit=input_unit, file='rays.in',action='read', status='old', form='formatted')
+		read(input_unit, SG_ode_list)
+		close(unit=input_unit)
+		write(message_unit, SG_ode_list)
+	end if
 
 !   Check error criterion for the ODE solver.
     if ( rel_err0 < 1.e-9 .or. abs_err0 < 1.e-9 ) then

@@ -16,14 +16,16 @@
 
  contains
 
- subroutine initialize_post_processing_m
+ subroutine initialize_post_processing_m(read_input)
 
     use diagnostics_m, only : message_unit, message, text_message, verbosity
     use constants_m, only : input_unit, output_unit, ray_list_unit
     use slab_processor_m, only : initialize_slab_processor
     use solovev_processor_m, only : initialize_solovev_processor
     use ray_init_m, only : nray_ray_init => nray
+
     implicit none
+    logical, intent(in) :: read_input
 
     integer :: nray, nv, iray, ipoint
     real(KIND=rkind) :: s
@@ -31,19 +33,21 @@
     real(KIND=rkind), allocatable :: residuals(:) 
     character(len = 20), allocatable :: ray_stop(:)
 
-! Read and write input namelist
+    if (read_input .eqv. .true.) then    
+	! Read and write input namelist
         open(unit=input_unit, file='post_process_rays.in',action='read', status='old', form='formatted')
         read(input_unit, post_process_list)
         close(unit=input_unit)
         write(message_unit, post_process_list)
+	end if
 
     select case (trim(processor))
 
        case ('slab')
-          call initialize_slab_processor
+          call initialize_slab_processor(read_input)
 
        case ('solovev')
-          call initialize_solovev_processor
+          call initialize_solovev_processor(read_input)
 
        case default
           write(*,*) 'post_process_rays: unimplemented post_processor =', trim(processor)
