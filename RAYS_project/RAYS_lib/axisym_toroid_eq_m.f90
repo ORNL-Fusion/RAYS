@@ -15,6 +15,7 @@ module axisym_toroid_eq_m
 ! data for magnetics
     character(len=15) :: magnetics_model
 
+<<<<<<< HEAD
 ! data for density and temperature
     character(len=15) :: density_prof_model
     real(KIND=rkind) :: alphan1
@@ -29,6 +30,18 @@ module axisym_toroid_eq_m
      & alphan1, alphan2, & ! parameters for parabolic model
      & temperature_prof_model, &
      & alphat1, alphat2 ! parameters for parabolic model
+=======
+! data for slab density and temperature
+    character(len=15) :: dens_prof_model
+    character(len=15), allocatable :: t_prof_model(:)
+
+ namelist /axisym_toroid_eq_list/&
+     & poloidal_flux_model, &
+     & density_prof_model, &
+     & alphan1, alphan2, ! parameters for parabolic model
+     & temperature_prof_model, &
+     & alphat1, alphat2, & ! parameters for parabolic model
+>>>>>>> 47dd208b739c6b82af6ec9c77d62cf52c1c3da99
      
 !********************************************************************
 
@@ -49,7 +62,11 @@ contains
 
     real(KIND=rkind) :: bp0
     
+<<<<<<< HEAD
     allocate( temperature_prof_model(0:nspec) )
+=======
+    allocate( t_prof_model(0:nspec) )
+>>>>>>> 47dd208b739c6b82af6ec9c77d62cf52c1c3da99
     allocate( alphat1(0:nspec), alphat2(0:nspec) )
 
     if (read_input .eqv. .true.) then    
@@ -59,7 +76,11 @@ contains
         write(message_unit, toroid_eq_list)
     end if
     
+<<<<<<< HEAD
     magnetics: select case (trim(magnetics_model))
+=======
+    magnetics: select case (trim(poloidal_flux_model))
+>>>>>>> 47dd208b739c6b82af6ec9c77d62cf52c1c3da99
        case ('solovev_magnetics')
           call initialize_solovev_magnetics(read_input)
 
@@ -90,8 +111,11 @@ contains
 
     use species_m, only : nspec, n0s, t0s
     use diagnostics_m, only : message_unit, message
+<<<<<<< HEAD
 
     use solovev_magnetics_m, only : solovev_magnetics
+=======
+>>>>>>> 47dd208b739c6b82af6ec9c77d62cf52c1c3da99
     
     implicit none
 
@@ -119,15 +143,25 @@ contains
     if (r < box_rmin .or. r > box_rmax) equib_err = 'R out_of_bounds'
     if (z < box_zmin .or. z > box_zmax) equib_err = 'z out_of_bounds'
 
+<<<<<<< HEAD
     magnetics: select case (trim(magnetics_model))
        case ('solovev_magnetics')
           call solovev_magnetics(rvec, bvec, gradbtensor, psi, gradpsi, psiN, gradpsiN, equib_err)
+=======
+    magnetics: select case (trim(poloidal_flux_model))
+       case ('solovev_magnetics')
+          call solovev_magnetics(rvec, bvec, gradbtensor psi, gradpsi, psiN, gradpsiN, equib_err)
+>>>>>>> 47dd208b739c6b82af6ec9c77d62cf52c1c3da99
     end select magnetics
 
 
 !   Density profile.
 
+<<<<<<< HEAD
     density: select case (trim(density_prof_model))
+=======
+    density: select case (trim(dens_prof_model))
+>>>>>>> 47dd208b739c6b82af6ec9c77d62cf52c1c3da99
 
         case ('constant')
           ns(:nspec) = n0s(:nspec)
@@ -147,7 +181,11 @@ contains
             end if
 
         case default
+<<<<<<< HEAD
             write(0,*) 'axisym_toriod_eq: Unknown density_prof_model =', density_prof_model
+=======
+            write(0,*) 'axisym_toriod_eq: Unknown dens_prof_model =', dens_prof_model
+>>>>>>> 47dd208b739c6b82af6ec9c77d62cf52c1c3da99
             stop 1
 
     end select density
@@ -155,7 +193,11 @@ contains
 
 !   Temperature profile.
     do is = 0, nspec
+<<<<<<< HEAD
        temperature: select case (temperature_prof_model(is))
+=======
+       temperature: select case (t_prof_model(is))
+>>>>>>> 47dd208b739c6b82af6ec9c77d62cf52c1c3da99
 
 
         case ('zero')
@@ -183,8 +225,12 @@ contains
           end if
 
        case default
+<<<<<<< HEAD
           write(0,*) 'axisym_toroid_eq: Unknown temperature_prof_model: ', &
                      & temperature_prof_model(0:nspec)
+=======
+          write(0,*) 'axisym_toroid_eq: Unknown t_prof_model: ', t_prof_model(0:nspec)
+>>>>>>> 47dd208b739c6b82af6ec9c77d62cf52c1c3da99
           stop 1
 
        end select temperature
@@ -205,7 +251,11 @@ contains
     use species_m, only : nspec, n0s, t0s
     use diagnostics_m, only : message_unit, message
 
+<<<<<<< HEAD
     use solovev_magnetics_m, only : solovev_magnetics
+=======
+    use solovev_magnetics_m, only : solovev_magnetics_m
+>>>>>>> 47dd208b739c6b82af6ec9c77d62cf52c1c3da99
     
     implicit none
 

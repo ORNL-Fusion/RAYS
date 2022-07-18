@@ -84,7 +84,11 @@ contains
   end subroutine initialize_solovev_magnetics
 
 
+<<<<<<< HEAD
   subroutine solovev_magnetics(rvec, bvec, gradbtensor, psi, gradpsi, psiN, gradpsiN, equib_err)
+=======
+  subroutine solovev_magnetics(rvec, bvec, gradbtensor psi, gradpsi, psiN, gradpsiN, equib_err)
+>>>>>>> 47dd208b739c6b82af6ec9c77d62cf52c1c3da99
 !   Simple solovev equilibrium model originally based on notes from 7/28/1995 .
 !   by Cai-ye Wang.  Reworked extensively by DBB.  See notes of 2-12-2022. 
 !
@@ -169,7 +173,57 @@ contains
     gradbtensor(2,3) = dbzdr * y/r
     gradbtensor(3,3) = dbzdz
 
+<<<<<<< HEAD
     return
     end subroutine solovev_magnetics
   
   end module solovev_magnetics_m
+=======
+!********************************************************************
+
+  subroutine solovev_psi(rvec, psi, gradpsi, psiN, gradpsiN)
+!   Simple solovev equilibrium model originally based on notes from 7/28/1995 by Cai-ye Wang.
+!   Reworked extensively by DBB.  See notes of 2-12-2022. 
+!
+!   Checks for some error conditions and sets equib_err for outside handling.  Does not
+!   stop.
+
+    use species_m, only : nspec, n0s, t0s
+    use diagnostics_m, only : message_unit, message
+    
+    implicit none
+
+    real(KIND=rkind), intent(in) :: rvec(3) 
+    real(KIND=rkind), intent(out) :: psi, gradpsi(3), psiN, gradpsiN(3)
+
+
+    real(KIND=rkind) :: x, y, z, R
+    real(KIND=rkind) :: br, bz, bphi, bp0
+
+    x = rvec(1)
+    y = rvec(2)
+    z = rvec(3)
+    R = sqrt(x**2+y**2)
+ 
+!   Define
+    bp0 = bphi0*iota0
+ 
+!   Flux function x, y, z normalized to one at last surface (z=0, r=outer_bound)
+    psi = .5*bp0 * ( (R*z/(rmaj*kappa))**2 + ((R**2-rmaj**2)**2)/rmaj**2/4. )
+
+
+!   Magnetic field
+    br = -bp0*R*z/(rmaj*kappa)**2
+    bz = bp0 * ( (z/(rmaj*kappa))**2 + .5*((R/rmaj)**2-1.) )
+    gradpsi = (/x*bz, y*bz, -R*br/)
+
+!   Normalized Flux function x, y, z normalized to 1.0 at last surface (z=0, R=outer_bound)
+    psiN = psi/psiB
+    gradpsiN = gradpsi/psiB
+    
+    return
+  
+  end subroutine solovev_psi
+ 
+end module solovev_magnetics_m
+>>>>>>> 47dd208b739c6b82af6ec9c77d62cf52c1c3da99
