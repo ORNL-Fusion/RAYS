@@ -15,16 +15,20 @@ module axisym_toroid_eq_m
 ! data for magnetics
     character(len=15) :: magnetics_model
 
-! data for slab density and temperature
-    character(len=15) :: dens_prof_model
-    character(len=15), allocatable :: t_prof_model(:)
+! data for density and temperature
+    character(len=15) :: density_prof_model
+    real(KIND=rkind) :: alphan1
+    real(KIND=rkind) :: alphan2
+    character(len=15), allocatable :: temperature_prof_model(:)
+    real(KIND=rkind), allocatable :: alphat1(:)
+    real(KIND=rkind), allocatable :: alphat2(:)
 
  namelist /axisym_toroid_eq_list/&
-     & poloidal_flux_model, &
+     & magnetics_model, &
      & density_prof_model, &
-     & alphan1, alphan2, ! parameters for parabolic model
+     & alphan1, alphan2, & ! parameters for parabolic model
      & temperature_prof_model, &
-     & alphat1, alphat2, & ! parameters for parabolic model
+     & alphat1, alphat2 ! parameters for parabolic model
      
 !********************************************************************
 
@@ -45,7 +49,7 @@ contains
 
     real(KIND=rkind) :: bp0
     
-    allocate( t_prof_model(0:nspec) )
+    allocate( temperature_prof_model(0:nspec) )
     allocate( alphat1(0:nspec), alphat2(0:nspec) )
 
     if (read_input .eqv. .true.) then    
@@ -55,7 +59,7 @@ contains
         write(message_unit, toroid_eq_list)
     end if
     
-    magnetics: select case (trim(poloidal_flux_model))
+    magnetics: select case (trim(magnetics_model))
        case ('solovev_magnetics')
           call initialize_solovev_magnetics(read_input)
 
@@ -86,6 +90,8 @@ contains
 
     use species_m, only : nspec, n0s, t0s
     use diagnostics_m, only : message_unit, message
+
+    use solovev_magnetics_m, only : solovev_magnetics
     
     implicit none
 
@@ -113,15 +119,15 @@ contains
     if (r < box_rmin .or. r > box_rmax) equib_err = 'R out_of_bounds'
     if (z < box_zmin .or. z > box_zmax) equib_err = 'z out_of_bounds'
 
-    magnetics: select case (trim(poloidal_flux_model))
+    magnetics: select case (trim(magnetics_model))
        case ('solovev_magnetics')
-          call solovev_magnetics(rvec, bvec, gradbtensor psi, gradpsi, psiN, gradpsiN, equib_err)
+          call solovev_magnetics(rvec, bvec, gradbtensor, psi, gradpsi, psiN, gradpsiN, equib_err)
     end select magnetics
 
 
 !   Density profile.
 
-    density: select case (trim(dens_prof_model))
+    density: select case (trim(density_prof_model))
 
         case ('constant')
           ns(:nspec) = n0s(:nspec)
@@ -141,7 +147,7 @@ contains
             end if
 
         case default
-            write(0,*) 'axisym_toriod_eq: Unknown dens_prof_model =', dens_prof_model
+            write(0,*) 'axisym_toriod_eq: Unknown density_prof_model =', density_prof_model
             stop 1
 
     end select density
@@ -149,7 +155,7 @@ contains
 
 !   Temperature profile.
     do is = 0, nspec
-       temperature: select case (t_prof_model(is))
+       temperature: select case (temperature_prof_model(is))
 
 
         case ('zero')
@@ -177,7 +183,8 @@ contains
           end if
 
        case default
-          write(0,*) 'axisym_toroid_eq: Unknown t_prof_model: ', t_prof_model(0:nspec)
+          write(0,*) 'axisym_toroid_eq: Unknown temperature_prof_model: ', &
+                     & temperature_prof_model(0:nspec)
           stop 1
 
        end select temperature
@@ -198,7 +205,7 @@ contains
     use species_m, only : nspec, n0s, t0s
     use diagnostics_m, only : message_unit, message
 
-    use solovev_magnetics_m, only : solovev_magnetics_m
+    use solovev_magnetics_m, only : solovev_magnetics
     
     implicit none
 
