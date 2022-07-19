@@ -84,11 +84,7 @@ contains
   end subroutine initialize_solovev_magnetics
 
 
-<<<<<<< HEAD
   subroutine solovev_magnetics(rvec, bvec, gradbtensor, psi, gradpsi, psiN, gradpsiN, equib_err)
-=======
-  subroutine solovev_magnetics(rvec, bvec, gradbtensor psi, gradpsi, psiN, gradpsiN, equib_err)
->>>>>>> 47dd208b739c6b82af6ec9c77d62cf52c1c3da99
 !   Simple solovev equilibrium model originally based on notes from 7/28/1995 .
 !   by Cai-ye Wang.  Reworked extensively by DBB.  See notes of 2-12-2022. 
 !
@@ -173,12 +169,11 @@ contains
     gradbtensor(2,3) = dbzdr * y/r
     gradbtensor(3,3) = dbzdz
 
-<<<<<<< HEAD
     return
     end subroutine solovev_magnetics
   
   end module solovev_magnetics_m
-=======
+
 !********************************************************************
 
   subroutine solovev_psi(rvec, psi, gradpsi, psiN, gradpsiN)
@@ -226,4 +221,3 @@ contains
   end subroutine solovev_psi
  
 end module solovev_magnetics_m
->>>>>>> 47dd208b739c6b82af6ec9c77d62cf52c1c3da99
