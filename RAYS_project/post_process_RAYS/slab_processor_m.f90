@@ -257,7 +257,7 @@
     implicit none
 
 !   fast, slow etc
-    character(len=15) :: wave_mode
+    character(len=60) :: wave_mode
 
     integer, parameter :: n_xpoints = 101 ! Number of x points in scan
     integer :: ix
@@ -329,7 +329,7 @@
     implicit none
 
 !   fast, slow etc
-    character(len=15) :: wave_mode
+    character(len=60) :: wave_mode
 
     integer, parameter :: n_xpoints = 101 ! Number of x points in scan
     integer :: iray, ix

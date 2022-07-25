@@ -4,7 +4,8 @@
 simple_assignment_file_edit.py 3/13/2018 (Batchelor)
 Utilities to read, modify, and write text files with lines in the form of assignment
 statements, i.e. of the form <name> = <value>
-For now it only deals with single line assignments.
+For now it only deals with single line assignments.  The line can have multiple values
+(i.e. a vector) but the line has to be parsed to separate the multiple values.
 """
 
 # Working notes:
@@ -93,6 +94,16 @@ def modify_variables_in_file(change_dict, filename):
             print('variable to be modified ', name, ' not found in file ', filename)
             raise
     put_lines(filename, lines)
+
+#---------------------------------------------------------------------------------------
+# Convert a dictionary variable containing whitespace delimited multiple variables to
+# a list of floats.  Useful when lines_to_variable_dict() hits a vector on a single line.
+#---------------------------------------------------------------------------------------
+
+def dict_variable_to_list_of_floats(variable_dict, variable):
+    chr_list =  variable_dict[variable].split()
+    num_list = [float(x) for x in chr_list]
+    return num_list
 
 #---------------------------------------------------------------------------------------
 # Edit fortran namelist file
@@ -216,15 +227,15 @@ if __name__ == '__main__':
     
     variable_dict_to_output_file(VD, 'out_file')
     
-    read_var_from_nml_lines(lines, 'x', separator = ',')
-    
-    VD_2 = input_file_to_variable_dict('little_dict2')
-    print(VD_2)
-
-    change_dict = {'x': [113.0, 142], 'y': 22.000001, 'switch' : "'on'"}
-    modify_variables_in_file(change_dict, 'little_dict2')
-
-    change_dict = {'Q': 600}
-    add_variables_to_output_file(change_dict, 'test_file_2')
-
-    read_var_from_nml_lines(lines, x, separator = ',')
+#     read_var_from_nml_lines(lines, 'x', separator = ',')
+#     
+#     VD_2 = input_file_to_variable_dict('little_dict2')
+#     print(VD_2)
+# 
+#     change_dict = {'x': [113.0, 142], 'y': 22.000001, 'switch' : "'on'"}
+#     modify_variables_in_file(change_dict, 'little_dict2')
+# 
+#     change_dict = {'Q': 600}
+#     add_variables_to_output_file(change_dict, 'test_file_2')
+# 
+#     read_var_from_nml_lines(lines, x, separator = ',')

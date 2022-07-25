@@ -31,7 +31,7 @@
 
     implicit none   
     
-    character(len=15) :: ray_init_model
+    character(len=60) :: ray_init_model
 
 !   Initial position and wavenumber of the ray.  The number of rays to be traced, nray,
 !   is calculated in ray_init_m from input values of initial loacations and initial k.
@@ -61,6 +61,7 @@ contains
         use diagnostics_m, only : message_unit, message, text_message
         use simple_slab_ray_init_m, only : simple_slab_ray_init
         use solovev_ray_init_nphi_ntheta_m, only : ray_init_solovev_nphi_ntheta
+        use axisym_toroid_ray_init_nphi_ntheta_m, only : ray_init_axisym_toroid_nphi_ntheta
  
         implicit none
         logical, intent(in) :: read_input
@@ -80,6 +81,9 @@ contains
 
              case ('solovev')
                 call ray_init_solovev_nphi_ntheta(nray_max, nray, rvec0, rindex_vec0, ray_pwr_wt)
+
+             case ('axisym_toroid_nphi_ntheta')
+                call ray_init_axisym_toroid_nphi_ntheta(nray_max, nray, rvec0, rindex_vec0, ray_pwr_wt)
         
             case default
                 write(0,*) 'initialize_ray_init: invalid ray_init_model = ', trim(ray_init_model)

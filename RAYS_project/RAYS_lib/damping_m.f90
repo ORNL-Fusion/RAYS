@@ -9,7 +9,7 @@
 !   damping_model = 'no_damp" do not calculate damping
 !   damping_model = 'poynting' use multicomponent Poyntings theorem
 !   damping_model = 'fund_ECH' use simple weak damping approx. for fundamental ECH
-    character(len=15) :: damping_model
+    character(len=60) :: damping_model
     
 !   Multi species damping.  Only meaningful if damping_model /= 'no_damp"
 !   If .true. integrate damping by individual species as well as total damping

@@ -3,7 +3,8 @@ module axisym_toroid_eq_m
 ! and temperature models.  It is assumed that there exists a poloidal flux function 
 ! on which the densities and temperatures are constant. An external magnetics module is
 ! required for each magnetics model which provides B, grad B tensor, and the flux function,
-! psi, along with it's gradient (poloidal_flux_model).
+! psi, along with it's gradient (poloidal_flux_model).  The magnetics model also provides
+! certain geometry data on initialization.
 !
 ! Input to axisym_toroid_eq() is rvec = (x,y,z) position
 ! Outputs from axisym_toroid_eq() are all quantities needed to fill an eq_point type
@@ -13,13 +14,21 @@ module axisym_toroid_eq_m
     implicit none
 
 ! data for magnetics
-    character(len=15) :: magnetics_model
+    character(len=60) :: magnetics_model
+    
+! Geometry data
+! Magnetic axis
+    real(KIND=rkind) :: r_axis, z_axis
+! data for bounding box
+    real(KIND=rkind) :: box_rmin, box_rmax, box_zmin, box_zmax
+! data for plasma boundary
+    real(KIND=rkind) :: inner_bound, outer_bound, upper_bound, lower_bound
 
 ! data for density and temperature
-    character(len=15) :: density_prof_model
+    character(len=60) :: density_prof_model
     real(KIND=rkind) :: alphan1
     real(KIND=rkind) :: alphan2
-    character(len=15), allocatable :: temperature_prof_model(:)
+    character(len=20), allocatable :: temperature_prof_model(:)
     real(KIND=rkind), allocatable :: alphat1(:)
     real(KIND=rkind), allocatable :: alphat2(:)
 
@@ -38,9 +47,9 @@ contains
 
   subroutine initialize_axisym_toroid_eq(read_input)
 
-    use constants_m, only : input_unit
+    use constants_m, only : rkind, input_unit
     use species_m, only : nspec
-    use diagnostics_m, only : message, message_unit, verbosity
+    use diagnostics_m, only : message, message_unit, text_message, verbosity
 
     use solovev_magnetics_m, only : initialize_solovev_magnetics, solovev_magnetics
 
@@ -54,16 +63,18 @@ contains
 
     if (read_input .eqv. .true.) then    
         open(unit=input_unit, file='rays.in',action='read', status='old', form='formatted')
-        read(input_unit, toroid_eq_list)
+        read(input_unit, axisym_toroid_eq_list)
         close(unit=input_unit)
-        write(message_unit, toroid_eq_list)
+        write(message_unit, axisym_toroid_eq_list)
     end if
     
     magnetics: select case (trim(magnetics_model))
        case ('solovev_magnetics')
-          call initialize_solovev_magnetics(read_input)
-
-       case default
+          call initialize_solovev_magnetics(read_input, r_axis, z_axis, &
+               & box_rmin, box_rmax, box_zmin, box_zmax, &
+               & inner_bound, outer_bound, upper_bound, lower_bound)
+   
+          case default
           write(0,*) 'initialize_axisym_toroid_eq: unknown magnetics model =', magnetics_model
           call text_message('initialize_axisym_toroid_eq: unknown magnetics model',&
           & trim(magnetics_model),0)
@@ -99,7 +110,7 @@ contains
     real(KIND=rkind), intent(out) :: bvec(3), gradbtensor(3,3)
     real(KIND=rkind), intent(out) :: ns(0:nspec), gradns(3,0:nspec)
     real(KIND=rkind), intent(out) :: ts(0:nspec), gradts(3,0:nspec)
-    character(len=20), intent(out) :: equib_err
+    character(len=60), intent(out) :: equib_err
 
 
     real(KIND=rkind) :: x, y, z, r
@@ -199,11 +210,12 @@ contains
 !********************************************************************
 
  subroutine axisym_toroid_psi(rvec, psi, gradpsi, psiN, gradpsiN)
-
+ 
+    use constants_m, only : rkind
     use species_m, only : nspec, n0s, t0s
     use diagnostics_m, only : message_unit, message
 
-    use solovev_magnetics_m, only : solovev_magnetics
+    use solovev_magnetics_m, only : solovev_magnetics, solovev_magnetics_psi
     
     implicit none
 
@@ -211,9 +223,9 @@ contains
     real(KIND=rkind), intent(out) :: psi, gradpsi(3), psiN, gradpsiN(3)
 
 
-    magnetics: select case (trim(poloidal_flux_model))
+    magnetics: select case (trim(magnetics_model))
        case ('solovev_magnetics')
-          call solovev_psi(rvec, psi, gradpsi, psiN, gradpsiN)
+          call solovev_magnetics_psi(rvec, psi, gradpsi, psiN, gradpsiN)
     end select magnetics
 
     return
@@ -222,6 +234,7 @@ contains
 
 !***********************************************************************
  subroutine write_axisym_toroid_profiles
+    use constants_m, only : rkind
     use species_m, only : nspec
     use diagnostics_m, only : message_unit
 
@@ -233,7 +246,7 @@ contains
     real(KIND=rkind) :: ns(0:nspec), gradns(3,0:nspec)
     real(KIND=rkind) :: ts(0:nspec), gradts(3,0:nspec)
     real(KIND=rkind) :: psi, gradpsi(3), psiN, gradpsiN(3)
-    character(len=20) :: equib_err
+    character(len=60) :: equib_err
 
     integer, parameter :: nx_points = 51
     integer :: ip, i
@@ -248,7 +261,7 @@ contains
     dx = (outer_bound-inner_bound)/(nx_points-1)
     
     write (message_unit,*) '    x', b9,'ne', b12, 'bx', b9, 'by', b9, 'bz', b9, 'psi', &
-            & b8, 'psi/psiB', b3,  'Te',b9, 'Ti(s)'
+            & b8, 'psiN', b8,  'Te',b9, 'Ti(s)'
 
     do ip = 1, nx_points
         x = inner_bound + (ip-1)*dx
@@ -256,7 +269,7 @@ contains
         call axisym_toroid_eq(rvec, bvec, gradbtensor, ns, gradns, ts, gradts, equib_err)
         call axisym_toroid_psi(rvec, psi, gradpsi, psiN, gradpsiN)  
         write (message_unit,'(f11.5, a, e12.5, 3f11.5, f11.5, f11.5,  7f11.5)') &
-               & x,'  ', ns(0), bvec, psi, psi/psiB, (ts(i), i=0, nspec)
+               & x,'  ', ns(0), bvec, psi, psiN, (ts(i), i=0, nspec)
 !        write(*,*) 'x = ', x, '  gradpsi = ', gradpsi
 !        write(*,*) 'gradbtensor = ', gradbtensor
     end do

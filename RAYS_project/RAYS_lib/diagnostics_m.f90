@@ -52,7 +52,7 @@
     integer :: verbosity
 
 !  Run label (N.B. should be legal in file name, e.g.no blanks allowed)
-    character(len=15) :: run_label = ''
+    character(len=60) :: run_label = ''
 
 !  Run description
     character(len=80) :: run_description = ''
@@ -68,7 +68,7 @@
     integer :: num_deriv
 
 !   Error returns
-    character(len=20) :: equib_err = ''
+    character(len=60) :: equib_err = ''
     
 !   Counter for general use, mostly for use in debugging
     integer :: diag_count = 0

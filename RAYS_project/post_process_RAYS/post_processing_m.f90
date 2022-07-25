@@ -22,6 +22,7 @@
     use constants_m, only : input_unit, output_unit, ray_list_unit
     use slab_processor_m, only : initialize_slab_processor
     use solovev_processor_m, only : initialize_solovev_processor
+    use axisym_toroid_processor_m, only : initialize_axisym_toroid_processor
     use ray_init_m, only : nray_ray_init => nray
 
     implicit none
@@ -48,6 +49,9 @@
 
        case ('solovev')
           call initialize_solovev_processor(read_input)
+
+       case ('axisym_toroid')
+          call initialize_axisym_toroid_processor(read_input)
 
        case default
           write(*,*) 'post_process_rays: unimplemented post_processor =', trim(processor)
@@ -137,9 +141,21 @@
     use diagnostics_m, only : message_unit, message, text_message, verbosity
     use slab_processor_m, only : slab_processor
     use solovev_processor_m, only : solovev_processor
+    use axisym_toroid_processor_m, only : axisym_toroid_processor
+!	use solovev_magnetics_m, only : inner_bound, outer_bound, rmaj, kappa
+    use axisym_toroid_eq_m, only : r_axis, z_axis, &
+                          & box_rmin, box_rmax, box_zmin, box_zmax, &
+                          & inner_bound, outer_bound, upper_bound, lower_bound
 
     implicit none
 
+   write(*, *) 'r_axis = ', r_axis
+   write(*, *) 'z_axis = ', z_axis
+   write(*, *) 'inner_bound = ', inner_bound
+   write(*, *) 'outer_bound = ', outer_bound
+   write(*, *) 'upper_bound = ', upper_bound
+   write(*, *) 'lower_bound = ', lower_bound
+   
     select case (trim(processor))
 
        case ('slab')
@@ -150,7 +166,12 @@
           write(*,*) 'calling solovev_processor'
           call solovev_processor
 
-       case default
+ 
+       case ('axisym_toroid')
+          write(*,*) 'calling axisym_toroid_processor'
+          call axisym_toroid_processor
+
+      case default
           write(0,*) 'post_process_rays: unimplemented post_processor =', trim(processor)
           call text_message('post_process_rays: unimplemented post_processor', trim(processor))
           stop 1

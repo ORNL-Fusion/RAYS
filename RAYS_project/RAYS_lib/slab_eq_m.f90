@@ -10,11 +10,11 @@ module slab_eq_m
     real(KIND=rkind) :: Ln_scale, LT_scale, LBy_shear_scale, LBz_scale
 
 ! data for slab density and temperature
-    character(len=15) :: dens_prof_model
+    character(len=60) :: dens_prof_model
     real(KIND=rkind) :: rmaj, rmin
     real(KIND=rkind) :: alphan1
     real(KIND=rkind) :: alphan2  
-    character(len=15), allocatable :: t_prof_model(:)
+    character(len=20), allocatable :: t_prof_model(:)
     real(KIND=rkind), allocatable :: alphat1(:)
     real(KIND=rkind), allocatable :: alphat2(:)
     
@@ -245,7 +245,7 @@ contains
     real(KIND=rkind) :: bvec(3), gradbtensor(3,3)
     real(KIND=rkind) :: ns(0:nspec), gradns(3,0:nspec)
     real(KIND=rkind) :: ts(0:nspec), gradts(3,0:nspec)
-    character(len=20) :: equib_err
+    character(len=60) :: equib_err
 
     integer, parameter :: nx_points = 51
     integer :: ip, i

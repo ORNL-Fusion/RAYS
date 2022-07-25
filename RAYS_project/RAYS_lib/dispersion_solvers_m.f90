@@ -37,10 +37,10 @@ contains
     type(eq_point(nspec=nspec)), intent(in) :: eq
 
 !   Name of dispersion model (can be different from that used in ray tracing)
-    character(len=15), intent(in) :: dispersion_model
+    character(len=20), intent(in) :: dispersion_model
 
 !   fast, slow etc
-    character(len=15), intent(in) :: wave_mode
+    character(len=20), intent(in) :: wave_mode
     
     integer, intent(in) :: k_sign
     real(KIND=rkind), intent(in) :: n2 ! n transverse
@@ -111,10 +111,10 @@ contains
     type(eq_point(nspec=nspec)), intent(in) :: eq
 
 !   Name of dispersion model (can be different from that used in ray tracing)
-    character(len=15), intent(in) :: dispersion_model
+    character(len=20), intent(in) :: dispersion_model
 
 !   fast, slow etc
-    character(len=15), intent(in) :: wave_mode
+    character(len=20), intent(in) :: wave_mode
     
     integer, intent(in) :: k_sign
     real(KIND=rkind), intent(in) :: ny, nz

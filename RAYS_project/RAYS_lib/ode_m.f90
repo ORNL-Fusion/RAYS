@@ -14,7 +14,7 @@
 !   supported routines are:
 !   ray_deriv_name = cold
 !   ray_deriv_name = numerical
-    character(len=15) :: ray_deriv_name
+    character(len=60) :: ray_deriv_name
     
 !   nv: No. of ODEs to be solved.
     integer :: nv 
@@ -31,7 +31,7 @@
 ! Derived type containing information on terminating ode integration
     type ode_stop    
         logical :: stop_ode = .false.
-        character(len=20) :: ode_stop_flag = ''
+        character(len=60) :: ode_stop_flag = ''
     end type ode_stop
 
 ! Interfaces for Shampine and Gordon ODE 

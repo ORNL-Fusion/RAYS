@@ -47,7 +47,7 @@
         real(KIND=rkind), allocatable :: alpha(:), gamma(:)
 
     !   Error returns
-        character(len=20) :: equib_err = ''
+        character(len=60) :: equib_err = ''
 
     end type eq_point
           
@@ -65,6 +65,7 @@ contains
     use diagnostics_m, only : message_unit, message, text_message
     use slab_eq_m, only : initialize_slab_eq
     use solovev_eq_m, only : initialize_solovev_eq
+    use axisym_toroid_eq_m, only : initialize_axisym_toroid_eq
 
     implicit none
     logical, intent(in) :: read_input
@@ -90,7 +91,7 @@ contains
 
        case ('axisym_toroid')
 !         A 1-D slab equilibrium with stratification in x
-          call initialize_solovev_eq(read_input)
+          call initialize_axisym_toroid_eq(read_input)
 
        case default
           write(0,*) 'initialize_equilibrium: improper equilib_model =', equilib_model
@@ -121,6 +122,7 @@ contains
     
     use slab_eq_m, only : slab_eq
     use solovev_eq_m, only : solovev_eq
+    use axisym_toroid_eq_m, only : axisym_toroid_eq
  
     implicit none
 
@@ -143,7 +145,7 @@ contains
     real(KIND=rkind)  :: omgc(0:nspec), omgp2(0:nspec)
     real(KIND=rkind)  :: alpha(0:nspec), gamma(0:nspec)
 
-    character(len=20) :: equib_err
+    character(len=60) :: equib_err
 
     integer :: ivec, ivec1, ivec2
 
@@ -157,7 +159,7 @@ contains
           call solovev_eq(rvec, bvec, gradbtensor, ns, gradns, ts, gradts, equib_err)
 
        case ('axisym_toroid')
-          call solovev_eq(rvec, bvec, gradbtensor, ns, gradns, ts, gradts, equib_err)
+          call axisym_toroid_eq(rvec, bvec, gradbtensor, ns, gradns, ts, gradts, equib_err)
 
        case default
           write(0,*) 'equilibrium_m: invalid equilibrium model = ', trim(equilib_model)
@@ -167,7 +169,8 @@ contains
                            
 !   If equilibrium subroutine has set equib_err then return for outside handling. Do not crash.
     if (equib_err /= '') then
-        eq%equib_err = equib_err        
+        eq%equib_err = equib_err
+        write (*, *) 'equilibrium:  equib_err = ', equib_err      
         return
     end if
 

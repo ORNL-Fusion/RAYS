@@ -1,4 +1,4 @@
- module solovev_ray_init_nphi_ntheta_m
+ module axisym_toroid_ray_init_nphi_ntheta_m
  
 ! Parameters to generate the initial conditions for the rays
 ! i.e. intitial position for each ray: rvec0(1:3, iray) and 
@@ -35,7 +35,7 @@
     integer:: n_rindex_phi = 1
     real(KIND=rkind) ::  rindex_phi0 = 0., delta_rindex_phi = 0.
      
- namelist /solovev_ray_init_nphi_ktheta_list/ &
+ namelist /axisym_toroid_ray_init_nphi_ntheta_list/ &
      & n_r_launch,  r_launch0, dr_launch, &
      & n_theta_launch, theta_launch0, dtheta_launch, &
      & n_rindex_theta, rindex_theta0, delta_rindex_theta, &
@@ -53,7 +53,7 @@ contains
 !****************************************************************************
 
                                              
-    subroutine ray_init_solovev_nphi_ntheta(nray_max, nray, rvec0, rindex_vec0, ray_pwr_wt)
+    subroutine ray_init_axisym_toroid_nphi_ntheta(nray_max, nray, rvec0, rindex_vec0, ray_pwr_wt)
     
 ! Specify a range of initial launch positions (r,theta) and at each launch position
 ! an initial poloidal wave number, rindex_theta0, and toroidal wave number, rindex_phi0.
@@ -73,7 +73,7 @@ contains
     use equilibrium_m, only : equilibrium, eq_point
     use dispersion_solvers_m, only: solve_n1_vs_n2_n3
     use rf_m, only : ray_dispersion_model, wave_mode, k0_sign, k0
-    use solovev_eq_m, only: rmaj, solovev_psi
+    use axisym_toroid_eq_m, only: r_axis, z_axis, axisym_toroid_psi
 
     implicit none
     
@@ -94,9 +94,9 @@ contains
 
 ! Read and write input namelist
     open(unit=input_unit, file='rays.in',action='read', status='old', form='formatted')
-    read(input_unit, solovev_ray_init_nphi_ktheta_list)
+    read(input_unit, axisym_toroid_ray_init_nphi_ntheta_list)
     close(unit=input_unit)
-    write(message_unit, solovev_ray_init_nphi_ktheta_list)
+    write(message_unit, axisym_toroid_ray_init_nphi_ntheta_list)
 
 ! Allocate maximum space for the initial condition vectors rvec0, rindex_vec0
 ! N.B. Not all of these may successfully initialize because of errors.  So count successful
@@ -108,7 +108,7 @@ contains
         allocate ( rvec0(3, nray), rindex_vec0(3, nray) )
         allocate ( ray_pwr_wt(nray) )
         else
-        write (*,*) 'solovev ray init: improper number of rays  nray=', nray
+        write (*,*) 'axisym_toroid ray init: improper number of rays  nray=', nray
         stop 1
         end if  
 
@@ -120,8 +120,8 @@ contains
         theta = theta_launch0 + (itheta-1) * dtheta_launch
 
         rmin_launch = r_launch0+(iray-1)*dr_launch 
-        x = rmaj + rmin_launch*cos(theta)
-        z = rmin_launch*sin(theta)
+        x = r_axis + rmin_launch*cos(theta)
+        z = z_axis + rmin_launch*sin(theta)
         rvec(:) = (/ x, 0._rkind, z /)  ! Without loss of generality take y = 0
 
     rindex_theta_loop: do i_ntheta = 1, n_rindex_theta 
@@ -131,9 +131,12 @@ contains
         rindex_phi = rindex_phi0 + (i_nphi-1) * delta_rindex_phi
 
         call equilibrium(rvec, eq)
-           if (trim(eq%equib_err) /= '') cycle rindex_phi_loop
+		if (trim(eq%equib_err) /= '') then
+		   write (*,*) 'ray_init_axisym_toroid_nphi_ntheta: equib_err = ', trim(eq%equib_err)
+		   cycle rindex_phi_loop
+		end if
 
-        call solovev_psi(rvec, psi, gradpsi, psiN, gradpsiN)  
+        call axisym_toroid_psi(rvec, psi, gradpsi, psiN, gradpsiN)  
                      
 ! Calculate a bunch of unit vectors, parallel and transverse components of k
         psi_unit = gradpsi/sqrt(dot_product(gradpsi,gradpsi))
@@ -159,7 +162,7 @@ contains
              &  n2, n3, npsi_cmplx)
 
         if (npsi_cmplx%im /= 0.) then
-            write(message_unit, *) 'solovev_ray_init: evanescent ray, rvec = ', rvec, &
+            write(message_unit, *) 'axisym_toroid_ray_init: evanescent ray, rvec = ', rvec, &
             & ' n2 = ', n2, ' n3 = ', n3
             cycle rindex_phi_loop
         end if
@@ -171,13 +174,14 @@ contains
         ! Take psi component to point inward i.e. direction -grad_psi
         rindex_vec0( : , count) = rindex_vec - npsi*psi_unit
 
- write(*,*) 'wave_mode = ', wave_mode
- write(*,*) 'eq%bunit = ', eq%bunit
- write(*,*) 'psi_unit = ', psi_unit, '  phi_unit = ', phi_unit
- write(*,*) 'theta_unit = ', theta_unit, '  trans_unit = ', trans_unit
- write(*,*) 'rindex_vec = ', rindex_vec, '  n3 = ', n3, '  n2 = ', n2
- write(*,*) 'npsi = ', npsi, '  n3 = ', n3, '  n2 = ', n2
- write(*,*) 'rindex_vec0( : , count) = ', rindex_vec0( : , count)
+!  write(*,*) 'wave_mode = ', wave_mode
+!  write(*,*) 'eq%bunit = ', eq%bunit
+!  write(*,*) 'psi_unit = ', psi_unit
+!  write(*,*) 'phi_unit = ', phi_unit
+!  write(*,*) 'theta_unit = ', theta_unit
+!  write(*,*) 'trans_unit = ', trans_unit
+!  write(*,*) 'npsi = ', npsi, '  n3 = ', n3, '  n2 = ', n2
+!  write(*,*) 'rindex_vec0( : ,', count,') = ', rindex_vec0( : , count)
 
  nperp = sqrt(npsi**2+n2**2)
 ! write(*,*) 'residual = ', residual(eq, k0*nperp, k0*n3)
@@ -191,7 +195,7 @@ contains
     end do ray_loop
 
     nray = count
-    call message('solovev_ray_init: nray', nray)
+    call message('axisym_toroid_ray_init: nray', nray)
 
     if (nray == 0) then
         stop 'No successful ray initializations'
@@ -200,7 +204,7 @@ contains
     end if
         
 
-    end subroutine ray_init_solovev_nphi_ntheta
+    end subroutine ray_init_axisym_toroid_nphi_ntheta
 
 !****************************************************************************
     real(KIND=rkind) function residual_2(eq, k1, k3)
@@ -277,4 +281,4 @@ contains
     end function residual_2
 
 
-end module solovev_ray_init_nphi_ntheta_m
+end module axisym_toroid_ray_init_nphi_ntheta_m

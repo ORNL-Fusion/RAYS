@@ -5,7 +5,7 @@
     implicit none
 
 !   Name of dispersion model used in ray tracing
-    character(len=15) :: ray_dispersion_model
+    character(len=60) :: ray_dispersion_model
 
 !   RF wave frequency: omgrf = 2*pi*frf, frf in Hz, and wave number
 !   in vacuum: k0 = clight / omgrf
@@ -15,7 +15,7 @@
 !   k initialization: i.e., fast wave, slow wave, IBW, or KAW, etc. 
 !   Cold plasma gives quadratic for nx^2(nz).  So can choose wave mode = plus, minus
 !   fast or slow, where fast is the smaller of |nx|
-    character(len=15) :: wave_mode
+    character(len=60) :: wave_mode
 
 !   A switch to determine whether the rays are initialized to propagate into
 !   or out of the plasma.  Typically k_init_sign = 1 for waves to propagate inward

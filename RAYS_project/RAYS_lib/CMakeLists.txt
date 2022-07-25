@@ -24,6 +24,7 @@ list (APPEND lib_sources
 	slab_eq_m.f90
 	axisym_toroid_eq_m.f90
     solovev_magnetics_m.f90
+    axisym_toroid_ray_init_nphi_ntheta_m.f90
 	solovev_eq_m.f90
 	solovev_ray_init_nphi_ntheta_m.f90
 	species_m.f90

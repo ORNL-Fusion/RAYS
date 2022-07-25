@@ -83,6 +83,15 @@
             if(sout > s_max) then
                 call message ('trace_rays: terminate ray, sout > s_max, s',s,0)
                 write (*, *) 'trace_rays: terminate ray, sout > s_max, s = ',s
+               
+                write (*, '( "ray ",i3, " stopped  s=", f12.4, "   nstep=", i4, /, &
+                &  "  (x,y,z)=", 3(f10.4),/,  "  (kx,ky,kz)=", 3(f10.4) )') iray, s, nstep, &
+                & v(1:3), v(4:6)
+                
+                write (message_unit, '( "ray ",i3, " stopped  s=", f12.4, "   nstep=", i4, /, &
+                &  "  (x,y,z)=", 3(f10.4),/,  "  (kx,ky,kz)=", 3(f10.4) )') iray, s, nstep, &
+                & v(1:3), v(4:6)
+                
                 ray_stop%ode_stop_flag = 'sout > s_max'
                 ray_stop_flag(iray) = ray_stop%ode_stop_flag
                 exit trajectory 
@@ -93,6 +102,15 @@
                 call message ('trace_rays: terminate ray, nstep > nstep_max, nstep', nstep, 0)
                 write (*, *) 'trace_rays: terminate ray, nstep > nstep_max, nstep = ',nstep
                 ray_stop%ode_stop_flag =  ' nstep > nstep_max'
+               
+                write (*, '( "ray ",i3, " stopped  s=", f12.4, "   nstep=", i4, /, &
+                &  "  (x,y,z)=", 3(f10.4),/,  "  (kx,ky,kz)=", 3(f10.4) )') iray, s, nstep, &
+                & v(1:3), v(4:6)
+                
+                write (message_unit, '( "ray ",i3, " stopped  s=", f12.4, "   nstep=", i4, /, &
+                &  "  (x,y,z)=", 3(f10.4),/,  "  (kx,ky,kz)=", 3(f10.4) )') iray, s, nstep, &
+                & v(1:3), v(4:6)
+                
                 ray_stop_flag(iray) = ray_stop%ode_stop_flag
                exit trajectory
             end if

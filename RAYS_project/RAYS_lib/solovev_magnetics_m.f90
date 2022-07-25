@@ -9,6 +9,7 @@ module solovev_magnetics_m
 ! data for magnetics
     real(KIND=rkind) :: rmaj, kappa, bphi0, iota0
     real(KIND=rkind) :: inner_bound, outer_bound, vert_bound, r_Zmax
+    real(KIND=rkind) :: outer_boundary
 
     ! Flux function psi at plasma boundary
     real(KIND=rkind) :: psiB
@@ -17,7 +18,7 @@ module solovev_magnetics_m
     real(KIND=rkind) :: box_rmin, box_rmax, box_zmin, box_zmax
 
  namelist /solovev_magnetics_list/ &
-     & rmaj, outer_bound, kappa, bphi0, iota0, &
+     & rmaj, outer_boundary, kappa, bphi0, iota0, &
      & box_rmin, box_rmax, box_zmin, box_zmax
      
 !********************************************************************
@@ -26,7 +27,9 @@ contains
 
 !********************************************************************
 
-  subroutine initialize_solovev_magnetics(read_input)
+  subroutine initialize_solovev_magnetics(read_input, r_axis, z_axis, &
+	   & arg_box_rmin, arg_box_rmax, arg_box_zmin, arg_box_zmax, &
+	   & inner_bound, outer_bound, upper_bound, lower_bound)
 
     use constants_m, only : input_unit
     use species_m, only : nspec
@@ -35,28 +38,46 @@ contains
     implicit none
     logical, intent(in) :: read_input
 
-    real(KIND=rkind) :: bp0
+! Geometry data
+    ! Magnetic axis
+    real(KIND=rkind), intent(out) :: r_axis, z_axis
+    ! data for bounding box of computational domain
+    real(KIND=rkind), intent(out) :: arg_box_rmin, arg_box_rmax, arg_box_zmin,arg_box_zmax
+! data for plasma boundary
+    real(KIND=rkind), intent(out) :: inner_bound, outer_bound, upper_bound, lower_bound
 
-    if (read_input .eqv. .true.) then    
+     real(KIND=rkind) :: bp0
+
+    write(*,*) 'initialize_solovev_magnetics'   
+
+    if (read_input .eqv. .true.) then 
         open(unit=input_unit, file='rays.in',action='read', status='old', form='formatted')
         read(input_unit, solovev_magnetics_list)
         close(unit=input_unit)
         write(message_unit, solovev_magnetics_list)
     end if
+
+	arg_box_rmin = box_rmin
+	arg_box_rmax = box_rmax
+	arg_box_zmin = box_zmin
+	arg_box_zmax = box_zmax
+
+   
+    outer_bound = outer_boundary
     
 ! Calculate inner and boundary
      ! Check that inner boundary is real number
      if ( outer_bound < rmaj .or. outer_bound >= Sqrt(2.)*rmaj ) then
-        call message('Inner boundary complex, outer_bound >=  sqrt2) rmaj = ', outer_bound)
-        write(*,*) 'Inner boundary complex, outer_bound >=  sqrt2) rmaj = ', outer_bound
+        call message('Inner boundary complex, outer_bound >=  sqrt2*rmaj = ', outer_bound)
+        write(*,*) 'Inner boundary complex, outer_bound >=  sqrt2*rmaj = ', outer_bound
+        stop
     end if
-
+    
 !   Define
     bp0 = bphi0*iota0
   
 !   Flux at plasma boundary
     psiB = .5*bp0 * (outer_bound**2-rmaj**2)**2/rmaj**2/4.
-   
     inner_bound = sqrt(2.*rmaj**2 -outer_bound**2 )
     
     ! radius of maximum in z
@@ -75,10 +96,11 @@ contains
     write(*,*) 'Inner boundary = ', inner_bound
     write(*,*) 'Outer boundary = ', outer_bound
     write(*,*) 'Vertical boundary = ', vert_bound
-
-    if (verbosity > 2)  then
-        call write_solovev_profiles
-    end if
+   
+    r_axis = rmaj
+    z_axis = 0.
+    upper_bound = vert_bound
+    lower_bound = -vert_bound
     
     return
   end subroutine initialize_solovev_magnetics
@@ -122,13 +144,14 @@ contains
     bp0 = bphi0*iota0
 
 ! Get poloidal flux
-    call solovev_psi(rvec, psi, gradpsi, psiN, gradpsiN)     
+    call solovev_magnetics_psi(rvec, psi, gradpsi, psiN, gradpsiN)     
 
 ! Check that we are in the plasma
     if (psiN > 1.) equib_err = 'psi >1 out_of_plasma'
     
     if (equib_err /= '') then
-        write (message_unit, *) 'solovev_eq:  equib_err ', equib_err
+        write (message_unit, *) 'solovev_magnetics:  equib_err ', equib_err
+        write (*, *) 'solovev_magnetics:  equib_err ', equib_err
         return
     end if
 
@@ -171,18 +194,17 @@ contains
 
     return
     end subroutine solovev_magnetics
-  
-  end module solovev_magnetics_m
 
 !********************************************************************
 
-  subroutine solovev_psi(rvec, psi, gradpsi, psiN, gradpsiN)
+  subroutine solovev_magnetics_psi(rvec, psi, gradpsi, psiN, gradpsiN)
 !   Simple solovev equilibrium model originally based on notes from 7/28/1995 by Cai-ye Wang.
 !   Reworked extensively by DBB.  See notes of 2-12-2022. 
 !
 !   Checks for some error conditions and sets equib_err for outside handling.  Does not
 !   stop.
 
+    use constants_m, only : rkind
     use species_m, only : nspec, n0s, t0s
     use diagnostics_m, only : message_unit, message
     
@@ -216,8 +238,7 @@ contains
     psiN = psi/psiB
     gradpsiN = gradpsi/psiB
     
-    return
-  
-  end subroutine solovev_psi
+    return 
+  end subroutine solovev_magnetics_psi
  
 end module solovev_magnetics_m
