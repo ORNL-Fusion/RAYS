@@ -8,7 +8,7 @@
 !   between 6/95 - 9/95.  MORAYS was based on the RAYS code (1982).
 
 !   External procedures: initialize (initialize.f90), trace_rays (trace_rays.f90)
-!                        finalize (finalize.f90)
+!                        finalize (finalize.f90), all in RAYS_lib
     implicit none 
     logical :: read_input = .true.
 
