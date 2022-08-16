@@ -27,6 +27,9 @@ list (APPEND lib_sources
     axisym_toroid_ray_init_nphi_ntheta_m.f90
 	solovev_eq_m.f90
 	solovev_ray_init_nphi_ntheta_m.f90
+	eqdsk_utilities_m.f90
+	eqdsk_magnetics_lin_interp_m.f90
+	
 	species_m.f90
 	suscep_m.f90
 )

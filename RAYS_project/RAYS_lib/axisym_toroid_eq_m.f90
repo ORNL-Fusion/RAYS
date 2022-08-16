@@ -51,7 +51,8 @@ contains
     use species_m, only : nspec
     use diagnostics_m, only : message, message_unit, text_message, verbosity
 
-    use solovev_magnetics_m, only : initialize_solovev_magnetics, solovev_magnetics
+    use solovev_magnetics_m, only : initialize_solovev_magnetics
+    use eqdsk_magnetics_lin_interp_m, only : initialize_eqdsk_magnetics_lin_interp
 
     implicit none
     logical, intent(in) :: read_input
@@ -74,6 +75,11 @@ contains
                & box_rmin, box_rmax, box_zmin, box_zmax, &
                & inner_bound, outer_bound, upper_bound, lower_bound)
    
+          case ('eqdsk_magnetics_lin_interp')
+          call initialize_eqdsk_magnetics_lin_interp(read_input, r_axis, z_axis, &
+               & box_rmin, box_rmax, box_zmin, box_zmax, &
+               & inner_bound, outer_bound, upper_bound, lower_bound)
+
           case default
           write(0,*) 'initialize_axisym_toroid_eq: unknown magnetics model =', magnetics_model
           call text_message('initialize_axisym_toroid_eq: unknown magnetics model',&
@@ -103,6 +109,7 @@ contains
     use diagnostics_m, only : message_unit, message
 
     use solovev_magnetics_m, only : solovev_magnetics
+    use eqdsk_magnetics_lin_interp_m, only : eqdsk_magnetics_lin_interp
     
     implicit none
 
@@ -130,9 +137,18 @@ contains
     if (r < box_rmin .or. r > box_rmax) equib_err = 'R out_of_bounds'
     if (z < box_zmin .or. z > box_zmax) equib_err = 'z out_of_bounds'
 
+    if (equib_err /= '') then
+        write (message_unit, *) ' axisym_toroid_eq:  equib_err ', equib_err
+        write (*, *) ' axisym_toroid_eq:  equib_err ', equib_err
+        return
+    end if
+
     magnetics: select case (trim(magnetics_model))
        case ('solovev_magnetics')
           call solovev_magnetics(rvec, bvec, gradbtensor, psi, gradpsi, psiN, gradpsiN, equib_err)
+
+       case ('eqdsk_magnetics_lin_interp')
+          call eqdsk_magnetics_lin_interp(rvec, bvec, gradbtensor, psi, gradpsi, psiN, gradpsiN, equib_err)
     end select magnetics
 
 !   Density profile.

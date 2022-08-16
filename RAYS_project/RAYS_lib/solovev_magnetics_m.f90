@@ -139,6 +139,12 @@ contains
 ! Check that we are in the box
     if (r < box_rmin .or. r > box_rmax) equib_err = 'R out_of_bounds'
     if (z < box_zmin .or. z > box_zmax) equib_err = 'z out_of_bounds'
+    
+    if (equib_err /= '') then
+        write (message_unit, *) 'solovev_magnetics:  equib_err ', equib_err
+        write (*, *) 'solovev_magnetics:  equib_err ', equib_err
+        return
+    end if
 
 !   Define
     bp0 = bphi0*iota0
@@ -146,14 +152,8 @@ contains
 ! Get poloidal flux
     call solovev_magnetics_psi(rvec, psi, gradpsi, psiN, gradpsiN)     
 
-! Check that we are in the plasma
+! Check that we are in the plasma. Set equib_err but don't stop.
     if (psiN > 1.) equib_err = 'psi >1 out_of_plasma'
-    
-    if (equib_err /= '') then
-        write (message_unit, *) 'solovev_magnetics:  equib_err ', equib_err
-        write (*, *) 'solovev_magnetics:  equib_err ', equib_err
-        return
-    end if
 
 !   Magnetic field and its derivatives.
     br = -bp0*r*z/(rmaj*kappa)**2
