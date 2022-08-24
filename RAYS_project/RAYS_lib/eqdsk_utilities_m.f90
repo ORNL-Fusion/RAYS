@@ -4,7 +4,7 @@ module eqdsk_utilities_m
 ! routines written by Richard Fitzpatrick,found in his EPEC github repo, and made into a 
 ! module.  Fitzpatrick's variable names are different from those found in Lang Lau's
 ! description "G EQSDK FORMAT", 2/7/1997.  Most are obvious, but some are not completely:
-! Fitzpatrick's -> Lau'status
+! Fitzpatrick's -> Lau's
 ! T -> fpol == R*Btoroidal
 ! P -> pres
 ! TTp -> ffprim

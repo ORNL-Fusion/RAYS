@@ -1,18 +1,34 @@
-program test_gFileReadWrite_Fitzpatrick
+program solovev_2_eqdsk
 
-  use constants_m, only : rkind
-  use eqdsk_utilities_m, only : ReadgFile, WritegFile, R_grid, Z_grid, dR, dZ, &
+! A simple code to generate an eqdsk file from a solovev equilibrium.  It links to RAYS\_lib
+! uses the solovev\_magnetics routine there, and uses the same solovev\_magnetics\_list
+! namelist to define the equilibrium.  It also directly uses eqdsk\_utilities\_m to write
+! the eqdsk file.  This routine only provides the eqdsk variables needed to calculate the
+! magnetic field quantities used in ray tracing, i.e. those provided by solovev_magnetics().
+! Unused eqdsk variables, such as current, pressure, FF', P', and q are set to zero.
+!
+! N.B. To be compatible with initialize_solovev_magnetics(), which expects a generic input
+!      file name to be 'rays.in', that is also the namelist file name for this code, 
+!      although a more descriptive name would be 'solovev_2_eqdsk.in'
+
+  use constants_m, only : rkind, input_unit, output_unit
+  
+  use solovev_magnetics_m, only : initialize_solovev_magnetics, solovev_magnetics, &
+        & solovev_magnetics_psi, rmaj, kappa, bphi0, iota0, psiB
+
+  use eqdsk_utilities_m, only : WritegFile, R_grid, Z_grid, dR, dZ, &
         & string, i3, NRBOX, NZBOX, RBOXLEN, ZBOXLEN, R0, RBOXLFT, ZOFF, RAXIS, ZAXIS, &
         & PSIAXIS, PSIBOUND, B0, CURRENT, T, P, TTp, Pp, Q, Psi, NBOUND, NLIM, RBOUND, &
-        & ZBOUND, RLIM, ZLIM, &
-        & GetPsi, GetRBphi, GetPsiR, GetPsiZ, GetPsiRR, GetPsiZZ, GetPsiRZ, GetRBphiR, &
-        & psi_derivs_lin_interp
+        & ZBOUND, RLIM, ZLIM
 
   
   implicit none
 
-  character (len = 100) :: eqdsk_in = 'eqdsk_in.dat'
-  character (len = 100) :: eqdsk_out = 'eqdsk_out.dat'
+  character (len = 100) :: eqdsk_file_name
+
+! N.B. The variables "box_..."" also appear in module solovev_magnetics_m.  They are
+!      declared here because they are needed as arguments in initialize_solovev_magnetics().
+!      So we don't access them from use association in the module
   
     ! data for bounding box of computational domain
     real(KIND=rkind) :: box_rmin, box_rmax, box_zmin, box_zmax
@@ -21,14 +37,136 @@ program test_gFileReadWrite_Fitzpatrick
 
   real(KIND=rkind) :: zero = 0.
   integer :: i,j
-  real(KIND=rkind) :: R, Z
-  real(KIND=rkind) :: PsiR, PsiZ, PsiRR, PsiZZ, PsiRZ, RBphiR 
-  
-  ! ................
-  ! Read input gFile
-  ! ................
+  real(KIND=rkind) :: rvec(3) 
+  real(KIND=rkind)  :: gradpsi(3), psiN, gradpsiN(3)
 
-  call ReadgFile(eqdsk_in)
+  logical :: read_input = .true.
+
+  real(KIND=rkind) :: R, Zsq
+
+  namelist /solovev_2_eqdsk_list/ &
+     & eqdsk_file_name, string, &
+     & NRBOX, NZBOX, NBOUND
+
+
+ open(unit=input_unit, file='rays.in', action='read', status='old', form='formatted')
+ read(input_unit, solovev_2_eqdsk_list)
+ close(unit=input_unit)
+ write(*, solovev_2_eqdsk_list)
+
+
+ call initialize_solovev_magnetics(read_input, RAXIS, ZAXIS, &
+	   & box_rmin, box_rmax, box_zmin,box_zmax, &
+	   & inner_bound, outer_bound, upper_bound, lower_bound)
+
+ 
+ write(*,*) 'Inner boundary = ', inner_bound
+ write(*,*) 'Outer boundary = ', outer_bound
+ write(*,*) 'Lower boundary = ', lower_bound
+ write(*,*) 'Upper boundary = ', upper_bound
+
+ RBOXLEN = box_rmax - box_rmin
+ ZBOXLEN = box_zmax - box_zmin
+ RBOXLFT = box_rmin
+ ZOFF = 0.
+ PSIAXIS = 0.
+ PSIBOUND = psiB
+ B0 = bphi0
+ 
+! Unused eqdsk variables
+ CURRENT = 0.
+ 
+ allocate (P(NRBOX))
+ allocate (TTp(NRBOX))
+ allocate (Pp(NRBOX))
+ allocate (Q(NRBOX))
+
+ write (*,*) 'Got to 1'
+ 
+ P = 0.
+ TTp = 0.
+ Pp = 0.
+ Q = 0.
+
+ write (*,*) 'Got to 2'
+ 
+
+ NLIM = 1  ! There is no limiter model so set to 1 to avoid allocation problems
+ allocate (RLIM(NLIM))
+ allocate (ZLIM(NLIM))
+ RLIM = 0.
+ ZLIM = 0.
+
+ write (*,*) 'Got to 3'
+ 
+    
+    ! radial and Z grids
+    allocate (R_grid(NRBOX))
+    allocate (Z_grid(NZBOX))
+    ! R*Bphi and psi
+    allocate (T(NRBOX))
+    allocate (Psi(NRBOX, NZBOX))
+
+ write (*,*) 'Got to 4'
+ 
+
+    do i = 1, NRBOX
+        R_grid(i) = inner_bound + (outer_bound - inner_bound)*(i-1)/(NRBOX - 1)
+        T(i) = bphi0*rmaj
+    end do
+
+ write (*,*) 'Got to 5'
+ 
+
+    do j = 1, NZBOX
+        Z_grid(j) = lower_bound + (upper_bound - lower_bound)*(j-1)/(NZBOX - 1)
+    end do
+
+ write (*,*) 'Got to 7'
+ 
+
+    do i = 1, NRBOX
+       do j = 1, NZBOX
+           rvec = (/ R_grid(i), zero, Z_grid(j) /)
+           call solovev_magnetics_psi(rvec, Psi(i,j) , gradpsi, psiN, gradpsiN)
+       end do
+    end do
+
+ write (*,*) 'Got to 8'
+ 
+    
+! Calculate boundary points.  This is cloned from axisym_toroid_processor_m
+! N.B.  This is up-down symmetric, and NBOUND needs to be an odd number
+
+ allocate(RBOUND(NBOUND), ZBOUND(NBOUND))
+
+		RBOUND(1) = inner_bound
+		ZBOUND(1) = 0.
+		RBOUND(NBOUND) = inner_bound
+		ZBOUND(NBOUND) = 0.
+		RBOUND((NBOUND-1)/2+1) = outer_bound
+		ZBOUND((NBOUND-1)/2+1) = 0.
+
+ write (*,*) 'Got to 9'
+ 
+
+		do i = 2, (NBOUND -1)/2
+			R = inner_bound + i*2.*(outer_bound - inner_bound)/(NBOUND)
+			Zsq = kappa/(4.*R)*(outer_bound**4 + 2.*(R**2 - outer_bound**2)*rmaj**2 -&
+			      & R**4)
+			RBOUND(i) = R
+			ZBOUND(i) = sqrt(Zsq)
+			RBOUND(NBOUND-(i-1)) = RBOUND(i)
+			ZBOUND(NBOUND-(i-1)) = ZBOUND(i)
+		end do
+
+ write (*,*) 'Got to 10'
+ 
+		
+! 		do i = 1, NBOUND
+! 			write(*,*) 'i = ', i, '   RBOUND = ', RBOUND(i), '   ZBOUND', ZBOUND(i)
+! 		end do
+    
   
   write (*, '(a48, 3i4)') string,  i3,      NRBOX,    NZBOX
   write (*, '(5e16.9  )') RBOXLEN, ZBOXLEN, R0,       RBOXLFT,  ZOFF
@@ -44,67 +182,12 @@ program test_gFileReadWrite_Fitzpatrick
   write (*, '(2i5)')      NBOUND, NLIM
   write (*, '(5e16.9)')  (RBOUND (i), ZBOUND (i), i = 1, NBOUND)
   write (*, '(5e16.9)')  (RLIM   (i), ZLIM   (i), i = 1, NLIM)
- 
-    box_rmin = RBOXLFT
-    box_rmax = box_rmin + RBOXLEN
-    box_zmin = ZOFF - ZBOXLEN/2.
-    box_zmax = ZOFF + ZBOXLEN/2.
-
-    inner_bound = minval(RBOUND)
-    outer_bound = maxval(RBOUND)
-    lower_bound = minval(ZBOUND)
-    upper_bound = maxval(ZBOUND)
-
-    write(*,*) 'Inner boundary = ', inner_bound
-    write(*,*) 'Outer boundary = ', outer_bound
-    write(*,*) 'Lower boundary = ', lower_bound
-    write(*,*) 'Upper boundary = ', upper_bound
-    
-    ! radial and Z grids
-    allocate (R_grid(NRBOX))
-    allocate (Z_grid(NZBOX))
-
-    do i = 1, NRBOX
-        R_grid(i) = inner_bound + (outer_bound - inner_bound)*(i-1)/(NRBOX - 1)
-    end do
-
-    do i = 1, NZBOX
-        Z_grid(i) = lower_bound + (upper_bound - lower_bound)*(i-1)/(NZBOX - 1)
-    end do
-    
-    dr = (R_grid(2) - R_grid(1))/2.
-    dz = (Z_grid(2) - Z_grid(1))/2.
-    R = (outer_bound - inner_bound)/2.
-    Z = (upper_bound - abs(lower_bound))/2.
-
-    write(*,*) 'dr = ', dr, '   dz = ', dz, '   R = ', R, '   Z = ', Z
-    write(*,*) 'GetPsi(R, Z) = ', GetPsi(R, Z), '   GetRBphi(R) = ', GetRBphi(R)
-    write(*,*) 'GetPsiR(R, Z) = ', GetPsiR(R, Z)
-    write(*,*) 'GetPsiZ(R, Z) = ', GetPsiZ(R, Z)
-    write(*,*) 'GetPsiRR(R, Z) = ', GetPsiRR(R, Z)
-    write(*,*) 'GetPsiZZ(R, Z) = ', GetPsiZZ(R, Z)
-    write(*,*) 'GetPsiRZ(R, Z) = ', GetPsiRZ(R, Z)
-    write(*,*) 'GetRBphiR(R) = ', GetRBphiR(R)
-    
-    write(*,*) ' '
-    write(*,*) 'Derivatives from psi_derivs_lin_interp() '
-    
-    call psi_derivs_lin_interp(R, Z, PsiR, PsiZ, PsiRR, PsiZZ, PsiRZ, RBphiR)
-    
-    write(*,*) 'PsiR = ', PsiR
-    write(*,*) 'PsiZ = ', PsiZ
-    write(*,*) 'PsiRR = ', PsiRR
-    write(*,*) 'PsiZZ = ', PsiZZ
-    write(*,*) 'PsiRZ = ', PsiRZ
-    write(*,*) 'RBphiR(R) = ', RBphiR
-    
-    
         
   ! ..................
   ! Write output gFile
   ! ..................
 
-  call WritegFile(eqdsk_out)
+  call WritegFile(eqdsk_file_name)
    
   ! ........
   ! Clean up
@@ -121,4 +204,4 @@ program test_gFileReadWrite_Fitzpatrick
   deallocate (RLIM)
   deallocate (ZLIM)
   
-end program test_gFileReadWrite_Fitzpatrick
+end program solovev_2_eqdsk

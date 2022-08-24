@@ -8,6 +8,7 @@ set(EXECUTABLE_OUTPUT_PATH ../bin)
 add_subdirectory (RAYS_lib)
 add_subdirectory (RAYS_code)
 add_subdirectory (post_process_RAYS)
+add_subdirectory (solovev_2_eqdsk)
 
 # Add the ability to auto generate API documentation with Doxygen
 # find_package (Doxygen)
