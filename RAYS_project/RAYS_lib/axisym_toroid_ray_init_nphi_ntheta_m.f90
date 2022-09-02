@@ -70,7 +70,7 @@ contains
     use constants_m, only : input_unit
     use diagnostics_m, only: message_unit, message, text_message
     use species_m, only : nspec
-    use equilibrium_m, only : equilibrium, eq_point
+    use equilibrium_m, only : equilibrium, eq_point, write_eq_point
     use dispersion_solvers_m, only: solve_n1_vs_n2_n3
     use rf_m, only : ray_dispersion_model, wave_mode, k0_sign, k0
     use axisym_toroid_eq_m, only: r_axis, z_axis, axisym_toroid_psi
@@ -137,7 +137,15 @@ contains
 		end if
 
         call axisym_toroid_psi(rvec, psi, gradpsi, psiN, gradpsiN)  
-                     
+    write (*,*) ' '
+    write(*,*) 'count =  ' , count
+    write(*,*) 'ray_init_axisym_toroid_nphi_ntheta: rvec, psi, gradpsi = '
+    write(*,*) rvec, psi, gradpsi
+    write(*,*) 'ray_init_axisym_toroid_nphi_ntheta: rvec, psiN, gradpsiN = '
+    write(*,*) rvec, psiN, gradpsiN
+    call write_eq_point(eq)
+    write (*,*) ' '
+                    
 ! Calculate a bunch of unit vectors, parallel and transverse components of k
         psi_unit = gradpsi/sqrt(dot_product(gradpsi,gradpsi))
 
@@ -160,6 +168,7 @@ contains
 ! Solve dispersion for complex refractive index in psi direction then cast as real        
         call solve_n1_vs_n2_n3(eq, ray_dispersion_model, wave_mode, k0_sign, &
              &  n2, n3, npsi_cmplx)
+    write (*,*) 'n2, n3, npsi_cmplx =  ', n2, n3, npsi_cmplx
 
         if (npsi_cmplx%im /= 0.) then
             write(message_unit, *) 'axisym_toroid_ray_init: evanescent ray, rvec = ', rvec, &
@@ -203,7 +212,6 @@ contains
         ray_pwr_wt = ray_pwr_wt/nray
     end if
         
-
     end subroutine ray_init_axisym_toroid_nphi_ntheta
 
 !****************************************************************************

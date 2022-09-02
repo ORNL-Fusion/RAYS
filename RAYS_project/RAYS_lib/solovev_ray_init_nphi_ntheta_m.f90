@@ -199,7 +199,6 @@ contains
         ray_pwr_wt = ray_pwr_wt/nray
     end if
         
-
     end subroutine ray_init_solovev_nphi_ntheta
 
 !****************************************************************************

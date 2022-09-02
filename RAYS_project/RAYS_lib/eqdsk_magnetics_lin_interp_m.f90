@@ -50,13 +50,13 @@ contains
     ! Magnetic axis
     real(KIND=rkind), intent(out) :: r_axis, z_axis
     ! data for bounding box of computational domain
-    real(KIND=rkind) :: box_rmin, box_rmax, box_zmin, box_zmax
+    real(KIND=rkind), intent(out) :: box_rmin, box_rmax, box_zmin, box_zmax
     ! data for plasma boundary
     real(KIND=rkind), intent(out) :: inner_bound, outer_bound, upper_bound, lower_bound
 
     integer :: i
     
-    write(*,*) 'initialize_eqdsk_magnetics'   
+    write(*,*) 'initialize_eqdsk_magnetics_lin_interp'   
 
     if (read_input .eqv. .true.) then 
         open(unit=input_unit, file='rays.in',action='read', status='old', form='formatted')
@@ -77,10 +77,8 @@ contains
 
     inner_bound = minval(RBOUND)
     outer_bound = maxval(RBOUND)
-    inner_bound = minval(ZBOUND)
+    lower_bound = minval(ZBOUND)
     upper_bound = maxval(ZBOUND)
-   
-   
 
     call message('PsiB = ', psiB)
     call message('Inner boundary = ', inner_bound)
@@ -99,11 +97,11 @@ contains
     allocate (Z_grid(NZBOX))
 
     do i = 1, NRBOX
-    	R_grid(i) = inner_bound + (outer_bound - inner_bound)*(i-1)/(NRBOX - 1)
+    	R_grid(i) = box_rmin + (box_rmax - box_rmin)*(i-1)/(NRBOX - 1)
     end do
 
     do i = 1, NZBOX
-    	Z_grid(i) = lower_bound + (upper_bound - lower_bound)*(i-1)/(NZBOX - 1)
+    	Z_grid(i) = box_zmin + (box_zmax - box_zmin)*(i-1)/(NZBOX - 1)
     end do
 
     dR = (R_grid(2) - R_grid(1))/2.
@@ -120,7 +118,8 @@ contains
 
     use species_m, only : nspec, n0s, t0s
     use diagnostics_m, only : message_unit, message
-    use eqdsk_utilities_m, only : GetRBphi, GetPsiR, GetPsiZ, GetPsiRR, GetPsiZZ, GetPsiRZ, GetRBphiR
+    use eqdsk_utilities_m, only : GetPsi, GetRBphi, GetPsiR, GetPsiZ, GetPsiRR, GetPsiZZ,&
+        & GetPsiRZ, GetRBphiR, PSIBOUND
 
     implicit none
 
@@ -144,11 +143,20 @@ contains
 ! Check that we are in the plasma. Set equib_err but don't stop
     if (psiN > 1.) equib_err = 'psi >1 out_of_plasma'
 
-!   Magnetic field and its derivatives.
-    br = -GetPsiZ(r,z)/r
-    bz = GetPsiR(r,z)/r
-    bphi = GetRBphi(r)/r
+!   Poloidfal flux function 
+    psi = GetPsi(R, z)
 
+!   Magnetic field
+    br = -GetPsiZ(R,z)/r
+    bz = GetPsiR(R,z)/r
+    bphi = GetRBphi(r)/r
+    gradpsi = (/x*bz, y*bz, -R*br/)
+
+!   Normalized Flux function x, y, z normalized to 1.0 at last surface
+    psiN = psi/PSIBOUND
+    gradpsiN = gradpsi/PSIBOUND
+
+!   Magnetic field derivatives.
 
 !   dbrdr = d(Br)/dr, dbrdz = d(Br)/dz.
     dbrdr = -br/r - GetPsiRZ(r,z)/r
@@ -213,7 +221,7 @@ contains
     R = sqrt(x**2+y**2)
  
 !   Poloidfal flux function 
-    psi = GetPsiZ(R, z)
+    psi = GetPsi(R, z)
 
 
 !   Magnetic field

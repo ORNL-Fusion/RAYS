@@ -42,7 +42,7 @@ program solovev_2_eqdsk
 
   logical :: read_input = .true.
 
-  real(KIND=rkind) :: R, Zsq
+  real(KIND=rkind) :: R, Zsq, dR_bound
 
   namelist /solovev_2_eqdsk_list/ &
      & eqdsk_file_name, string, &
@@ -80,60 +80,40 @@ program solovev_2_eqdsk
  allocate (TTp(NRBOX))
  allocate (Pp(NRBOX))
  allocate (Q(NRBOX))
-
- write (*,*) 'Got to 1'
  
  P = 0.
  TTp = 0.
  Pp = 0.
- Q = 0.
-
- write (*,*) 'Got to 2'
- 
+ Q = 0. 
 
  NLIM = 1  ! There is no limiter model so set to 1 to avoid allocation problems
  allocate (RLIM(NLIM))
  allocate (ZLIM(NLIM))
  RLIM = 0.
- ZLIM = 0.
-
- write (*,*) 'Got to 3'
- 
+ ZLIM = 0. 
     
     ! radial and Z grids
     allocate (R_grid(NRBOX))
     allocate (Z_grid(NZBOX))
     ! R*Bphi and psi
     allocate (T(NRBOX))
-    allocate (Psi(NRBOX, NZBOX))
-
- write (*,*) 'Got to 4'
- 
+    allocate (Psi(NRBOX, NZBOX)) 
 
     do i = 1, NRBOX
-        R_grid(i) = inner_bound + (outer_bound - inner_bound)*(i-1)/(NRBOX - 1)
+        R_grid(i) = box_rmin + (box_rmax - box_rmin)*(i-1)/(NRBOX - 1)
         T(i) = bphi0*rmaj
-    end do
-
- write (*,*) 'Got to 5'
- 
+    end do 
 
     do j = 1, NZBOX
-        Z_grid(j) = lower_bound + (upper_bound - lower_bound)*(j-1)/(NZBOX - 1)
-    end do
-
- write (*,*) 'Got to 7'
+        Z_grid(j) = box_zmin + (box_zmax - box_zmin)*(j-1)/(NZBOX - 1)
+    end do 
  
-
     do i = 1, NRBOX
        do j = 1, NZBOX
            rvec = (/ R_grid(i), zero, Z_grid(j) /)
            call solovev_magnetics_psi(rvec, Psi(i,j) , gradpsi, psiN, gradpsiN)
        end do
-    end do
-
- write (*,*) 'Got to 8'
- 
+    end do 
     
 ! Calculate boundary points.  This is cloned from axisym_toroid_processor_m
 ! N.B.  This is up-down symmetric, and NBOUND needs to be an odd number
@@ -144,43 +124,69 @@ program solovev_2_eqdsk
 		ZBOUND(1) = 0.
 		RBOUND(NBOUND) = inner_bound
 		ZBOUND(NBOUND) = 0.
-		RBOUND((NBOUND-1)/2+1) = outer_bound
-		ZBOUND((NBOUND-1)/2+1) = 0.
+		RBOUND((NBOUND+1)/2) = outer_bound
+		ZBOUND((NBOUND+1)/2) = 0. 
 
- write (*,*) 'Got to 9'
- 
-
-		do i = 2, (NBOUND -1)/2
-			R = inner_bound + i*2.*(outer_bound - inner_bound)/(NBOUND)
-			Zsq = kappa/(4.*R)*(outer_bound**4 + 2.*(R**2 - outer_bound**2)*rmaj**2 -&
+        dR_bound = 2.*(outer_bound - inner_bound)/(NBOUND-1)
+		do i = 2, (NBOUND-1)/2
+			R = inner_bound + (i-1)*dR_bound
+			Zsq = kappa/(4.*R**2)*(outer_bound**4 + 2.*(R**2 - outer_bound**2)*rmaj**2 -&
 			      & R**4)
 			RBOUND(i) = R
 			ZBOUND(i) = sqrt(Zsq)
 			RBOUND(NBOUND-(i-1)) = RBOUND(i)
-			ZBOUND(NBOUND-(i-1)) = ZBOUND(i)
-		end do
-
- write (*,*) 'Got to 10'
- 
+			ZBOUND(NBOUND-(i-1)) = -ZBOUND(i)
+		end do 
 		
 ! 		do i = 1, NBOUND
 ! 			write(*,*) 'i = ', i, '   RBOUND = ', RBOUND(i), '   ZBOUND', ZBOUND(i)
 ! 		end do
     
   
+  write (*, *) ' '
+  write (*, *) 'string,  i3,      NRBOX,    NZBOX'
   write (*, '(a48, 3i4)') string,  i3,      NRBOX,    NZBOX
+  write (*, *) ' '
+  write (*, *) 'RBOXLEN, ZBOXLEN, R0,       RBOXLFT,  ZOFF'
   write (*, '(5e16.9  )') RBOXLEN, ZBOXLEN, R0,       RBOXLFT,  ZOFF
+  write (*, *) ' '
+  write (*, *) 'RAXIS,   ZAXIS,   PSIAXIS,  PSIBOUND, B0'
   write (*, '(5e16.9  )') RAXIS,   ZAXIS,   PSIAXIS,  PSIBOUND, B0
+  write (*, *) ' '
+  write (*, *) 'CURRENT, PSIAXIS, zero,     RAXIS,    zero'
   write (*, '(5e16.9  )') CURRENT, PSIAXIS, zero,     RAXIS,    zero
+  write (*, *) ' '
+  write (*, *) 'ZAXIS,   zero,    PSIBOUND, zero,     zero'
   write (*, '(5e16.9  )') ZAXIS,   zero,    PSIBOUND, zero,     zero
+  write (*, *) ' '
+  write (*, *)  '(T(i), i = 1, NRBOX)'
   write (*, '(5e16.9)')  (T   (i), i = 1, NRBOX)
+  write (*, *) ' '
+  write (*, *)  '(P(i), i = 1, NRBOX)'
   write (*, '(5e16.9)')  (P   (i), i = 1, NRBOX)
+  write (*, *) ' '
+  write (*, *)  '(TTp(i), i = 1, NRBOX)'
   write (*, '(5e16.9)')  (TTp (i), i = 1, NRBOX)
+  write (*, *) ' '
+  write (*, *)  '(Pp(i), i = 1, NRBOX)'
   write (*, '(5e16.9)')  (Pp  (i), i = 1, NRBOX)
+  write (*, *) ' '
+  write (*, *)  '((Psi(i, j), i = 1, NRBOX), j = 1, NZBOX)'
   write (*, '(5e16.9)')  ((Psi  (i, j), i = 1, NRBOX), j = 1, NZBOX)
+  write (*, *) ' '
+  write (*, *)  '(Q (i), i = 1, NRBOX)'
   write (*, '(5e16.9)')  (Q (i), i = 1, NRBOX)
+  write (*, *) ' '
+  write (*, *)      'NBOUND, NLIM'
   write (*, '(2i5)')      NBOUND, NLIM
+  write (*, *) ' '
+  write (*, *)  '(RBOUND (i), ZBOUND (i), i = 1, NBOUND)'
   write (*, '(5e16.9)')  (RBOUND (i), ZBOUND (i), i = 1, NBOUND)
+  write (*, *) ' '
+  write (*, *)  'minval(RBOUND)= ', minval(RBOUND), '  maxval(RBOUND)= ', maxval(RBOUND)
+  write (*, *)  'minval(ZBOUND)= ', minval(ZBOUND), '  maxval(ZBOUND)= ', maxval(ZBOUND)
+  write (*, *) ' '
+  write (*, *)  '(RLIM(i), ZLIM(i), i = 1, NLIM)'
   write (*, '(5e16.9)')  (RLIM   (i), ZLIM   (i), i = 1, NLIM)
         
   ! ..................

@@ -85,12 +85,12 @@ contains
           call initialize_slab_eq(read_input)
 
        case ('solovev')
-!         A 1-D slab equilibrium with stratification in x
+!         A simple analytic tokamak model
           call initialize_solovev_eq(read_input)
 
 
        case ('axisym_toroid')
-!         A 1-D slab equilibrium with stratification in x
+!         A generic axisymmetric toroidal plasma model
           call initialize_axisym_toroid_eq(read_input)
 
        case default

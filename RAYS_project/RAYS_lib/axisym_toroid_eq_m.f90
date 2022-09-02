@@ -68,6 +68,8 @@ contains
         close(unit=input_unit)
         write(message_unit, axisym_toroid_eq_list)
     end if
+
+ write(*, axisym_toroid_eq_list)
     
     magnetics: select case (trim(magnetics_model))
        case ('solovev_magnetics')
@@ -145,11 +147,16 @@ contains
 
     magnetics: select case (trim(magnetics_model))
        case ('solovev_magnetics')
-          call solovev_magnetics(rvec, bvec, gradbtensor, psi, gradpsi, psiN, gradpsiN, equib_err)
+          call solovev_magnetics(rvec, bvec, gradbtensor, psi, gradpsi, psiN, gradpsiN,&
+            & equib_err)
 
        case ('eqdsk_magnetics_lin_interp')
-          call eqdsk_magnetics_lin_interp(rvec, bvec, gradbtensor, psi, gradpsi, psiN, gradpsiN, equib_err)
+          call eqdsk_magnetics_lin_interp(rvec, bvec, gradbtensor, psi, gradpsi, psiN,&
+              & gradpsiN, equib_err)
+              
     end select magnetics
+    
+    write(*,*) 'axisym_toroid_eq: psi, psiN = ', psi, psiN
 
 !   Density profile.
 
@@ -231,7 +238,8 @@ contains
     use species_m, only : nspec, n0s, t0s
     use diagnostics_m, only : message_unit, message
 
-    use solovev_magnetics_m, only : solovev_magnetics, solovev_magnetics_psi
+    use solovev_magnetics_m, only : solovev_magnetics_psi
+    use eqdsk_magnetics_lin_interp_m, only : eqdsk_magnetics_lin_interp_psi
     
     implicit none
 
@@ -242,6 +250,12 @@ contains
     magnetics: select case (trim(magnetics_model))
        case ('solovev_magnetics')
           call solovev_magnetics_psi(rvec, psi, gradpsi, psiN, gradpsiN)
+
+       case ('eqdsk_magnetics_lin_interp')
+         call  eqdsk_magnetics_lin_interp_psi(rvec, psi, gradpsi, psiN, gradpsiN)
+    
+    write(*,*) 'axisym_toroid_psi: rvec, psi, psiN = ', rvec, psi, psiN
+
     end select magnetics
 
     return

@@ -96,7 +96,8 @@ contains
     write(*,*) 'Inner boundary = ', inner_bound
     write(*,*) 'Outer boundary = ', outer_bound
     write(*,*) 'Vertical boundary = ', vert_bound
-   
+    write(*,*) 'radius of z_max = ', r_Zmax
+  
     r_axis = rmaj
     z_axis = 0.
     upper_bound = vert_bound
