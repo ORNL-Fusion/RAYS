@@ -58,7 +58,8 @@
     resid = residual(eq, k1,k3)
     call message ('check_save: residual', resid, 1)
     if (resid > dispersion_resid_limit) then
-        ray_stop%ode_stop_flag = 'dispersion residual'
+        ray_stop%stop_ode = .true.
+        ray_stop%ode_stop_flag = 'dispersion_residual'
     end if
         
 
@@ -81,7 +82,7 @@
     end if
 
 !   Group velocity.
-    if ( dddw /= 0. ) then
+    if ( abs(dddw) > tiny(dddw) ) then
        vg = -dddk / dddw
        vg0 = sqrt(sum(vg**2))
 
@@ -99,7 +100,8 @@
     else
        write(*,*) 'CHECK_SAVE: dddw = ', dddw
        call text_message('check_save: infinite group velocity, dddw = 0')
-       ray_stop%ode_stop_flag = 'infinite Vg'       
+       ray_stop%stop_ode = .true.
+       ray_stop%ode_stop_flag = 'infinite_Vg'       
     end if
 
 ! Start counting length of v(:) i.e. nv0

@@ -136,14 +136,10 @@ contains
  
 
 ! Check that we are in the box
-    if (r < box_rmin .or. r > box_rmax) equib_err = 'R out_of_bounds'
-    if (z < box_zmin .or. z > box_zmax) equib_err = 'z out_of_bounds'
+    if (r < box_rmin .or. r > box_rmax) equib_err = 'R_out_of_box'
+    if (z < box_zmin .or. z > box_zmax) equib_err = 'z_out_of_box'
 
-    if (equib_err /= '') then
-        write (message_unit, *) ' axisym_toroid_eq:  equib_err ', equib_err
-        write (*, *) ' axisym_toroid_eq:  equib_err ', equib_err
-        return
-    end if
+    if (equib_err /= '') return
 
     magnetics: select case (trim(magnetics_model))
        case ('solovev_magnetics')
@@ -155,8 +151,6 @@ contains
               & gradpsiN, equib_err)
               
     end select magnetics
-    
-    write(*,*) 'axisym_toroid_eq: psi, psiN = ', psi, psiN
 
 !   Density profile.
 
@@ -253,8 +247,6 @@ contains
 
        case ('eqdsk_magnetics_lin_interp')
          call  eqdsk_magnetics_lin_interp_psi(rvec, psi, gradpsi, psiN, gradpsiN)
-    
-    write(*,*) 'axisym_toroid_psi: rvec, psi, psiN = ', rvec, psi, psiN
 
     end select magnetics
 

@@ -130,8 +130,8 @@ contains
  
 
 ! Check that we are in the box
-    if (r < box_rmin .or. r > box_rmax) equib_err = 'R out_of_bounds'
-    if (z < box_zmin .or. z > box_zmax) equib_err = 'z out_of_bounds'
+    if (r < box_rmin .or. r > box_rmax) equib_err = 'R out_of_box'
+    if (z < box_zmin .or. z > box_zmax) equib_err = 'z out_of_box'
 
 !   Define
     bp0 = bphi0*iota0

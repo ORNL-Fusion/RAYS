@@ -15,6 +15,7 @@
     use rf_m, only : initialize_rf, frf
     use damping_m, only : initialize_damping
     use species_m, only : initialize_species_m
+    use ray_results_m, only : initialize_ray_results
 
     implicit none
     logical, intent(in) :: read_input
@@ -62,7 +63,9 @@
     
     call initialize_ode_solver(read_input)
     call message()
-    
+
+    call initialize_ray_results(read_input)    
+    call message()
 
 !*************** Open output files ******************************
 

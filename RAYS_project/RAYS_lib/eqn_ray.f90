@@ -86,8 +86,8 @@
     if (trim(eq%equib_err) /= '') then
         ray_stop%stop_ode = .true.
         write (*,*) 'eqn_ray: s = ', s, '  equib_err = ', eq%equib_err
-        write (message_unit,'(a,g12.4,3a,3g12.4)') 'eqn_ray: s = ', s, '  equib_err = ', eq%equib_err, &
-              & '  r_end = ', rvec
+        write (message_unit,'(a,g12.4,3a,3g12.4)') 'eqn_ray: s = ', s, '  equib_err = ',&
+              & trim(eq%equib_err), '  r_end = ', rvec
         ray_stop%ode_stop_flag = eq%equib_err
         return
     end if
