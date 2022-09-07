@@ -18,9 +18,9 @@
     character(len = 5) :: set_XY_lim = 'True'
 
 ! Number of plasma boundary points to calculate
-	integer, parameter :: n_boundary_points =101 ! should be an odd number
+	integer :: n_boundary_points
 ! R,Z boundary points
-    real(KIND=rkind) :: R_boundary(n_boundary_points), Z_boundary(n_boundary_points)
+    real(KIND=rkind), allocatable :: R_boundary(:), Z_boundary(:)
     
     namelist /axisym_toroid_processor_list/ processor, num_plot_k_vectors, scale_k_vec, set_XY_lim
 
@@ -70,6 +70,7 @@
 	use axisym_toroid_eq_m, only : magnetics_model, inner_bound, outer_bound, upper_bound, lower_bound
 	use solovev_magnetics_m, only : rmaj, kappa
     use diagnostics_m, only : message_unit, message, text_message
+    use eqdsk_utilities_m, only : NBOUND, RBOUND, ZBOUND
 	
 	implicit none
 	
@@ -79,6 +80,9 @@
     magnetics: select case (trim(magnetics_model))
 
     case ('solovev_magnetics')  ! N.B.  This is up-down symmetric
+		n_boundary_points =101 ! should be an odd number for this calculation
+		allocate(R_boundary(n_boundary_points))
+		allocate(Z_boundary(n_boundary_points))
 		dR = 2.*(outer_bound - inner_bound)/(n_boundary_points)
 
 		R_boundary(1) = inner_bound
@@ -97,7 +101,15 @@
 			R_boundary(n_boundary_points-(i-1)) = R_boundary(i)
 			Z_boundary(n_boundary_points-(i-1)) = Z_boundary(i)
 		end do
-		
+
+    case ('eqdsk_magnetics_lin_interp')
+        n_boundary_points = NBOUND ! not necessarily an odd number
+		allocate(R_boundary(n_boundary_points))
+		allocate(Z_boundary(n_boundary_points))
+        R_boundary(:) = RBOUND(:)
+        Z_boundary(:) = ZBOUND(:)
+        
+        
 ! 		do i = 1, n_boundary_points
 ! 			write(*,*) 'i = ', i, '   R_boundary = ', R_boundary(i), '   Z_boundary', Z_boundary(i)
 ! 		end do
