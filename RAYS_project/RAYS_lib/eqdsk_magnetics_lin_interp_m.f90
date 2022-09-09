@@ -5,6 +5,7 @@ module  eqdsk_magnetics_lin_interp_m
 ! In that regard they are not expected to be very accurate.  This version will soon be supplanted
 ! by one that uses cubic splines for the interpolation.
 !
+! N.B. Values of Psi are shifted on initialization so that Psi is zero on axis.
 
     use constants_m, only : rkind
     
@@ -80,19 +81,17 @@ contains
     lower_bound = minval(ZBOUND)
     upper_bound = maxval(ZBOUND)
 
-    call message('PsiB = ', psiB)
     call message('Inner boundary = ', inner_bound)
     call message('Outer boundary = ', outer_bound)
     call message('Upper boundary = ', upper_bound)
     call message('Lower boundary = ', lower_bound)
 
-    write(*,*) 'PsiB = ', psiB
     write(*,*) 'Inner boundary = ', inner_bound
     write(*,*) 'Outer boundary = ', outer_bound
     write(*,*) 'Lower boundary = ', lower_bound
     write(*,*) 'Upper boundary = ', upper_bound
     
-    ! radial and Z grids
+    ! radial and Z grids that Psi is defined on
     allocate (R_grid(NRBOX))
     allocate (Z_grid(NZBOX))
 
@@ -106,8 +105,13 @@ contains
 
     dR = (R_grid(2) - R_grid(1))/2.
     dZ = (Z_grid(2) - Z_grid(1))/2.
+
+! shift Psi to be zero on axis
+    Psi = Psi - PSIAXIS
+    PSIBOUND = PSIBOUND - PSIAXIS
+    psiB = PSIBOUND
     
-    return
+    return    
   end subroutine initialize_eqdsk_magnetics_lin_interp
 
 
