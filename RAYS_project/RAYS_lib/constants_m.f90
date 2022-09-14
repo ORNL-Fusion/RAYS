@@ -46,5 +46,11 @@
        nlike = -123454321 
 
     end subroutine initialize_constants_m
+    
+!********************************************************************
+
+    subroutine finalize_constants_m
+        return ! nothing to clean up
+    end subroutine finalize_constants_m
 
  end module constants_m

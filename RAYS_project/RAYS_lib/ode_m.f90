@@ -92,7 +92,7 @@
 
 !********************************************************************
 
-  subroutine initialize_ode_solver(read_input)
+  subroutine initialize_ode_solver_m(read_input)
 
     use constants_m, only : input_unit
     use damping_m, only : damping_model, multi_spec_damping
@@ -101,6 +101,9 @@
     
     implicit none
     logical, intent(in) :: read_input
+
+    write(*,*) ' '
+    write(*,*) 'initialize_ode_solver '
 
     if (read_input .eqv. .true.) then    
     ! Read and write input namelist
@@ -147,7 +150,7 @@
     call message ('initialize_ode_solver: ODE vector length nv', nv)
 
     return
-  end subroutine initialize_ode_solver
+  end subroutine initialize_ode_solver_m
     
 !********************************************************************
 
@@ -221,6 +224,11 @@
   return
   end subroutine ode_solver
     
+!********************************************************************
+
+    subroutine finalize_ode_solver_m
+		return ! Nothing to clean up
+    end subroutine finalize_ode_solver_m
  
  end module ode_m
 

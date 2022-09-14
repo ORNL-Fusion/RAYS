@@ -810,4 +810,11 @@ contains
         end if
     end subroutine diagnostic_counter
 
+!********************************************************************
+
+    subroutine finalize_diagnostics_m
+        close(message_unit)
+        return
+    end subroutine finalize_diagnostics_m
+
  end module diagnostics_m

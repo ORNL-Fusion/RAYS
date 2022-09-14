@@ -1,15 +1,16 @@
  subroutine initialize_post_process_RAYS(read_input)
 !   reads input file and initializes variables.  Called from main program RAYS.
 
-    use constants_m, only : input_unit, output_unit, ray_list_unit, initialize_constants_m, eps0
+    use constants_m, only : ray_list_unit, output_unit, initialize_constants_m
     use diagnostics_m, only : initialize_diagnostics, date_v, message_unit, message,&
         & text_message, run_description, run_label
-    use equilibrium_m, only : equilib_model, initialize_equilibrium, equilibrium
-    use ode_m, only : initialize_ode_solver
-    use ray_init_m, only : initialize_ray_init
-    use rf_m, only : omgrf, initialize_rf, frf, k0
-    use damping_m, only : initialize_damping
+    use equilibrium_m, only : equilib_model, initialize_equilibrium_m
+    use ode_m, only : initialize_ode_solver_m
+    use ray_init_m, only : initialize_ray_init_m
+    use rf_m, only : initialize_rf_m
+    use damping_m, only : initialize_damping_m
     use species_m, only : initialize_species_m
+    use ray_results_m, only : initialize_ray_results_m
     use post_processing_m, only : initialize_post_processing_m
 
     implicit none
@@ -62,19 +63,22 @@
     call initialize_species_m(read_input)
     call message()
     
-    call initialize_rf(read_input)
+    call initialize_rf_m(read_input)
     call message()
     
-    call initialize_damping(read_input)
+    call initialize_damping_m(read_input)
     call message()
 
-    call initialize_equilibrium(read_input)
+    call initialize_equilibrium_m(read_input)
     call message()
 
-    call initialize_ray_init(read_input)
+    call initialize_ray_init_m(read_input)
+    call message()
+    
+    call initialize_ode_solver_m(read_input)
     call message()
 
-    call initialize_ode_solver(read_input)
+    call initialize_ray_results_m(read_input)    
     call message()
     
     call initialize_post_processing_m(read_input)

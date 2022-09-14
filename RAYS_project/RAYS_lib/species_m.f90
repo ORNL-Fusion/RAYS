@@ -17,7 +17,8 @@
 !   is = species number
 !   is=0 is reserved for electrons and the rest for ions.
 !   qs: charge          ms: mass
-!   eta: concentration      n0s: number density
+!   eta: concentration as fraction of electron density
+!   n0s: number density = n0*eta
 !   t0s: temperature        alfas: T_perp/T_paral
 !   v0s: parallel drift velocity
 !   nus: collision frequency i.e. nu/omega
@@ -138,5 +139,9 @@ contains
         end do
     
     end subroutine initialize_species_m
+
+    subroutine finalize_species_m
+        return ! nothing to clean up
+    end subroutine finalize_species_m
 
  end module species_m

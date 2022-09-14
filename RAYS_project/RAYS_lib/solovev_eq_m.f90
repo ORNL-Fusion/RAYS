@@ -35,7 +35,7 @@ contains
 
 !********************************************************************
 
-  subroutine initialize_solovev_eq(read_input)
+  subroutine initialize_solovev_eq_m(read_input)
 
     use constants_m, only : input_unit
     use species_m, only : nspec
@@ -93,7 +93,7 @@ contains
     end if
     
     return
-  end subroutine initialize_solovev_eq
+  end subroutine initialize_solovev_eq_m
 
 !********************************************************************
 
@@ -285,7 +285,7 @@ contains
 !   Define
     bp0 = bphi0*iota0
  
-!   Flux function x, y, z normalized to one at last surface (z=0, r=outer_bound)
+!   Flux function x, y, z
     psi = .5*bp0 * ( (R*z/(rmaj*kappa))**2 + ((R**2-rmaj**2)**2)/rmaj**2/4. )
 
 
@@ -344,5 +344,15 @@ contains
     end do
         
  end subroutine write_solovev_profiles
+    
+!********************************************************************
+
+    subroutine finalize_solovev_eq_m
+		if (allocated(t_prof_model)) then
+			deallocate( t_prof_model )
+			deallocate( alphat1 )
+		end if
+		return
+    end subroutine finalize_solovev_eq_m
  
 end module solovev_eq_m

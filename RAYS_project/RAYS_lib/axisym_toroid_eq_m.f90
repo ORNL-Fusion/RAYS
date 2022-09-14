@@ -45,7 +45,7 @@ contains
 
 !********************************************************************
 
-  subroutine initialize_axisym_toroid_eq(read_input)
+  subroutine initialize_axisym_toroid_eq_m(read_input)
 
     use constants_m, only : rkind, input_unit
     use species_m, only : nspec
@@ -62,6 +62,9 @@ contains
     allocate( temperature_prof_model(0:nspec) )
     allocate( alphat1(0:nspec), alphat2(0:nspec) )
 
+    write(*,*) ' '
+    write(*,*) 'initialize_axisym_toroid_eq '
+
     if (read_input .eqv. .true.) then    
         open(unit=input_unit, file='rays.in',action='read', status='old', form='formatted')
         read(input_unit, axisym_toroid_eq_list)
@@ -69,7 +72,7 @@ contains
         write(message_unit, axisym_toroid_eq_list)
     end if
 
- write(*, axisym_toroid_eq_list)
+    write(*, axisym_toroid_eq_list)
     
     magnetics: select case (trim(magnetics_model))
        case ('solovev_magnetics')
@@ -93,7 +96,7 @@ contains
 ! this time.  If I add something to read profiles from a data file I might need to add
 ! an initialization routine for densities and temperatures.
   
-  end subroutine initialize_axisym_toroid_eq
+  end subroutine initialize_axisym_toroid_eq_m
 
 !********************************************************************
 
@@ -179,17 +182,16 @@ contains
 
     end select density
 
-
 !   Temperature profile.
     do is = 0, nspec
-       temperature: select case (temperature_prof_model(is))
+       temperature: select case( trim(temperature_prof_model(is)) )
 
         case ('zero')
           ts(is) = 0.
           gradts(:,is) = 0.
 
         case ('constant')
-          ns(:nspec) = n0s(:nspec)
+          ts(:nspec) = t0s(:nspec)
           gradns = 0.
 
        case ('parabolic')
@@ -297,5 +299,18 @@ contains
     end do
         
  end subroutine write_axisym_toroid_profiles
+    
+!********************************************************************
+
+    subroutine finalize_axisym_toroid_eq_m
+		if (allocated(temperature_prof_model)) then
+			deallocate( temperature_prof_model )
+			deallocate( alphat1 )
+		end if
+		return
+		
+		call finalize_solovev_magnetics_m
+		call finalize_eqdsk_magnetics_lin_interp_m
+    end subroutine finalize_axisym_toroid_eq_m
  
 end module axisym_toroid_eq_m

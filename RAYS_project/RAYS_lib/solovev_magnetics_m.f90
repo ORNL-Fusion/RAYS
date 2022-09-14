@@ -48,6 +48,7 @@ contains
 
      real(KIND=rkind) :: bp0
 
+    write (*,*) ' '
     write(*,*) 'initialize_solovev_magnetics'   
 
     if (read_input .eqv. .true.) then 
@@ -241,5 +242,11 @@ contains
     
     return 
   end subroutine solovev_magnetics_psi
- 
+
+!********************************************************************
+
+    subroutine finalize_solovev_magnetics_m
+        return ! nothing to clean up
+    end subroutine finalize_solovev_magnetics_m
+    
 end module solovev_magnetics_m

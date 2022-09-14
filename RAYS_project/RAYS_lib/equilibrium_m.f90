@@ -59,13 +59,13 @@ contains
 
 !********************************************************************
 
-  subroutine initialize_equilibrium(read_input)
+  subroutine initialize_equilibrium_m(read_input)
 
     use constants_m, only : input_unit    
     use diagnostics_m, only : message_unit, message, text_message
-    use slab_eq_m, only : initialize_slab_eq
-    use solovev_eq_m, only : initialize_solovev_eq
-    use axisym_toroid_eq_m, only : initialize_axisym_toroid_eq
+    use slab_eq_m, only : initialize_slab_eq_m
+    use solovev_eq_m, only : initialize_solovev_eq_m
+    use axisym_toroid_eq_m, only : initialize_axisym_toroid_eq_m
 
     implicit none
     logical, intent(in) :: read_input
@@ -82,16 +82,16 @@ contains
 
        case ('slab')
 !         A 1-D slab equilibrium with stratification in x
-          call initialize_slab_eq(read_input)
+          call initialize_slab_eq_m(read_input)
 
        case ('solovev')
 !         A simple analytic tokamak model
-          call initialize_solovev_eq(read_input)
+          call initialize_solovev_eq_m(read_input)
 
 
        case ('axisym_toroid')
 !         A generic axisymmetric toroidal plasma model
-          call initialize_axisym_toroid_eq(read_input)
+          call initialize_axisym_toroid_eq_m(read_input)
 
        case default
           write(0,*) 'initialize_equilibrium: improper equilib_model =', equilib_model
@@ -101,9 +101,8 @@ contains
 
     end select equilibria
 
-
     return
-  end subroutine initialize_equilibrium
+  end subroutine initialize_equilibrium_m
 
 !********************************************************************
 
@@ -260,5 +259,15 @@ contains
  end  subroutine write_eq_point
     
 !********************************************************************
+
+    subroutine finalize_equilibrium_m
+		use slab_eq_m, only : finalize_slab_eq_m
+		use solovev_eq_m, only : finalize_solovev_eq_m
+		use axisym_toroid_eq_m, only : finalize_axisym_toroid_eq_m
+
+		call finalize_slab_eq_m
+		call finalize_solovev_eq_m
+		call finalize_axisym_toroid_eq_m
+    end subroutine finalize_equilibrium_m
 
  end module equilibrium_m

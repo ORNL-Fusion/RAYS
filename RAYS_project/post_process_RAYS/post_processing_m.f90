@@ -31,7 +31,7 @@
     integer :: nray, nv, iray, ipoint
     real(KIND=rkind) :: s
     real(KIND=rkind), allocatable :: v(:)
-    real(KIND=rkind), allocatable :: residuals(:) 
+    real(KIND=rkind), allocatable :: end_residuals(:) 
     character(len = 20), allocatable :: ray_stop(:)
 
     if (read_input .eqv. .true.) then    
@@ -88,17 +88,10 @@
 
     read(ray_list_unit, *) npoints
     npoints_max = maxval(npoints)
-    allocate(residuals(nray))
-    read(ray_list_unit, *) residuals
+    allocate(end_residuals(nray))
+    read(ray_list_unit, *) end_residuals
     allocate(ray_stop(nray))
     read(ray_list_unit, *) ray_stop
-
-!     read (95) npoints
-!     npoints_max = maxval(npoints)
-!     read (95) nv
-!     allocate(v(nv))    
-!     allocate(ray_stop(nray))
-!     read (95) ray_stop
 
     allocate(s_vec(nray, npoints_max))
     allocate(v_vec(nray, npoints_max, nv ))
@@ -107,14 +100,10 @@
         do ipoint = 1, npoints(iray)
 
             read (output_unit, *) s, v
-!            read (94) s, v
             s_vec(iray, ipoint) = s
             v_vec(iray, ipoint, :) = v
         end do
     end do ray_loop
-
-!     close(94)
-!     close(95)
 
 ! Write data to an ASCII file for diagnostic    
     if (verbosity >= 3) then

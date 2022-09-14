@@ -39,6 +39,9 @@ contains
     implicit none
     logical, intent(in) :: read_input
 
+    write(*,*) ' '
+    write(*,*) 'initialize_SG_ode '
+
 	if (read_input .eqv. .true.) then        
 	! Read and write input namelist
 		open(unit=input_unit, file='rays.in',action='read', status='old', form='formatted')

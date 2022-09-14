@@ -239,5 +239,10 @@ contains
     
     return 
   end subroutine  eqdsk_magnetics_lin_interp_psi
+!********************************************************************
+
+    subroutine finalize_eqdsk_magnetics_lin_interp_m
+		return ! Nothing to clean up. R_grid,Z_grid deallocated in eqdsk_utilities_m
+    end subroutine finalize_eqdsk_magnetics_lin_interp_m
  
 end module  eqdsk_magnetics_lin_interp_m

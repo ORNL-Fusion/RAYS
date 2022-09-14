@@ -32,7 +32,7 @@
 
 !********************************************************************
 
-  subroutine initialize_damping(read_input)
+  subroutine initialize_damping_m(read_input)
  
     use constants_m, only : input_unit
     use diagnostics_m, only : message_unit
@@ -49,7 +49,7 @@
     end if
 
     return
-  end subroutine initialize_damping
+  end subroutine initialize_damping_m
 
 
 !********************************************************************
@@ -101,7 +101,12 @@
     return
     
  end subroutine damping
+    
+!********************************************************************
 
+    subroutine finalize_damping_m
+        return ! nothing to clean up
+    end subroutine finalize_damping_m
 
  end module damping_m
 

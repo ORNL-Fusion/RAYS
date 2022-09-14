@@ -55,13 +55,14 @@ contains
 
 !****************************************************************************
 
-    subroutine initialize_ray_init(read_input)
+    subroutine initialize_ray_init_m(read_input)
 
         use constants_m, only : input_unit
         use diagnostics_m, only : message_unit, message, text_message
         use simple_slab_ray_init_m, only : simple_slab_ray_init
         use solovev_ray_init_nphi_ntheta_m, only : ray_init_solovev_nphi_ntheta
         use axisym_toroid_ray_init_nphi_ntheta_m, only : ray_init_axisym_toroid_nphi_ntheta
+        use axisym_toroid_ray_init_R_Z_nphi_ntheta_m, only : ray_init_axisym_toroid_R_Z_nphi_ntheta
  
         implicit none
         logical, intent(in) :: read_input
@@ -83,8 +84,13 @@ contains
                 call ray_init_solovev_nphi_ntheta(nray_max, nray, rvec0, rindex_vec0, ray_pwr_wt)
 
              case ('axisym_toroid_nphi_ntheta')
-                call ray_init_axisym_toroid_nphi_ntheta(nray_max, nray, rvec0, rindex_vec0, ray_pwr_wt)
-        
+                call ray_init_axisym_toroid_nphi_ntheta(nray_max, nray, rvec0, rindex_vec0,&
+                   & ray_pwr_wt)
+
+             case ('axisym_toroid_ray_init_R_Z_nphi_ntheta')
+                call ray_init_axisym_toroid_R_Z_nphi_ntheta(nray_max, nray, rvec0,&
+                   & rindex_vec0, ray_pwr_wt)
+
             case default
                 write(0,*) 'initialize_ray_init: invalid ray_init_model = ', trim(ray_init_model)
                 call text_message('initialize_ray_init: invalid ray_init_model = ', trim(ray_init_model),0)
@@ -93,7 +99,23 @@ contains
         end select init_model
  
     return
-    end subroutine initialize_ray_init
+    end subroutine initialize_ray_init_m
 
+!********************************************************************
+
+    subroutine finalize_ray_init_m
+        use simple_slab_ray_init_m, only : finalize_simple_slab_ray_init_m
+        use solovev_ray_init_nphi_ntheta_m, only : finalize_solovev_ray_init_nphi_ntheta_m
+        use axisym_toroid_ray_init_nphi_ntheta_m, only :&
+          & finalize_axisym_toroid_ray_init_nphi_ntheta_m
+        use axisym_toroid_ray_init_R_Z_nphi_ntheta_m, only :&
+          & finalize_axisym_toroid_ray_init_R_Z_nphi_ntheta_m
+
+        call finalize_simple_slab_ray_init_m
+        call finalize_solovev_ray_init_nphi_ntheta_m
+        call finalize_axisym_toroid_ray_init_nphi_ntheta_m
+        call finalize_axisym_toroid_ray_init_R_Z_nphi_ntheta_m
+        return
+    end subroutine finalize_ray_init_m
 
  end module ray_init_m

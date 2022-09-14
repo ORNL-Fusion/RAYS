@@ -34,6 +34,8 @@ contains
 !     write(message_unit, RK4_ode_list)
 
     call text_message('RK4: RK4 has no initialization')
+    write(*,*) 'RK4: RK4 has no initialization'
+    
     return
   end subroutine initialize_RK4_ode
 

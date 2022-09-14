@@ -142,5 +142,10 @@ contains
     return
   end  subroutine solve_nx_vs_ny_nz_by_bz 
     
+!********************************************************************
+
+    subroutine finalize_dispersion_solvers_m
+        return ! nothing to clean up
+    end subroutine finalize_dispersion_solvers_m
 
 end module dispersion_solvers_m

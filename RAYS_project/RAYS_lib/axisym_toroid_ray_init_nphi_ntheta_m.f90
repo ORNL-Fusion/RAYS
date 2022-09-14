@@ -1,5 +1,8 @@
  module axisym_toroid_ray_init_nphi_ntheta_m
  
+! N.B. This routine needs work.  The initial position calculations are messed up. only
+!      launches in equatorial plane
+
 ! Parameters to generate the initial conditions for the rays
 ! i.e. intitial position for each ray: rvec0(1:3, iray) and 
 ! information necessary to initialize k for each ray: kvec0(1:3, iray)
@@ -92,6 +95,9 @@ contains
     real(KIND=rkind) :: npsi
     real(KIND=rkind) :: nperp
 
+    write(*,*) ' '
+    write(*,*) 'ray_init_axisym_toroid_nphi_ntheta '
+    
 ! Read and write input namelist
     open(unit=input_unit, file='rays.in',action='read', status='old', form='formatted')
     read(input_unit, axisym_toroid_ray_init_nphi_ntheta_list)
@@ -288,5 +294,15 @@ contains
        return
     end function residual_2
 
+!********************************************************************
+
+    subroutine finalize_axisym_toroid_ray_init_nphi_ntheta_m
+! 		if (allocated(rvec0)) then
+! 			deallocate ( rvec0, rindex_vec0)
+! 			deallocate ( ray_pwr_wt)
+! 		end if
+		return ! Maybe nothing to deallocate.  rvec0 etc deallocated when 
+		       ! ray_init_axisym_toroid_R_Z_nphi_ntheta returns?
+    end subroutine finalize_axisym_toroid_ray_init_nphi_ntheta_m
 
 end module axisym_toroid_ray_init_nphi_ntheta_m

@@ -10,7 +10,7 @@
 
     implicit none
     
-    logical :: write_results_list_directed
+    logical :: write_results_list_directed = .true.
 
 ! Time and date vector, get from diagnostics_m
     integer :: date_vector(8)
@@ -37,7 +37,7 @@ contains
 
 !****************************************************************************
 
-    subroutine initialize_ray_results(read_input)
+    subroutine initialize_ray_results_m(read_input)
 
         use constants_m, only : input_unit
         use diagnostics_m, only : message_unit, run_label, date_v
@@ -46,6 +46,8 @@ contains
  
         implicit none
         logical, intent(in) :: read_input
+        
+        write(*,*) 'initialize_ray_results'
      
         if (read_input .eqv. .true.) then    
         ! Read and write input namelist
@@ -70,7 +72,7 @@ contains
         allocate (ray_stop_flag(nray))
 
     return
-    end subroutine initialize_ray_results
+    end subroutine initialize_ray_results_m
 
 !****************************************************************************
 
@@ -117,6 +119,22 @@ contains
     write (results_star_unit,*) 'ray_vec'
     write (results_star_unit,*) ray_vec
 
+    close(unit=results_star_unit)
+
     end subroutine write_results_LD
     
+!********************************************************************
+
+    subroutine finalize_ray_results_m
+        deallocate (ray_vec)
+        deallocate (residual)
+        deallocate (npoints)
+        deallocate (end_ray_parameter)
+        deallocate (end_residuals)
+        deallocate (end_ray_vec)
+        deallocate (ray_stop_flag)
+        
+        return
+    end subroutine finalize_ray_results_m
+     
  end module ray_results_m

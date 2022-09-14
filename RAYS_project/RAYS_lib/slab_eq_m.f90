@@ -33,7 +33,7 @@ contains
 
 !********************************************************************
 
-  subroutine initialize_slab_eq(read_input)
+  subroutine initialize_slab_eq_m(read_input)
 
     use constants_m, only : input_unit
     use species_m, only : nspec
@@ -57,7 +57,7 @@ contains
     end if
     
     return
-  end subroutine initialize_slab_eq
+  end subroutine initialize_slab_eq_m
 
 !********************************************************************
 
@@ -267,5 +267,15 @@ contains
     end do
         
  end subroutine write_slab_profiles
- 
+    
+!********************************************************************
+
+    subroutine finalize_slab_eq_m
+		if (allocated(t_prof_model)) then
+			deallocate( t_prof_model )
+			deallocate( alphat1 )
+		end if
+		return
+    end subroutine finalize_slab_eq_m
+
 end module slab_eq_m

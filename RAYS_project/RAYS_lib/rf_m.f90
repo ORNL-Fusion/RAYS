@@ -38,7 +38,7 @@ contains
 
 !********************************************************************
 
-  subroutine initialize_rf(read_input)
+  subroutine initialize_rf_m(read_input)
  
     use constants_m, only : input_unit, pi, clight
     use diagnostics_m, only : message_unit, message
@@ -68,6 +68,10 @@ contains
     write(*,*) 'wave_mode = ', wave_mode
 
     return
-  end subroutine initialize_rf
+  end subroutine initialize_rf_m
+
+    subroutine finalize_rf_m
+        continue ! nothing to clean up
+    end subroutine finalize_rf_m
 
  end module rf_m
