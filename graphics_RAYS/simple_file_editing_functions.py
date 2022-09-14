@@ -154,8 +154,8 @@ def edit_nml_file(lines, var, values, separator = ','):
     var_lines = 1
     test = False
     while test == False:
-        next_iine_no = var_line_number + var_lines
-        next_line = lines[next_iine_no]
+        next_line_no = var_line_number + var_lines
+        next_line = lines[next_line_no]
         if '=' in next_line:   # Could get fooled by = in a quoted string
             test = True
             eq_index = next_line.find('=') # so check if quote before =
