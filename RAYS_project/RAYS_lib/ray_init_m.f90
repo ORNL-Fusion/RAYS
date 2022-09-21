@@ -103,19 +103,20 @@ contains
 
 !********************************************************************
 
-    subroutine finalize_ray_init_m
-        use simple_slab_ray_init_m, only : finalize_simple_slab_ray_init_m
-        use solovev_ray_init_nphi_ntheta_m, only : finalize_solovev_ray_init_nphi_ntheta_m
+    subroutine deallocate_ray_init_m
+        use simple_slab_ray_init_m, only : deallocate_simple_slab_ray_init_m
+        use solovev_ray_init_nphi_ntheta_m, only : deallocate_solovev_ray_init_nphi_ntheta_m
         use axisym_toroid_ray_init_nphi_ntheta_m, only :&
-          & finalize_axisym_toroid_ray_init_nphi_ntheta_m
+          & deallocate_axisym_toroid_ray_init_nphi_ntheta_m
         use axisym_toroid_ray_init_R_Z_nphi_ntheta_m, only :&
-          & finalize_axisym_toroid_ray_init_R_Z_nphi_ntheta_m
+          & deallocate_axisym_toroid_ray_init_R_Z_nphi_ntheta_m
 
-        call finalize_simple_slab_ray_init_m
-        call finalize_solovev_ray_init_nphi_ntheta_m
-        call finalize_axisym_toroid_ray_init_nphi_ntheta_m
-        call finalize_axisym_toroid_ray_init_R_Z_nphi_ntheta_m
+        call deallocate_simple_slab_ray_init_m
+        call deallocate_solovev_ray_init_nphi_ntheta_m
+        call deallocate_axisym_toroid_ray_init_nphi_ntheta_m
+        call deallocate_axisym_toroid_ray_init_R_Z_nphi_ntheta_m
+        
         return
-    end subroutine finalize_ray_init_m
+    end subroutine deallocate_ray_init_m
 
  end module ray_init_m

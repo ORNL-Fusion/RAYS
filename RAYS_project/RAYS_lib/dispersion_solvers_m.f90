@@ -144,8 +144,8 @@ contains
     
 !********************************************************************
 
-    subroutine finalize_dispersion_solvers_m
-        return ! nothing to clean up
-    end subroutine finalize_dispersion_solvers_m
+    subroutine deallocate_dispersion_solvers_m
+        return ! nothing to deallocate
+    end subroutine deallocate_dispersion_solvers_m
 
 end module dispersion_solvers_m

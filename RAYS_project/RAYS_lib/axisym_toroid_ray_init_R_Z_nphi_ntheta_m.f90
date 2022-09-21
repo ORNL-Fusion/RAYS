@@ -294,13 +294,13 @@ contains
 
 !****************************************************************************
 
-    subroutine finalize_axisym_toroid_ray_init_R_Z_nphi_ntheta_m
+    subroutine deallocate_axisym_toroid_ray_init_R_Z_nphi_ntheta_m
 ! 		if (allocated(rvec0)) then
 ! 			deallocate ( rvec0, rindex_vec0)
 ! 			deallocate ( ray_pwr_wt)
 ! 		end if
 		return ! Maybe nothing to deallocate.  rvec0 etc deallocated when 
 		       ! ray_init_axisym_toroid_R_Z_nphi_ntheta returns?
-    end subroutine finalize_axisym_toroid_ray_init_R_Z_nphi_ntheta_m
+    end subroutine deallocate_axisym_toroid_ray_init_R_Z_nphi_ntheta_m
 
 end module axisym_toroid_ray_init_R_Z_nphi_ntheta_m

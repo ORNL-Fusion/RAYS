@@ -77,7 +77,7 @@ contains
         close(unit=input_unit)
         write(message_unit, equilibrium_list)
     end if
-    
+
     equilibria: select case (trim(equilib_model))
 
        case ('slab')
@@ -90,6 +90,7 @@ contains
 
 
        case ('axisym_toroid')
+    
 !         A generic axisymmetric toroidal plasma model
           call initialize_axisym_toroid_eq_m(read_input)
 
@@ -260,14 +261,14 @@ contains
     
 !********************************************************************
 
-    subroutine finalize_equilibrium_m
-		use slab_eq_m, only : finalize_slab_eq_m
-		use solovev_eq_m, only : finalize_solovev_eq_m
-		use axisym_toroid_eq_m, only : finalize_axisym_toroid_eq_m
+    subroutine deallocate_equilibrium_m
+		use slab_eq_m, only : deallocate_slab_eq_m
+		use solovev_eq_m, only : deallocate_solovev_eq_m
+		use axisym_toroid_eq_m, only : deallocate_axisym_toroid_eq_m
 
-		call finalize_slab_eq_m
-		call finalize_solovev_eq_m
-		call finalize_axisym_toroid_eq_m
-    end subroutine finalize_equilibrium_m
+		call deallocate_slab_eq_m
+		call deallocate_solovev_eq_m
+		call deallocate_axisym_toroid_eq_m
+    end subroutine deallocate_equilibrium_m
 
  end module equilibrium_m

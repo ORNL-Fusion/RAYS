@@ -11,30 +11,48 @@
 !   External procedures: initialize (initialize.f90), trace_rays (trace_rays.f90)
 !                        finalize (finalize.f90), all in RAYS_lib
 
-    use scanner_m, only : initialize_scanner_m, update_scan_parameter, n_iterations
+    use diagnostics_m, only : message_unit, date_v
+    use scanner_m, only : initialize_scanner_m, update_scan_parameter, aggregate_run_data,&
+                        & write_scan_summary, deallocate_scanner_m, n_runs, scan_id,&
+                        & scan_date_v
     
     implicit none 
     logical :: read_input = .true.
-    integer :: i_iter
+    integer :: i_run
     
 !   Read input file and initialize variables before starting the scan loop
     call initialize(read_input)
-    call initialize_scanner_m
+    call initialize_scanner_m(read_input)
+    close(message_unit)
+    scan_date_v = date_v ! Get scan date from first initialization
     read_input = .false.
+ 
+! Copy messages file to log.scan_initialization so it won't get clobbered
+    call system('mv messages log.scan_init.'//trim(scan_id)) 
     
-    iteration_loop: do i_iter = 1, n_iterations
+    run_loop: do i_run = 1, n_runs
     
-		call update_scan_parameter(i_iter)
+		call update_scan_parameter(i_run)
 
 		! Initialize with updated input parameters    
 		call initialize(read_input)
 
-		!   Trace the rays.
+		! Trace the rays.
 		call trace_rays
 
-	!   Finish up, do post processing if any
-		call finalize
+	    ! Finish up
+		call finalize_run
+		
+		! Add run data to scan data
+		call aggregate_run_data(i_run)
     
-    end do iteration_loop
+    end do run_loop
+    
+    call write_scan_summary
+    
+    call deallocate
+    call deallocate_scanner_m
+
+!********************************************************************
 
  end program ray_scan

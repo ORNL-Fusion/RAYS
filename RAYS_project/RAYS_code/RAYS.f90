@@ -19,6 +19,6 @@
     call trace_rays
 
 !   Finish up, do post processing if any
-    call finalize
+    call finalize_run
 
  end program rays

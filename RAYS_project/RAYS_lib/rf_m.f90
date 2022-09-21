@@ -70,8 +70,8 @@ contains
     return
   end subroutine initialize_rf_m
 
-    subroutine finalize_rf_m
-        continue ! nothing to clean up
-    end subroutine finalize_rf_m
+    subroutine deallocate_rf_m
+        continue ! nothing to deallocate
+    end subroutine deallocate_rf_m
 
  end module rf_m

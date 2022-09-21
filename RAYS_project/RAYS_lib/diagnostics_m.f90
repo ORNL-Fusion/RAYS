@@ -62,11 +62,6 @@
 !   integrate_eq_gradients = true: integrate gradients of B, Te, and ne along the ray.
     logical :: integrate_eq_gradients = .false.
 
-!   Switch for numerically computing the derivatives of D.
-!   num_deriv = 0: default
-!   num_deriv = 1: do numerical computation of the derivatives of D.
-    integer :: num_deriv
-
 !   Error returns
     character(len=60) :: equib_err = ''
     
@@ -108,16 +103,16 @@ contains
         call system('cp '//trim(namelist_file)//' rays.in')
     end if
 
+	! Open file for output messages 
+		open(unit=message_unit, file=trim(message_file),                    &
+		   & action='write', status='replace', form='formatted')     
+
     if (read_input .eqv. .true.) then    
     ! Read input namelist
         open(unit=input_unit, file='rays.in',action='read', status='old', form='formatted')
         read(input_unit, diagnostics_list)
         close(unit=input_unit)
     end if
-
-!   Open file for output messages 
-    open(unit=message_unit, file=trim(message_file),                    &
-       & action='write', status='replace', form='formatted')     
 
 ! Write input namelist
     write(message_unit, diagnostics_list)
@@ -812,9 +807,8 @@ contains
 
 !********************************************************************
 
-    subroutine finalize_diagnostics_m
-        close(message_unit)
-        return
-    end subroutine finalize_diagnostics_m
+    subroutine deallocate_diagnostics_m
+        return ! Nothing to deallocate
+    end subroutine deallocate_diagnostics_m
 
  end module diagnostics_m

@@ -347,12 +347,12 @@ contains
     
 !********************************************************************
 
-    subroutine finalize_solovev_eq_m
+    subroutine deallocate_solovev_eq_m
 		if (allocated(t_prof_model)) then
 			deallocate( t_prof_model )
 			deallocate( alphat1 )
 		end if
 		return
-    end subroutine finalize_solovev_eq_m
+    end subroutine deallocate_solovev_eq_m
  
 end module solovev_eq_m

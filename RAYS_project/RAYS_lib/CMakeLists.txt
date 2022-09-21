@@ -5,6 +5,7 @@ list (APPEND lib_sources
 	check_save.f90
 	constants_m.f90
 	damping_m.f90
+	deallocate.f90
 	deriv_cold.f90
 	deriv_num.f90
 	diagnostics_m.f90
@@ -12,7 +13,7 @@ list (APPEND lib_sources
 	dispersion_solvers_m.f90
 	eqn_ray.f90
 	equilibrium_m.f90
-	finalize.f90
+	finalize_run.f90
 	initialize_ode_vector.f90
 	intialize.f90
 	ode_RAYS.f90

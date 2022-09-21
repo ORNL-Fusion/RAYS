@@ -49,8 +49,8 @@
     
 !********************************************************************
 
-    subroutine finalize_constants_m
-        return ! nothing to clean up
-    end subroutine finalize_constants_m
+    subroutine deallocate_constants_m
+        return ! nothing to deallocate
+    end subroutine deallocate_constants_m
 
  end module constants_m

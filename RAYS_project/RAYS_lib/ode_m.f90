@@ -110,8 +110,9 @@
         open(unit=input_unit, file='rays.in',action='read', status='old', form='formatted')
         read(input_unit, ode_list)
         close(unit=input_unit)
-        write(message_unit, ode_list)
     end if
+    write(message_unit, ode_list)
+    write(*, ode_list)
 
 !   Select ode solver.
     solver: select case (trim(ode_solver_name))
@@ -226,9 +227,9 @@
     
 !********************************************************************
 
-    subroutine finalize_ode_solver_m
-		return ! Nothing to clean up
-    end subroutine finalize_ode_solver_m
+    subroutine deallocate_ode_solver_m
+		return ! Nothing to deallocate
+    end subroutine deallocate_ode_solver_m
  
  end module ode_m
 

@@ -140,8 +140,8 @@ contains
     
     end subroutine initialize_species_m
 
-    subroutine finalize_species_m
-        return ! nothing to clean up
-    end subroutine finalize_species_m
+    subroutine deallocate_species_m
+        return ! nothing to deallocate
+    end subroutine deallocate_species_m
 
  end module species_m

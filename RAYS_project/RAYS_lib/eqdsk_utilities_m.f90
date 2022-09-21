@@ -325,7 +325,7 @@ end subroutine FindOXPoint
 
 !********************************************************************
 
-    subroutine finalize_eqdsk_utilities_m
+    subroutine deallocate_eqdsk_utilities_m
 	  deallocate (T)
 	  deallocate (P)
 	  deallocate (TTp)
@@ -339,6 +339,6 @@ end subroutine FindOXPoint
 	  deallocate (R_grid)
 	  deallocate (Z_grid)
 	  return
-    end subroutine finalize_eqdsk_utilities_m
+    end subroutine deallocate_eqdsk_utilities_m
 
 end module eqdsk_utilities_m

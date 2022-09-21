@@ -12,7 +12,7 @@
     use damping_m, only : damping_model, multi_spec_damping
     use species_m, only : nspec
     use ray_results_m, only : ray_stop_flag, ray_vec, residual, npoints, end_residuals,&
-                            & end_ray_parameter, end_ray_vec
+                            & max_residuals, end_ray_parameter, end_ray_vec, ray_trace_time
 
     implicit none
 
@@ -188,7 +188,8 @@
 ! nstep is incremented at the top of the loop, but "exit trajectory" above means last 
 ! step failed, and so is 1 too big, so actual npoints = nstep, not nstep + 1
         npoints(iray) = nstep
-        end_residuals(iray)  = residual(nstep,iray)
+        end_residuals(iray) = residual(nstep,iray)
+        max_residuals(iray) = maxval(abs(residual(1:nstep,iray)))
         end_ray_parameter(iray) = s
         ray_stop_flag(iray) = ray_stop%ode_stop_flag
         end_ray_vec(:, iray) = v(:)
@@ -211,7 +212,8 @@
 !      write (95) nv
 !      write (95) ray_stop
 
-    call cpu_time(t_finish_tracing)
+	call cpu_time(t_finish_tracing)
+	ray_trace_time = t_finish_tracing - t_start_tracing
 
     return
  end subroutine trace_rays

@@ -58,13 +58,18 @@ contains
     logical, intent(in) :: read_input
 
     real(KIND=rkind) :: bp0
-    
-    allocate( temperature_prof_model(0:nspec) )
-    allocate( alphat1(0:nspec), alphat2(0:nspec) )
 
     write(*,*) ' '
     write(*,*) 'initialize_axisym_toroid_eq '
 
+	if (.not. allocated(temperature_prof_model)) then    
+		allocate( temperature_prof_model(0:nspec) )
+		allocate( alphat1(0:nspec), alphat2(0:nspec) )
+		temperature_prof_model = ' '
+		alphat1 = 0. 
+		alphat2 = 0. 
+    end if
+    
     if (read_input .eqv. .true.) then    
         open(unit=input_unit, file='rays.in',action='read', status='old', form='formatted')
         read(input_unit, axisym_toroid_eq_list)
@@ -302,15 +307,20 @@ contains
     
 !********************************************************************
 
-    subroutine finalize_axisym_toroid_eq_m
+    subroutine deallocate_axisym_toroid_eq_m
+		use solovev_magnetics_m, only : deallocate_solovev_magnetics_m
+		use eqdsk_magnetics_lin_interp_m, only : deallocate_eqdsk_magnetics_lin_interp_m
+
 		if (allocated(temperature_prof_model)) then
 			deallocate( temperature_prof_model )
 			deallocate( alphat1 )
+			deallocate( alphat2 )
 		end if
+		
+		call deallocate_solovev_magnetics_m
+		call deallocate_eqdsk_magnetics_lin_interp_m
 		return
 		
-		call finalize_solovev_magnetics_m
-		call finalize_eqdsk_magnetics_lin_interp_m
-    end subroutine finalize_axisym_toroid_eq_m
+    end subroutine deallocate_axisym_toroid_eq_m
  
 end module axisym_toroid_eq_m

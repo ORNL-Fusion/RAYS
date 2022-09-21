@@ -127,7 +127,6 @@ contains
               ray_stop%stop_ode = .true.
               call message('SG_ode: Error return: iflag', iflag, 0)
               if (iflag == 5) call text_message('Equation is stiff', 0)
-              call message()
               ray_stop%ode_stop_flag = 'ODE iflag error'
               exit odeloop
          end if

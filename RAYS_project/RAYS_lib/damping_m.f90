@@ -104,9 +104,9 @@
     
 !********************************************************************
 
-    subroutine finalize_damping_m
-        return ! nothing to clean up
-    end subroutine finalize_damping_m
+    subroutine deallocate_damping_m
+        return ! nothing to deallocate
+    end subroutine deallocate_damping_m
 
  end module damping_m
 

@@ -245,8 +245,8 @@ contains
 
 !********************************************************************
 
-    subroutine finalize_solovev_magnetics_m
-        return ! nothing to clean up
-    end subroutine finalize_solovev_magnetics_m
+    subroutine deallocate_solovev_magnetics_m
+        return ! nothing to deallocate
+    end subroutine deallocate_solovev_magnetics_m
     
 end module solovev_magnetics_m

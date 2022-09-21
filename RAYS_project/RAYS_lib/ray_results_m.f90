@@ -24,9 +24,10 @@
     real(KIND=rkind), allocatable :: residual(:,:)
     integer, allocatable :: npoints(:)
     real(KIND=rkind), allocatable :: end_residuals(:) 
+    real(KIND=rkind), allocatable :: max_residuals(:) 
     real(KIND=rkind), allocatable :: end_ray_parameter(:)
     real(KIND=rkind), allocatable :: end_ray_vec(:,:)
-    real(KIND=rkind) :: ray_trace_time
+    real(KIND=rkind)  :: ray_trace_time
     character(len=60), allocatable :: ray_stop_flag(:)
 
     namelist /ray_results_list/ write_results_list_directed
@@ -55,6 +56,15 @@ contains
             read(input_unit, ray_results_list)
             close(unit=input_unit)
             write(message_unit, ray_results_list)
+
+			allocate (ray_vec(nv, nstep_max+1, nray))
+			allocate (residual(nstep_max, nray))
+			allocate (npoints(nray))
+			allocate (end_ray_parameter(nray))
+			allocate (end_residuals(nray))
+			allocate (max_residuals(nray))
+			allocate (end_ray_vec(nv, nray))
+			allocate (ray_stop_flag(nray))
         end if
 
         date_vector = date_v
@@ -62,33 +72,37 @@ contains
         number_of_rays = nray
         max_number_of_steps = nstep_max
         dim_v_vector = nv
+        
+        ray_vec = 0.
+        residual = 0.
+        npoints = 0
+        end_ray_parameter = 0.
+        end_residuals = 0.
+        max_residuals = 0.
+        end_ray_vec = 0.
+        ray_trace_time = 0.
+        ray_stop_flag = ''        
+        
        
-        allocate (ray_vec(nv, nstep_max+1, nray))
-        allocate (residual(nstep_max, nray))
-        allocate (npoints(nray))
-        allocate (end_ray_parameter(nray))
-        allocate (end_residuals(nray))
-        allocate (end_ray_vec(nv, nray))
-        allocate (ray_stop_flag(nray))
-
     return
     end subroutine initialize_ray_results_m
 
 !****************************************************************************
 
-    subroutine write_results_LD(results_star_unit)
+    subroutine write_results_LD
     
     use diagnostics_m, only : run_label
     
     implicit none
     
-    integer, intent(in) :: results_star_unit
+    integer :: results_star_unit
     
  !  File name for  output
     character(len=80) :: out_filename
    
-    ! Open fortran ascii file for results output 
-    out_filename = 'ray_results_'//trim(run_label)
+    ! Open fortran ascii file for results output
+    results_star_unit = 59 
+    out_filename = 'run_results.'//trim(run_label)
     open(unit=results_star_unit, file=trim(out_filename), &
        & action='write', status='replace', form='formatted')     
 
@@ -96,8 +110,6 @@ contains
     write (results_star_unit,*) RAYS_run_label
     write (results_star_unit,*) 'date_vector'
     write (results_star_unit,*) date_vector
-    write (results_star_unit,*) 'ray_trace_time'
-    write (results_star_unit,*) ray_trace_time
     write (results_star_unit,*) 'number_of_rays'
     write (results_star_unit,*) number_of_rays
     write (results_star_unit,*) 'max_number_of_steps'
@@ -106,10 +118,14 @@ contains
     write (results_star_unit,*) dim_v_vector
     write (results_star_unit,*) 'npoints'
     write (results_star_unit,*) npoints
+    write (results_star_unit,*) 'ray_trace_time'
+    write (results_star_unit,*) ray_trace_time
     write (results_star_unit,*) 'end_ray_parameter'
     write (results_star_unit,*) end_ray_parameter
     write (results_star_unit,*) 'end_residuals'
     write (results_star_unit,*) end_residuals
+    write (results_star_unit,*) 'max_residuals'
+    write (results_star_unit,*) max_residuals
     write (results_star_unit,*) 'ray_stop_flag'
     write (results_star_unit,*) ray_stop_flag
     write (results_star_unit,*) 'end_ray_vec'
@@ -125,16 +141,17 @@ contains
     
 !********************************************************************
 
-    subroutine finalize_ray_results_m
+    subroutine deallocate_ray_results_m
         deallocate (ray_vec)
         deallocate (residual)
         deallocate (npoints)
         deallocate (end_ray_parameter)
         deallocate (end_residuals)
+        deallocate (max_residuals)
         deallocate (end_ray_vec)
         deallocate (ray_stop_flag)
         
         return
-    end subroutine finalize_ray_results_m
+    end subroutine deallocate_ray_results_m
      
  end module ray_results_m

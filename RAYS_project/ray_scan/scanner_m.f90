@@ -1,5 +1,14 @@
 module scanner_m
 
+! Modifies data in modules to implement a scan of ray runs with varying input data.
+! scan_parameter selects which parameter is to be varied.  Presently only supported are:
+!   ode_m -> 'ds'
+! scan_algorithm selects the algorithm by which the parameter is varied.  Presently only
+! supported are: 'fixed_increment'
+!
+! N.B.  For now we only aggregate data for ray # 1.  A parameter scan varying only
+! simulation parameters might reasonably only consist of one ray per run.
+
 
     use constants_m, only : rkind
     
@@ -7,20 +16,29 @@ module scanner_m
 
     character(len=60) :: scan_parameter
     character(len=60) :: scan_algorithm
-    character(len=60) :: file_name_stem
-    integer :: n_iterations
+    character(len=60) :: scan_id
+    integer :: n_runs
     real(KIND=rkind), allocatable :: p_values(:)
     character(len=60), allocatable :: file_name_suffix(:)
-    character(len=60) :: suffix_selector
-    
-    
+    integer :: scan_date_v(8)
+     
+   
 ! data for fixed increment scan algorithm
     real(KIND=rkind) :: p_start, p_incr
 
+! Scan summary data
+    real(KIND=rkind), allocatable :: end_resid_run(:) 
+    real(KIND=rkind), allocatable :: max_resid_run(:) 
+    real(KIND=rkind), allocatable :: end_ray_param_run(:)
+    real(KIND=rkind), allocatable :: end_ray_vec_run(:,:)
+    real(KIND=rkind), allocatable :: trace_time_run(:)
+    character(len=60), allocatable :: ray_stop_flag_run(:)
+
+    real(KIND=rkind) :: scan_trace_time
 
  namelist /scanner_list/ &
-     & scan_parameter, scan_algorithm, n_iterations, file_name_stem, &
-     & suffix_selector
+     & scan_parameter, scan_algorithm, n_runs, scan_id, &
+     & p_start, p_incr
      
 !********************************************************************
 
@@ -31,273 +49,180 @@ contains
   subroutine initialize_scanner_m(read_input)
 
     use constants_m, only : input_unit
-    use diagnostics_m, only : message_unit, verbosity
-    
+    use diagnostics_m, only : message_unit, verbosity, run_label
+	use ode_m, only : nv ! dimension of ray vector
+   
     implicit none
     logical, intent(in) :: read_input
+    integer :: i_run
+    character (len=4) :: chr_iter_number
 
-    allocate( p_values(n_iterations) )
-    allocate( file_name_suffix(n_iterations) )
+        
+    write(*,*) 'initialize_scanner_m'
 
     if (read_input .eqv. .true.) then    
         open(unit=input_unit, file='rays.in',action='read', status='old', form='formatted')
         read(input_unit, scanner_list)
         close(unit=input_unit)
         write(message_unit, scanner_list)
-    end if
 
+		allocate( p_values(n_runs) )
+		allocate( file_name_suffix(n_runs) )
+
+		allocate (end_ray_param_run(n_runs))
+		allocate (end_resid_run(n_runs))
+		allocate (max_resid_run(n_runs))
+		allocate (end_ray_vec_run(nv, n_runs))
+		allocate (ray_stop_flag_run(n_runs))
+
+    end if
+    write(*,*) 'n_runs = ', n_runs
+
+        p_values = 0.
+        file_name_suffix = ''
+
+        end_ray_param_run = 0.
+        end_resid_run = 0.
+        max_resid_run = 0.
+        end_ray_vec_run = 0.
+        ray_stop_flag_run = ''        
+        scan_trace_time = 0.
+        
 !   Calculate parameter values and 
     algorithm: select case (trim(scan_algorithm))
 
        case ('fixed_increment')
 
-			iteration_loop: do i_iter = 1, n_iterations	
-				p_values(i_iter) = p_start +  i_iter * p_incr
+		do i_run = 1, n_runs	
+		   p_values(i_run) = p_start +  i_run * p_incr
+		   write (chr_iter_number, '(I4)') i_run
+    write(*,*) 'chr_iter_number = ', adjustl(trim(chr_iter_number))
+		   file_name_suffix(i_run) = 'run_'//adjustl(trim(chr_iter_number))
+		end do
 
-				selector: select case (trim(suffix_selector))
-
-				   case ('p_value')
-						file_name_suffix(i_iter) = 
-
-	
-						end do iteration_loop
-
-				   case default
-					  write(0,*) 'initialize_scanner_m: unknown scan algorithm = ', scan_algorithm
-					  stop 1
-	
-				end select selector
-
-	
-			end do iteration_loop
-
-       case default
-          write(0,*) 'initialize_scanner_m: unknown scan algorithm = ', scan_algorithm
-          stop 1
+	   case default
+		  write(0,*) 'initialize_scanner_m: unknown scan algorithm = ', scan_algorithm
+		  stop 1
     
     end select algorithm
 
-    
+  write(*,*) 'p_values = ', p_values
+  write(*,*) ' '
+  write(*,*) 'file_name_suffix = ', file_name_suffix
+
     return
   end subroutine initialize_scanner_m
 
 !********************************************************************
 
- subroutine scanner(rvec, bvec, gradbtensor, ns, gradns, ts, gradts, equib_err)
-!   A simple slab plasma equilibrium with B(x) = By(x)*ey + Bz(x)*ez, 
-!   where ey and ez are unit vectors along y and z.
-!   Note that bvec = B and gradbtensor(i,j) = d[B(j)]/d[x(i)].
-!
-!   For now Bx is constrained to be 0.  Non-zero B component in the direction of
-!   stratification (i.e, x) complicates initialization solution of the dispersion
-!   relation.  Several models are given for By(x), Bz(x).
-!
-!   Checks for some error conditions and sets equib_err for outside handling.  Does not
-!   stop.
+ subroutine update_scan_parameter(i_run)
 
-    use species_m, only : nspec, n0s, t0s
-    use diagnostics_m, only : message_unit, message
+    use diagnostics_m, only : message_unit, verbosity, run_label
+    use ode_m, only : ds
     
     implicit none
-
-    real(KIND=rkind), intent(in) :: rvec(3) 
-    real(KIND=rkind), intent(out) :: bvec(3), gradbtensor(3,3)
-    real(KIND=rkind), intent(out) :: ns(0:nspec), gradns(3,0:nspec)
-    real(KIND=rkind), intent(out) :: ts(0:nspec), gradts(3,0:nspec)
-    character(len=20), intent(out) :: equib_err
-
-    real(KIND=rkind) :: x, y, z
-    integer :: is
-
-    equib_err = ''
-    x = rvec(1)
-    y = rvec(2)
-    z = rvec(3)
-    gradbtensor = 0.
-
-! Check that we are in the box
-    if (x < xmin .or. x > xmax) equib_err = 'x out_of_bounds'
-    if (y < ymin .or. y > ymax) equib_err = 'y out_of_bounds'
-    if (z < zmin .or. z > zmax) equib_err = 'z out_of_bounds'
     
-    if (equib_err /= '') then
-        write (message_unit, *) 'scanner:  equib_err ', equib_err
-        return
-    end if
+    integer, intent(in) :: i_run
 
-!   Calculate Bx, and d(Bx)/dx.
-    bx: select case (trim(bx_prof_model))
+    param: select case (trim(scan_parameter))
 
-       case ('zero')
-          bvec(1) = 0.
+       case ('ds')
+       	ds = p_values(i_run)
+       	run_label = trim(file_name_suffix(i_run))
 
-       case default
-          write(0,*) 'SLAB: invalid bx_prof_model = ', bx_prof_model
-          stop 1
-
-    end select bx
-
-!   Calculate By, and d(By)/dx.
-    by: select case (trim(by_prof_model))
-
-       case ('constant')
-          bvec(2) = by0
-
-       case ('toroid')
-!         Same as Tokamak like magnetic field Bz. For diagnostics.
-          bvec(2) = by0 / (1.+x/rmaj)
-          gradbtensor(1,2) = -bvec(2) / (rmaj+x)
-
-       case ('linear_shear')
-!         Sheared By(x), By(0) = 0
-          bvec(2) = by0 * x/LBy_shear_scale
-          gradbtensor(1,2) = by0 / LBy_shear_scale
-
-       case default
-          write(0,*) 'SLAB: invalid by_prof_model = ', by_prof_model
-          stop 1
-
-    end select by
-
-!   Calculate Bz, and d(Bz)/dx, d(Bz)/dy, d(Bz)/dz.
-    bz: select case (trim(bz_prof_model))
-
-       case ('constant')
-          bvec(3) = bz0
-
-       case ('toroid')
-!         Tokamak like toroidal  field.
-          bvec(3) = bz0 / (1.+x/rmaj)
-          gradbtensor(1,3) = -bvec(3) / (rmaj+x)
-
-       case ('linear')
-!         Linear with scale length rmin
-          bvec(3) = bz0 * (1.+x/LBz_scale)
-          gradbtensor(1,3) = bz0/LBz_scale
-
-       case default
-          write(0,*) 'SLAB: invalid bz_prof_model = ', bz_prof_model
-          stop 1
-
-    end select bz
-
-!   Density profile.
+	   case default
+		  write(0,*) 'initialize_scanner_m: unknown scan parameter = ', scan_parameter
+		  stop 1
     
-    density: select case (trim(dens_prof_model))
+    end select param
 
-        case ('constant')
-          ns(:nspec) = n0s(:nspec)
-          gradns = 0.
+ end subroutine update_scan_parameter
 
-        case ('linear')
-!       Linear with scale length rmin (i.e. ns = n0s at x = 0, ns = 0 at x = -rmin)
-            ns = n0s(:nspec)*(1.0 + x/Ln_scale)
-            gradns = 0.
-            gradns(1,0:nspec) = n0s(0:nspec) * (1.0/Ln_scale)
+!********************************************************************
 
-        case ('parabolic')
-!       Parabolic around x = rmin
-            ns(:nspec) = n0s(:nspec) * (1.-(x/rmin-1)**alphan2)**alphan1
-            gradns = 0.
-            gradns(1,:) = -n0s(:nspec)/rmin*alphan1*alphan2*(x/rmin-1)**(alphan2-1)* &
-                         & (1-(1-(x/rmin-1)**alphan2)**(alphan1-1))
-            gradns(2:3,:) = 0. 
+ subroutine aggregate_run_data(i_run)
 
-        case ('Gaussian')
-!         Gaussian (default: alphan1=1.).
-            ns(:nspec) = n0s(:nspec) * exp(-3.*alphan1*(x/rmin)**2)
-            gradns = 0.
-            gradns(1,:nspec) = ns * (-6.*alphan1*x/rmin**2)
-
-        case default
-            write(0,*) 'SLAB: invalid dens_prof_model =', dens_prof_model
-            stop 1
-
-    end select density
-
-!   Temperature profile.
-    
-    do is = 0, nspec
-       temperature: select case (t_prof_model(is))
-
-       case ('zero')
-          ts(is) = 0.
-          gradts(:,is) = 0.
-
-       case ('constant')
-          ts(is) = t0s(is)
-          gradts(:,is) = 0.
-
-        case ('linear')
-!       Linear with scale length rmin
-            ts(is)=t0s(is)*(1.+x/LT_scale)
-            gradts(1,is) = t0s(is) * (1./LT_scale)
-
-       case ('parabolic')
-!         Parabolic around x = rmin
-          ts(is) = t0s(is) * (1.-(x/rmin-1)**alphat2(is))**alphat1(is)
-          gradts(1,is) = -t0s(is)/rmin*(alphat1(is)*alphat2(is)*(x/rmin-1)**(alphat2(is)-1)* &
-                         & (1-(x/rmin-1)**alphat2(is))**(alphat1(is)-1))
-          gradts(2:3,is) = 0.
-
-       case default
-          write(0,*) 'SLAB: invalid t_prof_model = ', t_prof_model(:nspec)
-          stop 1
-
-       end select temperature
-    end do
-
-! Do some checking for invalid values
-
-    if (minval(ns) < 0.) equib_err = 'negative_dens'
-    if (minval(ts) < 0.) equib_err = 'negative_temp'
-
-    return
- end subroutine scanner
+    use diagnostics_m, only : message_unit, verbosity, run_label
+    use ray_results_m, only : end_residuals, max_residuals, end_ray_parameter, end_ray_vec,&
+                            & ray_trace_time, ray_stop_flag
 
 
- subroutine write_slab_profiles
-    use species_m, only : nspec
-    use diagnostics_m, only : message_unit
 
     implicit none
     
-    real(KIND=rkind) :: dx, x
-    real(KIND=rkind) :: rvec(3) 
-    real(KIND=rkind) :: bvec(3), gradbtensor(3,3)
-    real(KIND=rkind) :: ns(0:nspec), gradns(3,0:nspec)
-    real(KIND=rkind) :: ts(0:nspec), gradts(3,0:nspec)
-    character(len=60) :: equib_err
+    integer, intent(in) :: i_run
+ 
+	end_ray_param_run(i_run) = end_ray_parameter(1)
+	end_resid_run(i_run) = end_residuals(1)
+	max_resid_run(i_run) = max_residuals(1)
+	end_ray_vec_run(:, i_run) = end_ray_vec(:, 1)
+	ray_stop_flag_run(i_run) = ray_stop_flag(1)     
+   
+    scan_trace_time = scan_trace_time + ray_trace_time
+    
+ end subroutine aggregate_run_data
 
-    integer, parameter :: nx_points = 51
-    integer :: ip, i
-    
-    character (len = *), parameter :: b9 = '         '
-    character (len = *), parameter :: b10 = '          '
-    character (len = *), parameter :: b12 = '            '
-    
-    dx = 2.*rmin/(nx_points-1)
-    
-    write (message_unit,*) '    x', b9,'ne', b12, 'bx', b9, 'by', b9, 'bz', b9, 'Te',b9, 'Ti(s)'
+!********************************************************************
 
-    do ip = 1, nx_points
-        x = -rmin + (ip-1)*dx
-        rvec( : ) = (/ x, real(0.,KIND=rkind), real(0.,KIND=rkind) /)
-        call scanner(rvec, bvec, gradbtensor, ns, gradns, ts, gradts, equib_err)
-        write (message_unit,'(f11.5, a, e12.5, 3f11.5, 7f11.5)') &
-               & x,'  ', ns(0), bvec, (ts(i), i=0, nspec)
-    end do
+    subroutine write_scan_summary
+
+    use diagnostics_m, only : message_unit, run_label   
+ 	use ode_m, only : nv ! dimension of ray vector
+    use ray_results_m, only : end_residuals, max_residuals, end_ray_parameter, end_ray_vec,&
+                            & ray_trace_time
         
- end subroutine write_slab_profiles
+    implicit none
+    
+    integer :: scan_star_unit
+    
+ !  File name for  output
+    character(len=80) :: out_filename
+   
+    ! Open fortran ascii file for results output
+    scan_star_unit = 59 
+    out_filename = 'scan_summary.'//trim(scan_id)
+    open(unit=scan_star_unit, file=trim(out_filename), &
+       & action='write', status='replace', form='formatted')     
+
+    write (scan_star_unit,*) 'scan_id'
+    write (scan_star_unit,*) scan_id
+    write (scan_star_unit,*) 'scan_date_v'
+    write (scan_star_unit,*) scan_date_v
+    write (scan_star_unit,*) 'dim_v_vector'
+    write (scan_star_unit,*) nv
+    write (scan_star_unit,*) 'scan_trace_time'
+    write (scan_star_unit,*) scan_trace_time
+    write (scan_star_unit,*) 'end_ray_param_run'
+    write (scan_star_unit,*) end_ray_param_run
+    write (scan_star_unit,*) 'end_resid_run'
+    write (scan_star_unit,*) end_resid_run
+    write (scan_star_unit,*) 'max_resid_run'
+    write (scan_star_unit,*) max_resid_run
+    write (scan_star_unit,*) 'ray_stop_flag_run'
+    write (scan_star_unit,*) ray_stop_flag_run
+    write (scan_star_unit,*) 'end_ray_vec_run'
+    write (scan_star_unit,*) end_ray_vec_run
+
+    close(unit=scan_star_unit)
+
+    end subroutine write_scan_summary
+
+!********************************************************************
+
     
 !********************************************************************
 
-    subroutine finalize_scanner_m
+    subroutine deallocate_scanner_m
 		if (allocated(p_values)) then
 			deallocate( p_values )
 			deallocate( file_name_suffix )
+			deallocate (end_ray_param_run)
+			deallocate (end_resid_run)
+			deallocate (max_resid_run)
+			deallocate (end_ray_vec_run)
+			deallocate (ray_stop_flag_run)
 		end if
 		return
-    end subroutine finalize_scanner_m
+    end subroutine deallocate_scanner_m
 
 end module scanner_m
