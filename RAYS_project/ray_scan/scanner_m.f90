@@ -6,7 +6,10 @@ module scanner_m
 ! scan_algorithm selects the algorithm by which the parameter is varied.  Presently only
 ! supported are: 'fixed_increment'
 !
-! N.B.  For now we only aggregate data for ray # 1.  A parameter scan varying only
+! Reads standard rays.in namelist file with added /scanner_list/.  Serves as template for
+! all data that is not varied during scan.
+!
+! N.B.  For now we only aggregate data for ray # 1 per run.  A parameter scan varying only
 ! simulation parameters might reasonably only consist of one ray per run.
 
 
@@ -27,18 +30,17 @@ module scanner_m
     real(KIND=rkind) :: p_start, p_incr
 
 ! Scan summary data
+    real(KIND=rkind), allocatable :: trace_time_run(:)
+    real(KIND=rkind), allocatable :: end_ray_param_run(:)
     real(KIND=rkind), allocatable :: end_resid_run(:) 
     real(KIND=rkind), allocatable :: max_resid_run(:) 
-    real(KIND=rkind), allocatable :: end_ray_param_run(:)
     real(KIND=rkind), allocatable :: end_ray_vec_run(:,:)
-    real(KIND=rkind), allocatable :: trace_time_run(:)
     character(len=60), allocatable :: ray_stop_flag_run(:)
 
     real(KIND=rkind) :: scan_trace_time
 
  namelist /scanner_list/ &
-     & scan_parameter, scan_algorithm, n_runs, scan_id, &
-     & p_start, p_incr
+     & scan_id, scan_parameter, scan_algorithm, n_runs, p_start, p_incr
      
 !********************************************************************
 
@@ -69,6 +71,7 @@ contains
 		allocate( p_values(n_runs) )
 		allocate( file_name_suffix(n_runs) )
 
+		allocate (trace_time_run(n_runs))
 		allocate (end_ray_param_run(n_runs))
 		allocate (end_resid_run(n_runs))
 		allocate (max_resid_run(n_runs))
@@ -81,6 +84,7 @@ contains
         p_values = 0.
         file_name_suffix = ''
 
+        trace_time_run = 0.
         end_ray_param_run = 0.
         end_resid_run = 0.
         max_resid_run = 0.
@@ -141,24 +145,26 @@ contains
 !********************************************************************
 
  subroutine aggregate_run_data(i_run)
+! N.B.  For now we only aggregate data for ray # 1 per run.  See above.
 
     use diagnostics_m, only : message_unit, verbosity, run_label
     use ray_results_m, only : end_residuals, max_residuals, end_ray_parameter, end_ray_vec,&
-                            & ray_trace_time, ray_stop_flag
+                            & run_trace_time, ray_trace_time, ray_stop_flag
 
 
 
     implicit none
     
     integer, intent(in) :: i_run
- 
+
+    trace_time_run(i_run) = ray_trace_time(1)
 	end_ray_param_run(i_run) = end_ray_parameter(1)
 	end_resid_run(i_run) = end_residuals(1)
 	max_resid_run(i_run) = max_residuals(1)
 	end_ray_vec_run(:, i_run) = end_ray_vec(:, 1)
 	ray_stop_flag_run(i_run) = ray_stop_flag(1)     
    
-    scan_trace_time = scan_trace_time + ray_trace_time
+    scan_trace_time = scan_trace_time + run_trace_time
     
  end subroutine aggregate_run_data
 
@@ -186,12 +192,17 @@ contains
 
     write (scan_star_unit,*) 'scan_id'
     write (scan_star_unit,*) scan_id
+    write (scan_star_unit,*) 'scan_parameter'
+    write (scan_star_unit,*) scan_parameter
     write (scan_star_unit,*) 'scan_date_v'
     write (scan_star_unit,*) scan_date_v
+    write (scan_star_unit,*) 'p_values'
+    write (scan_star_unit,*) p_values
     write (scan_star_unit,*) 'dim_v_vector'
     write (scan_star_unit,*) nv
-    write (scan_star_unit,*) 'scan_trace_time'
-    write (scan_star_unit,*) scan_trace_time
+
+    write (scan_star_unit,*) 'trace_time_run'
+    write (scan_star_unit,*) trace_time_run
     write (scan_star_unit,*) 'end_ray_param_run'
     write (scan_star_unit,*) end_ray_param_run
     write (scan_star_unit,*) 'end_resid_run'
@@ -216,6 +227,7 @@ contains
 		if (allocated(p_values)) then
 			deallocate( p_values )
 			deallocate( file_name_suffix )
+			deallocate (trace_time_run)
 			deallocate (end_ray_param_run)
 			deallocate (end_resid_run)
 			deallocate (max_resid_run)

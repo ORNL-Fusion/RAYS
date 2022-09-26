@@ -7,7 +7,7 @@
            & t_start_rays, t_finish_rays, t_start_tracing, t_finish_tracing
     use constants_m, only : rkind
     use ray_results_m, only : write_results_list_directed,&
-                            & write_results_LD, ray_trace_time
+                            & write_results_LD, run_trace_time
 
     implicit none
     
@@ -17,14 +17,14 @@
 !     close(95)
 
     call cpu_time(t_finish_rays)
-    ray_trace_time = t_finish_tracing - t_start_tracing 
+    run_trace_time = t_finish_tracing - t_start_tracing 
     code_time = t_finish_rays - t_start_rays
-    call message('CPU time ray tracing', ray_trace_time)
+    call message('CPU time ray tracing', run_trace_time)
     call message('CPU time RAYS code', code_time)
 
 
     write(*,*) ' '
-    write(*,*) 'CPU time ray tracing = ', ray_trace_time
+    write(*,*) 'CPU time ray tracing = ', run_trace_time
     write(*,*) 'CPU time RAYS code', code_time
     write(*,*) ' '
     

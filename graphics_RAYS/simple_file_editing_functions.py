@@ -35,6 +35,7 @@ def put_lines(filename, lines):
 #---------------------------------------------------------------------------------------
 
 def lines_to_variable_dict(lines):
+# Parses lines of the form "variable_name = variable value" into dictionary {name:value}
     variable_dict = {}
     for line in lines:
         if (line.strip() not in ['!', '#']) and (len(line) > 0):  # ignore comments
@@ -44,6 +45,34 @@ def lines_to_variable_dict(lines):
                 val = val.strip()
                 variable_dict[name] = val
     return variable_dict
+
+def lines_to_list(lines):
+# Collects lines into list, one line per list entry
+    line_list = []
+    for line in lines:
+# Get rid of newline if there is one
+        if line[-1] == '\n':
+            line = line[:-1]
+        line_list.append(line)
+    return line_list
+
+def list_variables_in_fortran_star_file(lines):
+# Assumes lines come in pairs: First a line with variable name, second a line with variable 
+# value.
+
+    variable_list = []
+    npairs = int(len(lines)/2)
+    
+    # Check if an even number of lines
+    if (2*npairs != len(lines)):
+    	err_mess = 'list_variables_in_fortran_star_file: odd number of lines = ' + str(len(lines))
+    	print(err_mess)
+    	raise Exception(err_mess)
+    	
+    for i in range(npairs):
+        name = lines[2*i].strip()
+        variable_list.append(name)
+    return variable_list
 
 def variable_dict_to_lines(variable_dict):
     lines = []
@@ -214,18 +243,71 @@ def read_var_from_nml_lines(lines, var, separator = ','):
     print('value = ', value)
     return value
 
+#---------------------------------------------------------------------------------------
+# Read a variable from a file of simple format. 
+# For example a fortran file written with list directed format (unit,*)
+# The file must be a sequence of pairs of lines: one line with variable name, followed
+# by one line with variable values.  Returns a value of var_type which must be
+# in ['string', 'int', 'float'].  If there is only one value it returns a scalar,
+# otherwise it returns a list.
+#---------------------------------------------------------------------------------------
+
+def read_var_from_fortran_star_file(lines, var, var_type, separator = ''):
+
+    if var_type.strip() not in ['string', 'int', 'float']:
+        message = 'unrecognized variable type ',type, ' for ', var.strip()
+        print(message)
+        raise Exception(message)
+    
+    # Find the line containing 'var' also 'var = ' is allowed
+    var_line_number = -1
+    for i in range(len(lines)):
+        line = lines[i]
+        if line.strip() == var.strip() or line.strip() == var.strip() + '='\
+                           or line.strip() == var.strip() + ' =':
+            var_line_number = i
+            if separator == '' :
+                value = lines[i+1].split()
+            else:
+                value = lines[i+1].split(separator)
+
+    if var_line_number == -1:
+        message = 'read_var_from_fortran_star_file: Could not find variable ',\
+                   var, ' in file'
+        print(message)
+        raise Exception(message)
+    
+#    if var_type == 'string' do nothing
+
+    if var_type == 'int' :
+        for i in range(len(value)) :
+            value[i] = int(value[i])
+
+    if var_type == 'float' :
+        for i in range(len(value)) :
+            value[i] = float(value[i])          
+      
+    
+    if len(value) == 1: return value[0]
+    else: return value
+
+
 #_________________________________________________________________________________________________
 
 if __name__ == '__main__':
 
-    VD = {'x': 1.0, 'y': 2.000001}
-    lines = variable_dict_to_lines(VD)
-    print('lines = ', lines)
+	lines = get_lines('line_pairs.txt')
+	VL = list_variables_in_fortran_star_file(lines)
+	print(VL)
 
-    variable_dict = lines_to_variable_dict(lines)
-    print('variable_dict = ', variable_dict)
-    
-    variable_dict_to_output_file(VD, 'out_file')
+#     VD = {'x': 1.0, 'y': 2.000001}
+#     lines = variable_dict_to_lines(VD)
+#     print('lines = ', lines)
+# 
+#     variable_dict = lines_to_variable_dict(lines)
+#     print('variable_dict = ', variable_dict)
+#     
+#     variable_dict_to_output_file(VD, 'out_file')
     
 #     read_var_from_nml_lines(lines, 'x', separator = ',')
 #     

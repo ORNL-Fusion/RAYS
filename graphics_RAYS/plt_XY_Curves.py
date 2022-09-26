@@ -83,8 +83,7 @@ def scale_curve_list(curve_list):
     if fig_xmax >= sci_threshold:
         xscale = int(math.log10(fig_xmax))
     if fig_xmax <= 1.0/sci_threshold and fig_xmax > 0.:
-        print('fig_xmax = ', fig_xmax)
-        xscale = int(math.log10(fig_xmax))
+        xscale = int(math.log10(fig_xmax)-1.)
     if xscale != 1:
         scale = pow(10.0, xscale)
         for curve in curve_list:
@@ -93,7 +92,7 @@ def scale_curve_list(curve_list):
     if fig_ymax >= sci_threshold:
         yscale = int(math.log10(fig_ymax))
     if fig_ymax <= 1.0/sci_threshold and fig_ymax > 0.:
-        yscale = int(math.log10(fig_ymax))
+        yscale = int(math.log10(fig_ymax)-1.)
     if yscale != 1:
         scale = pow(10.0, yscale)
         for curve in curve_list:
@@ -255,7 +254,7 @@ class XY_Curves_Fig:
         
         scaleX, scaleY = scale_curve_list(self.curve_list)
         if scaleX != 1:
-            power_string = '  ' + r'$' + r'\times' + '10^{' + str(scaleX) + r'})$'
+            power_string = '  (' + r'$' + r'\times' + '10^{' + str(scaleX) + r'})$'
             self.xlabel = xlabel + power_string
         if scaleY != 1:
             power_string = '  (' + r'$' + r'\times' + '10^{' + str(scaleY) + r'})$'

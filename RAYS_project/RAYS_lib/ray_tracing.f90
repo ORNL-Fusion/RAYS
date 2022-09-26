@@ -12,12 +12,13 @@
     use damping_m, only : damping_model, multi_spec_damping
     use species_m, only : nspec
     use ray_results_m, only : ray_stop_flag, ray_vec, residual, npoints, end_residuals,&
-                            & max_residuals, end_ray_parameter, end_ray_vec, ray_trace_time
+                            & max_residuals, end_ray_parameter, end_ray_vec, ray_trace_time, &
+                            & run_trace_time
 
     implicit none
 
     integer :: iray, nstep
-    real(KIND=rkind) :: s, sout, resid
+    real(KIND=rkind) :: s, sout, resid, t_start_ray, t_finish_ray
  
 !   v: Vector to be integrated by ode solver
     real(KIND=rkind) :: v(nv)
@@ -40,6 +41,8 @@
          write (*,'(/,a,i4)') 'ray #', iray
          call message()
          call message ('trace_rays: ray #', iray, 0)
+
+         call cpu_time(t_start_ray)
 
          nstep=0
          s = 0. 
@@ -78,10 +81,9 @@
        
             s = sout
             sout = sout + ds
-            nstep=nstep+1
 
             call message()
-            call message ('trace_rays: start step', nstep, 1)
+            call message ('trace_rays: start step', nstep + 1, 1)
             call message ('trace_rays: s', s, 1)
             call message ('trace_rays: sout', sout, 1)
           
@@ -105,9 +107,9 @@
             end if
             
 ! check limits on nstep
-            if(nstep > nstep_max) then
-                call message ('trace_rays: terminate ray, nstep > nstep_max, nstep', nstep, 0)
-                write (*, *) 'trace_rays: terminate ray, nstep > nstep_max, nstep = ',nstep
+            if(nstep + 1 > nstep_max) then
+                call message ('trace_rays: terminate ray, nstep+1 > nstep_max, nstep', nstep, 0)
+                write (*, *) 'trace_rays: terminate ray, nstep+1 > nstep_max, nstep = ',nstep
                 ray_stop%ode_stop_flag =  ' nstep > nstep_max'
                 
                 nstep = nstep_max ! Last valid step was nstep_max
@@ -131,14 +133,13 @@
 ! check for stop condition inside ode solver. Step failed.
             if (ray_stop%stop_ode .eqv. .true.) then 
                 ray_stop_flag(iray) = ray_stop%ode_stop_flag
-                write(message_unit, *) 'ray ', iray, ' stopped in ODE solver. ', &
-                    & ray_stop%ode_stop_flag
-                write(*, *) 'ray ', iray, ' stopped in ODE solver. ', &
-                    & ray_stop%ode_stop_flag
-                
-                write (*, '( "ray ",i3, " stopped, last valid step   s=", g12.4, "   nstep=", i4, /, &
-                &  "  (x,y,z)=", 3(f10.4),/,  "  (kx,ky,kz)=", 3(f10.4) )') iray, s, nstep, &
-                & v(1:3), v(4:6)
+                write(message_unit, *) 'ray ', iray, ' stopped in ODE solver on step #',&
+                  & nstep+1, ',  s = ', s, ', ode_stop_flag =  ', trim(ray_stop%ode_stop_flag)
+                  
+                write(*, *) 'ray ', iray, ' stopped in ODE solver on step #',&
+                  & nstep+1, ',  s = ', s, ', stop_flag =  ', trim(ray_stop%ode_stop_flag)
+                                 
+                write (*, '(  "  (x,y,z)=", 3(f10.4),/,  "  (kx,ky,kz)=", 3(f10.4) )') v(1:3), v(4:6)
                 
                 write (message_unit, '( "ray ",i3, " stopped, last valid step   s=", g12.4, "   nstep=", i4, /, &
                 &  "  (x,y,z)=", 3(f10.4),/,  "  (kx,ky,kz)=", 3(f10.4) )') iray, s, nstep, &
@@ -162,35 +163,47 @@
             call check_save(s, nv, v, resid, ray_stop)
 
             if (ray_stop%stop_ode .eqv. .true.) then
-                write(message_unit, *) 'ray ', iray, ' stopped, last valid step  ', ray_stop%ode_stop_flag
-                write(*, *) 'ray ', iray, ' stopped, last valid step  ', ray_stop%ode_stop_flag,&
-                  & '  residual  ', resid
+                write(message_unit, *) 'ray ', iray, ' stopped in check_save  ', &
+                                    & ray_stop%ode_stop_flag, '  residual =', resid
+                                    
+                 write (message_unit, '( " s=", g12.4, "   nstep=", i4, /, &
+                &  "  (x,y,z)=", 3(f10.4),/,  "  (kx,ky,kz)=", 3(f10.4) )') s, nstep, &
+                & v(1:3), v(4:6)
+
+               write(*, *) 'ray ', iray, ' stopped in check_save  ', &
+                                    & ray_stop%ode_stop_flag, '  residual =', resid
                 
                 write (*, '( " s=", g12.4, "   nstep=", i4, /, &
                 &  "  (x,y,z)=", 3(f10.4),/,  "  (kx,ky,kz)=", 3(f10.4) )') s, nstep, &
                 & v(1:3), v(4:6)
                 
-                write (message_unit, '( " s=", g12.4, "   nstep=", i4, /, &
-                &  "  (x,y,z)=", 3(f10.4),/,  "  (kx,ky,kz)=", 3(f10.4) )') s, nstep, &
-                & v(1:3), v(4:6)
                 exit trajectory
             end if
 
+! increment nstep here it that was a valid step
+            nstep=nstep+1
+
 ! Save in ray_results_m
+! Tricky point: The number of points in the ray = point 0 + number of valid steps.   
+! So  actual npoints = nstep + 1
             ray_vec(:,nstep+1,iray) = v(:)
-            residual(nstep,iray) = resid
+            residual(nstep+1,iray) = resid
             
         end do trajectory
+
+	    call cpu_time(t_finish_ray)
         
 ! Save in ray_results_m
 
 ! Tricky point: The number of points in the ray = point 0 + number of valid steps.   
 ! nstep is incremented at the top of the loop, but "exit trajectory" above means last 
 ! step failed, and so is 1 too big, so actual npoints = nstep, not nstep + 1
+
         npoints(iray) = nstep
+	    ray_trace_time(iray) = t_finish_ray - t_start_ray
         end_residuals(iray) = residual(nstep,iray)
         max_residuals(iray) = maxval(abs(residual(1:nstep,iray)))
-        end_ray_parameter(iray) = s
+        end_ray_parameter(iray) = v(7)
         ray_stop_flag(iray) = ray_stop%ode_stop_flag
         end_ray_vec(:, iray) = v(:)
 
@@ -213,7 +226,7 @@
 !      write (95) ray_stop
 
 	call cpu_time(t_finish_tracing)
-	ray_trace_time = t_finish_tracing - t_start_tracing
+	run_trace_time = t_finish_tracing - t_start_tracing
 
     return
  end subroutine trace_rays
