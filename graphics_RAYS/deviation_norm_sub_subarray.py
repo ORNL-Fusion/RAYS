@@ -4,7 +4,7 @@ import math
 # Parse in_list into segments of length len(ref_list).  Subtract rev_list
 # from segments and calculate 2-norm. Use numpy arrrays
 
-#Split list into sublists of length len_sub_list
+# Convert list to numpy array.  Split list into sublists of length len_sub_list
 def split_flat_list(in_list, len_sub_list):
 
 # check that len(in_list) is a multiple of len_sub_list
@@ -15,8 +15,7 @@ def split_flat_list(in_list, len_sub_list):
 
     d1 = int(len(in_list)/len_sub_list)
     x = np.array(in_list)
-    x2 = x.reshape(d1, len_sub_list)
-    return x2
+    return x.reshape(d1, len_sub_list)
 
 #_________________________________________________________________________________________________
 # Takes a flat list of numbers consisting of a concatenation of vectors each of length 
@@ -25,7 +24,7 @@ def split_flat_list(in_list, len_sub_list):
 # same length as the slice.  Calculates the 2-norm of the difference array.  Returns a
 # numpy array containing the difference 2-norm for each vector in in_list
 # 
-def deviation_2d_array(in_list, len_sub_list, ref_list, offset, norm = 1.):
+def deviation_norm_sub_subarray(in_list, len_sub_list, ref_list, offset, norm = 1.):
     p_array = split_flat_list(in_list, len_sub_list)
     ref_array = np.array(ref_list)
     sub_list = []
@@ -48,5 +47,5 @@ if __name__ == '__main__':
     print(' ')
     ref_list = [1.,1.]
     offset = 2
-    dev = deviation_2d_array(in_list, len_sub_list, ref_list, offset, 2.)
+    dev = deviation_norm_sub_subarray(in_list, len_sub_list, ref_list, offset, 2.)
     print(dev)

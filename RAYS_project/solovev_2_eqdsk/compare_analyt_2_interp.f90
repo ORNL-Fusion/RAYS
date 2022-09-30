@@ -44,7 +44,7 @@ program compare_analyt_2_interp
 
 ! Test grid for comparison
   integer :: n_Rgrid, n_Zgrid
-  real(KIND=rkind), dimension (:), allocatable :: R_grid, Z_grid 
+  real(KIND=rkind), dimension (:), allocatable :: R_grid, Z_grid, rms_psi_err(:)
   real(KIND=rkind) :: dR, dZ    
 
   real(KIND=rkind) :: abserr, relerr
@@ -128,9 +128,10 @@ program compare_analyt_2_interp
  
  ! For now just have to Z values - zero and halfway up plasma
  n_Zgrid = 2
- allocate(Z_grid(n_Rgrid))
+ allocate(Z_grid(n_Rgrid), rms_psi_err(n_Rgrid))
  Z_grid(1) = 0.
  Z_grid(2) = upper_bound/2.
+ rms_psi_err = 0.
  
 ! Come back and allocate
  write (*,*) ' '
@@ -144,6 +145,7 @@ program compare_analyt_2_interp
          call eqdsk_magnetics_lin_interp_psi(rvec, eqd_psi, eqd_gradpsi, eqd_psiN, eqd_gradpsiN)
          call abserr_relerr(psi, eqd_psi, abserr, relerr)
          write(*,*) R_grid(i), psi, eqd_psi, abserr, relerr
+         rms_psi_err(i) = rms_psi_err(i) + (psi - eqd_psi)**2
      end do
      write (*,*) ' '
     write (*,*) '***************************************************************** '
@@ -172,7 +174,7 @@ program compare_analyt_2_interp
          rvec = (/ R_grid(i), 0._rkind, Z_grid(j) /)
          call solovev_magnetics_psi(rvec, psi, gradpsi, psiN, gradpsiN)
          call eqdsk_magnetics_lin_interp_psi(rvec, eqd_psi, eqd_gradpsi, eqd_psiN, eqd_gradpsiN)
-         call abserr_relerr(psi, eqd_psi, abserr, relerr)
+         call abserr_relerr(gradpsi(1), eqd_gradpsi(1), abserr, relerr)
          write(*,*) R_grid(i), gradpsi(1), eqd_gradpsi(1), abserr, relerr
      end do
      write (*,*) ' '
@@ -187,7 +189,7 @@ program compare_analyt_2_interp
          rvec = (/ R_grid(i), 0._rkind, Z_grid(j) /)
          call solovev_magnetics_psi(rvec, psi, gradpsi, psiN, gradpsiN)
          call eqdsk_magnetics_lin_interp_psi(rvec, eqd_psi, eqd_gradpsi, eqd_psiN, eqd_gradpsiN)
-         call abserr_relerr(psi, eqd_psi, abserr, relerr)
+         call abserr_relerr(gradpsi(2), eqd_gradpsi(2), abserr, relerr)
          write(*,*) R_grid(i), gradpsi(2), eqd_gradpsi(2), abserr, relerr
      end do
      write (*,*) ' '
@@ -202,12 +204,17 @@ program compare_analyt_2_interp
          rvec = (/ R_grid(i), 0._rkind, Z_grid(j) /)
          call solovev_magnetics_psi(rvec, psi, gradpsi, psiN, gradpsiN)
          call eqdsk_magnetics_lin_interp_psi(rvec, eqd_psi, eqd_gradpsi, eqd_psiN, eqd_gradpsiN)
-         call abserr_relerr(psi, eqd_psi, abserr, relerr)
+         call abserr_relerr(gradpsi(3), eqd_gradpsi(3), abserr, relerr)
          write(*,*) R_grid(i), gradpsi(3), eqd_gradpsi(3), abserr, relerr
      end do
      write (*,*) ' '
     write (*,*) '***************************************************************** '
     write (*,*) ' '
+ end do
+
+ do j = 1, n_Zgrid
+    rms_psi_err(j) = sqrt(rms_psi_err(j)/n_Rgrid)
+    write(*,*) 'Z = ', Z_grid(j), '    rms_psi_err = ', rms_psi_err(j)
  end do
  
  contains

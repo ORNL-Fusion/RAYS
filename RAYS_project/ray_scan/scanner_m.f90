@@ -4,7 +4,7 @@ module scanner_m
 ! scan_parameter selects which parameter is to be varied.  Presently only supported are:
 !   ode_m -> 'ds'
 ! scan_algorithm selects the algorithm by which the parameter is varied.  Presently only
-! supported are: 'fixed_increment'
+! supported are: 'fixed_increment', 'pwr_of_2'
 !
 ! Reads standard rays.in namelist file with added /scanner_list/.  Serves as template for
 ! all data that is not varied during scan.
@@ -28,19 +28,24 @@ module scanner_m
    
 ! data for fixed increment scan algorithm
     real(KIND=rkind) :: p_start, p_incr
+   
+! data for fixed pwr_of_2 scan algorithm
+    real(KIND=rkind) :: p_max
+    real(KIND=rkind) :: delta = 1.e-14
 
 ! Scan summary data
     real(KIND=rkind), allocatable :: trace_time_run(:)
     real(KIND=rkind), allocatable :: end_ray_param_run(:)
     real(KIND=rkind), allocatable :: end_resid_run(:) 
     real(KIND=rkind), allocatable :: max_resid_run(:) 
+    real(KIND=rkind), allocatable :: start_ray_vec_run(:,:)
     real(KIND=rkind), allocatable :: end_ray_vec_run(:,:)
     character(len=60), allocatable :: ray_stop_flag_run(:)
 
     real(KIND=rkind) :: scan_trace_time
 
  namelist /scanner_list/ &
-     & scan_id, scan_parameter, scan_algorithm, n_runs, p_start, p_incr
+     & scan_id, scan_parameter, scan_algorithm, n_runs, p_start, p_incr, p_max
      
 !********************************************************************
 
@@ -75,6 +80,7 @@ contains
 		allocate (end_ray_param_run(n_runs))
 		allocate (end_resid_run(n_runs))
 		allocate (max_resid_run(n_runs))
+		allocate (start_ray_vec_run(nv, n_runs))
 		allocate (end_ray_vec_run(nv, n_runs))
 		allocate (ray_stop_flag_run(n_runs))
 
@@ -88,6 +94,7 @@ contains
         end_ray_param_run = 0.
         end_resid_run = 0.
         max_resid_run = 0.
+        start_ray_vec_run = 0.
         end_ray_vec_run = 0.
         ray_stop_flag_run = ''        
         scan_trace_time = 0.
@@ -97,10 +104,17 @@ contains
 
        case ('fixed_increment')
 
-		do i_run = 1, n_runs	
-		   p_values(i_run) = p_start +  i_run * p_incr
+		do i_run = 1, n_runs
+		   p_values(i_run) = p_start +  (i_run - 1) * p_incr
 		   write (chr_iter_number, '(I4)') i_run
-    write(*,*) 'chr_iter_number = ', adjustl(trim(chr_iter_number))
+		   file_name_suffix(i_run) = 'run_'//adjustl(trim(chr_iter_number))
+		end do
+
+       case ('pwr_of_2') ! p_max is always (an integral number of p_values) - delta
+
+		do i_run = 1, n_runs
+		   p_values(i_run) = p_max/2.**(n_runs-i_run) - delta
+		   write (chr_iter_number, '(I4)') i_run
 		   file_name_suffix(i_run) = 'run_'//adjustl(trim(chr_iter_number))
 		end do
 
@@ -148,8 +162,8 @@ contains
 ! N.B.  For now we only aggregate data for ray # 1 per run.  See above.
 
     use diagnostics_m, only : message_unit, verbosity, run_label
-    use ray_results_m, only : end_residuals, max_residuals, end_ray_parameter, end_ray_vec,&
-                            & run_trace_time, ray_trace_time, ray_stop_flag
+    use ray_results_m, only : end_residuals, max_residuals, end_ray_parameter, start_ray_vec,&
+                            & end_ray_vec, run_trace_time, ray_trace_time, ray_stop_flag
 
 
 
@@ -161,6 +175,7 @@ contains
 	end_ray_param_run(i_run) = end_ray_parameter(1)
 	end_resid_run(i_run) = end_residuals(1)
 	max_resid_run(i_run) = max_residuals(1)
+	start_ray_vec_run(:, i_run) = start_ray_vec(:, 1)
 	end_ray_vec_run(:, i_run) = end_ray_vec(:, 1)
 	ray_stop_flag_run(i_run) = ray_stop_flag(1)     
    
@@ -211,6 +226,8 @@ contains
     write (scan_star_unit,*) max_resid_run
     write (scan_star_unit,*) 'ray_stop_flag_run'
     write (scan_star_unit,*) ray_stop_flag_run
+    write (scan_star_unit,*) 'start_ray_vec_run'
+    write (scan_star_unit,*) start_ray_vec_run
     write (scan_star_unit,*) 'end_ray_vec_run'
     write (scan_star_unit,*) end_ray_vec_run
 
@@ -231,6 +248,7 @@ contains
 			deallocate (end_ray_param_run)
 			deallocate (end_resid_run)
 			deallocate (max_resid_run)
+			deallocate (start_ray_vec_run)
 			deallocate (end_ray_vec_run)
 			deallocate (ray_stop_flag_run)
 		end if

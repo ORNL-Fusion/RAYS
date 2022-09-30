@@ -263,8 +263,20 @@ if num_plot_k_vectors > 0:
 R_boundary = dict_variable_to_list_of_floats(graphics_variable_dict, 'R_boundary')
 Z_boundary = dict_variable_to_list_of_floats(graphics_variable_dict, 'Z_boundary')
 
+lbl = ''
+new_curve = XY_curve(R_boundary, Z_boundary, label = lbl)
+curve_list.append(new_curve)
+
 n_Bpoints = len(R_boundary)
-print('Z_boundary = ', Z_boundary)
+print(' ')
+#print('R_boundary = ', R_boundary)
+print('min(R_boundary) = ', min(R_boundary))
+print('max(R_boundary) = ', max(R_boundary))
+print(' ')
+#print('Z_boundary = ', Z_boundary)
+print('min(Z_boundary) = ', min(Z_boundary))
+print('max(Z_boundary) = ', max(Z_boundary))
+
 
 plot_XY_Curves_Fig(plotZX)
 

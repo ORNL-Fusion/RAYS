@@ -80,7 +80,7 @@
     magnetics: select case (trim(magnetics_model))
 
     case ('solovev_magnetics')  ! N.B.  This is up-down symmetric
-		n_boundary_points =101 ! should be an odd number for this calculation
+		n_boundary_points = 271 ! should be an odd number for this calculation
 		allocate(R_boundary(n_boundary_points))
 		allocate(Z_boundary(n_boundary_points))
 		dR = 2.*(outer_bound - inner_bound)/(n_boundary_points)
@@ -94,12 +94,12 @@
 
 		do i = 2, (n_boundary_points -1)/2
 			R = inner_bound + i*dR
-			Zsq = kappa/(4.*R)*(outer_bound**4 + 2.*(R**2 - outer_bound**2)*rmaj**2 -&
+			Zsq = kappa*2/(4.*R**2)*(outer_bound**4 + 2.*(R**2 - outer_bound**2)*rmaj**2 -&
 			      & R**4)
 			R_boundary(i) = R
 			Z_boundary(i) = sqrt(Zsq)
 			R_boundary(n_boundary_points-(i-1)) = R_boundary(i)
-			Z_boundary(n_boundary_points-(i-1)) = Z_boundary(i)
+			Z_boundary(n_boundary_points-(i-1)) = -Z_boundary(i)
 		end do
 
     case ('eqdsk_magnetics_lin_interp')
@@ -110,9 +110,9 @@
         Z_boundary(:) = ZBOUND(:)
         
         
-! 		do i = 1, n_boundary_points
-! 			write(*,*) 'i = ', i, '   R_boundary = ', R_boundary(i), '   Z_boundary', Z_boundary(i)
-! 		end do
+	do i = 1, n_boundary_points
+		write(*,*) 'i = ', i, '   R_boundary = ', R_boundary(i), '   Z_boundary', Z_boundary(i)
+	end do
   
     case default
 	  write(0,*) 'initialize_axisym_toroid_eq: unknown magnetics model =', magnetics_model

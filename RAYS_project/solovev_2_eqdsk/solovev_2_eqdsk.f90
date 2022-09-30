@@ -12,7 +12,7 @@ program solovev_2_eqdsk
 !      although a more descriptive name would be 'solovev_2_eqdsk.in'
 
   use constants_m, only : rkind, input_unit, output_unit
-  
+  use diagnostics_m, only : initialize_diagnostics  
   use solovev_magnetics_m, only : initialize_solovev_magnetics, solovev_magnetics, &
         & solovev_magnetics_psi, rmaj, kappa, bphi0, iota0, psiB
 
@@ -54,7 +54,7 @@ program solovev_2_eqdsk
  close(unit=input_unit)
  write(*, solovev_2_eqdsk_list)
 
-
+ call initialize_diagnostics(read_input)
  call initialize_solovev_magnetics(read_input, RAXIS, ZAXIS, &
 	   & box_rmin, box_rmax, box_zmin,box_zmax, &
 	   & inner_bound, outer_bound, upper_bound, lower_bound)
@@ -115,7 +115,8 @@ program solovev_2_eqdsk
        end do
     end do 
     
-! Calculate boundary points.  This is cloned from axisym_toroid_processor_m
+! Calculate boundary points.  This is cloned from axisym_toroid_processor_m, case =
+! 'solovev_magnetics'
 ! N.B.  This is up-down symmetric, and NBOUND needs to be an odd number
 
  allocate(RBOUND(NBOUND), ZBOUND(NBOUND))
@@ -124,13 +125,13 @@ program solovev_2_eqdsk
 		ZBOUND(1) = 0.
 		RBOUND(NBOUND) = inner_bound
 		ZBOUND(NBOUND) = 0.
-		RBOUND((NBOUND+1)/2) = outer_bound
+		RBOUND((NBOUND-1)/2+1) = outer_bound
 		ZBOUND((NBOUND+1)/2) = 0. 
 
         dR_bound = 2.*(outer_bound - inner_bound)/(NBOUND-1)
 		do i = 2, (NBOUND-1)/2
-			R = inner_bound + (i-1)*dR_bound
-			Zsq = kappa/(4.*R**2)*(outer_bound**4 + 2.*(R**2 - outer_bound**2)*rmaj**2 -&
+			R = inner_bound + i*dR_bound
+			Zsq = kappa**2/(4.*R**2)*(outer_bound**4 + 2.*(R**2 - outer_bound**2)*rmaj**2 -&
 			      & R**4)
 			RBOUND(i) = R
 			ZBOUND(i) = sqrt(Zsq)
@@ -138,9 +139,9 @@ program solovev_2_eqdsk
 			ZBOUND(NBOUND-(i-1)) = -ZBOUND(i)
 		end do 
 		
-! 		do i = 1, NBOUND
-! 			write(*,*) 'i = ', i, '   RBOUND = ', RBOUND(i), '   ZBOUND', ZBOUND(i)
-! 		end do
+		do i = 1, NBOUND
+			write(*,*) 'i = ', i, '   RBOUND = ', RBOUND(i), '   ZBOUND', ZBOUND(i)
+		end do
     
   
   write (*, *) ' '
