@@ -92,8 +92,10 @@ contains
     write(*,*) 'Upper boundary = ', upper_bound
     
     ! radial and Z grids that Psi is defined on
-    allocate (R_grid(NRBOX))
-    allocate (Z_grid(NZBOX))
+    if (.not. allocated(R_grid)) then
+		allocate (R_grid(NRBOX))
+		allocate (Z_grid(NZBOX))
+    end if
 
     do i = 1, NRBOX
     	R_grid(i) = box_rmin + (box_rmax - box_rmin)*(i-1)/(NRBOX - 1)

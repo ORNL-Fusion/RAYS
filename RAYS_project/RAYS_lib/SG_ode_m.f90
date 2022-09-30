@@ -50,9 +50,9 @@ contains
 		write(message_unit, SG_ode_list)
 	end if
 
-!   Check error criterion for the ODE solver.
-    if ( rel_err0 < 1.e-9 .or. abs_err0 < 1.e-9 ) then
-       write(0,*) 'initialize: rel_err0, abs_err0 =', rel_err0, abs_err0
+!   Check error criterion for the ODE solver.  Put a limit on how small target error can be.
+    if ( rel_err0 < 1.e-10 .or. abs_err0 < 1.e-10 ) then
+       write(0,*) 'initialize_SG_ode: rel_err0, abs_err0 too small =', rel_err0, abs_err0
        stop 1
     end if
 

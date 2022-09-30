@@ -59,12 +59,14 @@ subroutine ReadgFile (eqdsk_file_name)
   read (100, '(5e16.9  )') CURRENT, zero,    zero,    zero,     zero
   read (100, '(5e16.9  )') zero,    zero,    zero,    zero,     zero
 
-  allocate (T   (NRBOX))
-  allocate (P   (NRBOX))
-  allocate (TTp (NRBOX))
-  allocate (Pp  (NRBOX))
-  allocate (Q   (NRBOX))
-  allocate (Psi (NRBOX, NZBOX))
+  if (.not. allocated(T)) then
+	  allocate (T   (NRBOX))
+	  allocate (P   (NRBOX))
+	  allocate (TTp (NRBOX))
+	  allocate (Pp  (NRBOX))
+	  allocate (Q   (NRBOX))
+	  allocate (Psi (NRBOX, NZBOX))
+  end if
   
   read (100, '(5e16.9)') (T   (i), i = 1, NRBOX)
   read (100, '(5e16.9)') (P   (i), i = 1, NRBOX)
@@ -77,10 +79,15 @@ subroutine ReadgFile (eqdsk_file_name)
 
   read (100, '(2i5)') NBOUND, NLIM
 
-  allocate (RBOUND (NBOUND))
-  allocate (ZBOUND (NBOUND))
-  allocate (RLIM   (NLIM))
-  allocate (ZLIM   (NLIM))
+  if (.not. allocated(RBOUND)) then
+	  allocate (RBOUND (NBOUND))
+	  allocate (ZBOUND (NBOUND))
+	  allocate (RLIM   (NLIM))
+	  allocate (ZLIM   (NLIM))
+  end if
+
+ write(*,*) 'NBOUND = ', NBOUND, '   NLIM = ', NLIM
+ write(*,*) 'shape(RBOUND) = ', shape(RBOUND)
 
   read (100, '(5e16.9)') (RBOUND (i), ZBOUND (i), i = 1, NBOUND)
   read (100, '(5e16.9)') (RLIM   (i), ZLIM   (i), i = 1, NLIM)

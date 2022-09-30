@@ -19,14 +19,18 @@
     character(len=60) :: RAYS_run_label = ''
 
     integer :: number_of_rays, max_number_of_steps, dim_v_vector
-    
+
+! ray data    
     real(KIND=rkind), allocatable :: ray_vec(:,:,:)
     real(KIND=rkind), allocatable :: residual(:,:)
     integer, allocatable :: npoints(:)
+
+! Summary data
     real(KIND=rkind), allocatable :: ray_trace_time(:)
     real(KIND=rkind), allocatable :: end_residuals(:) 
     real(KIND=rkind), allocatable :: max_residuals(:) 
     real(KIND=rkind), allocatable :: end_ray_parameter(:)
+    real(KIND=rkind), allocatable :: start_ray_vec(:,:)
     real(KIND=rkind), allocatable :: end_ray_vec(:,:)
     character(len=60), allocatable :: ray_stop_flag(:)
 
@@ -66,6 +70,7 @@ contains
 			allocate (end_ray_parameter(nray))
 			allocate (end_residuals(nray))
 			allocate (max_residuals(nray))
+			allocate (start_ray_vec(nv, nray))
 			allocate (end_ray_vec(nv, nray))
 			allocate (ray_stop_flag(nray))
         end if
@@ -83,6 +88,7 @@ contains
         end_ray_parameter = 0.
         end_residuals = 0.
         max_residuals = 0.
+        start_ray_vec = 0.
         end_ray_vec = 0.
         ray_stop_flag = ''        
         
@@ -134,6 +140,8 @@ contains
     write (results_star_unit,*) max_residuals
     write (results_star_unit,*) 'ray_stop_flag'
     write (results_star_unit,*) ray_stop_flag
+    write (results_star_unit,*) 'start_ray_vec'
+    write (results_star_unit,*) start_ray_vec
     write (results_star_unit,*) 'end_ray_vec'
     write (results_star_unit,*) end_ray_vec
     write (results_star_unit,*) 'residual'
@@ -154,6 +162,7 @@ contains
         deallocate (end_ray_parameter)
         deallocate (end_residuals)
         deallocate (max_residuals)
+        deallocate (start_ray_vec)
         deallocate (end_ray_vec)
         deallocate (ray_stop_flag)
         

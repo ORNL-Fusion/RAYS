@@ -12,8 +12,8 @@
     use damping_m, only : damping_model, multi_spec_damping
     use species_m, only : nspec
     use ray_results_m, only : ray_stop_flag, ray_vec, residual, npoints, end_residuals,&
-                            & max_residuals, end_ray_parameter, end_ray_vec, ray_trace_time, &
-                            & run_trace_time
+                            & max_residuals, end_ray_parameter, start_ray_vec, end_ray_vec,&
+                            & ray_trace_time, run_trace_time
 
     implicit none
 
@@ -205,6 +205,7 @@
         max_residuals(iray) = maxval(abs(residual(1:nstep,iray)))
         end_ray_parameter(iray) = v(7)
         ray_stop_flag(iray) = ray_stop%ode_stop_flag
+        start_ray_vec(:,iray) = ray_vec(:,1,iray)
         end_ray_vec(:, iray) = v(:)
 
     end do ray_loop

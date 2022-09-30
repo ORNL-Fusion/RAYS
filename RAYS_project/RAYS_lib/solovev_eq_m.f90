@@ -74,8 +74,8 @@ contains
     ! radius of maximum in z
     r_Zmax = (2.*outer_bound**2 * rmaj**2 - outer_bound**4)**0.25
     ! z at r_Zmax
-    vert_bound = sqrt(kappa)/(2.*r_Zmax)*sqrt(outer_bound**4 - r_Zmax**4 +2.*r_Zmax**2*rmaj**2- &
-              &  2.*outer_bound**2*rmaj**2)
+    vert_bound = kappa/(2.*r_Zmax)*sqrt(outer_bound**4 + &
+               & 2.*(r_Zmax**2 - outer_bound**2)*rmaj**2 - r_Zmax**4)
 
     call message('PsiB = ', psiB)
     call message('Inner boundary = ', inner_bound)
