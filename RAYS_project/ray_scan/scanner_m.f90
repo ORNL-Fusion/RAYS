@@ -29,9 +29,14 @@ module scanner_m
 ! data for fixed increment scan algorithm
     real(KIND=rkind) :: p_start, p_incr
    
-! data for fixed pwr_of_2 scan algorithm
+! data for pwr_of_2 scan algorithm and integer_divide
     real(KIND=rkind) :: p_max
+    integer :: max_divide
     real(KIND=rkind) :: delta = 1.e-14
+   
+! data for algorithm_1
+    real(KIND=rkind) :: S_max
+    integer :: n_max, k_factor
 
 ! Scan summary data
     real(KIND=rkind), allocatable :: trace_time_run(:)
@@ -45,7 +50,8 @@ module scanner_m
     real(KIND=rkind) :: scan_trace_time
 
  namelist /scanner_list/ &
-     & scan_id, scan_parameter, scan_algorithm, n_runs, p_start, p_incr, p_max
+     & scan_id, scan_parameter, scan_algorithm, n_runs, p_start, p_incr, p_max, max_divide,&
+     & S_max, n_max, k_factor
      
 !********************************************************************
 
@@ -103,7 +109,6 @@ contains
     algorithm: select case (trim(scan_algorithm))
 
        case ('fixed_increment')
-
 		do i_run = 1, n_runs
 		   p_values(i_run) = p_start +  (i_run - 1) * p_incr
 		   write (chr_iter_number, '(I4)') i_run
@@ -111,9 +116,22 @@ contains
 		end do
 
        case ('pwr_of_2') ! p_max is always (an integral number of p_values) - delta
-
 		do i_run = 1, n_runs
 		   p_values(i_run) = p_max/2.**(n_runs-i_run) - delta
+		   write (chr_iter_number, '(I4)') i_run
+		   file_name_suffix(i_run) = 'run_'//adjustl(trim(chr_iter_number))
+		end do
+
+       case ('integer_divide') ! p_max is always (an integral number of p_values) - delta
+		do i_run = 1, n_runs
+		   p_values(i_run) = p_max/(max_divide - i_run +1)
+		   write (chr_iter_number, '(I4)') i_run
+		   file_name_suffix(i_run) = 'run_'//adjustl(trim(chr_iter_number))
+		end do
+
+       case ('algorithm_1') ! p_max is always (an integral number of p_values) - delta
+		do i_run = 1, n_runs
+		   p_values(i_run) = S_max/(n_max + k_factor*(n_runs-i_run)) - delta
 		   write (chr_iter_number, '(I4)') i_run
 		   file_name_suffix(i_run) = 'run_'//adjustl(trim(chr_iter_number))
 		end do

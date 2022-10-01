@@ -96,7 +96,7 @@ program compare_analyt_2_interp
      inconsitent = .true.     
  end if
  if (abs(inner_bound - eqd_inner_bound) > geom_tol) then
-     write (*,*) 'inner_bound inconsistent, nner_bound = ', inner_bound, '  eqd_inner_bound = ', eqd_inner_bound
+     write (*,*) 'inner_bound inconsistent, inner_bound = ', inner_bound, '  eqd_inner_bound = ', eqd_inner_bound
      inconsitent = .true.
  end if
  if (abs(outer_bound - eqd_outer_bound) > geom_tol) then
