@@ -13,9 +13,7 @@ module  eqdsk_magnetics_lin_interp_m
 
     character (len = 100) :: eqdsk_file_name
 
-! data for magnetics
-    real(KIND=rkind) :: rmaj, kappa, bphi0, iota0
-    real(KIND=rkind) :: inner_bound, outer_bound, upper_bound, lower_bound
+    ! data for psplines
 
     ! Flux function psi at plasma boundary
     real(KIND=rkind) :: psiB
@@ -146,9 +144,6 @@ contains
     z = rvec(3)
     r = sqrt(x**2+y**2)
 
-! Check that we are in the plasma. Set equib_err but don't stop
-    if (psiN > 1.) equib_err = 'psi >1 out_of_plasma'
-
 !   Poloidfal flux function 
     psi = GetPsi(R, z)
 
@@ -161,6 +156,8 @@ contains
 !   Normalized Flux function x, y, z normalized to 1.0 at last surface
     psiN = psi/PSIBOUND
     gradpsiN = gradpsi/PSIBOUND
+    ! Check that we are in the plasma. Set equib_err but don't stop
+    if (psiN > 1.) equib_err = 'psi >1 out_of_plasma'
 
 !   Magnetic field derivatives.
 

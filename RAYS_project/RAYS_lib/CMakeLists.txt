@@ -31,13 +31,14 @@ list (APPEND lib_sources
 	solovev_ray_init_nphi_ntheta_m.f90
 	eqdsk_utilities_m.f90
 	eqdsk_magnetics_lin_interp_m.f90	
+	eqdsk_magnetics_spline_interp_m.f90	
 	species_m.f90
 	suscep_m.f90
 	ray_results_m.f90
 )
 
 add_library (RAYS_lib ${lib_sources})
-
+target_link_libraries(RAYS_lib spline_lib)
 # 
 # target_sources (RAYS_lib
 #                 PRIVATE

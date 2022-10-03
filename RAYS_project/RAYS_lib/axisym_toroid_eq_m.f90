@@ -53,6 +53,7 @@ contains
 
     use solovev_magnetics_m, only : initialize_solovev_magnetics
     use eqdsk_magnetics_lin_interp_m, only : initialize_eqdsk_magnetics_lin_interp
+    use eqdsk_magnetics_spline_interp_m, only : initialize_eqdsk_magnetics_spline_interp
 
     implicit none
     logical, intent(in) :: read_input
@@ -85,8 +86,13 @@ contains
                & box_rmin, box_rmax, box_zmin, box_zmax, &
                & inner_bound, outer_bound, upper_bound, lower_bound)
    
-          case ('eqdsk_magnetics_lin_interp')
-          call initialize_eqdsk_magnetics_lin_interp(read_input, r_axis, z_axis, &
+        case ('eqdsk_magnetics_lin_interp')
+           call initialize_eqdsk_magnetics_lin_interp(read_input, r_axis, z_axis, &
+               & box_rmin, box_rmax, box_zmin, box_zmax, &
+               & inner_bound, outer_bound, upper_bound, lower_bound)
+   
+        case ('eqdsk_magnetics_spline_interp')
+           call initialize_eqdsk_magnetics_spline_interp(read_input, r_axis, z_axis, &
                & box_rmin, box_rmax, box_zmin, box_zmax, &
                & inner_bound, outer_bound, upper_bound, lower_bound)
 
@@ -120,6 +126,7 @@ contains
 
     use solovev_magnetics_m, only : solovev_magnetics
     use eqdsk_magnetics_lin_interp_m, only : eqdsk_magnetics_lin_interp
+    use eqdsk_magnetics_spline_interp_m, only : eqdsk_magnetics_spline_interp
     
     implicit none
 
@@ -157,6 +164,10 @@ contains
        case ('eqdsk_magnetics_lin_interp')
           call eqdsk_magnetics_lin_interp(rvec, bvec, gradbtensor, psi, gradpsi, psiN,&
               & gradpsiN, equib_err)
+
+       case ('eqdsk_magnetics_spline_interp')
+          call eqdsk_magnetics_spline_interp(rvec, bvec, gradbtensor, psi, gradpsi, psiN,&
+             & gradpsiN, equib_err)
               
     end select magnetics
 
@@ -255,6 +266,9 @@ contains
        case ('eqdsk_magnetics_lin_interp')
          call  eqdsk_magnetics_lin_interp_psi(rvec, psi, gradpsi, psiN, gradpsiN)
 
+       case ('eqdsk_magnetics_spline_interp')
+         call  eqdsk_magnetics_spline_interp_psi(rvec, psi, gradpsi, psiN, gradpsiN)
+
     end select magnetics
 
     return
@@ -310,6 +324,7 @@ contains
     subroutine deallocate_axisym_toroid_eq_m
 		use solovev_magnetics_m, only : deallocate_solovev_magnetics_m
 		use eqdsk_magnetics_lin_interp_m, only : deallocate_eqdsk_magnetics_lin_interp_m
+		use eqdsk_magnetics_spline_interp_m, only : deallocate_eqdsk_magnetics_spline_interp_m
 
 		if (allocated(temperature_prof_model)) then
 			deallocate( temperature_prof_model )
@@ -319,8 +334,11 @@ contains
 		
 		call deallocate_solovev_magnetics_m
 		call deallocate_eqdsk_magnetics_lin_interp_m
+		call deallocate_eqdsk_magnetics_spline_interp_m
 		return
 		
     end subroutine deallocate_axisym_toroid_eq_m
+    
+!********************************************************************
  
 end module axisym_toroid_eq_m

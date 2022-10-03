@@ -10,6 +10,7 @@ add_subdirectory (RAYS_code)
 add_subdirectory (post_process_RAYS)
 add_subdirectory (solovev_2_eqdsk)
 add_subdirectory (ray_scan)
+add_subdirectory (splines)
 
 # Add the ability to auto generate API documentation with Doxygen
 # find_package (Doxygen)

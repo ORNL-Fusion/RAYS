@@ -86,11 +86,13 @@ subroutine ReadgFile (eqdsk_file_name)
 	  allocate (ZLIM   (NLIM))
   end if
 
- write(*,*) 'NBOUND = ', NBOUND, '   NLIM = ', NLIM
- write(*,*) 'shape(RBOUND) = ', shape(RBOUND)
- write(*,*) 'RBOUND = ', RBOUND
+  write(*,*) 'NBOUND = ', NBOUND, '   NLIM = ', NLIM
+  write(*,*) 'shape(RBOUND) = ', shape(RBOUND)
 
   read (100, '(5e16.9)') (RBOUND (i), ZBOUND (i), i = 1, NBOUND)
+  write(*,*) 'RBOUND = ', RBOUND
+  write(*,*) 'ZBOUND = ', RBOUND
+
   read (100, '(5e16.9)') (RLIM   (i), ZLIM   (i), i = 1, NLIM)
 
   close (unit = 100)
