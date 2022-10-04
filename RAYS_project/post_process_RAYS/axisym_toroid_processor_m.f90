@@ -108,11 +108,18 @@
 		allocate(Z_boundary(n_boundary_points))
         R_boundary(:) = RBOUND(:)
         Z_boundary(:) = ZBOUND(:)
+
+    case ('eqdsk_magnetics_spline_interp')
+        n_boundary_points = NBOUND ! not necessarily an odd number
+		allocate(R_boundary(n_boundary_points))
+		allocate(Z_boundary(n_boundary_points))
+        R_boundary(:) = RBOUND(:)
+        Z_boundary(:) = ZBOUND(:)
         
         
-	do i = 1, n_boundary_points
-		write(*,*) 'i = ', i, '   R_boundary = ', R_boundary(i), '   Z_boundary', Z_boundary(i)
-	end do
+! 	do i = 1, n_boundary_points
+! 		write(*,*) 'i = ', i, '   R_boundary = ', R_boundary(i), '   Z_boundary', Z_boundary(i)
+! 	end do
   
     case default
 	  write(0,*) 'initialize_axisym_toroid_eq: unknown magnetics model =', magnetics_model

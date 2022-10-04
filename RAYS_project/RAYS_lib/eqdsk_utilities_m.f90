@@ -90,8 +90,8 @@ subroutine ReadgFile (eqdsk_file_name)
   write(*,*) 'shape(RBOUND) = ', shape(RBOUND)
 
   read (100, '(5e16.9)') (RBOUND (i), ZBOUND (i), i = 1, NBOUND)
-  write(*,*) 'RBOUND = ', RBOUND
-  write(*,*) 'ZBOUND = ', RBOUND
+!   write(*,*) 'RBOUND = ', RBOUND
+!   write(*,*) 'ZBOUND = ', RBOUND
 
   read (100, '(5e16.9)') (RLIM   (i), ZLIM   (i), i = 1, NLIM)
 

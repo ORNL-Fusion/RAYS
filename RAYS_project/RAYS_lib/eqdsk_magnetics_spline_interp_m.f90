@@ -132,11 +132,17 @@ contains
     PSIBOUND = PSIBOUND - PSIAXIS
     psiB = PSIBOUND
 
+ write (*,*) 'PSIAXIS = ', PSIAXIS, '   maxval(Psi) = ', maxval(Psi)
 ! Set f(1,1,i,j) = eqdsk Psi
     do i = 1, NRBOX
     do j = 1, NZBOX
     	fspl(1,1,i,j) = Psi(i,j)
     end do
+    end do
+
+! Set f(1,1,i) = eqdsk T
+    do i = 1, NRBOX
+    	fspl_1D(1,i) = T(i)
     end do
 
 ! Set up spline coefficients for Psi
@@ -201,7 +207,7 @@ contains
     r = sqrt(x**2+y**2)
 
 ! evaluate spline fits
-	call bcspeval(x,y,iselect,fval,R_grid,NRBOX,Z_grid,NZBOX,ilinx,ilinth,fspl,R_grid,ier)            
+	call bcspeval(r,z,iselect,fval,R_grid,NRBOX,Z_grid,NZBOX,ilinx,ilinth,fspl,NRBOX,ier)            
     if (ier .ne. 0) write (*,*) 'bcspeval: ier = ', ier
 
     Psi = fval(1)
@@ -211,7 +217,7 @@ contains
     PsiRZ = fval(5)
     PsiZZ = fval(6)
 
-    call cspeval(x,iselect_1D,fval_1D,R_grid,NRBOX,ilinx,fspl_1D,ier)
+    call cspeval(r,iselect_1D,fval_1D,R_grid,NRBOX,ilinx,fspl_1D,ier)
     if (ier .ne. 0) write (*,*) 'cspeval: ier = ', ier
     
     RBphi = fval_1D(1)
@@ -301,7 +307,7 @@ contains
     fval = 0.
 
 ! evaluate spline fit
-	call bcspeval(x,y,psi_select,fval,R_grid,NRBOX,Z_grid,NZBOX,ilinx,ilinth,fspl,R_grid,ier)            
+	call bcspeval(R,z,psi_select,fval,R_grid,NRBOX,Z_grid,NZBOX,ilinx,ilinth,fspl,NRBOX,ier)            
     if (ier .ne. 0) write (*,*) 'bcspeval: ier = ', ier
 
     Psi = fval(1) ! Poloidfal flux function 
@@ -317,6 +323,7 @@ contains
 !   Normalized Flux function x, y, z normalized to 1.0 at last surface
     psiN = Psi/PSIBOUND
     gradpsiN = gradpsi/PSIBOUND
+
     
     return 
   end subroutine  eqdsk_magnetics_spline_interp_psi

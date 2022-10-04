@@ -252,6 +252,7 @@ contains
 
     use solovev_magnetics_m, only : solovev_magnetics_psi
     use eqdsk_magnetics_lin_interp_m, only : eqdsk_magnetics_lin_interp_psi
+    use eqdsk_magnetics_spline_interp_m, only : eqdsk_magnetics_spline_interp_psi
     
     implicit none
 
@@ -268,7 +269,6 @@ contains
 
        case ('eqdsk_magnetics_spline_interp')
          call  eqdsk_magnetics_spline_interp_psi(rvec, psi, gradpsi, psiN, gradpsiN)
-
     end select magnetics
 
     return

@@ -12,8 +12,8 @@ program compare_analyt_2_interp
   use solovev_magnetics_m, only : initialize_solovev_magnetics, solovev_magnetics, &
         & solovev_magnetics_psi, rmaj, kappa, bphi0, iota0, psiB
 
-  use eqdsk_magnetics_lin_interp_m, only : initialize_eqdsk_magnetics_lin_interp, &
-       & eqdsk_magnetics_lin_interp_psi
+  use eqdsk_magnetics_spline_interp_m, only : initialize_eqdsk_magnetics_spline_interp, &
+       & eqdsk_magnetics_spline_interp_psi
   
   implicit none
 
@@ -64,7 +64,7 @@ program compare_analyt_2_interp
 	   & box_rmin, box_rmax, box_zmin,box_zmax, &
 	   & inner_bound, outer_bound, upper_bound, lower_bound)
 
- call initialize_eqdsk_magnetics_lin_interp(read_input, eqd_r_axis, eqd_z_axis, &
+ call initialize_eqdsk_magnetics_spline_interp(read_input, eqd_r_axis, eqd_z_axis, &
                & eqd_box_rmin, eqd_box_rmax, eqd_box_zmin, eqd_box_zmax, &
                & eqd_inner_bound, eqd_outer_bound, eqd_upper_bound, eqd_lower_bound)
  
@@ -118,6 +118,18 @@ program compare_analyt_2_interp
  write(*,*) 'Lower boundary = ', lower_bound
  write(*,*) 'Upper boundary = ', upper_bound
 
+ rvec = (/ box_rmax, 0._rkind, box_zmin /)
+ call eqdsk_magnetics_spline_interp_psi(rvec, eqd_psi, eqd_gradpsi, eqd_psiN, eqd_gradpsiN)
+ write(*,*) 'spline Lower Right: eqd_psi = ', eqd_psi
+ call solovev_magnetics_psi(rvec, psi, gradpsi, psiN, gradpsiN)
+ write(*,*) 'solovev Lower Right: psi = ', psi
+
+ rvec = (/ inner_bound, 0._rkind,0._rkind /)
+ call eqdsk_magnetics_spline_interp_psi(rvec, eqd_psi, eqd_gradpsi, eqd_psiN, eqd_gradpsiN)
+ write(*,*) 'spline Left, zero: eqd_psi = ', eqd_psi
+ call solovev_magnetics_psi(rvec, psi, gradpsi, psiN, gradpsiN)
+ write(*,*) 'solovev Left, zero: psi = ', psi
+
 ! set up Rgrid, Zgrid
  allocate(R_grid(n_Rgrid))
  
@@ -142,7 +154,7 @@ program compare_analyt_2_interp
      do i = 1, n_Rgrid
          rvec = (/ R_grid(i), 0._rkind, Z_grid(j) /)
          call solovev_magnetics_psi(rvec, psi, gradpsi, psiN, gradpsiN)
-         call eqdsk_magnetics_lin_interp_psi(rvec, eqd_psi, eqd_gradpsi, eqd_psiN, eqd_gradpsiN)
+         call eqdsk_magnetics_spline_interp_psi(rvec, eqd_psi, eqd_gradpsi, eqd_psiN, eqd_gradpsiN)
          call abserr_relerr(psi, eqd_psi, abserr, relerr)
          write(*,*) R_grid(i), psi, eqd_psi, abserr, relerr
          rms_psi_err(i) = rms_psi_err(i) + (psi - eqd_psi)**2
@@ -158,7 +170,7 @@ program compare_analyt_2_interp
      do i = 1, n_Rgrid
          rvec = (/ R_grid(i), 0._rkind, Z_grid(j) /)
          call solovev_magnetics_psi(rvec, psi, gradpsi, psiN, gradpsiN)
-         call eqdsk_magnetics_lin_interp_psi(rvec, eqd_psi, eqd_gradpsi, eqd_psiN, eqd_gradpsiN)
+         call eqdsk_magnetics_spline_interp_psi(rvec, eqd_psi, eqd_gradpsi, eqd_psiN, eqd_gradpsiN)
          call abserr_relerr(psiN, eqd_psiN, abserr, relerr)
          write(*,*) R_grid(i), psiN, eqd_psiN, abserr, relerr
      end do
@@ -173,7 +185,7 @@ program compare_analyt_2_interp
      do i = 1, n_Rgrid
          rvec = (/ R_grid(i), 0._rkind, Z_grid(j) /)
          call solovev_magnetics_psi(rvec, psi, gradpsi, psiN, gradpsiN)
-         call eqdsk_magnetics_lin_interp_psi(rvec, eqd_psi, eqd_gradpsi, eqd_psiN, eqd_gradpsiN)
+         call eqdsk_magnetics_spline_interp_psi(rvec, eqd_psi, eqd_gradpsi, eqd_psiN, eqd_gradpsiN)
          call abserr_relerr(gradpsi(1), eqd_gradpsi(1), abserr, relerr)
          write(*,*) R_grid(i), gradpsi(1), eqd_gradpsi(1), abserr, relerr
      end do
@@ -188,7 +200,7 @@ program compare_analyt_2_interp
      do i = 1, n_Rgrid
          rvec = (/ R_grid(i), 0._rkind, Z_grid(j) /)
          call solovev_magnetics_psi(rvec, psi, gradpsi, psiN, gradpsiN)
-         call eqdsk_magnetics_lin_interp_psi(rvec, eqd_psi, eqd_gradpsi, eqd_psiN, eqd_gradpsiN)
+         call eqdsk_magnetics_spline_interp_psi(rvec, eqd_psi, eqd_gradpsi, eqd_psiN, eqd_gradpsiN)
          call abserr_relerr(gradpsi(2), eqd_gradpsi(2), abserr, relerr)
          write(*,*) R_grid(i), gradpsi(2), eqd_gradpsi(2), abserr, relerr
      end do
@@ -203,7 +215,7 @@ program compare_analyt_2_interp
      do i = 1, n_Rgrid
          rvec = (/ R_grid(i), 0._rkind, Z_grid(j) /)
          call solovev_magnetics_psi(rvec, psi, gradpsi, psiN, gradpsiN)
-         call eqdsk_magnetics_lin_interp_psi(rvec, eqd_psi, eqd_gradpsi, eqd_psiN, eqd_gradpsiN)
+         call eqdsk_magnetics_spline_interp_psi(rvec, eqd_psi, eqd_gradpsi, eqd_psiN, eqd_gradpsiN)
          call abserr_relerr(gradpsi(3), eqd_gradpsi(3), abserr, relerr)
          write(*,*) R_grid(i), gradpsi(3), eqd_gradpsi(3), abserr, relerr
      end do

@@ -35,7 +35,7 @@ program solovev_2_eqdsk
     ! data for plasma boundary
     real(KIND=rkind) :: inner_bound, outer_bound, upper_bound, lower_bound
 
-  real(KIND=rkind) :: zero = 0.
+  real(KIND=rkind) :: zero = 0., psi_test
   integer :: i,j
   real(KIND=rkind) :: rvec(3) 
   real(KIND=rkind)  :: gradpsi(3), psiN, gradpsiN(3)
@@ -115,6 +115,16 @@ program solovev_2_eqdsk
        end do
     end do 
     
+    write(*,*) 'solovev_2_eqdsk: maxval(psi) = ', maxval(Psi) 
+    write(*,*) 'solovev_2_eqdsk: maxloc(psi) = ', maxloc(Psi)
+    write(*,*) ' '
+
+
+    call solovev_magnetics_psi((/ 6.07518_rkind, 0._rkind,  3.46253_rkind /), psi_test , gradpsi, psiN, gradpsiN)
+    write(*,*) 'solovev_2_eqdsk: psi_test = ', psi_test, '  psiN = ', psiN
+    call solovev_magnetics_psi((/ 8.0_rkind, 0._rkind,  1.21_rkind /), psi_test , gradpsi, psiN, gradpsiN)
+    write(*,*) 'solovev_2_eqdsk: psi_test = ', psi_test, '  psiN = ', psiN
+    
 ! Calculate boundary points.  This is cloned from axisym_toroid_processor_m, case =
 ! 'solovev_magnetics'
 ! N.B.  This is up-down symmetric, and NBOUND needs to be an odd number
@@ -139,9 +149,9 @@ program solovev_2_eqdsk
 			ZBOUND(NBOUND-(i-1)) = -ZBOUND(i)
 		end do 
 		
-		do i = 1, NBOUND
-			write(*,*) 'i = ', i, '   RBOUND = ', RBOUND(i), '   ZBOUND', ZBOUND(i)
-		end do
+! 		do i = 1, NBOUND
+! 			write(*,*) 'i = ', i, '   RBOUND = ', RBOUND(i), '   ZBOUND', ZBOUND(i)
+! 		end do
     
   
   write (*, *) ' '
