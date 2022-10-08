@@ -238,9 +238,9 @@ for i_ray in range(len(rays_s_list)):
 
 if set_XY_lim in ['True', 'true', 'T']:
     plotZX = XY_Curves_Fig(curve_list, title, xlabel, ylabel, figsize=figsize, \
-             ylim = [zmin,zmax], xlim = [xmin,xmax])
+             ylim = [zmin,zmax], xlim = [xmin,xmax], aspect_ratio = 'equal')
 else:
-    plotZX = XY_Curves_Fig(curve_list, title, xlabel, ylabel, figsize=figsize)
+    plotZX = XY_Curves_Fig(curve_list, title, xlabel, ylabel, figsize=figsize, aspect_ratio = 'equal')
 
 # Add k vectors at selected points
 if num_plot_k_vectors > 0:
@@ -262,6 +262,8 @@ if num_plot_k_vectors > 0:
 
 R_boundary = dict_variable_to_list_of_floats(graphics_variable_dict, 'R_boundary')
 Z_boundary = dict_variable_to_list_of_floats(graphics_variable_dict, 'Z_boundary')
+for i in range(len(R_boundary)):
+    print('R_boundary[i] = ', R_boundary[i], '   Z_boundary[i] = ', Z_boundary[i] )
 
 lbl = ''
 new_curve = XY_curve(R_boundary, Z_boundary, label = lbl)

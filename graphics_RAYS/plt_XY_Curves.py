@@ -35,6 +35,9 @@ change log:
  11/21/2021 (DBB)
  Modified XY_Curves_Fig to accept matplotlib xlim and ylim as keyword args
  
+ 11/2/2022 (DBB)
+ Modified XY_Curves_Fig to accept figsize and aspect_ratio as keyword args
+ 
 """
 
 from matplotlib import use
@@ -228,10 +231,16 @@ class XY_Curves_Fig:
             self.figsize = kwargs['figsize']
             print('figsize = ', self.figsize)
         
-        fig = plt.figure(figsize=self.figsize) # the first figure
-        plt.axes((0.15, 0.1, 0.6, 0.75))
-#        plt.axes([0.15, 0.1, 0.6, 0.75])
-#        plt.axis('equal')
+        fig = plt.figure(figsize=self.figsize)
+
+        if 'aspect_ratio' in kwargs:
+            self.aspect_ratio = kwargs['aspect_ratio']
+            print('aspect_ratio = ', self.aspect_ratio)
+            plt.axes((0.1, 0.1, 0.75, 0.75), aspect = self.aspect_ratio)
+        else:
+           plt.axes((0.1, 0.1, 0.75, 0.75))
+           
+#        plt.axes((0.15, 0.1, 0.3, 0.75))
 
         if 'xlim' in kwargs:
             self.xlim = kwargs['xlim']
@@ -254,7 +263,7 @@ class XY_Curves_Fig:
         
         scaleX, scaleY = scale_curve_list(self.curve_list)
         if scaleX != 1:
-            power_string = '  (' + r'$' + r'\times' + '10^{' + str(scaleX) + r'})$'
+            power_string = '  ' + r'$' + r'\times' + '10^{' + str(scaleX) + r'})$'
             self.xlabel = xlabel + power_string
         if scaleY != 1:
             power_string = '  (' + r'$' + r'\times' + '10^{' + str(scaleY) + r'})$'
@@ -405,6 +414,15 @@ if __name__ == '__main__':
     plot2 = XY_Curves_Fig(curve_list, title, xlabel, ylabel)
     plot_XY_Curves_Fig(plot2)
 
+    title = 'Try to set xlim' 
+    plot3 = XY_Curves_Fig(curve_list, title, xlabel, ylabel, xlim = [0.2, 0.8])
+#    plot3 = XY_Curves_Fig(curve_list, title, xlabel, ylabel)
+    plot_XY_Curves_Fig(plot3)
+
+    title = 'Try to set aspect_ratio' 
+    plot4 = XY_Curves_Fig(curve_list, title, xlabel, ylabel, aspect_ratio = 'equal')
+    plot_XY_Curves_Fig(plot4)
+
     x = []
     y = []
     vx = []
@@ -418,21 +436,39 @@ if __name__ == '__main__':
         vy.append(math.sin(t))
         vscale.append(0.1*t)
 
+    title = 'Parametric Plot - different fig size'
+    xlabel = 'x(cm)'
+    ylabel = 'y(cm)'
+    curve_list = [XY_curve(x, y)]
+    plot_parametric2 = XY_Curves_Fig(curve_list, title, xlabel, ylabel, aspect_ratio = 'equal')
+    plot_XY_Curves_Fig(plot_parametric2)
+
+
     title = 'Parametric Plot'
     xlabel = 'x(cm)'
     ylabel = 'y(cm)'
     curve_list = [XY_curve(x, y)]
-    plot3 = XY_Curves_Fig(curve_list, title, xlabel, ylabel,figsize = (8., 8.))
+    plot_parametric = XY_Curves_Fig(curve_list, title, xlabel, ylabel,figsize = (8., 8.),\
+                      aspect_ratio = 'equal')
 
     for i in range(16):
         plt.arrow(x[i], y[i], vscale[i]*vx[i], vscale[i]*vy[i], shape='full', head_width = 0.02)
- #       plot3.arrow(x[i], y[i], vscale[i]*vx[i], vscale[i]*vy[i], shape='full', head_width = 0.02)
+    plot_XY_Curves_Fig(plot_parametric)
 
-    plot_XY_Curves_Fig(plot3)
+
+    title = 'Parametric Plot - different fig size'
+    xlabel = 'x(cm)'
+    ylabel = 'y(cm)'
+    curve_list = [XY_curve(x, y)]
+    plot_parametric2 = XY_Curves_Fig(curve_list, title, xlabel, ylabel, aspect_ratio = 'equal')
+
+    plot_XY_Curves_Fig(plot_parametric2)
 
     global_attributes = [['Global_label = ', 'Global_label'], ['RunID = ', 'RunID'],\
                       ['tokamak_id = ', 'tokamak_id'], ['shot_number = ', str(2)] ]    
-    
+
+#_________________________________________________________________________________________    
+
     print('adding index')
     index = [ [1,'fig 1'], [2,'fig 2'], [3,'fig 3'], [4,'fig 4'] ]
     summary ={'global_attributes': global_attributes, 'index': index, 'file_name': 'no file'}
