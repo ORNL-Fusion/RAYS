@@ -173,7 +173,7 @@
           dsd_ray_param = vg0
           
 !         Calculate ksi and ki.
-          call damping (v, k1, k3, ksi, ki, vg)
+          call damping(eq, v, vg, ksi, ki)
 
 
        case default
@@ -191,11 +191,7 @@
 ! Damping Calculate ksi and ki.
     damp : if (damping_model /= 'no_damp') then    
     
-!   k1 (n1) = perpedicular component of kvec (nvec) (magnitude).
-!   k3 (n3) = parallel component of kvec (nvec).  
-        k3 = sum(kvec*eq%bunit)
-        k1 = sqrt( sum((kvec-k3*eq%bunit)**2) )
-        call damping (v, k1, k3, ksi, ki, vg)
+        call damping(eq, v, vg, ksi, ki)
 
 !       Differential equation for total power absorption.
         nv0 = nv0 + 1

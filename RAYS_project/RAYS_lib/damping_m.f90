@@ -55,24 +55,25 @@
 !********************************************************************
 
 
- subroutine damping(v, k1, k3, ksi, ki, vg)
+ subroutine damping(eq, v, vg, ksi, ki)
  
 !   Wrapper subroutine to call one of several damping models based on the
 !   value of damping_model
 
-
-!   k1: component of k perpendicular to B (magnitude).
-!   k3: component of k parallel to B (magnitude).
-
     use diagnostics_m, only : message, text_message
     use species_m, only : nspec
+    use equilibrium_m, only : eq_point
 
     implicit none
 
-    real(KIND=rkind), intent(in) :: v(:), k1, k3
+    real(KIND=rkind), intent(in) :: v(:)
+    real(KIND=rkind), intent(in) :: vg(3)    
     real(KIND=rkind), intent(out) :: ksi(0:nspec), ki
 
-    real(KIND=rkind), intent(in) :: vg(3)    
+    type(eq_point), intent(in) :: eq
+    real(KIND=rkind) :: kvec(3)
+    
+    kvec = v(4:6)  
     
     model: select case (trim(damping_model))
 
@@ -87,7 +88,7 @@
 !         
 !         case ('fund_ECH')   ! simple weak damping approximation for fundamental ECH
 !     
-!             call damp_fund_ECH (ksi, ki, vg)
+!             call damp_fund_ECH(eq, v, vg, ksi, ki, vg)
     
         case default
     

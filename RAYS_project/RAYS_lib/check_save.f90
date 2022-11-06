@@ -108,7 +108,7 @@
     nv0 = 7
 
     damp : if (damping_model /= 'no_damp') then    
-        call damping (v, k1, k3, ksi, ki, vg)
+        call damping(eq, v, vg, ksi, ki)
         nv0 = nv0 + 1
 
         total_absorption = v(nv0)
