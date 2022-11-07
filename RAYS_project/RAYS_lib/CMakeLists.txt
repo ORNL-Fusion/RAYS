@@ -39,7 +39,7 @@ list (APPEND lib_sources
 )
 
 add_library (RAYS_lib ${lib_sources})
-target_link_libraries(RAYS_lib spline_lib)
+target_link_libraries(RAYS_lib spline)
 # 
 # target_sources (RAYS_lib
 #                 PRIVATE

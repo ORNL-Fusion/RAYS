@@ -10,7 +10,7 @@ list (APPEND lib_sources
 	splinck.f90
 	zonfind.f90)
 
-add_library (spline_lib ${lib_sources})
+add_library (spline ${lib_sources})
 
 #********************************************
 add_executable (test_pspline)
@@ -24,10 +24,10 @@ target_sources (test_pspline
 target_include_directories (test_pspline
                             PUBLIC
                             $<TARGET_PROPERTY:RAYS_lib,BINARY_DIR>
-                            $<TARGET_PROPERTY:spline_lib,BINARY_DIR>
+                            $<TARGET_PROPERTY:spline,BINARY_DIR>
 )
 target_link_libraries (test_pspline
                        PUBLIC
                        RAYS_lib
-                       spline_lib
+                       spline
 )
