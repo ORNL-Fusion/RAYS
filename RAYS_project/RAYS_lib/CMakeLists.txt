@@ -5,7 +5,7 @@ list (APPEND lib_sources
 	check_save.f90
 	constants_m.f90
 	damping_m.f90
-#	damp_fund_ECH.f90
+	damp_fund_ECH.f90
 	deallocate.f90
 	deriv_cold.f90
 	deriv_num.f90
@@ -39,7 +39,8 @@ list (APPEND lib_sources
 )
 
 add_library (RAYS_lib ${lib_sources})
-target_link_libraries(RAYS_lib spline)
+target_link_libraries(RAYS_lib spline math_functions)
+
 # 
 # target_sources (RAYS_lib
 #                 PRIVATE

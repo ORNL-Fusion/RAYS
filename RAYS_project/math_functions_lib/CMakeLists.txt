@@ -5,9 +5,11 @@ list (APPEND lib_sources
                 $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/fzeta.f>
 
 )
-add_library (zfun ${lib_sources})
+add_library (math_functions ${lib_sources})
 
 #********************************************
+
+SET(CMAKE_RUNTIME_OUTPUT_DIRECTORY "../../tests")
 
 add_executable (test_zfun)
 
@@ -18,7 +20,7 @@ target_sources (test_zfun
 
 target_link_libraries (test_zfun
                        PUBLIC
-                       zfun
+                       math_functions
 )
 
 
