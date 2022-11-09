@@ -5,9 +5,12 @@
 
     integer, parameter :: rkind = selected_real_kind(15,307) ! kind parameter for reals
     integer, parameter :: skind = selected_real_kind(6,37) ! kind parameter single precision
-    integer, parameter :: input_unit = 70 ! Unit number for namelist input file
-    integer, parameter :: output_unit = 75 ! Unit number for formatted ray data output
-    integer, parameter :: ray_list_unit = 74 ! Unit number for formatted ray list output
+
+! unit numbers for persistent files (i.e. ones that stay open all through the run)
+    integer :: input_unit = 70 ! Unit number for namelist input file
+    integer :: output_unit = 75 ! Unit number for formatted ray data output
+    integer :: ray_list_unit = 74 ! Unit number for formatted ray list output
+    integer :: get_unit_number ! Function to find free unit number
  
     complex :: i                ! positive square root of -1
 
@@ -45,6 +48,12 @@
        unlike = - sqrt(1.5) * 1.e25
        nlike = -123454321 
 
+! Set unit numbers for persistent files (i.e. ones that stay open all through the run)
+ 
+      input_unit = get_unit_number
+      output_unit = get_unit_number
+      ray_list_unit = get_unit_number
+      
     end subroutine initialize_constants_m
     
 !********************************************************************
