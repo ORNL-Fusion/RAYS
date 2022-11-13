@@ -88,7 +88,7 @@
 !         
         case ('fund_ECH')   ! simple weak damping approximation for fundamental ECH
     
-            call damp_fund_ECH(eq, v, vg, ksi, ki, vg)
+            call damp_fund_ECH(eq, v, vg, ksi, ki)
     
         case default
     

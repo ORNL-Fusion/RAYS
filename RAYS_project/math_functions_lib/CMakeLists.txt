@@ -1,9 +1,6 @@
 set (lib_sources "")
 list (APPEND lib_sources
-                $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/zfunct.f>
-                $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/zfun0.f90>
-                $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/fzeta.f>
-
+                $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/zfunctions_m.f90>
 )
 add_library (math_functions ${lib_sources})
 
