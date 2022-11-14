@@ -13,6 +13,7 @@
     use species_m, only : nspec, qs, ms
     use ode_m, only : nv
     use equilibrium_m, only : eq_point
+    use zfunctions_m, only : zfun0
 
     implicit none
     
@@ -69,13 +70,7 @@
 !      Z function.
 
           xi = (omgrf+eq%omgc(0)) / (k3*vth)
-
-          if ( abs(xi) < expand_z0 ) then
-             zf = zfun0(cmplx(xi), k3)
-          else
-             zf = -1./xi * (1.+.5/xi**2+.75/xi**4)
-          end if
-
+          zf = zfun0(cmplx(xi), real(k3))
 	
 	P=eq%alpha(0)
 	Q=P/2./(1-B1)
