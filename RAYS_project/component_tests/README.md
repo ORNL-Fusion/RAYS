@@ -5,7 +5,7 @@ links to RAYS\_lib and so can test components in the environment in which they w
 used.  This collection is distinct from the directory "test" which contains stand alone 
 tests that don't link to RAYS\lib of simpler code pieces.
 
-The wrapper code executable "component\tests" lives in RAYS\_project/bin.
+The wrapper code executable "component_tests" lives in RAYS\_project/bin.
 
 As of 11-22-2022 the only test here is is for damp\_fund\_ECH.f90
 
