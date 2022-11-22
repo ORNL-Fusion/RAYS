@@ -12,13 +12,13 @@
     use rf_m, only : omgrf, k0
     use species_m, only : nspec, qs, ms
     use ode_m, only : nv
-    use equilibrium_m, only : eq_point
-    use zfunctions_m, only : zfun0
+    use equilibrium_m, only : eq_point, write_eq_point
+    use zfunctions_m, only : zfun, zfun0
 
     implicit none
     
     type(eq_point), intent(in) :: eq
-    real(KIND=rkind), intent(in) :: v(:)
+    real(KIND=rkind), intent(in) :: v(6) ! N.B. need x and k from v(:), not the rest of it.
     real(KIND=rkind), intent(in) :: vg(3)
     real(KIND=rkind), intent(out) :: ksi(0:nspec), ki
     
@@ -33,6 +33,9 @@
 	
 	COMPLEX D_WARM, DELTA
 
+	ksi(0:nspec) = 0.
+	ki = ksi(0)
+	
 !   kvec (nvec) = k (k/k0) in xyz coordinates (vector)
     kvec = v(4:6)
     nvec = kvec/k0
@@ -48,16 +51,9 @@
       
       B1=eq%gamma(0)
       BETAE=B1**2
-	
 
 ! check if k||=0, if so there is no damping
-
-	if (R3 == 0.) then
-	ksi(0:nspec) = 0.
-	ki = ksi(0)
-	return
-	end if
-		
+	if (R3 == 0.) return		
 
 ! Get warm plasma terms (note: B1 as defined here carries the sign of the
 ! electron charge (i.e. is negative)  Omega-sub-e in the notes does not )
@@ -69,8 +65,13 @@
 
 !      Z function.
 
-          xi = (omgrf+eq%omgc(0)) / (k3*vth)
-          zf = zfun0(cmplx(xi), real(k3))
+    xi = (omgrf+eq%omgc(0)) / (k3*vth)
+
+! Check if arg too large to produce damping
+    if (abs(xi)> 5.) return
+
+    zf = zfun0(cmplx(xi), real(k3))
+!    zf = zfun(cmplx(xi))
 	
 	P=eq%alpha(0)
 	Q=P/2./(1-B1)

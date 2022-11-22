@@ -150,7 +150,6 @@ contains
     integer :: ivec, ivec1, ivec2
 
     equilibria: select case (trim(equilib_model))
-
        case ('slab')
 !         A 1-D slab equilibrium with stratification in x
           call slab_eq(rvec, bvec, gradbtensor, ns, gradns, ts, gradts, equib_err)
@@ -251,10 +250,6 @@ contains
     write(out_unit, *) 'omgc = ', eq%omgc
     write(out_unit, *) 'omgp2 = ', eq%omgp2
     write(out_unit, *) 'alpha = ', eq%omgp2
-    write(out_unit, *) 'gamma = ', eq%gamma
-    write(out_unit, *) 'omgc = ', eq%omgc
-    write(out_unit, *) 'omgp2 = ', eq%omgp2
-    write(out_unit, *) 'alpha = ', eq%alpha
     write(out_unit, *) 'gamma = ', eq%gamma
 
  end  subroutine write_eq_point

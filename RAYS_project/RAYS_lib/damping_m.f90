@@ -66,7 +66,7 @@
 
     implicit none
 
-    real(KIND=rkind), intent(in) :: v(:)
+    real(KIND=rkind), intent(in) :: v(6) ! N.B. need x and k from v(:), not the rest of it.
     real(KIND=rkind), intent(in) :: vg(3)    
     real(KIND=rkind), intent(out) :: ksi(0:nspec), ki
 
@@ -74,7 +74,8 @@
     real(KIND=rkind) :: kvec(3)
     
     kvec = v(4:6)  
-    
+  write(*,*) 'damping damping_model = ', trim(damping_model)
+   
     model: select case (trim(damping_model))
 
         case ('no_damp')    ! do not calculate damping
@@ -86,10 +87,9 @@
 !     
 !             call poynting(v, k1, k3, ksi, ki, vg)
 !         
-        case ('fund_ECH')   ! simple weak damping approximation for fundamental ECH
-    
+        case ('damp_fund_ECH')   ! simple weak damping approximation for fundamental ECH
             call damp_fund_ECH(eq, v, vg, ksi, ki)
-    
+
         case default
     
             write (0, *) 'damping: Unimplemented damping model', trim(damping_model)
