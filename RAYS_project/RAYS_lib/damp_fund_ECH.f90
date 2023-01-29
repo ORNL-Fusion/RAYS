@@ -69,7 +69,6 @@
 
 ! Check if arg too large to produce damping
     if (abs(xi)> 5.) return
-
     zf = zfun0(cmplx(xi), real(k3))
 !    zf = zfun(cmplx(xi))
 	

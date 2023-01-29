@@ -72,9 +72,7 @@
 
     type(eq_point), intent(in) :: eq
     real(KIND=rkind) :: kvec(3)
-    
     kvec = v(4:6)  
-  write(*,*) 'damping damping_model = ', trim(damping_model)
    
     model: select case (trim(damping_model))
 
@@ -90,10 +88,9 @@
         case ('damp_fund_ECH')   ! simple weak damping approximation for fundamental ECH
             call damp_fund_ECH(eq, v, vg, ksi, ki)
 
-        case default
-    
-            write (0, *) 'damping: Unimplemented damping model', trim(damping_model)
-            call text_message('damping: Unimplemented damping model', trim(damping_model), 0)
+        case default   
+            write (*, *) 'damping: Unimplemented damping model ', trim(damping_model)
+            call text_message('damping: Unimplemented damping model:', trim(damping_model), 0)
             stop 1
     
     end select model
