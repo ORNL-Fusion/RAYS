@@ -171,7 +171,7 @@ contains
        case ('linear_2')
 !         Linear: Specify bz0 => Bz(rmin) & slope => dBzdx
           bvec(3) = bz0 + dBzdx*(x - rmin)
-          gradbtensor(1,3) = bz0*dBzdx
+          gradbtensor(1,3) = dBzdx
 
        case default
           write(0,*) 'SLAB: invalid bz_prof_model = ', bz_prof_model
@@ -221,6 +221,7 @@ contains
 
 !   Temperature profile.
     do is = 0, nspec
+
        temperature: select case (trim(t_prof_model(is)))
 
        case ('zero')

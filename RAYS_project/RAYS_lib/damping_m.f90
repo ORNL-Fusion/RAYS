@@ -87,6 +87,7 @@
 !         
         case ('damp_fund_ECH')   ! simple weak damping approximation for fundamental ECH
             call damp_fund_ECH(eq, v, vg, ksi, ki)
+        write(*,*) 'damping: v(1) = ', v(1), 'ki = ', ki
 
         case default   
             write (*, *) 'damping: Unimplemented damping model ', trim(damping_model)
