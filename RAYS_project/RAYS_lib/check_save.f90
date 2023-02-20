@@ -52,6 +52,8 @@
 
     call message ('check_save: ray k-parallel', k3, 1)
     call message ('check_save: ray k-perp', k1, 1)
+    call message ('check_save: ray n-parallel', n3, 1)
+    call message ('check_save: ray n-perp', n1, 1)
 
 !   Calculate the residual.
     
@@ -112,6 +114,7 @@
         nv0 = nv0 + 1
 
         total_absorption = v(nv0)
+        call message ('check_save: ni', ki/k0, 1)
         call message ('check_save: Total absorption', total_absorption, 1)
         if (total_absorption > total_damping_limit) then
             ray_stop%ode_stop_flag = 'total_absorption'

@@ -11,6 +11,7 @@ add_subdirectory (RAYS_lib)
 add_subdirectory (RAYS_code)
 add_subdirectory (ray_scan)
 add_subdirectory (post_process_RAYS)
+add_subdirectory (component_tests)
 
 # These make executables that go into both /bin and /tests
 # Check CMAKE_RUNTIME_OUTPUT_DIRECTORY inside the subdirectories
@@ -23,6 +24,7 @@ SET(CMAKE_RUNTIME_OUTPUT_DIRECTORY "../../tests")
 
 add_subdirectory (splines_lib)
 add_subdirectory (math_functions_lib)
+
 
 # Add the ability to auto generate API documentation with Doxygen
 # find_package (Doxygen)

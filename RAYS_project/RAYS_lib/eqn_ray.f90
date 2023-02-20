@@ -38,7 +38,8 @@
 
     real(KIND=rkind) :: rvec(3)
     real(KIND=rkind) :: kvec(3), k1, k3
-    real(KIND=rkind) :: nvec(3) 
+    real(KIND=rkind) :: nvec(3)
+    real(KIND=rkind) :: v_xk(6) ! N.B. damping() needs x and k from v(:), not the rest of it.
 
 !   Derived type containing equilibrium data for a spatial point in the plasma
     type(eq_point) :: eq
@@ -191,7 +192,8 @@
 ! Damping Calculate ksi and ki.
     damp : if (damping_model /= 'no_damp') then    
     
-        call damping(eq, v, vg, ksi, ki)
+        v_xk = v(1:6) ! N.B. damping() needs x and k from v(:), not the rest of it.
+        call damping(eq, v_xk, vg, ksi, ki)
 
 !       Differential equation for total power absorption.
         nv0 = nv0 + 1

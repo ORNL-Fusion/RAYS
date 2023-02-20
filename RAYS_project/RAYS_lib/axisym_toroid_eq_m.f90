@@ -207,8 +207,8 @@ contains
           gradts(:,is) = 0.
 
         case ('constant')
-          ts(:nspec) = t0s(:nspec)
-          gradns = 0.
+          ts(is) = t0s(is)
+          gradts = 0.
 
        case ('parabolic')
 !      Parabolic: N.B. psi goes something like r**2 so if alphan2 = 1 and alphan1 = 2

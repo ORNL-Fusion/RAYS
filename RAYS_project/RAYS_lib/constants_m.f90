@@ -10,7 +10,6 @@
     integer :: input_unit = 70 ! Unit number for namelist input file
     integer :: output_unit = 75 ! Unit number for formatted ray data output
     integer :: ray_list_unit = 74 ! Unit number for formatted ray list output
-    integer :: get_unit_number ! Function to find free unit number
  
     complex :: i                ! positive square root of -1
 
@@ -26,6 +25,8 @@
 
  contains
     subroutine initialize_constants_m
+       integer :: get_unit_number ! Function to find free unit number
+       external get_unit_number
 
        i = (0.,1.)
        pi = 3.1415926535897932385
@@ -47,12 +48,6 @@
 
        unlike = - sqrt(1.5) * 1.e25
        nlike = -123454321 
-
-! Set unit numbers for persistent files (i.e. ones that stay open all through the run)
- 
-      input_unit = get_unit_number
-      output_unit = get_unit_number
-      ray_list_unit = get_unit_number
       
     end subroutine initialize_constants_m
     

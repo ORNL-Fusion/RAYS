@@ -1,4 +1,14 @@
 module slab_eq_m
+! Simple models for plasma stratified in x and uniform in y and z useful for testing and
+! benchmarking.  There are several different models for each quantity.  
+
+! The coding is self explanatory, however some comments about the linear_2 models might be
+! useful.  For these one specifies the quantity at x = rmin and the slope there.  If any
+! of the models are linear_2, then to make the x ranges consistent, all the models should 
+! be linear_2, zero, or constant.  The only complication is that in the subroutine 
+! write_slab_profiles() rmaj now serves the role of max value of x for writing.  The 
+! motivation for linear_2 is added flexibility in specifying the independent coordinate,
+! for example using the density or B field as a plotting axis coordinate.
 
     use constants_m, only : rkind
     
@@ -8,6 +18,7 @@ module slab_eq_m
     character(len=12) :: bx_prof_model, by_prof_model, bz_prof_model
     real(KIND=rkind) :: bx0, by0, bz0
     real(KIND=rkind) :: Ln_scale, LT_scale, LBy_shear_scale, LBz_scale
+    real(KIND=rkind) :: dBzdx, dndx, dtdx
 
 ! data for slab density and temperature
     character(len=60) :: dens_prof_model
@@ -24,7 +35,7 @@ module slab_eq_m
  namelist /slab_eq_list/ &
      & bx_prof_model, by_prof_model, bz_prof_model, bx0, by0, bz0,                    &
      & rmaj, rmin, dens_prof_model, alphan1, alphan2, t_prof_model, alphat1, alphat2, &
-     & Ln_scale, LT_scale, LBy_shear_scale, LBz_scale, &
+     & Ln_scale, LT_scale, LBy_shear_scale, LBz_scale, dBzdx, dndx, dtdx, &
      & xmin, xmax, ymin, ymax, zmin, zmax
      
 !********************************************************************
@@ -44,6 +55,8 @@ contains
 
     allocate( t_prof_model(0:nspec) )
     allocate( alphat1(0:nspec), alphat2(0:nspec) )
+    alphat1 = 0.
+    alphat2 = 0.
 
     if (read_input .eqv. .true.) then    
         open(unit=input_unit, file='rays.in',action='read', status='old', form='formatted')
@@ -73,7 +86,7 @@ contains
 !   Checks for some error conditions and sets equib_err for outside handling.  Does not
 !   stop.
 
-    use species_m, only : nspec, n0s, t0s
+    use species_m, only : nspec, n0s, t0s, eta
     use diagnostics_m, only : message_unit, message
     
     implicit none
@@ -82,7 +95,7 @@ contains
     real(KIND=rkind), intent(out) :: bvec(3), gradbtensor(3,3)
     real(KIND=rkind), intent(out) :: ns(0:nspec), gradns(3,0:nspec)
     real(KIND=rkind), intent(out) :: ts(0:nspec), gradts(3,0:nspec)
-    character(len=20), intent(out) :: equib_err
+    character(len=60), intent(out) :: equib_err
 
     real(KIND=rkind) :: x, y, z
     integer :: is
@@ -97,9 +110,8 @@ contains
     if (x < xmin .or. x > xmax) equib_err = 'x out_of_bounds'
     if (y < ymin .or. y > ymax) equib_err = 'y out_of_bounds'
     if (z < zmin .or. z > zmax) equib_err = 'z out_of_bounds'
-    
     if (equib_err /= '') then
-        write (message_unit, *) 'slab_eq:  equib_err ', equib_err
+        write (message_unit, *) 'slab_eq:  equib_err ', trim(equib_err)
         return
     end if
 
@@ -114,9 +126,12 @@ contains
           stop 1
 
     end select bx
-
+ 
 !   Calculate By, and d(By)/dx.
     by: select case (trim(by_prof_model))
+
+       case ('zero')
+          bvec(2) = 0.
 
        case ('constant')
           bvec(2) = by0
@@ -132,7 +147,7 @@ contains
           gradbtensor(1,2) = by0 / LBy_shear_scale
 
        case default
-          write(0,*) 'SLAB: invalid by_prof_model = ', by_prof_model
+          write(*,*) 'SLAB: invalid by_prof_model = ', by_prof_model
           stop 1
 
     end select by
@@ -153,6 +168,11 @@ contains
           bvec(3) = bz0 * (1.+x/LBz_scale)
           gradbtensor(1,3) = bz0/LBz_scale
 
+       case ('linear_2')
+!         Linear: Specify bz0 => Bz(rmin) & slope => dBzdx
+          bvec(3) = bz0 + dBzdx*(x - rmin)
+          gradbtensor(1,3) = dBzdx
+
        case default
           write(0,*) 'SLAB: invalid bz_prof_model = ', bz_prof_model
           stop 1
@@ -160,7 +180,7 @@ contains
     end select bz
 
 !   Density profile.
-    
+   
     density: select case (trim(dens_prof_model))
 
         case ('constant')
@@ -172,6 +192,12 @@ contains
             ns = n0s(:nspec)*(1.0 + x/Ln_scale)
             gradns = 0.
             gradns(1,0:nspec) = n0s(0:nspec) * (1.0/Ln_scale)
+
+        case ('linear_2')
+!         Linear: Specify n0s => ns(rmin) & slope => dndx
+            ns = n0s(:nspec) + dndx*eta*(x - rmin)
+            gradns = 0.
+            gradns(1,0:nspec) = n0s(0:nspec) * dndx
 
         case ('parabolic')
 !       Parabolic around x = rmin
@@ -194,9 +220,9 @@ contains
     end select density
 
 !   Temperature profile.
-    
     do is = 0, nspec
-       temperature: select case (t_prof_model(is))
+
+       temperature: select case (trim(t_prof_model(is)))
 
        case ('zero')
           ts(is) = 0.
@@ -210,6 +236,13 @@ contains
 !       Linear with scale length rmin
             ts(is)=t0s(is)*(1.+x/LT_scale)
             gradts(1,is) = t0s(is) * (1./LT_scale)
+            gradts(2:3,is) = 0.
+
+        case ('linear_2')
+!         Linear: Specify t0s => ns(rmin) & slope => dtdx
+            ts(is)=t0s(is) + dtdx*(x - rmin)
+            gradts(1,is) = t0s(is) * dtdx
+            gradts(2:3,is) = 0.
 
        case ('parabolic')
 !         Parabolic around x = rmin
@@ -240,7 +273,7 @@ contains
 
     implicit none
     
-    real(KIND=rkind) :: dx, x
+    real(KIND=rkind) :: dx, x, xstart
     real(KIND=rkind) :: rvec(3) 
     real(KIND=rkind) :: bvec(3), gradbtensor(3,3)
     real(KIND=rkind) :: ns(0:nspec), gradns(3,0:nspec)
@@ -255,17 +288,23 @@ contains
     character (len = *), parameter :: b12 = '            '
     
     dx = 2.*rmin/(nx_points-1)
+    xstart = -rmin
+
+    if (trim(bz_prof_model) == 'linear_2') then
+		xstart = rmin
+		dx = (rmaj - rmin)/(nx_points-1)
+    end if
     
     write (message_unit,*) '    x', b9,'ne', b12, 'bx', b9, 'by', b9, 'bz', b9, 'Te',b9, 'Ti(s)'
 
     do ip = 1, nx_points
-        x = -rmin + (ip-1)*dx
+        x = xstart + (ip-1)*dx
         rvec( : ) = (/ x, real(0.,KIND=rkind), real(0.,KIND=rkind) /)
         call slab_eq(rvec, bvec, gradbtensor, ns, gradns, ts, gradts, equib_err)
         write (message_unit,'(f11.5, a, e12.5, 3f11.5, 7f11.5)') &
                & x,'  ', ns(0), bvec, (ts(i), i=0, nspec)
     end do
-        
+       
  end subroutine write_slab_profiles
     
 !********************************************************************
