@@ -6,7 +6,7 @@
 ! (DBB 11-1-2022) Adapted to new RAYS_lib environment
 !
 
-    SUBROUTINE DAMP_FUND_ECH(eq, v, vg, ksi, ki)
+    SUBROUTINE DAMP_FUND_ECH(eq, v_kx, vg, ksi, ki)
 
     use constants_m, only : clight, rkind
     use rf_m, only : omgrf, k0
@@ -18,7 +18,7 @@
     implicit none
     
     type(eq_point), intent(in) :: eq
-    real(KIND=rkind), intent(in) :: v(6) ! N.B. need x and k from v(:), not the rest of it.
+    real(KIND=rkind), intent(in) :: v_kx(6) ! N.B. need x and k from v(:), not the rest of it.
     real(KIND=rkind), intent(in) :: vg(3)
     real(KIND=rkind), intent(out) :: ksi(0:nspec), ki
     
@@ -37,7 +37,7 @@
 	ki = ksi(0)
 	
 !   kvec (nvec) = k (k/k0) in xyz coordinates (vector)
-    kvec = v(4:6)
+    kvec = v_kx(4:6)
     nvec = kvec/k0
 
 ! 1 and 3 below refer to perp and parallel to B               
@@ -119,6 +119,8 @@
     ksi(0) = k0 * aimag(DELTA)
 	ksi(1:nspec) = 0.
 	ki = ksi(0)
+	
+!		  write(*, *) 'x, eq%bmag, DELTA, ki = ', x, eq%bmag, DELTA, ki
 	
       RETURN
       END
