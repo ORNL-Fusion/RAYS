@@ -4,6 +4,7 @@
     use constants_m, only : input_unit, output_unit, ray_list_unit
     
     use damping_slab_test_m, only : init_damping_slab_test, damping_slab_test
+    use read_results_LD_test_m, only : init_read_results_LD_test, read_results_LD_test
 
     implicit none 
     logical :: read_input = .true.
@@ -28,6 +29,10 @@
        case ('damping_slab')
           call init_damping_slab_test(read_input)
           call damping_slab_test
+
+       case ('read_results_LD')
+          call init_read_results_LD_test(read_input)
+          call read_results_LD_test
 
        case default
           write(*,*) 'Unimplemented component tester =', trim(test_name)

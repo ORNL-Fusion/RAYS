@@ -104,13 +104,14 @@ contains
     
     implicit none
     
-    integer :: results_star_unit
+    integer :: results_star_unit, get_unit_number
     
  !  File name for  output
     character(len=80) :: out_filename
    
     ! Open fortran ascii file for results output
-    results_star_unit = 59 
+!    results_star_unit = 59 
+    results_star_unit = get_unit_number 
     out_filename = 'run_results.'//trim(run_label)
     open(unit=results_star_unit, file=trim(out_filename), &
        & action='write', status='replace', form='formatted')     
@@ -152,6 +153,162 @@ contains
     close(unit=results_star_unit)
 
     end subroutine write_results_LD
+
+!****************************************************************************
+
+    subroutine read_results_LD(in_filename)
+    
+	use diagnostics_m, only : run_label, date_v
+	use ray_init_m, only : nray  ! Number of rays initialized
+	use ode_m, only : nv, nstep_max ! dimension of ray vector, max number of steps allowed
+    
+    implicit none
+    
+ !  File name for input
+    character(len=80), intent(in) :: in_filename
+    character(len=80) :: var_name
+    
+    integer :: results_star_unit, get_unit_number
+    ! Open fortran ascii file for results output
+
+    results_star_unit = get_unit_number()
+    open(unit=results_star_unit, file=trim(in_filename), &
+       & action='read', status='old', form='formatted')
+
+! Read scalars and date_v which is fixed length -> integer :: date_v(8)
+
+    read (results_star_unit,*) var_name
+    if (var_name .ne. 'RAYS_run_label') then
+    	write(*,*) 'read_results_LD: inconsistent variable name = ', var_name
+    	stop
+    end if
+    read (results_star_unit,*) RAYS_run_label
+
+    read (results_star_unit,*) var_name
+    if (var_name .ne. 'date_vector') then
+    	write(*,*) 'read_results_LD: inconsistent variable name = ', var_name
+    	stop
+    end if
+    read (results_star_unit,*) date_vector
+
+    read (results_star_unit,*) var_name
+    if (var_name .ne. 'number_of_rays') then
+    	write(*,*) 'read_results_LD: inconsistent variable name = ', var_name
+    	stop
+    end if
+    read (results_star_unit,*) number_of_rays
+
+    read (results_star_unit,*) var_name
+    if (var_name .ne. 'max_number_of_steps') then
+    	write(*,*) 'read_results_LD: inconsistent variable name = ', var_name
+    	stop
+    end if
+    read (results_star_unit,*) max_number_of_steps
+
+    read (results_star_unit,*) var_name
+    if (var_name .ne. 'dim_v_vector') then
+    	write(*,*) 'read_results_LD: inconsistent variable name = ', var_name
+    	stop
+    end if
+    read (results_star_unit,*) dim_v_vector
+
+! If the arrays are already allocated deallocate them and reallocate with dimensions just read
+
+	if (allocated(ray_vec)) call deallocate_ray_results_m
+	allocate (ray_vec(nv, nstep_max+1, nray))
+	allocate (residual(nstep_max, nray))
+	allocate (npoints(nray))
+	allocate (ray_trace_time(nray))
+	allocate (end_ray_parameter(nray))
+	allocate (end_residuals(nray))
+	allocate (max_residuals(nray))
+	allocate (start_ray_vec(nv, nray))
+	allocate (end_ray_vec(nv, nray))
+	allocate (ray_stop_flag(nray))
+	
+
+! Read arrays
+
+    read (results_star_unit,*) var_name
+    if (var_name .ne. 'npoints') then
+    	write(*,*) 'read_results_LD: inconsistent variable name = ', var_name
+    	stop
+    end if
+    read (results_star_unit,*) npoints
+
+    read (results_star_unit,*) var_name
+    if (var_name .ne. 'run_trace_time') then
+    	write(*,*) 'read_results_LD: inconsistent variable name = ', var_name
+    	stop
+    end if
+    read (results_star_unit,*) run_trace_time
+
+    read (results_star_unit,*) var_name
+    if (var_name .ne. 'ray_trace_time') then
+    	write(*,*) 'read_results_LD: inconsistent variable name = ', var_name
+    	stop
+    end if
+    read (results_star_unit,*) ray_trace_time
+
+    read (results_star_unit,*) var_name
+    if (var_name .ne. 'end_ray_parameter') then
+    	write(*,*) 'read_results_LD: inconsistent variable name = ', var_name
+    	stop
+    end if
+    read (results_star_unit,*) end_ray_parameter
+
+    read (results_star_unit,*) var_name
+    if (var_name .ne. 'end_residuals') then
+    	write(*,*) 'read_results_LD: inconsistent variable name = ', var_name
+    	stop
+    end if
+    read (results_star_unit,*) end_residuals
+
+    read (results_star_unit,*) var_name
+    if (var_name .ne. 'max_residuals') then
+    	write(*,*) 'read_results_LD: inconsistent variable name = ', var_name
+    	stop
+    end if
+    read (results_star_unit,*) max_residuals
+
+    read (results_star_unit,*) var_name
+    if (var_name .ne. 'ray_stop_flag') then
+    	write(*,*) 'read_results_LD: inconsistent variable name = ', var_name
+    	stop
+    end if
+    read (results_star_unit,*) ray_stop_flag
+
+    read (results_star_unit,*) var_name
+    if (var_name .ne. 'start_ray_vec') then
+    	write(*,*) 'read_results_LD: inconsistent variable name = ', var_name
+    	stop
+    end if
+    read (results_star_unit,*) start_ray_vec
+
+    read (results_star_unit,*) var_name
+    if (var_name .ne. 'end_ray_vec') then
+    	write(*,*) 'read_results_LD: inconsistent variable name = ', var_name
+    	stop
+    end if
+    read (results_star_unit,*) end_ray_vec
+
+    read (results_star_unit,*) var_name
+    if (var_name .ne. 'residual') then
+    	write(*,*) 'read_results_LD: inconsistent variable name = ', var_name
+    	stop
+    end if
+    read (results_star_unit,*) residual
+
+    read (results_star_unit,*) var_name
+    if (var_name .ne. 'ray_vec') then
+    	write(*,*) 'read_results_LD: inconsistent variable name = ', var_name
+    	stop
+    end if
+    read (results_star_unit,*) ray_vec
+
+    close(unit=results_star_unit)
+
+    end subroutine read_results_LD
     
 !********************************************************************
 
@@ -159,6 +316,7 @@ contains
         deallocate (ray_vec)
         deallocate (residual)
         deallocate (npoints)
+        deallocate (ray_trace_time)
         deallocate (end_ray_parameter)
         deallocate (end_residuals)
         deallocate (max_residuals)
