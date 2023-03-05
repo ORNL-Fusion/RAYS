@@ -1,11 +1,12 @@
  MODULE bin_to_uniform_grid_m
 
 ! generic procedure: uniform grid binner to accumulate an extensive quantity, Q, into a
-! set of uniformly spaced bins in x.  For example to discretize the power absorbed from
-! a wave as it propagates in x, giving the local profile of power deposition.
+! set of uniformly spaced bins in coordinate x (such as psi).  For example to discretize 
+! the power absorbed from a wave as it propagates in space, giving the local profile of
+! power deposition in psi.
 
 ! Input Q(:): Extensive quantity to be distributed over x bins.
-! Input x(:) Strictly increasing parameter vector.  size(x) must equal size(Q))
+! Input xQ(:) Grid parameter vector of Q. -> N.B. size(xQ) must equal size(Q))
 ! Input xmin: Scalar value of left edge of lowest bin
 ! Input xmax: Scalar value of right edge of highest bin
 
@@ -23,10 +24,10 @@
     CONTAINS
  !*********************************************************************************
 
-    SUBROUTINE binner_single(Q, x, xmin, xmax, binned_Q, ierr)
+    SUBROUTINE binner_single(Q, xQ, xmin, xmax, binned_Q, ierr)
     
         IMPLICIT NONE
-        REAL(kind = skind), INTENT(IN) :: Q(:), x(:)
+        REAL(kind = skind), INTENT(IN) :: Q(:), xQ(:)
         REAL(kind = skind), INTENT(IN) :: xmin, xmax
         REAL(kind = skind), INTENT(INOUT) :: binned_Q(:)
         INTEGER, INTENT(OUT) :: ierr
@@ -41,19 +42,19 @@
         
         ierr = 0
         
-! Check that s(:), Q(:), x(:) are all the same size
-		if (size(x) .ne. size(Q)) then
+! Check that Q(:), xQ(:) are the same size
+		if (size(xQ) .ne. size(Q)) then
 			write(*,*) 'uniform_grid_binner: Input arrays sizes inconsistent ', &
-			&   '  size(Q) = ', size(Q), '   size(x) = ', size(x)
+			&   '  size(Q) = ', size(Q), '   size(x) = ', size(xQ)
 			ierr = 1
 			return
 		end if
 		
-		nx = size(x)
+		nx = size(xQ)
 		
 ! Check that xmin <= all x <= xmax
-		x_low = minval(x)
-		x_high = maxval(x)
+		x_low = minval(xQ)
+		x_high = maxval(xQ)
 		
 		write(*,*) 'x_low, x_high', x_low, x_high
 		
@@ -69,9 +70,9 @@
 		x_range = xmax - xmin
 		bin_width = x_range/n_bins
 
-		s_loop: do is = 2, nx
-			x_low = x(is-1)
-			x_high = x(is)
+		x_loop: do is = 2, nx
+			x_low = xQ(is-1) ! N.B. Reusing x_low, x_high to avoid inventing new names.
+			x_high = xQ(is)
 			
 			! find bin indices: xmin .le. x < xmin+bin_width -> bin 1
 			! xmax-bin_width < x .le. xmax -> bin n_bins
@@ -113,17 +114,17 @@
 				end if
 			end if
 						
-		end do s_loop
+		end do x_loop
     
     RETURN
     END SUBROUTINE binner_single
  !*********************************************************************************
     
 
-    SUBROUTINE binner_real(Q, x, xmin, xmax, binned_Q, ierr)
+    SUBROUTINE binner_real(Q, xQ, xmin, xmax, binned_Q, ierr)
     
         IMPLICIT NONE
-        REAL(kind = rkind), INTENT(IN) :: Q(:), x(:)
+        REAL(kind = rkind), INTENT(IN) :: Q(:), xQ(:)
         REAL(kind = rkind), INTENT(IN) :: xmin, xmax
         REAL(kind = rkind), INTENT(INOUT) :: binned_Q(:)
         INTEGER, INTENT(OUT) :: ierr
@@ -138,19 +139,19 @@
         
         ierr = 0
         
-! Check that s(:), Q(:), x(:) are all the same size
-		if (size(x) .ne. size(Q)) then
+! Check that Q(:), xQ(:) are the same size
+		if (size(xQ) .ne. size(Q)) then
 			write(*,*) 'uniform_grid_binner: Input arrays sizes inconsistent ', &
-			&   '  size(Q) = ', size(Q), '   size(x) = ', size(x)
+			&   '  size(Q) = ', size(Q), '   size(x) = ', size(xQ)
 			ierr = 1
 			return
 		end if
 		
-		nx = size(x)
+		nx = size(xQ)
 		
 ! Check that xmin <= all x <= xmax
-		x_low = minval(x)
-		x_high = maxval(x)
+		x_low = minval(xQ)
+		x_high = maxval(xQ)
 		
 		write(*,*) 'x_low, x_high', x_low, x_high
 		
@@ -166,9 +167,9 @@
 		x_range = xmax - xmin
 		bin_width = x_range/n_bins
 
-		s_loop: do is = 2, nx
-			x_low = x(is-1)
-			x_high = x(is)
+		x_loop: do is = 2, nx
+			x_low = xQ(is-1) ! N.B. Reusing x_low, x_high to avoid inventing new names.
+			x_high = xQ(is)
 			
 			! find bin indices: xmin .le. x < xmin+bin_width -> bin 1
 			! xmax-bin_width < x .le. xmax -> bin n_bins
@@ -203,14 +204,14 @@
 				binned_Q(index_high) = binned_Q(index_high) + Q_incrH
 			
 				if (delta_i > 1) then ! increment middle bins by Q_density
-					Q_density = delta_Q/bin_width
+					Q_density = delta_Q/(Rindex_high - Rindex_low)
 					do i = index_low + 1, index_high - 1
 						binned_Q(i) = binned_Q(i) + Q_density
 					end do
 				end if
 			end if
 						
-		end do s_loop
+		end do x_loop
     
     RETURN
     END SUBROUTINE binner_real

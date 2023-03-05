@@ -21,12 +21,12 @@
     integer :: number_of_rays, max_number_of_steps, dim_v_vector
 
 ! ray data    
-    real(KIND=rkind), allocatable :: ray_vec(:,:,:)
-    real(KIND=rkind), allocatable :: residual(:,:)
-    integer, allocatable :: npoints(:)
+    real(KIND=rkind), allocatable :: ray_vec(:,:,:) ! nv, nstep_max+1, nray
+    real(KIND=rkind), allocatable :: residual(:,:)  ! nstep_max, nray
+    integer, allocatable :: npoints(:)              ! nray
 
 ! Summary data
-    real(KIND=rkind), allocatable :: ray_trace_time(:)
+    real(KIND=rkind), allocatable :: ray_trace_time(:) 
     real(KIND=rkind), allocatable :: end_residuals(:) 
     real(KIND=rkind), allocatable :: max_residuals(:) 
     real(KIND=rkind), allocatable :: end_ray_parameter(:)
@@ -110,7 +110,6 @@ contains
     character(len=80) :: out_filename
    
     ! Open fortran ascii file for results output
-!    results_star_unit = 59 
     results_star_unit = get_unit_number 
     out_filename = 'run_results.'//trim(run_label)
     open(unit=results_star_unit, file=trim(out_filename), &
