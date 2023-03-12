@@ -5,6 +5,7 @@
     
     use damping_slab_test_m, only : init_damping_slab_test, damping_slab_test
     use read_results_LD_test_m, only : init_read_results_LD_test, read_results_LD_test
+!    use profile_calculation_test_m, only : init_profile_calculation_test, profile_calculation_test
 
     implicit none 
     logical :: read_input = .true.
@@ -33,6 +34,10 @@
        case ('read_results_LD')
           call init_read_results_LD_test(read_input)
           call read_results_LD_test
+
+!        case ('profile_calculation')
+!           call init_profile_calculation_test(read_input)
+!           call profile_calculation_test
 
        case default
           write(*,*) 'Unimplemented component tester =', trim(test_name)

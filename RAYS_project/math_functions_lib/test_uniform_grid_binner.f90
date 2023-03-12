@@ -12,7 +12,7 @@ program test_uniform_grid_binner_m
     REAL(kind = rkind) :: pi = 3.1415926535897931
 
 
-    INTEGER, PARAMETER :: nx = 103, n_bins = 5
+    INTEGER, PARAMETER :: nx = 103, n_bins = 20
     REAL(kind = skind) :: Q(nx), x(nx), binned_Q(n_bins)
     REAL(kind = skind) ::  xmin, xmax, delta_x
 
@@ -160,6 +160,60 @@ program test_uniform_grid_binner_m
 	write(*,*) sum(binned_Qr)
 	write(*,*)
 
+
+!*****************************************************************************
+! Test with points outside [xmin, xmax]
+!*****************************************************************************
+
+	write(*,*) '************************************************************************'
+	write(*,*) 'Test with points outside [xmin, xmax]'
+	write(*,*) '************************************************************************'
+	write(*,*)
+    
+    xmin = 0.
+    xmax = 1.
+    delta_x = (xmax - xmin)/real(nx-1)
+	write(*,*)
+	write(*,*) 'delta_x = ', delta_x
+	write(*,*)
+    
+    do ix = 1, nx
+    	x(ix) = delta_x*(ix-1) - 0.05
+    	Q(ix) = x(ix) + 0.05
+    end do
+ 
+!  	write(*,*) 'Q'
+! 	write(*,*) Q
+   
+	call bin_to_uniform_grid(Q, x, xmin, xmax, binned_Q, ierr)
+
+	write(*,*)
+	write(*,*) 'binned_Q linear, x shifted -0.05'
+	write(*,*) binned_Q
+	write(*,*)
+	write(*,*) 'sum(binned_Q, x shifted -0.05)'
+	write(*,*) sum(binned_Q)
+	write(*,*)
+    
+    do ix = 1, nx
+    	x(ix) = delta_x*(ix-1) + 0.05
+    	Q(ix) = x(ix) - 0.05
+    end do
+ 
+!  	write(*,*) 'Q'
+! 	write(*,*) Q
+   
+	call bin_to_uniform_grid(Q, x, xmin, xmax, binned_Q, ierr)
+
+	write(*,*)
+	write(*,*) 'binned_Q linear, x shifted +0.05'
+	write(*,*) binned_Q
+	write(*,*)
+	write(*,*) 'sum(binned_Q, x shifted +0.05)'
+	write(*,*) sum(binned_Q)
+	write(*,*)
+
+! Test long constant anomaly
  write (*,*) 'sin(pis) = ', sin(pis), '    4.*atan(1.) = ', 4.*atan(1.)
  write (*,*) 'sin(pi) = ', sin(pi), '    pi = ', pi
  write (*,*) 'sin(pir) = ', sin(pir), '    4._rkind*atan(1._rkind) = ', 4._rkind*atan(1._rkind)
