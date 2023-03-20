@@ -70,7 +70,6 @@ contains
 !
 ! External procedures: Only from module use.
 
-    use constants_m, only : input_unit
     use diagnostics_m, only: message_unit, message, text_message
     use species_m, only : nspec
     use equilibrium_m, only : equilibrium, eq_point, write_eq_point
@@ -85,6 +84,8 @@ contains
     type(eq_point(nspec=nspec)) :: eq
     real(KIND=rkind), allocatable, intent(out) :: rvec0(:, :), rindex_vec0(:, :)
     real(KIND=rkind), allocatable, intent(out) :: ray_pwr_wt(:)
+
+	integer :: input_unit, get_unit_number ! External, free unit finder
     
     integer :: iray, itheta, i_ntheta, i_nphi, count
     real(KIND=rkind) :: x, z, rmin_launch, theta, rindex_theta, rindex_phi, n2, n3
@@ -99,6 +100,7 @@ contains
     write(*,*) 'ray_init_axisym_toroid_nphi_ntheta '
     
 ! Read and write input namelist
+    input_unit = get_unit_number()
     open(unit=input_unit, file='rays.in',action='read', status='old', form='formatted')
     read(input_unit, axisym_toroid_ray_init_nphi_ntheta_list)
     close(unit=input_unit)

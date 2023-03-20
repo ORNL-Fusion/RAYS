@@ -61,12 +61,13 @@ contains
 
   subroutine initialize_scanner_m(read_input)
 
-    use constants_m, only : input_unit
     use diagnostics_m, only : message_unit, verbosity, run_label
 	use ode_m, only : nv ! dimension of ray vector
    
     implicit none
     logical, intent(in) :: read_input
+	integer :: input_unit, get_unit_number ! External, free unit finder   
+
     integer :: i_run
     character (len=4) :: chr_iter_number
 
@@ -74,6 +75,7 @@ contains
     write(*,*) 'initialize_scanner_m'
 
     if (read_input .eqv. .true.) then    
+   		input_unit = get_unit_number()
         open(unit=input_unit, file='rays.in',action='read', status='old', form='formatted')
         read(input_unit, scanner_list)
         close(unit=input_unit)

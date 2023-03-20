@@ -11,7 +11,7 @@ program solovev_2_eqdsk
 !      file name to be 'rays.in', that is also the namelist file name for this code, 
 !      although a more descriptive name would be 'solovev_2_eqdsk.in'
 
-  use constants_m, only : rkind, input_unit, output_unit
+  use constants_m, only : rkind
   use diagnostics_m, only : initialize_diagnostics  
   use solovev_magnetics_m, only : initialize_solovev_magnetics, solovev_magnetics, &
         & solovev_magnetics_psi, rmaj, kappa, bphi0, iota0, psiB
@@ -24,7 +24,9 @@ program solovev_2_eqdsk
   
   implicit none
 
+  integer :: input_unit, get_unit_number ! External, free unit finder   
   character (len = 100) :: eqdsk_file_name
+
 
 ! N.B. The variables "box_..."" also appear in module solovev_magnetics_m.  They are
 !      declared here because they are needed as arguments in initialize_solovev_magnetics().
@@ -50,6 +52,7 @@ program solovev_2_eqdsk
 
 
  open(unit=input_unit, file='rays.in', action='read', status='old', form='formatted')
+ input_unit = get_unit_number()
  read(input_unit, solovev_2_eqdsk_list)
  close(unit=input_unit)
  write(*, solovev_2_eqdsk_list)

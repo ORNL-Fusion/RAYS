@@ -21,27 +21,34 @@
 	integer :: n_boundary_points
 ! R,Z boundary points
     real(KIND=rkind), allocatable :: R_boundary(:), Z_boundary(:)
+
+	logical :: calculate_dep_profiles, write_dep_profiles
     
-    namelist /axisym_toroid_processor_list/ processor, num_plot_k_vectors, scale_k_vec, set_XY_lim
+    namelist /axisym_toroid_processor_list/ processor, num_plot_k_vectors, scale_k_vec,&
+             & set_XY_lim, calculate_dep_profiles, write_dep_profiles
 
  contains
 
  subroutine initialize_axisym_toroid_processor(read_input)
 
     use diagnostics_m, only : message_unit, message, text_message
-    use constants_m, only : input_unit
+	use deposition_profiles_m, only : initialize_deposition_profiles
 
     implicit none
     logical, intent(in) :: read_input
+	 integer :: input_unit, get_unit_number ! External, free unit finder   
  
     if (read_input .eqv. .true.) then    
     ! Read and write input namelist
+  		input_unit = get_unit_number()
         open(unit=input_unit, file='post_process_rays.in',action='read', status='old', form='formatted')
         read(input_unit, axisym_toroid_processor_list)
         close(unit=input_unit)
         write(message_unit, axisym_toroid_processor_list)
         call text_message('Finished initialize_axisym_toroid_processor ', processor)
     end if
+
+	if (calculate_dep_profiles .eqv. .true.) call initialize_deposition_profiles(read_input)
     
     return
  end subroutine initialize_axisym_toroid_processor
@@ -52,10 +59,15 @@
 
     use constants_m, only : rkind
     use diagnostics_m, only : message_unit, message, text_message
+    use deposition_profiles_m, only : calculate_deposition_profiles, write_deposition_profiles
 
     implicit none
     
     call write_graphics_description_file
+
+    if (calculate_dep_profiles .eqv. .true.) call calculate_deposition_profiles
+
+    if (write_dep_profiles .eqv. .true.) call write_deposition_profiles
     
     call text_message('Finished axisym_toroid_processor work')
 

@@ -7,7 +7,7 @@ program compare_analyt_2_interp
 !      file name to be 'rays.in', that is also the namelist file name for this code, 
 !      although a more descriptive name would be 'solovev_2_eqdsk.in'
 
-  use constants_m, only : rkind, input_unit, output_unit
+  use constants_m, only : rkind
   
   use solovev_magnetics_m, only : initialize_solovev_magnetics, solovev_magnetics, &
         & solovev_magnetics_psi, rmaj, kappa, bphi0, iota0, psiB
@@ -17,6 +17,7 @@ program compare_analyt_2_interp
   
   implicit none
 
+  integer :: input_unit, get_unit_number ! External, free unit finder   
   character (len = 100) :: eqdsk_file_name
 
     ! Magnetic axis
@@ -53,7 +54,7 @@ program compare_analyt_2_interp
   namelist /compare_analyt_2_interp_list/ &
      & n_Rgrid, n_Zgrid
 
-
+ input_unit = get_unit_number()
  open(unit=input_unit, file='rays.in', action='read', status='old', form='formatted')
  read(input_unit, compare_analyt_2_interp_list)
  close(unit=input_unit)

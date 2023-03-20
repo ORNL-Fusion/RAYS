@@ -30,7 +30,6 @@ contains
                & box_rmin, box_rmax, box_zmin, box_zmax, &
                & inner_bound, outer_bound, upper_bound, lower_bound)
 
-    use constants_m, only : input_unit
     use species_m, only : nspec
     use diagnostics_m, only : message, message_unit, verbosity
  !   use eqdsk_utilities_m, only : ReadgFile, R_grid, Z_grid, dR, dZ
@@ -44,6 +43,7 @@ contains
     implicit none
     
     logical, intent(in) :: read_input
+	integer :: input_unit, get_unit_number ! External, free unit finder
 
 ! Geometry data
     ! Magnetic axis
@@ -58,6 +58,7 @@ contains
     write(*,*) 'initialize_eqdsk_magnetics_lin_interp'   
 
     if (read_input .eqv. .true.) then 
+    	input_unit = get_unit_number()
         open(unit=input_unit, file='rays.in',action='read', status='old', form='formatted')
         read(input_unit, eqdsk_magnetics_lin_interp_list)
         close(unit=input_unit)

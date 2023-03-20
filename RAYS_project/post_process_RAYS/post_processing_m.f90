@@ -1,3 +1,21 @@
+! Generic wrapper for post processing by individual processors, mostly differentiated by
+! The specific geometry. It does the initializations for the specific processor.
+! This also reads the data from a given RAYS run.  For now this is done both of 2 ways.
+! 1) Read an ASCII (or binary) pair of files as specified by unit numbers: ray_list_unit and
+!    output_unit,  These files are written incrementally as the rays are traced and 
+!    therefore are still available if the code crashes.  The data read is put into this
+!    module variables: npoints, s_vec, and v_vec.  For now the older processors use this
+!    data.
+! 2) Read an ASCII file containing data from the ray_results_m module.  This file is
+!    intended to be thread safe and is only written at the end of the RAYS RUN. The data
+!    read goes back into the ray_results_m module
+! Eventually I expect the ASCII files will be replaced by NETCDF or the like.  But for now
+! I want to avoid external libraries.
+!
+! Working notes:
+! 2/28.2022 (DBB)
+! Turn ray_list_unit and output_unit into a subroutine.
+
  module post_processing_m
 
     use constants_m, only : rkind
@@ -12,14 +30,17 @@
 ! Switch to select specific post processor
     character(len=80) :: processor = ''
 
-    namelist /post_process_list/ processor
+! Switches to control reading of ray data
+    logical :: read_ray_data_file, read_ray_results_file
+    
+    namelist /post_process_list/ processor, read_ray_data_file, read_ray_results_file
 
  contains
 
  subroutine initialize_post_processing_m(read_input)
 
     use diagnostics_m, only : message_unit, message, text_message, verbosity
-    use constants_m, only : input_unit, output_unit, ray_list_unit
+    use constants_m, only : output_unit, ray_list_unit
     use slab_processor_m, only : initialize_slab_processor
     use solovev_processor_m, only : initialize_solovev_processor
     use axisym_toroid_processor_m, only : initialize_axisym_toroid_processor
@@ -27,15 +48,13 @@
 
     implicit none
     logical, intent(in) :: read_input
+	integer :: input_unit, get_unit_number ! External, free unit finder   
 
-    integer :: nray, nv, iray, ipoint
-    real(KIND=rkind) :: s
-    real(KIND=rkind), allocatable :: v(:)
-    real(KIND=rkind), allocatable :: end_residuals(:) 
-    character(len = 20), allocatable :: ray_stop(:)
+    call text_message('initialize_post_process_rays', 3)
 
     if (read_input .eqv. .true.) then    
 	! Read and write input namelist
+  		input_unit = get_unit_number()
         open(unit=input_unit, file='post_process_rays.in',action='read', status='old', form='formatted')
         read(input_unit, post_process_list)
         close(unit=input_unit)
@@ -62,15 +81,75 @@
 
 !****** Read in all ray data *********************************    
 
-!  Read number of rays and number of points points on each ray from binary file ray_list.bin
-!  Then read the ray data from binary file rays.bin
-!  Note: files ray_list.bin = unit 95 and rays.bin = unit 94 are opened in subroutine 
-!  initialize()
+	if (read_ray_data_file) call read_ray_data
 
-    call text_message('initialize_post_process_rays', 3)
+	if (read_ray_data_file) call read_results_data
+   
+    return
+ end subroutine initialize_post_processing_m
 
-!    read (95) nray this is a read for binary file.  For now use formatted file instead
+!*************************************************************************     
 
+  subroutine post_process
+
+    use diagnostics_m, only : message_unit, message, text_message, verbosity
+    use slab_processor_m, only : slab_processor
+    use solovev_processor_m, only : solovev_processor
+    use axisym_toroid_processor_m, only : axisym_toroid_processor
+!	use solovev_magnetics_m, only : inner_bound, outer_bound, rmaj, kappa
+    use axisym_toroid_eq_m, only : r_axis, z_axis, &
+                          & box_rmin, box_rmax, box_zmin, box_zmax, &
+                          & inner_bound, outer_bound, upper_bound, lower_bound
+
+    implicit none
+   
+    select case (trim(processor))
+
+       case ('slab')
+          write(*,*) 'calling slab_processor'
+          call slab_processor
+
+       case ('solovev')
+          write(*,*) 'calling solovev_processor'
+          call solovev_processor
+
+ 
+       case ('axisym_toroid')
+          write(*,*) 'calling axisym_toroid_processor'
+          call axisym_toroid_processor
+
+      case default
+          write(0,*) 'post_process_rays: unimplemented post_processor =', trim(processor)
+          call text_message('post_process_rays: unimplemented post_processor', trim(processor))
+          stop 1
+
+       end select
+
+    return
+ end subroutine post_process
+
+!*************************************************************************     
+
+!  Read number of rays and number of points points on each ray from file: ray_list.<run label>
+!  Then read the ray data from file: ray_out.<run_label>.
+!  Note: The units for ray_list.<run label> (= unit 95) and ray_list.<run label> (= unit 94)
+!  are opened in subroutine initialize().  The actual filenames, including .<run_label> are
+!  not used here.
+
+ subroutine read_ray_data
+
+    use diagnostics_m, only : message_unit, message, text_message, verbosity
+    use constants_m, only : output_unit, ray_list_unit
+    use ray_init_m, only : nray_ray_init => nray
+
+    implicit none
+
+    integer :: nray, nv, iray, ipoint
+    real(KIND=rkind) :: s
+    real(KIND=rkind), allocatable :: v(:)
+    real(KIND=rkind), allocatable :: end_residuals(:) 
+    character(len = 20), allocatable :: ray_stop(:)
+ 
     read(ray_list_unit, *) nray
     allocate(npoints(nray))
     read(ray_list_unit, *) nv
@@ -118,60 +197,37 @@
         end do
     end if
 
-    call text_message('Finished initialize_post_process_rays')
-    
-    return
- end subroutine initialize_post_processing_m
+ end subroutine read_ray_data
 
 !*************************************************************************     
 
-  subroutine post_process
+!  Read number of rays and number of points points on each ray from file: ray_list.<run label>
+!  Then read the ray data from file: ray_out.<run_label>.
+!  Note: The units for ray_list.<run label> (= unit 95) and ray_list.<run label> (= unit 94)
+!  are opened in subroutine initialize().  The actual filenames, including .<run_label> are
+!  not used here.
 
-    use diagnostics_m, only : message_unit, message, text_message, verbosity
-    use slab_processor_m, only : slab_processor
-    use solovev_processor_m, only : solovev_processor
-    use axisym_toroid_processor_m, only : axisym_toroid_processor
-!	use solovev_magnetics_m, only : inner_bound, outer_bound, rmaj, kappa
-    use axisym_toroid_eq_m, only : r_axis, z_axis, &
-                          & box_rmin, box_rmax, box_zmin, box_zmax, &
-                          & inner_bound, outer_bound, upper_bound, lower_bound
+ subroutine read_results_data
+
+    use diagnostics_m, only : message_unit, message, text_message, verbosity, run_label
+    use ray_results_m, only : read_results_LD, RAYS_run_label, date_vector
 
     implicit none
+    
+ !  File name for input
+    character(len=80) :: in_filename
 
-   write(*, *) 'r_axis = ', r_axis
-   write(*, *) 'z_axis = ', z_axis
-   write(*, *) 'inner_bound = ', inner_bound
-   write(*, *) 'outer_bound = ', outer_bound
-   write(*, *) 'upper_bound = ', upper_bound
-   write(*, *) 'lower_bound = ', lower_bound
-   
-    select case (trim(processor))
+    in_filename = 'run_results.'//trim(run_label)
+	call read_results_LD(in_filename)
 
-       case ('slab')
-          write(*,*) 'calling slab_processor'
-          call slab_processor
-
-       case ('solovev')
-          write(*,*) 'calling solovev_processor'
-          call solovev_processor
-
+	write(*,*)	
+	write(*,*) 'read_results_data: RAYS_run_label = ', RAYS_run_label
+	write(*,*) 'read_results_data: date_vector = ', date_vector
+	write(*,*)
+			
+ end subroutine read_results_data
  
-       case ('axisym_toroid')
-          write(*,*) 'calling axisym_toroid_processor'
-          call axisym_toroid_processor
-
-      case default
-          write(0,*) 'post_process_rays: unimplemented post_processor =', trim(processor)
-          call text_message('post_process_rays: unimplemented post_processor', trim(processor))
-          stop 1
-
-       end select
-
-    return
- end subroutine post_process
-
 !*************************************************************************     
 
- 
  end module post_processing_m
 

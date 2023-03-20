@@ -28,33 +28,40 @@
 ! Number of k vectors to plot for each ray in graphics
     integer :: num_plot_k_vectors
 
-! Scale plot k vectors to kmax on the ray, (True, False)
+! Scale plot k vectors to kmax on the ray, (True, False) N.B. character not logical -> python
     character(len = 5) :: scale_k_vec = 'True'
 
 ! Set plot xlim -> [xmin, xmax] and ylim -> [ymin,ymax], (True, False)
     character(len = 5) :: set_XY_lim = 'True'
 
-    namelist /slab_processor_list/ processor, num_plot_k_vectors, scale_k_vec, set_XY_lim
+	logical :: calculate_dep_profiles, write_dep_profiles
+
+    namelist /slab_processor_list/ processor, num_plot_k_vectors, scale_k_vec, set_XY_lim, &
+             & calculate_dep_profiles, write_dep_profiles
 
  contains
 
  subroutine initialize_slab_processor(read_input)
 
     use diagnostics_m, only : message_unit, message, text_message
-    use constants_m, only : input_unit
+	use deposition_profiles_m, only : initialize_deposition_profiles
 
     implicit none
     logical, intent(in) :: read_input
+	integer :: input_unit, get_unit_number ! External, free unit finder   
 
     if (read_input .eqv. .true.) then    
     ! Read and write input namelist
+   		input_unit = get_unit_number()
         open(unit=input_unit, file='post_process_rays.in',action='read', status='old', form='formatted')
         read(input_unit, slab_processor_list)
         close(unit=input_unit)
         write(message_unit, slab_processor_list)
         call text_message('Finished initialize_slab_processor ', processor)
     end if
-    
+
+	if (calculate_dep_profiles .eqv. .true.) call initialize_deposition_profiles(read_input)
+	
     return
  end subroutine initialize_slab_processor
 
@@ -64,6 +71,7 @@
 
     use constants_m, only : rkind
     use diagnostics_m, only : message_unit, message, text_message
+    use deposition_profiles_m, only : calculate_deposition_profiles, write_deposition_profiles
 
     implicit none
     
@@ -74,6 +82,10 @@
     call find_res_and_cuts
     
     call write_graphics_description_file
+    
+    if (calculate_dep_profiles .eqv. .true.) call calculate_deposition_profiles
+    
+    if (write_dep_profiles .eqv. .true.) call write_deposition_profiles
     
     call text_message('Finished slab_processor work')
 
@@ -413,7 +425,17 @@
 
 !*************************************************************************     
 
+!   subroutine calculate_depositon_profiles
+! ! Calculate various deposition profiles (e.g. power deposition for each species or
+! ! summed over species)
+! 
+! 
+!  end subroutine calculate_depositon_profiles
+ 
+!*************************************************************************     
+
   subroutine write_graphics_description_file
+! Info the graphics routine needs to plot ray trajectories.
   
    use diagnostics_m, only : run_description, run_label
    use slab_eq_m, only : xmin, xmax, ymin, ymax, zmin, zmax

@@ -47,7 +47,7 @@ contains
 
   subroutine initialize_axisym_toroid_eq_m(read_input)
 
-    use constants_m, only : rkind, input_unit
+    use constants_m, only : rkind
     use species_m, only : nspec
     use diagnostics_m, only : message, message_unit, text_message, verbosity
 
@@ -57,6 +57,7 @@ contains
 
     implicit none
     logical, intent(in) :: read_input
+	integer :: input_unit, get_unit_number ! External, free unit finder
 
     real(KIND=rkind) :: bp0
 
@@ -72,6 +73,7 @@ contains
     end if
     
     if (read_input .eqv. .true.) then    
+    	input_unit = get_unit_number()
         open(unit=input_unit, file='rays.in',action='read', status='old', form='formatted')
         read(input_unit, axisym_toroid_eq_list)
         close(unit=input_unit)

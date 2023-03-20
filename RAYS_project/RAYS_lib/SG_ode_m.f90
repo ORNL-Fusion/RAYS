@@ -33,17 +33,18 @@ contains
 
   module subroutine initialize_SG_ode(read_input)
 
-    use constants_m, only : input_unit
-    use diagnostics_m, only : message_unit
+     use diagnostics_m, only : message_unit
     
     implicit none
     logical, intent(in) :: read_input
+	integer :: input_unit, get_unit_number ! External, free unit finder   
 
     write(*,*) ' '
     write(*,*) 'initialize_SG_ode '
 
 	if (read_input .eqv. .true.) then        
 	! Read and write input namelist
+  		input_unit = get_unit_number()
 		open(unit=input_unit, file='rays.in',action='read', status='old', form='formatted')
 		read(input_unit, SG_ode_list)
 		close(unit=input_unit)

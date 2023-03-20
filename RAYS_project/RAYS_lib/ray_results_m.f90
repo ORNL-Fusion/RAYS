@@ -46,18 +46,19 @@ contains
 
     subroutine initialize_ray_results_m(read_input)
 
-        use constants_m, only : input_unit
         use diagnostics_m, only : message_unit, run_label, date_v
         use ray_init_m, only : nray  ! Number of rays initialized
         use ode_m, only : nv, nstep_max ! dimension of ray vector, max number of steps allowed
  
         implicit none
         logical, intent(in) :: read_input
+ 		integer :: input_unit, get_unit_number ! External, free unit finder   
         
         write(*,*) 'initialize_ray_results'
      
         if (read_input .eqv. .true.) then    
         ! Read and write input namelist
+  		  	input_unit = get_unit_number()
             open(unit=input_unit, file='rays.in',action='read', status='old', form='formatted')
             read(input_unit, ray_results_list)
             close(unit=input_unit)
@@ -304,7 +305,7 @@ contains
     	stop
     end if
     read (results_star_unit,*) ray_vec
-
+    
     close(unit=results_star_unit)
 
     end subroutine read_results_LD

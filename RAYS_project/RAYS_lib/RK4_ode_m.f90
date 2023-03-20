@@ -21,8 +21,7 @@ contains
 
   module subroutine initialize_RK4_ode
 
-    use constants_m, only : input_unit
-    use diagnostics_m, only : message_unit, text_message
+     use diagnostics_m, only : message_unit, text_message
     
     implicit none
     

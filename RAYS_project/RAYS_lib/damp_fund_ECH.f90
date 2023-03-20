@@ -58,7 +58,6 @@
 ! Get warm plasma terms (note: B1 as defined here carries the sign of the
 ! electron charge (i.e. is negative)  Omega-sub-e in the notes does not )
 
-
 !   Thermal speed:
     vth = sqrt( 2.*eq%ts(0)/ms(0) )
     VT = vth/clight

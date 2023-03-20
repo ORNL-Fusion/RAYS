@@ -180,7 +180,7 @@
                 exit trajectory
             end if
 
-! increment nstep here it that was a valid step
+! increment nstep here if that was a valid step
             nstep=nstep+1
 
 ! Save in ray_results_m
@@ -199,7 +199,7 @@
 ! nstep is incremented at the top of the loop, but "exit trajectory" above means last 
 ! step failed, and so is 1 too big, so actual npoints = nstep, not nstep + 1
 
-        npoints(iray) = nstep
+        npoints(iray) = nstep + 1
 	    ray_trace_time(iray) = t_finish_ray - t_start_ray
         end_residuals(iray) = residual(nstep,iray)
         max_residuals(iray) = maxval(abs(residual(1:nstep,iray)))

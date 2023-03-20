@@ -16,14 +16,15 @@ module read_results_LD_test_m
  subroutine init_read_results_LD_test(read_input)
 
     use diagnostics_m, only : message_unit, message, text_message, run_label
-    use constants_m, only : input_unit
 
     implicit none
     
     logical, intent(in) :: read_input
+	integer :: input_unit, get_unit_number ! External, free unit finder   
 
     if (read_input .eqv. .true.) then    
     ! Read and write input namelist
+   		input_unit = get_unit_number()
         open(unit=input_unit, file='component_test_rays.in',action='read', status='old', form='formatted')
         read(input_unit, read_results_LD_test_list)
         close(unit=input_unit)

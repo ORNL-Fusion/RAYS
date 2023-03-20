@@ -49,7 +49,6 @@ contains
 !
 ! External procedures: Only from module use.
 
-    use constants_m, only : input_unit
     use diagnostics_m, only: message_unit, message, text_message
     use species_m, only : nspec
     use equilibrium_m, only : equilibrium, eq_point
@@ -68,8 +67,10 @@ contains
     real(KIND=rkind) :: x, y, z, rindex_y, rindex_z
     real(KIND=rkind) :: rvec(3)
     complex(KIND=rkind) :: rindex_x
+	integer :: input_unit, get_unit_number ! External, free unit finder   
 
 ! Read and write input namelist
+  	input_unit = get_unit_number()
     open(unit=input_unit, file='rays.in',action='read', status='old', form='formatted')
     read(input_unit, simple_slab_ray_init_list)
     close(unit=input_unit)

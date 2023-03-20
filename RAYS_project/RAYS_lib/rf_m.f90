@@ -40,14 +40,16 @@ contains
 
   subroutine initialize_rf_m(read_input)
  
-    use constants_m, only : input_unit, pi, clight
+    use constants_m, only : pi, clight
     use diagnostics_m, only : message_unit, message
     
     implicit none
     logical, intent(in) :: read_input
-
+ 	integer :: input_unit, get_unit_number ! External, free unit finder   
+ 	
     if (read_input .eqv. .true.) then    
 		! Read and write input namelist
+  		  	input_unit = get_unit_number()
 			open(unit=input_unit, file='rays.in',action='read', status='old', form='formatted')
 			read(input_unit, rf_list)
 			close(unit=input_unit)

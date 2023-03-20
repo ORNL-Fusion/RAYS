@@ -1,14 +1,15 @@
  program component_test_RAYS
 
     use diagnostics_m, only : message_unit, message, text_message, verbosity
-    use constants_m, only : input_unit, output_unit, ray_list_unit
+    use constants_m, only : output_unit, ray_list_unit
     
     use damping_slab_test_m, only : init_damping_slab_test, damping_slab_test
     use read_results_LD_test_m, only : init_read_results_LD_test, read_results_LD_test
-!    use profile_calculation_test_m, only : init_profile_calculation_test, profile_calculation_test
 
     implicit none 
     logical :: read_input = .true.
+	integer :: input_unit, get_unit_number ! External, free unit finder   
+
     character(len=60) :: test_name
 
     namelist /component_test_list/ test_name
@@ -18,6 +19,7 @@
 
     if (read_input .eqv. .true.) then    
 	! Read and write input namelist
+   		input_unit = get_unit_number()
         open(unit=input_unit, file='component_test_rays.in',action='read', status='old',&
                                   & form='formatted')
         read(input_unit, component_test_list)
@@ -34,10 +36,6 @@
        case ('read_results_LD')
           call init_read_results_LD_test(read_input)
           call read_results_LD_test
-
-!        case ('profile_calculation')
-!           call init_profile_calculation_test(read_input)
-!           call profile_calculation_test
 
        case default
           write(*,*) 'Unimplemented component tester =', trim(test_name)

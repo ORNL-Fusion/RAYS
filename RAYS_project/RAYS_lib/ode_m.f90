@@ -94,19 +94,20 @@
 
   subroutine initialize_ode_solver_m(read_input)
 
-    use constants_m, only : input_unit
     use damping_m, only : damping_model, multi_spec_damping
     use diagnostics_m, only : message_unit, message, text_message, integrate_eq_gradients
     use species_m, only : nspec
     
     implicit none
     logical, intent(in) :: read_input
+ 	integer :: input_unit, get_unit_number ! External, free unit finder   
 
     write(*,*) ' '
     write(*,*) 'initialize_ode_solver '
 
     if (read_input .eqv. .true.) then    
     ! Read and write input namelist
+  		input_unit = get_unit_number()
         open(unit=input_unit, file='rays.in',action='read', status='old', form='formatted')
         read(input_unit, ode_list)
         close(unit=input_unit)
