@@ -214,13 +214,13 @@ contains
         
     implicit none
     
-    integer :: scan_star_unit
+    integer :: scan_star_unit, get_unit_number ! External, free unit finder
     
  !  File name for  output
     character(len=80) :: out_filename
    
     ! Open fortran ascii file for results output
-    scan_star_unit = 59 
+    scan_star_unit = get_unit_number() 
     out_filename = 'scan_summary.'//trim(scan_id)
     open(unit=scan_star_unit, file=trim(out_filename), &
        & action='write', status='replace', form='formatted')     

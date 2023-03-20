@@ -7,7 +7,6 @@
     integer, parameter :: skind = selected_real_kind(6,37) ! kind parameter single precision
 
 ! unit numbers for persistent files (i.e. ones that stay open all through the run)
-!    integer :: input_unit = 70 ! Unit number for namelist input file
     integer :: output_unit = 75 ! Unit number for formatted ray data output
     integer :: ray_list_unit = 74 ! Unit number for formatted ray list output
  
