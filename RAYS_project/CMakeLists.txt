@@ -8,6 +8,7 @@ SET(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "../../lib")
 
 # These only make executables that go into /bin
 add_subdirectory (RAYS_lib)
+add_subdirectory (post_process_lib)
 add_subdirectory (RAYS_code)
 add_subdirectory (ray_scan)
 add_subdirectory (post_process_RAYS)

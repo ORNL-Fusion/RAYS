@@ -13,9 +13,6 @@
     
     real(KIND=rkind) :: trace_time, code_time
 
-!     close(94)
-!     close(95)
-
     call cpu_time(t_finish_rays)
     run_trace_time = t_finish_tracing - t_start_tracing 
     code_time = t_finish_rays - t_start_rays
