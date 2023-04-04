@@ -117,7 +117,9 @@
         call message ('check_save: ni', ki/k0, 1)
         call message ('check_save: Total absorption', total_absorption, 1)
         if (total_absorption > total_damping_limit) then
-            ray_stop%ode_stop_flag = 'total_absorption'
+ 	       ray_stop%stop_ode = .true.
+           ray_stop%ode_stop_flag = 'total_absorption'
+            write (*,*) 'ray_stop%ode_stop_flag = ', ray_stop%ode_stop_flag
         end if
 
 !       Check if the sum of all by species absorption is equal to the total.        
