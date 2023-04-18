@@ -160,6 +160,7 @@ subroutine initialize_deposition_profiles(read_input)
 		implicit none
 	
 		integer :: iray
+		write(*,*) 'Calculating deposition profiles '
 	
 		ray_loop: do iray = 1, nray
 		
@@ -213,6 +214,7 @@ subroutine initialize_deposition_profiles(read_input)
 		! Evaluate grid value and profile quantity at each ray point
 		do ip = 1, npoints(iray)
 			call evaluator(iray, ip, xQ(ip), Q(ip))
+	write(*,*) 'ip, xQ(ip), Q(ip) = ', ip, xQ(ip), Q(ip)
 		end do
 		
     	call bin_to_uniform_grid(Q(1:npoints(iray)), xQ(1:npoints(iray)), xmin, xmax,&

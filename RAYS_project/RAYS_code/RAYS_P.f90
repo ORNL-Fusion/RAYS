@@ -31,7 +31,8 @@
 !   Post Processing
 !****************************************************************************************
 
-!   Read input file and initialize variables.
+!   Read input file and initialize variables for post_processing_m only.
+    read_input = .false.
     call initialize_post_process_RAYS(read_input)
 
 !   Do the post processing. Contained in module post_processing_m.f90

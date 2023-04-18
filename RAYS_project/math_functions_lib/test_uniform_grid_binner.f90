@@ -12,7 +12,7 @@ program test_uniform_grid_binner_m
     REAL(kind = rkind) :: pi = 3.1415926535897931
 
 
-    INTEGER, PARAMETER :: nx = 103, n_bins = 20
+    INTEGER, PARAMETER :: nx = 10001, n_bins = 51
     REAL(kind = skind) :: Q(nx), x(nx), binned_Q(n_bins)
     REAL(kind = skind) ::  xmin, xmax, delta_x
 
@@ -69,6 +69,58 @@ program test_uniform_grid_binner_m
 	write(*,*) binned_Q
 	write(*,*)
 	write(*,*) 'sum(binned_Q sin)'
+	write(*,*) sum(binned_Q)
+	write(*,*)
+
+!*****************************************************************************
+! Test increasing/decreasing x
+!*****************************************************************************
+
+	write(*,*) '************************************************************************'
+	write(*,*) 'Test increasing/decreasing x, linearly increasing Q'
+	write(*,*) '************************************************************************'
+	write(*,*)
+
+    do ix = 1, nx
+    	x(ix) = sin(3.1415926*delta_x*(ix-1))
+    	Q(ix) = delta_x*(ix-1)
+    end do
+ 
+!   write(*,*) 'x = ', x
+! 	write(*,*)
+!  	write(*,*) 'q = ', Q
+   
+	call bin_to_uniform_grid(Q, x, xmin, xmax, binned_Q, ierr)
+
+	write(*,*)
+	write(*,*) 'binned_Q increasing/decreasing x, linearly increasing Q'
+	write(*,*) binned_Q
+	write(*,*)
+	write(*,*) 'sum(binned_Q)'
+	write(*,*) sum(binned_Q)
+	write(*,*)
+
+	write(*,*) '************************************************************************'
+	write(*,*) 'Test increasing/decreasing x, quadratically increasing Q'
+	write(*,*) '************************************************************************'
+	write(*,*)
+
+    do ix = 1, nx
+    	x(ix) = sin(3.1415926*delta_x*(ix-1))
+    	Q(ix) = delta_x*(ix-1)**2/(nx-1)
+    end do
+ 
+!   write(*,*) 'x = ', x
+! 	write(*,*)
+!  	write(*,*) 'q = ', Q
+   
+	call bin_to_uniform_grid(Q, x, xmin, xmax, binned_Q, ierr)
+
+	write(*,*)
+	write(*,*) 'binned_Q increasing/decreasing x, quadratically increasing Q'
+	write(*,*) binned_Q
+	write(*,*)
+	write(*,*) 'sum(binned_Q)'
 	write(*,*) sum(binned_Q)
 	write(*,*)
 
@@ -147,8 +199,8 @@ program test_uniform_grid_binner_m
     	Qr(ix) = sin(pir*xr(ix))
     end do
  
-  	write(*,*) 'Qr'
- 	write(*,*) Qr
+!   write(*,*) 'Qr'
+!  	write(*,*) Qr
    
 	call bin_to_uniform_grid(Qr, xr, xminr, xmaxr, binned_Qr, ierr)
 

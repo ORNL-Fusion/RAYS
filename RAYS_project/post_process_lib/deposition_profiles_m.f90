@@ -136,7 +136,7 @@ subroutine initialize_deposition_profiles(read_input)
 			allocate(Ptotal_work%work(n_bins_Ptotal, nray), source = 0.0_rkind)
 			
 			! Generate uniform grid for Ptotal	
-			delta = (grid_max - grid_min)/real(n_bins_Ptotal-1)    
+			delta = (grid_max - grid_min)/real(n_bins_Ptotal)    
 			do i = 1, n_bins_Ptotal+1
 				Ptotal_prof%grid(i) = grid_min + delta*(i-1)
 			end do
@@ -160,6 +160,7 @@ subroutine initialize_deposition_profiles(read_input)
 		implicit none
 	
 		integer :: iray
+		write(*,*) 'Calculating deposition profiles '
 	
 		ray_loop: do iray = 1, nray
 		
@@ -301,6 +302,7 @@ subroutine initialize_deposition_profiles(read_input)
 		
 		xQ = psiN
 		Q = ray_vec(8, ix, iray)
+	write(*,*) 'ix, ray_vec(1:3, ix, iray), xQ, Q = ', ix, ray_vec(1:3, ix, iray), xQ, Q
 
  	return
     end subroutine Ptotal_axisym_evaluator

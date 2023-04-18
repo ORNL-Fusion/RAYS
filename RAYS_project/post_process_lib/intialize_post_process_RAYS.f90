@@ -1,5 +1,11 @@
  subroutine initialize_post_process_RAYS(read_input)
-!   reads input file and initializes variables.  Called from main program RAYS.
+!   Reads input file and initializes variables.  Called from main program post_process_RAYS
+!   or from another host program.
+! N.B. If called from main program post_process_RAYS it is necessary to initialize all of
+!      the rays_lib components.  If called from a host program wich has already done the
+!      component initializations only the initialize_post_processing_m routine should be
+!      called.  Therefore this routine should be called from the host program with 
+!      initialize_post_processing_m = .false.
 
     use constants_m, only : ray_list_unit, output_unit, initialize_constants_m
     use diagnostics_m, only : initialize_diagnostics, date_v, message_unit, message,&
@@ -81,7 +87,7 @@
     call initialize_ray_results_m(read_input)    
     call message()
     
-    call initialize_post_processing_m(read_input)
+    call initialize_post_processing_m(.true.)
     call message()
     
 
