@@ -46,7 +46,8 @@ contains
 
     subroutine initialize_ray_results_m(read_input)
 
-        use diagnostics_m, only : message_unit, run_label, date_v
+        use diagnostics_m, only : message_unit, message, text_message, run_label, date_v, &
+                                & messages_to_stdout, verbosity
         use ray_init_m, only : nray  ! Number of rays initialized
         use ode_m, only : nv, nstep_max ! dimension of ray vector, max number of steps allowed
  
@@ -54,7 +55,8 @@ contains
         logical, intent(in) :: read_input
  		integer :: input_unit, get_unit_number ! External, free unit finder   
         
-        write(*,*) 'initialize_ray_results'
+		call message()
+		call text_message('Initializing solovev_eq_m ', 1)
      
         if (read_input .eqv. .true.) then    
         ! Read and write input namelist
@@ -62,7 +64,6 @@ contains
             open(unit=input_unit, file='rays.in',action='read', status='old', form='formatted')
             read(input_unit, ray_results_list)
             close(unit=input_unit)
-            write(message_unit, ray_results_list)
 
 			allocate (ray_vec(nv, nstep_max+1, nray))
 			allocate (residual(nstep_max, nray))
@@ -75,6 +76,12 @@ contains
 			allocate (end_ray_vec(nv, nray))
 			allocate (ray_stop_flag(nray))
         end if
+
+! Write input namelist
+		if (verbosity > 0) then
+			write(message_unit, ray_results_list)
+			if (messages_to_stdout) write(*, ray_results_list)
+		end if
 
         date_vector = date_v
         RAYS_run_label = run_label

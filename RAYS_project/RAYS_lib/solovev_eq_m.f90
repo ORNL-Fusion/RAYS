@@ -38,7 +38,7 @@ contains
   subroutine initialize_solovev_eq_m(read_input)
 
     use species_m, only : nspec
-    use diagnostics_m, only : message, message_unit, verbosity
+    use diagnostics_m, only : message, text_message, message_unit, messages_to_stdout, verbosity
     
     implicit none
     logical, intent(in) :: read_input
@@ -49,12 +49,20 @@ contains
     allocate( t_prof_model(0:nspec) )
     allocate( alphat1(0:nspec), alphat2(0:nspec) )
 
+    call message()
+    call text_message('Initializing solovev_eq_m ', 1)
+
     if (read_input .eqv. .true.) then    
   		input_unit = get_unit_number()
         open(unit=input_unit, file='rays.in',action='read', status='old', form='formatted')
         read(input_unit, solovev_eq_list)
         close(unit=input_unit)
-        write(message_unit, solovev_eq_list)
+    end if
+
+! Write input namelist
+    if (verbosity > 0) then
+		write(message_unit, solovev_eq_list)
+		if (messages_to_stdout) write(*, solovev_eq_list)
     end if
     
 ! Calculate inner and boundary

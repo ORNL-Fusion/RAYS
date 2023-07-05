@@ -32,7 +32,7 @@ contains
 	   & inner_bound, outer_bound, upper_bound, lower_bound)
 
     use species_m, only : nspec
-    use diagnostics_m, only : message, message_unit, verbosity
+    use diagnostics_m, only : message, text_message, message_unit, messages_to_stdout, verbosity
     
     implicit none
     logical, intent(in) :: read_input
@@ -48,15 +48,20 @@ contains
 
      real(KIND=rkind) :: bp0
 
-    write (*,*) ' '
-    write(*,*) 'initialize_solovev_magnetics'   
+    call message()
+    call text_message('Initializing solovev_magnetics_m ', 1)
 
     if (read_input .eqv. .true.) then 
   		input_unit = get_unit_number()
         open(unit=input_unit, file='rays.in',action='read', status='old', form='formatted')
         read(input_unit, solovev_magnetics_list)
         close(unit=input_unit)
-        write(message_unit, solovev_magnetics_list)
+    end if
+
+! Write input namelist
+    if (verbosity > 0) then
+		write(message_unit, solovev_magnetics_list)
+		if (messages_to_stdout) write(*, solovev_magnetics_list)
     end if
 
 	arg_box_rmin = box_rmin
@@ -89,18 +94,12 @@ contains
     vert_bound = kappa/(2.*r_Zmax)*sqrt(outer_bound**4 + &
                & 2.*(r_Zmax**2 - outer_bound**2)*rmaj**2 - r_Zmax**4)
 
-    call message('PsiB = ', psiB)
-    call message('Inner boundary = ', inner_bound)
-    call message('Outer boundary = ', outer_bound)
-    call message('Vertical boundary = ', vert_bound)
-    call message('radius of z_max = ', r_Zmax)
+    call message('PsiB = ', psiB, 1)
+    call message('Inner boundary = ', inner_bound, 1)
+    call message('Outer boundary = ', outer_bound, 1)
+    call message('Vertical boundary = ', vert_bound, 1)
+    call message('radius of z_max = ', r_Zmax, 1)
 
-    write(*,*) 'PsiB = ', psiB
-    write(*,*) 'Inner boundary = ', inner_bound
-    write(*,*) 'Outer boundary = ', outer_bound
-    write(*,*) 'Vertical boundary = ', vert_bound
-    write(*,*) 'radius of z_max = ', r_Zmax
-  
     r_axis = rmaj
     z_axis = 0.
     upper_bound = vert_bound
@@ -118,7 +117,7 @@ contains
 !   stop.
 
     use species_m, only : nspec, n0s, t0s
-    use diagnostics_m, only : message_unit, message
+    use diagnostics_m, only : message_unit, message, text_message
     
     implicit none
 
@@ -145,8 +144,7 @@ contains
     if (z < box_zmin .or. z > box_zmax) equib_err = 'z out_of_bounds'
     
     if (equib_err /= '') then
-        write (message_unit, *) 'solovev_magnetics:  equib_err ', equib_err
-        write (*, *) 'solovev_magnetics:  equib_err ', equib_err
+        call text_message('solovev_magnetics:  equib_err ', equib_err, 1)
         return
     end if
 

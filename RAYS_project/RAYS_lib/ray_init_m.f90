@@ -73,8 +73,8 @@ contains
             open(unit=input_unit, file='rays.in',action='read', status='old', form='formatted')
             read(input_unit, ray_init_list)
             close(unit=input_unit)
-            write(message_unit, ray_init_list)
         end if
+        write(message_unit, ray_init_list)
 
         init_model: select case (trim(ray_init_model))
     

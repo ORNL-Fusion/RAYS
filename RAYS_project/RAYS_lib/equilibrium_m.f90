@@ -61,7 +61,7 @@ contains
 
   subroutine initialize_equilibrium_m(read_input)
 
-    use diagnostics_m, only : message_unit, message, text_message
+    use diagnostics_m, only : message_unit, message, text_message, messages_to_stdout, verbosity
     use slab_eq_m, only : initialize_slab_eq_m
     use solovev_eq_m, only : initialize_solovev_eq_m
     use axisym_toroid_eq_m, only : initialize_axisym_toroid_eq_m
@@ -76,7 +76,12 @@ contains
         open(unit=input_unit, file='rays.in',action='read', status='old', form='formatted')
         read(input_unit, equilibrium_list)
         close(unit=input_unit)
-        write(message_unit, equilibrium_list)
+    end if
+
+! Write input namelist
+    if (verbosity > 0) then
+		write(message_unit, equilibrium_list)
+		if (messages_to_stdout) write(*, equilibrium_list)
     end if
 
     equilibria: select case (trim(equilib_model))
@@ -119,7 +124,7 @@ contains
     use constants_m, only : eps0
     use rf_m, only : omgrf
     use species_m, only : nspec, ms, qs 
-    use diagnostics_m, only : message
+    use diagnostics_m, only : message, text_message
     
     use slab_eq_m, only : slab_eq
     use solovev_eq_m, only : solovev_eq
@@ -170,7 +175,7 @@ contains
 !   If equilibrium subroutine has set equib_err then return for outside handling. Do not crash.
     if (equib_err /= '') then
         eq%equib_err = equib_err
-        write (*, *) 'equilibrium:  equib_err = ', equib_err      
+        call text_message('equilibrium:  equib_err = ', equib_err,1)
         return
     end if
 
@@ -226,6 +231,8 @@ contains
 ! present, in which case it writes to 'unit'
 
     use, intrinsic :: iso_fortran_env, only : stdout=>output_unit
+    use diagnostics_m, only : message, message_unit, text_message, verbosity
+    use species_m, only : nspec
     
     implicit none
     
@@ -235,7 +242,7 @@ contains
     
     out_unit = stdout
     if (present(unit)) out_unit = unit
-    
+ 
     write(out_unit, *) ' '
     write(out_unit, *) 'eq_point = '
     write(out_unit, *) 'bvec = ', eq%bvec
@@ -247,11 +254,28 @@ contains
     write(out_unit, *) 'bmag = ', eq%bmag
     write(out_unit, *) 'bunit = ', eq%bunit
     write(out_unit, *) 'gradbmag = ', eq%gradbmag
-    write(out_unit, *) 'radbunit = ', eq%gradbunit
+    write(out_unit, *) 'gradbunit = ', eq%gradbunit
     write(out_unit, *) 'omgc = ', eq%omgc
     write(out_unit, *) 'omgp2 = ', eq%omgp2
     write(out_unit, *) 'alpha = ', eq%omgp2
     write(out_unit, *) 'gamma = ', eq%gamma
+   
+!     call message()
+!     call text_message('eq_point')
+!     call message('bvec = ', eq%bvec)
+!     call message('gradbtensor = ', eq%gradbtensor, 3, 3)
+!     call message('ns = ', eq%ns)
+!     call message('gradns = ', eq%gradns, 3, nspec+1)
+!     call message('ts = ', eq%ts)
+!     call message('gradts = ', eq%gradts, 3, nspec+1)
+!     call message('bmag = ', eq%bmag)
+!     call message('bunit = ', eq%bunit)
+!     call message('gradbmag = ', eq%gradbmag)
+!     call message('gradbunit = ', eq%gradbunit, 3, 3)
+!     call message('omgc = ', eq%omgc)
+!     call message('omgp2 = ', eq%omgp2)
+!     call message('alpha = ', eq%alpha)
+!     call message('gamma = ', eq%gamma)
 
  end  subroutine write_eq_point
     

@@ -41,7 +41,8 @@ contains
   subroutine initialize_rf_m(read_input)
  
     use constants_m, only : pi, clight
-    use diagnostics_m, only : message_unit, message
+    use diagnostics_m, only : message_unit, message, text_message,  &
+                            & messages_to_stdout, verbosity
     
     implicit none
     logical, intent(in) :: read_input
@@ -53,7 +54,14 @@ contains
 			open(unit=input_unit, file='rays.in',action='read', status='old', form='formatted')
 			read(input_unit, rf_list)
 			close(unit=input_unit)
-			write(message_unit, rf_list)
+    end if
+    
+    call text_message('initializing rf_m', 1)
+
+! Write input namelist
+    if (verbosity > 0) then
+		write(message_unit, rf_list)
+		if (messages_to_stdout) write(*, rf_list)
     end if
 
     if ( frf <= 0. ) then
@@ -66,8 +74,6 @@ contains
 !   Wave number in vacuum.
     k0 = omgrf/clight 
     call message ('initialize_rf: k0', k0, 1)
-    
-    write(*,*) 'wave_mode = ', wave_mode
 
     return
   end subroutine initialize_rf_m

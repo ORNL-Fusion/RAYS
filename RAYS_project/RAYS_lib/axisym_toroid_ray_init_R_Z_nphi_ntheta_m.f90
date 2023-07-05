@@ -71,7 +71,7 @@ contains
 !
 ! External procedures: Only from module use.
 
-    use diagnostics_m, only: message_unit, message, text_message
+    use diagnostics_m, only: message_unit, message, text_message, verbosity
     use species_m, only : nspec
     use equilibrium_m, only : equilibrium, eq_point, write_eq_point
     use dispersion_solvers_m, only: solve_n1_vs_n2_n3
@@ -97,8 +97,8 @@ contains
     real(KIND=rkind) :: npsi
     real(KIND=rkind) :: nperp
 
-    write(*,*) ' '
-    write(*,*) 'ray_init_axisym_toroid_nphi_ntheta '
+    call message(3)
+    call text_message( 'ray_init_axisym_toroid_nphi_ntheta ', 3)
     
 ! Read and write input namelist
   	input_unit = get_unit_number()
@@ -117,8 +117,9 @@ contains
         allocate ( rvec0(3, nray), rindex_vec0(3, nray) )
         allocate ( ray_pwr_wt(nray) )
         else
-        write (*,*) 'axisym_toroid ray init: improper number of rays  nray=', nray
-        stop 1
+			call message ('axisym_toroid ray init: improper number of rays  nray=', nray)
+			write (*,*) 'axisym_toroid ray init: improper number of rays  nray=', nray
+			stop 1
         end if  
 
     count = 0
@@ -143,14 +144,13 @@ contains
 		end if
 
         call axisym_toroid_psi(rvec, psi, gradpsi, psiN, gradpsiN)  
-    write (*,*) ' '
-    write(*,*) 'count =  ' , count
-    write(*,*) 'ray_init_axisym_toroid_nphi_ntheta: rvec, psi, gradpsi = '
-    write(*,*) rvec, psi, gradpsi
-    write(*,*) 'ray_init_axisym_toroid_nphi_ntheta: rvec, psiN, gradpsiN = '
-    write(*,*) rvec, psiN, gradpsiN
-    call write_eq_point(eq)
-    write (*,*) ' '
+
+        call message()
+        call message('count =  ' , count, 3)
+        call message('ray_init_axisym_toroid_nphi_ntheta: rvec = ', rvec, 3)
+        call message('ray_init_axisym_toroid_nphi_ntheta: psiN = ', psiN, 3)
+        call message('ray_init_axisym_toroid_nphi_ntheta: gradpsiN = ', gradpsiN, 3)
+        if (verbosity > 2) call write_eq_point(eq)
                     
 ! Calculate a bunch of unit vectors, parallel and transverse components of k
         psi_unit = gradpsi/sqrt(dot_product(gradpsi,gradpsi))
@@ -174,11 +174,13 @@ contains
 ! Solve dispersion for complex refractive index in psi direction then cast as real        
         call solve_n1_vs_n2_n3(eq, ray_dispersion_model, wave_mode, k0_sign, &
              &  n2, n3, npsi_cmplx)
-    write (*,*) 'n2, n3, npsi_cmplx =  ', n2, n3, npsi_cmplx
+        if (verbosity > 2) write (*,*) 'n2, n3, npsi_cmplx =  ', n2, n3, npsi_cmplx
 
-        if (npsi_cmplx%im /= 0.) then
-            write(message_unit, *) 'axisym_toroid_ray_init: evanescent ray, rvec = ', rvec, &
-            & ' n2 = ', n2, ' n3 = ', n3
+        if (abs(npsi_cmplx%im) > 10.*tiny(abs(npsi_cmplx))) then
+            if (verbosity > 0) then
+				write(message_unit, *) 'axisym_toroid_ray_init: non-zero Im(npsi_cmplx),&
+				   & rvec = ',  rvec, ' n2 = ', n2, ' n3 = ', n3, ' npsi_cmplx = ', npsi_cmplx
+            end if
             cycle rindex_phi_loop
         end if
         npsi = npsi_cmplx%re

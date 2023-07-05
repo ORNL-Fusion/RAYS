@@ -1,11 +1,14 @@
  module diagnostics_m
-!   contains diagnostic switches, error flags, and a routine, message(), to conveniently
-!   output messages and numbers
-!   The fortran I/O unit number -> 'message_unit' must be set in initialization.
+!   Controls output to files, stdio, etc
+!   
+!   Contains and initializes fortran output unit numbers.
+!   Contains diagnostic switches, error flags, and other miscellaneous data
+!   Provides two generic routines (message and text_message) to produce formatted output 
+!   requiring only one line of code.
 !   A switch -> 'verbosity' gives central control of how much output is produced.
-!   since messages are skipped unless the argument 'threshold' is >= 'verbosity'.
+!   messages are suppressed unless the optional argument 'threshold' is >= 'verbosity'.
 !   Routines are also provided to toggle 'message_unit' the originally specified
-!   unit number over to std I/O (i.e. unit=6) and back.
+!   unit number over to a diffferent unit and back so messages could be sent to other files
 !   'set_message_unit_stdio' and 'reset_message_unit_file'
 
 !   External procedures: cpu_time (intrinsic)
@@ -14,14 +17,9 @@
 
     implicit none
 
-
-
-! generic procedure: message(caller/character, mess/character, value/generic,
-!  threshold/integer)
-!    
+! generic procedure: message(mess/character, value/generic, threshold/integer)   
 ! Prints "caller: mess= value" when threshold > verbosity
-! value can be integer,real or complex
-
+! value can be integer,real, complex, or matrix
     interface message
     module procedure blank_message, &
     &   i_message, logical_message, r_message, rdbl_message, c_message, &
@@ -30,6 +28,9 @@
     &   cmatrixdbl_message
     end interface
 
+! generic procedure: text_message(mess/character, threshold/integer)   
+!                 or text_message(mess1/character,mess2/character, threshold/integer)
+
     interface text_message
     module procedure text_message, two_texts_message
     end interface
@@ -37,19 +38,31 @@
 ! Time and date vector - loaded in subroutine initialize()
     integer :: date_v(8)
 
-! message_unit = device number where output from message() goes
-    integer :: message_unit = 11
+! Unit where output from message() goes
+    integer :: message_unit
+
+! Place to temporarily stash message_unit to send messages to alternate file
     integer :: save_message_unit
 
-!  File name for message output
+! Unit for alternate message file
+    integer :: message_unit_alternate ! Superseded, stdout -> write(*...
+
+!  Default file name for message output.  At end copied to "log.RAYS.<run label>"
     character(len=80) :: message_file = 'messages'
 
-! message_unit = for standard I/O for writting to screen
-    integer, parameter :: message_unit_stdio = 6
-
-!  verbosity = a switch to set the level of output from message()
+!  verbosity = a switch to set the level of output from message() and text_message()
 !  verbosity = 0 gives minimum output 
     integer :: verbosity
+
+!   messages_to_stdout = If true write messages to stdout as well as to messages file
+    logical :: messages_to_stdout = .false.
+
+!   write_formatted_ray_files = If true write ray data to formatted ASCII file
+    logical :: write_formatted_ray_files = .false.
+
+!   unit numbers for persistent files (i.e. ones that stay open all through the run)
+    integer :: output_unit   ! Unit for formatted ray data output.  Set in initialize()
+    integer :: ray_list_unit ! Unit for formatted ray list output.  Set in initialize()
 
 !  Run label (N.B. should be legal in file name, e.g.no blanks allowed)
     character(len=60) :: run_label = ''
@@ -72,8 +85,8 @@
 !   Timing variables
     real :: t_start_rays, t_finish_rays, t_start_tracing, t_finish_tracing    
 
-    namelist /diagnostics_list/ message_unit, verbosity, run_description, &
-           & run_label, integrate_eq_gradients
+    namelist /diagnostics_list/ verbosity, messages_to_stdout, write_formatted_ray_files, &
+           & run_description, run_label, integrate_eq_gradients
 
 !******************************    
     
@@ -102,7 +115,8 @@ contains
         call system('cp '//trim(namelist_file)//' rays.in')
     end if
 
-	! Open file for output messages 
+	! Get unit number and open file for output messages 
+		message_unit = get_unit_number()
 		open(unit=message_unit, file=trim(message_file),                    &
 		   & action='write', status='replace', form='formatted')     
 
@@ -114,8 +128,14 @@ contains
         close(unit=input_unit)
     end if
 
+    call text_message('Initializing diagnostics', 1)
+
 ! Write input namelist
-    write(message_unit, diagnostics_list)
+    if (verbosity > 0) then
+		write(message_unit, diagnostics_list)
+		if (messages_to_stdout) write(*, diagnostics_list)
+		call message(1)
+    end if
 
     return
     
@@ -123,13 +143,20 @@ contains
 
 
 ! Print blank line  i.e. skip a line 
-    subroutine blank_message()
+    subroutine blank_message(threshold)
+		implicit none
+		integer, optional, intent (in) :: threshold
 
-    implicit none
+		if (present(threshold)) then
+		   if (verbosity < threshold) then
+			 return
+		   end if
+		end if
 
-    write (message_unit, '(" ")')
+		write(message_unit, '(" ")')
+		if (messages_to_stdout) write(*, '(" ")')
 
-    return
+		return
     end subroutine blank_message
 
 
@@ -147,7 +174,9 @@ contains
            end if
         end if
  
-        write (message_unit, '(a)') text
+        write(message_unit, '(a)') trim(text)
+        if (messages_to_stdout) write(*, '(a)') trim(text)
+        
         return
     end subroutine text_message
  
@@ -165,7 +194,9 @@ contains
            end if
         end if
 
-        write (message_unit, '(a," ", a)') text1, text2
+        write(message_unit, '(a," ", a)') trim(text1), trim(text2)
+        if (messages_to_stdout) write(*, '(a," ", a)') trim(text1), trim(text2)
+        
         return
     end subroutine two_texts_message
  
@@ -185,11 +216,21 @@ contains
         end if
 
         if (abs(value) < 1.e4) then
-            write (message_unit, '(a, " = ", I6)') &
+            write(message_unit, '(a, " = ", I6)') &
             &    mess, value
+            if (messages_to_stdout) then
+				write(*, '(a, " = ", I6)') &
+				&    mess, value
+            end if
+            
         else
-            write (message_unit, '(a, " = ", 1pe11.4)') &
+            write(message_unit, '(a, " = ", 1pe11.4)') &
             &    mess, real(value)
+            if (messages_to_stdout) then
+				write(*, '(a, " = ", 1pe11.4)') &
+				&    mess, real(value)
+            end if
+            
         end if
  
         return
@@ -211,11 +252,19 @@ contains
         end if
 
         if ( value ) then
-            write (message_unit, '(a, " = .true. ")') &
+            write(message_unit, '(a, " = .true. ")') &
             & mess
+            if (messages_to_stdout) then
+				write(*, '(a, " = .true. ")') &
+				& mess
+            end if
         else
-            write (message_unit, '(a, " = .false.")') &
+            write(message_unit, '(a, " = .false.")') &
             & mess
+            if (messages_to_stdout) then
+				write(*, '(a, " = .false.")') &
+				& mess
+            end if
         end if
     return
     end subroutine logical_message 
@@ -236,11 +285,19 @@ contains
         end if
 
         if ( (abs(value) <  1.e4) .and. (abs(value) > 1.e-3) ) then
-            write (message_unit, '(a, " = ", f11.4)') &
+            write(message_unit, '(a, " = ", f11.4)') &
             & mess, value
+            if (messages_to_stdout) then
+				write(*, '(a, " = ", f11.4)') &
+				& mess, value
+            end if
         else
-            write (message_unit, '(a, " = ", 1pe11.4)') &
+            write(message_unit, '(a, " = ", 1pe11.4)') &
             & mess, value 
+            if (messages_to_stdout) then
+				write(*, '(a, " = ", 1pe11.4)') &
+				& mess, value 
+            end if
         end if
     return
     end subroutine r_message 
@@ -260,11 +317,19 @@ contains
            end if
         end if
         if ( (abs(value) <  1.e4) .and. (abs(value) > 1.e-3) ) then
-            write (message_unit, '(a, " = (", f11.4,", ",f11.4,")")')&
+            write(message_unit, '(a, " = (", f11.4,", ",f11.4,")")')&
             & mess, value
+            if (messages_to_stdout) then
+            write(*, '(a, " = (", f11.4,", ",f11.4,")")')&
+            & mess, value
+            end if
         else
-            write (message_unit, '(a, " = (", 1pe11.4,", ",1pe11.4,")")')&
+            write(message_unit, '(a, " = (", 1pe11.4,", ",1pe11.4,")")')&
             & mess, value   
+            if (messages_to_stdout) then
+				write(*, '(a, " = (", 1pe11.4,", ",1pe11.4,")")')&
+				& mess, value   
+            end if
         end if
     return
     end subroutine c_message 
@@ -296,12 +361,19 @@ contains
         end do
 
         if ((v_max < 1.e5)) then
-            write (message_unit, '(a, " = ")') mess
-            write (message_unit, '(10i8)') (value(i), i=1, length_n)
-
+            write(message_unit, '(a, " = ")') mess
+            write(message_unit, '(10i8)') (value(i), i=1, length_n)
+            if (messages_to_stdout) then
+				write(*, '(a, " = ")') mess
+				write(*, '(10i8)') (value(i), i=1, length_n)
+            end if
         else
-            write (message_unit, '(a, " = ")') mess
-            write (message_unit, '(10(1pe12.4))') (value(i), i=1, length_n)
+            write(message_unit, '(a, " = ")') mess
+            write(message_unit, '(10(1pe12.4))') (value(i), i=1, length_n)
+            if (messages_to_stdout) then
+				write(*, '(a, " = ")') mess
+				write(*, '(10(1pe12.4))') (value(i), i=1, length_n)
+            end if
         end if
     return
     end subroutine ivn_message  
@@ -337,19 +409,34 @@ contains
         if (length_n <= 10 ) then
 
             if ((v_max < 1.e4) .and. (v_min > 1.e-3)) then
-                write (message_unit, '(a, " = ", 10f12.4,")")') &
+                write(message_unit, '(a, " = ", 10f12.4,")")') &
                 & mess, (value(i), i=1, length_n)
+            if (messages_to_stdout) then
+                write(*, '(a, " = ", 10f12.4,")")') &
+                & mess, (value(i), i=1, length_n)
+            end if
             else
-                write (message_unit, '(a, " = ", 10(1pe12.4),")")') &
+                write(message_unit, '(a, " = ", 10(1pe12.4),")")') &
                 & mess, (value(i), i=1, length_n) 
+				if (messages_to_stdout) then
+					write(*, '(a, " = ", 10(1pe12.4),")")') &
+					& mess, (value(i), i=1, length_n) 
+				end if
             end if
         else
 
             if ((v_max < 1.e4) .and. (v_min > 1.e-3)) then
-                write (message_unit, '(10f12.4)') (value(i), i=1, length_n)
+                write(message_unit, '(10f12.4)') (value(i), i=1, length_n)
+				if (messages_to_stdout) then
+					write(*, '(10f12.4)') (value(i), i=1, length_n)
+				end if
             else
-                write (message_unit, '(a, " = ")') mess
-                write (message_unit, '(10(1pe12.4))') (value(i), i=1, length_n) 
+                write(message_unit, '(a, " = ")') mess
+                write(message_unit, '(10(1pe12.4))') (value(i), i=1, length_n) 
+				if (messages_to_stdout) then
+					write(*, '(a, " = ")') mess
+					write(*, '(10(1pe12.4))') (value(i), i=1, length_n) 
+				end if
             end if
     
         end if
@@ -396,21 +483,37 @@ contains
         if (length_n <= 5 ) then
 
             if ((v_max < 1.e4) .and. (v_min > 1.e-3)) then
-                write (message_unit, '(a, " = ", 5(2f12.5,5x),")")') &
+                write(message_unit, '(a, " = ", 5(2f12.5,5x),")")') &
                 & mess, (value(i), i=1, length_n)
-            else
-                write (message_unit, '(a, " = ", 5(1pe12.4,1x,1pe12.4,4x),")")') &
+				if (messages_to_stdout) then
+					write(*, '(a, " = ", 5(2f12.5,5x),")")') &
+					& mess, (value(i), i=1, length_n)
+				end if
+				else
+                write(message_unit, '(a, " = ", 5(1pe12.4,1x,1pe12.4,4x),")")') &
                 & mess, (value(i), i=1, length_n) 
+				if (messages_to_stdout) then
+					write(*, '(a, " = ", 5(1pe12.4,1x,1pe12.4,4x),")")') &
+					& mess, (value(i), i=1, length_n) 
+				end if
             end if
 
         else
 
             if ((v_max < 1.e4) .and. (v_min > 1.e-3)) then
-                write (message_unit, '(a, " = ")') mess
-                write (message_unit, '(5(2f10.4,5x))') (value(i), i=1, length_n)
-            else
-                write (message_unit, '(a, " = ")') mess
-                write (message_unit, '(5(2(1pe11.4),5x))') (value(i), i=1, length_n) 
+                write(message_unit, '(a, " = ")') mess
+                write(message_unit, '(5(2f10.4,5x))') (value(i), i=1, length_n)
+				if (messages_to_stdout) then
+					write(*, '(a, " = ")') mess
+					write(*, '(5(2f10.4,5x))') (value(i), i=1, length_n)
+				end if
+           else
+                write(message_unit, '(a, " = ")') mess
+                write(message_unit, '(5(2(1pe11.4),5x))') (value(i), i=1, length_n) 
+				if (messages_to_stdout) then
+					write(*, '(a, " = ")') mess
+					write(*, '(5(2(1pe11.4),5x))') (value(i), i=1, length_n) 
+				end if
             end if
 
         end if
@@ -460,21 +563,37 @@ contains
         if (length_n <= 5 ) then
 
             if ((v_max < 1.e4) .and. (v_min > 1.e-3)) then
-                write (message_unit, '(a, " = ", 5(2f12.5,5x),")")') &
+                write(message_unit, '(a, " = ", 5(2f12.5,5x),")")') &
                 & mess, (value(i), i=1, length_n)
+				if (messages_to_stdout) then
+					write(*, '(a, " = ", 5(2f12.5,5x),")")') &
+					& mess, (value(i), i=1, length_n)
+				end if
             else
-                write (message_unit, '(a, " = ", 5(1pe12.4,1x,1pe12.4,4x),")")') &
+                write(message_unit, '(a, " = ", 5(1pe12.4,1x,1pe12.4,4x),")")') &
                 & mess, (value(i), i=1, length_n) 
+				if (messages_to_stdout) then
+					write(*, '(a, " = ", 5(1pe12.4,1x,1pe12.4,4x),")")') &
+					& mess, (value(i), i=1, length_n) 
+				end if
             end if
 
         else
 
             if ((v_max < 1.e4) .and. (v_min > 1.e-3)) then
-                write (message_unit, '(a, " = ")') mess
-                write (message_unit, '(5(2f10.4,5x))') (value(i), i=1, length_n)
+                write(message_unit, '(a, " = ")') mess
+                write(message_unit, '(5(2f10.4,5x))') (value(i), i=1, length_n)
+				if (messages_to_stdout) then
+					write(*, '(a, " = ")') mess
+					write(*, '(5(2f10.4,5x))') (value(i), i=1, length_n)
+				end if
             else
-                write (message_unit, '(a, " = ")') mess
-                write (message_unit, '(5(2(1pe11.4),5x))') (value(i), i=1, length_n) 
+                write(message_unit, '(a, " = ")') mess
+                write(message_unit, '(5(2(1pe11.4),5x))') (value(i), i=1, length_n) 
+				if (messages_to_stdout) then
+					write(*, '(a, " = ")') mess
+					write(*, '(5(2(1pe11.4),5x))') (value(i), i=1, length_n) 
+				end if
             end if
 
         end if
@@ -516,16 +635,28 @@ contains
 
         if ((v_max < 1.e4) .and. (v_min > 1.e-3)) then
 
-            write (message_unit, '(a, " = ")' ) mess
+            write(message_unit, '(a, " = ")' ) mess
+			if (messages_to_stdout) then
+				write(*, '(a, " = ")' ) mess
+			end if
             do i = 1, m_dim
-                write (message_unit, '(10f12.5)' )  (value(i, j), j=1, n_dim)
+                write(message_unit, '(10f12.5)' )  (value(i, j), j=1, n_dim)
+				if (messages_to_stdout) then
+					write(*, '(10f12.5)' )  (value(i, j), j=1, n_dim)
+				end if
             end do
         
         else
 
-            write (message_unit, '(a, " = ")' ) mess
+            write(message_unit, '(a, " = ")' ) mess
+			if (messages_to_stdout) then
+				write(*, '(a, " = ")' ) mess
+			end if
             do i = 1, m_dim
-                write (message_unit, '(10(1pe12.4))' )  (value(i, j), j=1, n_dim)
+                write(message_unit, '(10(1pe12.4))' )  (value(i, j), j=1, n_dim)
+				if (messages_to_stdout) then
+					write(*, '(10(1pe12.4))' )  (value(i, j), j=1, n_dim)
+				end if
             end do
         
         end if
@@ -551,11 +682,19 @@ contains
         end if
 !******************************
         if ( (abs(value) <  1.e4) .and. (abs(value) > 1.e-3) ) then
-            write (message_unit, '(a, " = ", f11.4)') &
+            write(message_unit, '(a, " = ", f11.4)') &
             & mess, value
+            if (messages_to_stdout) then
+				write(*, '(a, " = ", f11.4)') &
+				& mess, value
+            end if
         else
-            write (message_unit, '(a, " = ", 1pe11.4)') &
+            write(message_unit, '(a, " = ", 1pe11.4)') &
             & mess, value 
+            if (messages_to_stdout) then
+				write(*, '(a, " = ", 1pe11.4)') &
+				& mess, value 
+            end if
         end if
 !******************************
     return
@@ -591,11 +730,19 @@ contains
         end do
 
         if ((v_max < 1.e4) .and. (v_min > 1.e-3)) then
-            write (message_unit, '(a, " = ", 10f12.4,")")') &
+            write(message_unit, '(a, " = ", 10f12.4,")")') &
             & mess, (value(i), i=1, length_n)
-        else
-            write (message_unit, '(a, " = ", 10(1pe12.4),")")') &
+            if (messages_to_stdout) then
+				write(*, '(a, " = ", 10f12.4,")")') &
+				& mess, (value(i), i=1, length_n)
+            end if
+       else
+            write(message_unit, '(a, " = ", 10(1pe12.4),")")') &
             & mess, (value(i), i=1, length_n) 
+            if (messages_to_stdout) then
+				write(*, '(a, " = ", 10(1pe12.4),")")') &
+				& mess, (value(i), i=1, length_n) 
+            end if
         end if
 !******************************
     return
@@ -637,16 +784,28 @@ contains
 
         if ((v_max < 1.e4) .and. (v_min > 1.e-3)) then
 
-            write (message_unit, '(a, " = ")' ) mess
+            write(message_unit, '(a, " = ")' ) mess
+            if (messages_to_stdout) then
+				write(*, '(a, " = ")' ) mess
+            end if
             do i = 1, m_dim
-                write (message_unit, '(10f12.5)' )  (value(i, j), j=1, n_dim)
+                write(message_unit, '(10f12.5)' )  (value(i, j), j=1, n_dim)
+				if (messages_to_stdout) then
+					write(*, '(10f12.5)' )  (value(i, j), j=1, n_dim)
+				end if
             end do
         
         else
 
-            write (message_unit, '(a, " = ")' ) mess
-            do i = 1, m_dim
-                write (message_unit, '(10(1pe12.4))' )  (value(i, j), j=1, n_dim)
+            write(message_unit, '(a, " = ")' ) mess
+			if (messages_to_stdout) then
+				write(*, '(a, " = ")' ) mess
+			end if
+           do i = 1, m_dim
+                write(message_unit, '(10(1pe12.4))' )  (value(i, j), j=1, n_dim)
+				if (messages_to_stdout) then
+					write(*, '(10(1pe12.4))' )  (value(i, j), j=1, n_dim)
+				end if
             end do
         
         end if
@@ -691,16 +850,28 @@ contains
 
         if ((v_max < 1.e4) .and. (v_min > 1.e-3)) then
 
-            write (message_unit, '(a, " = ")' ) mess
+            write(message_unit, '(a, " = ")' ) mess
+			if (messages_to_stdout) then
+				write(*, '(a, " = ")' ) mess
+			end if
             do i = 1, m_dim
-                write (message_unit, '(i3,8(3x,2f10.4))' )  i, (value(i, j), j=1, n_dim)
+                write(message_unit, '(i3,8(3x,2f10.4))' )  i, (value(i, j), j=1, n_dim)
+				if (messages_to_stdout) then
+					write(*, '(i3,8(3x,2f10.4))' )  i, (value(i, j), j=1, n_dim)
+				end if
             end do
         
         else
 
-            write (message_unit, '(a, " = ")' ) mess
+            write(message_unit, '(a, " = ")' ) mess
+            if (messages_to_stdout) then
+				write(*, '(a, " = ")' ) mess
+			end if
             do i = 1, m_dim
-                write (message_unit, '(i3,8(2x,2(1pe12.4)))' )  i, (value(i, j), j=1, n_dim)
+                write(message_unit, '(i3,8(2x,2(1pe12.4)))' )  i, (value(i, j), j=1, n_dim)
+				if (messages_to_stdout) then
+					write(*, '(i3,8(2x,2(1pe12.4)))' )  i, (value(i, j), j=1, n_dim)
+				end if
             end do
         
         end if
@@ -743,16 +914,28 @@ contains
 
         if ((v_max < 1.e4) .and. (v_min > 1.e-3)) then
 
-            write (message_unit, '(a, " = ")' ) mess
+            write(message_unit, '(a, " = ")' ) mess
+            if (messages_to_stdout) then
+				write(*, '(a, " = ")' ) mess
+            end if
             do i = 1, m_dim
-                write (message_unit, '(i3,2x,8(3x,2f10.4))' )  i, (value(i, j), j=1, n_dim)
+                write(message_unit, '(i3,2x,8(3x,2f10.4))' )  i, (value(i, j), j=1, n_dim)
+				if (messages_to_stdout) then
+					write(*, '(i3,2x,8(3x,2f10.4))' )  i, (value(i, j), j=1, n_dim)
+				end if
             end do
         
         else
 
-            write (message_unit, '(a, " = ")' ) mess
+            write(message_unit, '(a, " = ")' ) mess
+            if (messages_to_stdout) then
+				write(*, '(a, " = ")' ) mess
+            end if
             do i = 1, m_dim
-                write (message_unit, '(i3,2x,8(3x,2(1pe11.4)))' )  i, (value(i, j), j=1, n_dim)
+                write(message_unit, '(i3,2x,8(3x,2(1pe11.4)))' )  i, (value(i, j), j=1, n_dim)
+				if (messages_to_stdout) then
+					write(*, '(i3,2x,8(3x,2(1pe11.4)))' )  i, (value(i, j), j=1, n_dim)
+				end if
             end do
         
         end if
@@ -761,12 +944,12 @@ contains
     end subroutine cmatrixdbl_message 
     
     
-    subroutine set_message_unit_stdio
+    subroutine set_message_unit_alternate
     implicit none
         save_message_unit = message_unit
-        message_unit = message_unit_stdio
+        message_unit = message_unit_alternate
     return
-    end subroutine set_message_unit_stdio
+    end subroutine set_message_unit_alternate
 
 
 
@@ -799,7 +982,7 @@ contains
     subroutine diagnostic_counter()
         diag_count = diag_count + 1
         if (diag_count >= max_diag_count) then
-            write (message_unit, *) 'diagnostic_counter issued stop: count = ',&
+            write(message_unit, *) 'diagnostic_counter issued stop: count = ',&
                &diag_count, '  = max_count'
             stop
         end if

@@ -19,7 +19,11 @@
 !   qs: charge          ms: mass
 !   eta: concentration as fraction of electron density
 !   n0s: number density = n0*eta
-!   t0s: temperature        alfas: T_perp/T_paral
+!   t0s_eV: temperature in eV.  Entered in eV in namelist file for convenience
+!   t0s: temperature in MKS (Joules) converted below from t0s_eV
+!   tseps_eV: temperature in eV.  Entered in eV in namelist file for convenience
+!   tseps: temperature in MKS (Joules) converted below from tseps_eV
+!	alfas: T_perp/T_paral
 !   v0s: parallel drift velocity
 !   nus: collision frequency i.e. nu/omega
 
@@ -41,7 +45,9 @@
     real(KIND=rkind), dimension(0:nspec0) :: eta = 0.
     real(KIND=rkind), dimension(0:nspec0) :: n0s = 0.
     real(KIND=rkind), dimension(0:nspec0) :: nseps = 0.
+    real(KIND=rkind), dimension(0:nspec0) :: t0s_eV = 0.
     real(KIND=rkind), dimension(0:nspec0) :: t0s = 0.
+    real(KIND=rkind), dimension(0:nspec0) :: tseps_eV = 0.
     real(KIND=rkind), dimension(0:nspec0) :: tseps = 0.
     real(KIND=rkind), dimension(0:nspec0) :: alfas = 0.
     real(KIND=rkind), dimension(0:nspec0) :: v0s = 0.
@@ -62,7 +68,7 @@
  
  
     namelist /species_list/ &
-      & n0, spec_name, spec_model, qs, ms, t0s, tseps, eta, neutrality
+      & n0, spec_name, spec_model, qs, ms, t0s_eV, tseps_eV, eta, neutrality
      
 
 !********************************************************************
@@ -91,8 +97,8 @@ contains
             open(unit=input_unit, file='rays.in',action='read', status='old', form='formatted')
             read(input_unit, species_list)    
             close(unit=input_unit)
-            write(message_unit, species_list)
         end if
+        write(message_unit, species_list)
     
 ! Electrons:   
         spec_name(0) = 'electron'
@@ -132,7 +138,7 @@ contains
         n0s = eta * n0
 
 !   Convert temperature unit from eV to Joules:
-        t0s = e * t0s
+        t0s = e * t0s_eV
 
         write(message_unit,*) ' is      qs         ms         eta        t0s(eV)      n0s'
         do is = 0, nspec

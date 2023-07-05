@@ -70,7 +70,7 @@ contains
 !
 ! External procedures: Only from module use.
 
-    use diagnostics_m, only: message_unit, message, text_message
+    use diagnostics_m, only: message_unit, messages_to_stdout, message, text_message, verbosity
     use species_m, only : nspec
     use equilibrium_m, only : equilibrium, eq_point, write_eq_point
     use dispersion_solvers_m, only: solve_n1_vs_n2_n3
@@ -96,15 +96,18 @@ contains
     real(KIND=rkind) :: npsi
     real(KIND=rkind) :: nperp
 
-    write(*,*) ' '
-    write(*,*) 'ray_init_axisym_toroid_nphi_ntheta '
+    call message(3)
+    call text_message( 'ray_init_axisym_toroid_nphi_ntheta ', 3)
     
 ! Read and write input namelist
     input_unit = get_unit_number()
     open(unit=input_unit, file='rays.in',action='read', status='old', form='formatted')
     read(input_unit, axisym_toroid_ray_init_nphi_ntheta_list)
     close(unit=input_unit)
-    write(message_unit, axisym_toroid_ray_init_nphi_ntheta_list)
+    if (verbosity > 0) then
+		write(message_unit, axisym_toroid_ray_init_nphi_ntheta_list)
+		if (messages_to_stdout) write(*, axisym_toroid_ray_init_nphi_ntheta_list)
+    end if
 
 ! Allocate maximum space for the initial condition vectors rvec0, rindex_vec0
 ! N.B. Not all of these may successfully initialize because of errors.  So count successful
@@ -113,11 +116,12 @@ contains
         nray = n_r_launch * n_theta_launch * n_rindex_theta * n_rindex_phi
 
         if ((nray > 0) .and. (nray <= nray_max)) then
-        allocate ( rvec0(3, nray), rindex_vec0(3, nray) )
-        allocate ( ray_pwr_wt(nray) )
+			allocate ( rvec0(3, nray), rindex_vec0(3, nray) )
+			allocate ( ray_pwr_wt(nray) )
         else
-        write (*,*) 'axisym_toroid ray init: improper number of rays  nray=', nray
-        stop 1
+			call message ('axisym_toroid ray init: improper number of rays  nray=', nray)
+			write (*,*) 'axisym_toroid ray init: improper number of rays  nray=', nray
+			stop 1
         end if  
 
     count = 0
@@ -140,19 +144,19 @@ contains
 
         call equilibrium(rvec, eq)
 		if (trim(eq%equib_err) /= '') then
-		   write (*,*) 'ray_init_axisym_toroid_nphi_ntheta: equib_err = ', trim(eq%equib_err)
+		   call text_message('ray_init_axisym_toroid_nphi_ntheta: equib_err = ', &
+		                     & trim(eq%equib_err), 1)
 		   cycle rindex_phi_loop
 		end if
 
-        call axisym_toroid_psi(rvec, psi, gradpsi, psiN, gradpsiN)  
-    write (*,*) ' '
-    write(*,*) 'count =  ' , count
-    write(*,*) 'ray_init_axisym_toroid_nphi_ntheta: rvec, psi, gradpsi = '
-    write(*,*) rvec, psi, gradpsi
-    write(*,*) 'ray_init_axisym_toroid_nphi_ntheta: rvec, psiN, gradpsiN = '
-    write(*,*) rvec, psiN, gradpsiN
-    call write_eq_point(eq)
-    write (*,*) ' '
+        call axisym_toroid_psi(rvec, psi, gradpsi, psiN, gradpsiN)
+        
+        call message(3)
+        call message('count =  ' , count, 3)
+        call message('ray_init_axisym_toroid_nphi_ntheta: rvec = ', rvec, 3)
+        call message('ray_init_axisym_toroid_nphi_ntheta: psiN = ', psiN, 3)
+        call message('ray_init_axisym_toroid_nphi_ntheta: gradpsiN = ', gradpsiN, 3)
+        if (verbosity > 2) call write_eq_point(eq)
                     
 ! Calculate a bunch of unit vectors, parallel and transverse components of k
         psi_unit = gradpsi/sqrt(dot_product(gradpsi,gradpsi))
@@ -176,11 +180,14 @@ contains
 ! Solve dispersion for complex refractive index in psi direction then cast as real        
         call solve_n1_vs_n2_n3(eq, ray_dispersion_model, wave_mode, k0_sign, &
              &  n2, n3, npsi_cmplx)
-    write (*,*) 'n2, n3, npsi_cmplx =  ', n2, n3, npsi_cmplx
+   
+        if (verbosity > 2) write (*,*) 'n2, n3, npsi_cmplx =  ', n2, n3, npsi_cmplx
 
-        if (npsi_cmplx%im /= 0.) then
-            write(message_unit, *) 'axisym_toroid_ray_init: evanescent ray, rvec = ', rvec, &
-            & ' n2 = ', n2, ' n3 = ', n3
+        if (abs(npsi_cmplx%im) > 10.*tiny(abs(npsi_cmplx))) then
+            if (verbosity > 0) then
+				write(message_unit, *) 'axisym_toroid_ray_init: non-zero Im(npsi_cmplx),&
+				   & rvec = ',  rvec, ' n2 = ', n2, ' n3 = ', n3, ' npsi_cmplx = ', npsi_cmplx
+            end if
             cycle rindex_phi_loop
         end if
         npsi = npsi_cmplx%re
@@ -212,7 +219,7 @@ contains
     end do ray_loop
 
     nray = count
-    call message('axisym_toroid_ray_init: nray', nray)
+    call message('axisym_toroid_ray_init: nray', nray, 1)
 
     if (nray == 0) then
         stop 'No successful ray initializations'
@@ -245,14 +252,10 @@ contains
 
        integer :: i, j
 
- write(*,*) 'inside function residual'
-
 !   Need dielectric tensor.
 
     if (ray_dispersion_model == "cold") then
- write(*,*) 'call dielectric_cold'
         call dielectric_cold(eq, eps)
- write(*,*) ' return from call dielectric_cold'
     end if
     
 !    write(*,*) 'eps = ', eps

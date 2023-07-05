@@ -6,9 +6,10 @@
 ! component of a host code, the host code may modify initial values by directly using
 ! the modules and not want data reread from files.
 
-    use constants_m, only : ray_list_unit, output_unit, initialize_constants_m
-    use diagnostics_m, only : initialize_diagnostics, date_v, message_unit, message,&
-        & text_message, run_description, run_label
+    use constants_m, only : initialize_constants_m
+    use diagnostics_m, only : initialize_diagnostics, date_v, message_unit, &
+        & ray_list_unit, output_unit, &
+        & messages_to_stdout, message, text_message, run_description, run_label
     use equilibrium_m, only : equilib_model, initialize_equilibrium_m
     use ode_m, only : initialize_ode_solver_m
     use ray_init_m, only : initialize_ray_init_m
@@ -22,8 +23,6 @@
 
 !************* read input data and set up for messages and diagnostic output  **************
 
-    write(*,*) 'initialize RAYS'
-
 !   Read data to set up diagnostic output
     call initialize_diagnostics(read_input)
 
@@ -33,13 +32,13 @@
     call text_message('initializing RAYS')
     write (message_unit,fmt="(i2,'-',i2,'-',i4,'   ',i2,':',i2,':',i2,'.',i3)") &
      & date_v(2), date_v(3), date_v(1), date_v(5), date_v(6), date_v(7), date_v(8)
+    if (messages_to_stdout) then
+		write (*,fmt="(i2,'-',i2,'-',i4,'   ',i2,':',i2,':',i2,'.',i3)") &
+		 & date_v(2), date_v(3), date_v(1), date_v(5), date_v(6), date_v(7), date_v(8)
+    end if
+    call text_message('run_description = ',trim(run_description), 1)
+    call text_message('run_label = ', trim(run_label), 1)
     call message()
-    call text_message(trim(run_description))
-    call text_message(trim(run_label))
-    call message()
-   
-    write(*,*) trim(run_description)
-    write(*,*) trim(run_label)
 
 ! ****** Initialize the modules, they read input data from module namelists   ***********
 
@@ -70,11 +69,12 @@
 !*************** Open output files ******************************
 
 !   Open a formatted file to receive number of rays and number of steps per ray
+!   File written in ray_tracing()
     open(unit=ray_list_unit, file='ray_list.'//trim(run_label),action='write', &
                 & status='replace', form='formatted')
 
 
-!   Open a file for formatted ray output.
+!   Open a file for formatted ray output. File written in check_save()
     open(unit=output_unit, file='ray_out.'//trim(run_label),action='write', &
                 & status='replace', form='formatted')
 

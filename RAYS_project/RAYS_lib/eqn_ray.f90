@@ -115,7 +115,6 @@
        
    if (verbosity > 3) then  ! Debugging diagnostics
        write (*,*) 'eqn_ray: rvec = ', rvec, '  kvec = ', kvec
-       write (message_unit,*) 'eqn_ray: dddx = ', dddx, 'dddk = ', dddk, 'dddw = ', dddw
        write (*,*) 'eqn_ray: dddx = ', dddx, 'dddk = ', dddk, 'dddw = ', dddw
    end if
 
@@ -129,7 +128,7 @@
        vg_unit = vg / vg0
 !      write(6,'(a,1p3e12.4)') 'EQN_RAY: vg/|vg| =', vg_unit
     else
-       write(*,*) 'EQN_RAY: infinite group velocity, dddw = ', dddw
+       call message('EQN_RAY: infinite group velocity, dddw = ', dddw, 1)
        ray_stop%stop_ode = .true.
        ray_stop%ode_stop_flag = 'infinite Vg'
        return
@@ -155,8 +154,7 @@
              vg_unit = vg / vg0
 !            write(6,'(a,1p3e12.4)') 'EQN_RAY: vg/|vg| =', vg_unit
           else
-             write(0,*) 'EQN_RAY: ray stalled, dddk = ', dddk
-             write(message_unit,*) 'EQN_RAY: ray stalled, dddk = ', dddk
+             call message('EQN_RAY: ray stalled, dddk = ', dddk, 1)
              ray_stop%stop_ode = .true.
              ray_stop%ode_stop_flag = 'ray stalled'
              return

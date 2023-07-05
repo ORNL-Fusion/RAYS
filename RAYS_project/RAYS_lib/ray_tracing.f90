@@ -4,9 +4,10 @@
 
 ! External procedures: cpu_time (intrinsic), check_save (check_save.f90)
 
-    use constants_m, only : rkind, ray_list_unit
-    use diagnostics_m, only : message_unit, message, verbosity, &
-                               t_start_tracing, t_finish_tracing
+    use constants_m, only : rkind
+    use diagnostics_m, only : message_unit, message, verbosity, write_formatted_ray_files, &
+                             & messages_to_stdout, &
+                             & ray_list_unit, t_start_tracing, t_finish_tracing
     use ode_m, only : ode_solver, ray_init_ode_solver, nv, ds, s_max, nstep_max, ode_stop
     use ray_init_m, only : nray
     use damping_m, only : damping_model, multi_spec_damping
@@ -38,9 +39,8 @@
        
     ray_loop: do iray = 1, nray  
 
-         write (*,'(/,a,i4)') 'ray #', iray
          call message()
-         call message ('trace_rays: ray #', iray, 0)
+         call message ('trace_rays: ray #', iray, 1)
 
          call cpu_time(t_start_ray)
 
@@ -61,7 +61,7 @@
     !    Save in ray_results_m 
 		 ray_vec(:,1,iray) = v(:)
  
-         call message()
+         call message(1)
          call message ('trace_rays: initial (x,y,z)', v(1:3), 3, 1)
          call message ('trace_rays: initial (kx,ky,kz)', v(4:6), 3, 1)
 
@@ -70,10 +70,16 @@
          if (ray_stop%stop_ode .eqv. .true.) then  ! Ray didn't start, initial conditions bad
             ray_stop_flag(iray) = ray_stop%ode_stop_flag
             npoints(iray) = 1 ! i.e. initial point
-            write(message_unit, *) 'ray ', iray, ' did not start. ', ray_stop%ode_stop_flag
+ 
+ 			if (verbosity > 0) then
+				write(message_unit, *) 'ray ', iray, ' did not start. ', ray_stop%ode_stop_flag
+				if (messages_to_stdout) write(*, *) 'ray ', iray, ' did not start. ', &
+				              & ray_stop%ode_stop_flag
+			end if
+
             cycle ray_loop
-         end if
-         
+ 		  end if
+        
       
     !***********************************    
 
@@ -82,24 +88,27 @@
             s = sout
             sout = sout + ds
 
-            call message()
+            call message(1)
             call message ('trace_rays: start step', nstep + 1, 1)
             call message ('trace_rays: s', s, 1)
             call message ('trace_rays: sout', sout, 1)
           
 ! check limits on s
             if(sout > s_max) then
-                call message ('trace_rays: stop ray, sout > s_max, s',s,0)
-                write (*, *) 'trace_rays: stop ray, sout > s_max, s = ',s
+                call message ('trace_rays: stop ray, sout > s_max, s',s, 1)
+                              
+                if (verbosity > 0) then
+					write (message_unit, '( "ray ",i3, "  s=", g12.4, "   nstep=", i4, /, &
+					&  "  (x,y,z)=", 3(f10.4),/,  "  (kx,ky,kz)=", 3(f10.4) )') iray, s, nstep, &
+					& v(1:3), v(4:6)
+					
+					if (messages_to_stdout) then
+						 write (*, '( "ray ",i3, "  s=", g12.4, "   nstep=", i4, /, &
+						&  "  (x,y,z)=", 3(f10.4),/,  "  (kx,ky,kz)=", 3(f10.4) )') iray, s, nstep, &
+						& v(1:3), v(4:6)
+					end if
+				end if
                
-                write (*, '( "ray ",i3, "  s=", g12.4, "   nstep=", i4, /, &
-                &  "  (x,y,z)=", 3(f10.4),/,  "  (kx,ky,kz)=", 3(f10.4) )') iray, s, nstep, &
-                & v(1:3), v(4:6)
-                
-                write (message_unit, '( "ray ",i3, "  s=", g12.4, "   nstep=", i4, /, &
-                &  "  (x,y,z)=", 3(f10.4),/,  "  (kx,ky,kz)=", 3(f10.4) )') iray, s, nstep, &
-                & v(1:3), v(4:6)
-                
                 ray_stop%stop_ode = .true.
                 ray_stop%ode_stop_flag = 'sout > s_max'
                 ray_stop_flag(iray) = ray_stop%ode_stop_flag
@@ -108,23 +117,27 @@
             
 ! check limits on nstep
             if(nstep + 1 > nstep_max) then
-                call message ('trace_rays: terminate ray, nstep+1 > nstep_max, nstep', nstep, 0)
-                write (*, *) 'trace_rays: terminate ray, nstep+1 > nstep_max, nstep = ',nstep
-                ray_stop%ode_stop_flag =  ' nstep > nstep_max'
-                
-                nstep = nstep_max ! Last valid step was nstep_max
-               
-                write (*, '( "ray ",i3, " stopped, last valid step  s=", g12.4, "   nstep=", i4, /, &
-                &  "  (x,y,z)=", 3(f10.4),/,  "  (kx,ky,kz)=", 3(f10.4) )') iray, s, nstep, &
-                & v(1:3), v(4:6)
-                
-                write (message_unit, '( "ray ",i3, " stopped, last valid step   s=", g12.4, "   nstep=", i4, /, &
-                &  "  (x,y,z)=", 3(f10.4),/,  "  (kx,ky,kz)=", 3(f10.4) )') iray, s, nstep, &
-                & v(1:3), v(4:6)
-                
                 ray_stop%stop_ode = .true.
-                ray_stop_flag(iray) = ray_stop%ode_stop_flag
-               exit trajectory
+                ray_stop%ode_stop_flag =  ' nstep > nstep_max'
+                ray_stop_flag(iray) = ray_stop%ode_stop_flag                
+                nstep = nstep_max ! Last valid step was nstep_max
+
+                call message ('trace_rays: terminate ray, nstep+1 > nstep_max, nstep', nstep, 1)
+
+                if (verbosity > 0) then                
+
+					write (message_unit, '( "ray ",i3, " stopped, last valid step   s=", g12.4, &
+					& "   nstep=", i4, /, "  (x,y,z)=", 3(f10.4),/,  "  (kx,ky,kz)=", 3(f10.4) )') &
+					&  iray, s, nstep, v(1:3), v(4:6)
+
+					if (messages_to_stdout) then
+						write (message_unit, '( "ray ",i3, " stopped, last valid step   s=", g12.4, &
+						& "   nstep=", i4, /, "  (x,y,z)=", 3(f10.4),/,  "  (kx,ky,kz)=", 3(f10.4) )') &
+						&  iray, s, nstep, v(1:3), v(4:6)
+					end if
+				end if
+                
+                exit trajectory
             end if
           
 ! Integrate from s to sout
@@ -133,17 +146,23 @@
 ! check for stop condition inside ode solver. Step failed.
             if (ray_stop%stop_ode .eqv. .true.) then 
                 ray_stop_flag(iray) = ray_stop%ode_stop_flag
-                write(message_unit, *) 'ray ', iray, ' stopped in ODE solver on step #',&
-                  & nstep+1, ',  s = ', s, ', ode_stop_flag =  ', trim(ray_stop%ode_stop_flag)
-                  
-                write(*, *) 'ray ', iray, ' stopped in ODE solver on step #',&
-                  & nstep+1, ',  s = ', s, ', stop_flag =  ', trim(ray_stop%ode_stop_flag)
-                                 
-                write (*, '(  "  (x,y,z)=", 3(f10.4),/,  "  (kx,ky,kz)=", 3(f10.4) )') v(1:3), v(4:6)
+
+                if (verbosity > 0) then                
+					write(message_unit, *) 'ray ', iray, ' stopped in ODE solver on step #',&
+					  & nstep+1, ',  s = ', s, ', ode_stop_flag =  ', trim(ray_stop%ode_stop_flag)
+					write (message_unit, '( "last valid step   s=", g12.4, "   nstep=", i4, /, &
+					&  "  (x,y,z)=", 3(f10.4),/,  "  (kx,ky,kz)=", 3(f10.4) )') s, nstep, &
+					& v(1:3), v(4:6)
+
+					if (messages_to_stdout) then
+						write(*, *) 'ray ', iray, ' stopped in ODE solver on step #',&
+						  & nstep+1, ',  s = ', s, ', ode_stop_flag =  ', trim(ray_stop%ode_stop_flag)
+						write (message_unit, '( "last valid step   s=", g12.4, "   nstep=", i4, /, &
+						&  "  (x,y,z)=", 3(f10.4),/,  "  (kx,ky,kz)=", 3(f10.4) )') s, nstep, &
+						& v(1:3), v(4:6)
+					end if
+				end if
                 
-                write (message_unit, '( "ray ",i3, " stopped, last valid step   s=", g12.4, "   nstep=", i4, /, &
-                &  "  (x,y,z)=", 3(f10.4),/,  "  (kx,ky,kz)=", 3(f10.4) )') iray, s, nstep, &
-                & v(1:3), v(4:6)
                 exit trajectory
             end if    
 
@@ -154,8 +173,8 @@
             damping : if (damping_model /= 'no_damp') then    
               call message ('trace_rays: Total P-abs', v(8), 1)
 
-              if ((multi_spec_damping .eqv. .true.) .and. (verbosity >= 1)) then
-                write (message_unit,*) 'trace_rays: P_abs(species)', v(9:9+nspec)
+              if (multi_spec_damping .eqv. .true.) then
+                call message('trace_rays: P_abs(species)', v(9:9+nspec), 1)
               end if  
             end if damping
  
@@ -163,19 +182,23 @@
             call check_save(s, nv, v, resid, ray_stop)
 
             if (ray_stop%stop_ode .eqv. .true.) then
-                write(message_unit, *) 'ray ', iray, ' stopped in check_save  ', &
-                                    & ray_stop%ode_stop_flag, '  residual =', resid
-                                    
-                 write (message_unit, '( " s=", g12.4, "   nstep=", i4, /, &
-                &  "  (x,y,z)=", 3(f10.4),/,  "  (kx,ky,kz)=", 3(f10.4) )') s, nstep, &
-                & v(1:3), v(4:6)
+                if (verbosity > 0) then                
+					write(message_unit, *) 'ray ', iray, ' stopped in check_save  ', &
+										& ray_stop%ode_stop_flag, '  residual =', resid
+									
+					 write (message_unit, '( " s=", g12.4, "   nstep=", i4, /, &
+					&  "  (x,y,z)=", 3(f10.4),/,  "  (kx,ky,kz)=", 3(f10.4) )') s, nstep, &
+					& v(1:3), v(4:6)
 
-               write(*, *) 'ray ', iray, ' stopped in check_save  ', &
-                                    & ray_stop%ode_stop_flag, '  residual =', resid
-                
-                write (*, '( " s=", g12.4, "   nstep=", i4, /, &
-                &  "  (x,y,z)=", 3(f10.4),/,  "  (kx,ky,kz)=", 3(f10.4) )') s, nstep, &
-                & v(1:3), v(4:6)
+					if (messages_to_stdout) then
+						write(message_unit, *) 'ray ', iray, ' stopped in check_save  ', &
+											& ray_stop%ode_stop_flag, '  residual =', resid
+									
+						 write (message_unit, '( " s=", g12.4, "   nstep=", i4, /, &
+						&  "  (x,y,z)=", 3(f10.4),/,  "  (kx,ky,kz)=", 3(f10.4) )') s, nstep, &
+						& v(1:3), v(4:6)
+					end if
+				end if
                 
                 exit trajectory
             end if
@@ -214,11 +237,13 @@
 !    write(94) -12345
 
 !   Write ray file description
-     write(ray_list_unit, *) nray
-     write(ray_list_unit, *) nv
-     write(ray_list_unit, *) npoints
-     write(ray_list_unit, *) end_residuals
-     write(ray_list_unit, *) ray_stop_flag
+    if (write_formatted_ray_files) then
+       write(ray_list_unit, *) nray
+       write(ray_list_unit, *) nv
+       write(ray_list_unit, *) npoints
+       write(ray_list_unit, *) end_residuals
+       write(ray_list_unit, *) ray_stop_flag
+    end if
 
 ! Below are writes for binary file.  For now use formatted
 !      write (95) nray

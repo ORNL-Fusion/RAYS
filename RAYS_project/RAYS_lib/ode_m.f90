@@ -95,15 +95,16 @@
   subroutine initialize_ode_solver_m(read_input)
 
     use damping_m, only : damping_model, multi_spec_damping
-    use diagnostics_m, only : message_unit, message, text_message, integrate_eq_gradients
+    use diagnostics_m, only : message_unit, message, text_message, integrate_eq_gradients, &
+                 & messages_to_stdout, verbosity
     use species_m, only : nspec
     
     implicit none
     logical, intent(in) :: read_input
  	integer :: input_unit, get_unit_number ! External, free unit finder   
 
-    write(*,*) ' '
-    write(*,*) 'initialize_ode_solver '
+    call message()
+    call text_message('Initializing ode_solver_m ', 1)
 
     if (read_input .eqv. .true.) then    
     ! Read and write input namelist
@@ -112,8 +113,12 @@
         read(input_unit, ode_list)
         close(unit=input_unit)
     end if
-    write(message_unit, ode_list)
-    write(*, ode_list)
+
+! Write input namelist
+    if (verbosity > 0) then
+		write(message_unit, ode_list)
+		if (messages_to_stdout) write(*, ode_list)
+    end if
 
 !   Select ode solver.
     solver: select case (trim(ode_solver_name))
@@ -149,7 +154,7 @@
     ! diagnostic purposes
     if (integrate_eq_gradients .eqv. .true. ) nv = nv + 5
     
-    call message ('initialize_ode_solver: ODE vector length nv', nv)
+    call message ('initialize_ode_solver: ODE vector length nv', nv, 1)
 
     return
   end subroutine initialize_ode_solver_m
@@ -179,8 +184,10 @@
        case ('RK4_ODE')
           call ray_init_RK4_ode
 
-       case default  ! By this point there has to be a solver
-           stop 2
+       case default
+          write(0,*) 'ray_init_ode_solver, invalid ode solver = ', trim(ode_solver_name)
+          call text_message ('ray_init_ode_solver: invalid ode solver', trim(ode_solver_name),0)
+          stop 2
 
     end select solver
  

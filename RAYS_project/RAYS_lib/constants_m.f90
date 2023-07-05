@@ -5,10 +5,6 @@
 
     integer, parameter :: rkind = selected_real_kind(15,307) ! kind parameter for reals
     integer, parameter :: skind = selected_real_kind(6,37) ! kind parameter single precision
-
-! unit numbers for persistent files (i.e. ones that stay open all through the run)
-    integer :: output_unit = 75 ! Unit number for formatted ray data output
-    integer :: ray_list_unit = 74 ! Unit number for formatted ray list output
  
     complex :: i                ! positive square root of -1
 

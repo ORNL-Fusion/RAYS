@@ -46,8 +46,8 @@
         open(unit=input_unit, file='rays.in',action='read', status='old', form='formatted')
         read(input_unit, damping_list)
         close(unit=input_unit)
-        write(message_unit, damping_list)
     end if
+    write(message_unit, damping_list)
 
     return
   end subroutine initialize_damping_m

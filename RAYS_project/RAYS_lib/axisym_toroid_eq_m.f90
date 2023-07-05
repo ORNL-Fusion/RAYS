@@ -49,7 +49,7 @@ contains
 
     use constants_m, only : rkind
     use species_m, only : nspec
-    use diagnostics_m, only : message, message_unit, text_message, verbosity
+    use diagnostics_m, only : message, message_unit, text_message, messages_to_stdout, verbosity
 
     use solovev_magnetics_m, only : initialize_solovev_magnetics
     use eqdsk_magnetics_lin_interp_m, only : initialize_eqdsk_magnetics_lin_interp
@@ -61,8 +61,8 @@ contains
 
     real(KIND=rkind) :: bp0
 
-    write(*,*) ' '
-    write(*,*) 'initialize_axisym_toroid_eq '
+    call message()
+    call text_message('initializing_axisym_toroid_eq ', 1)
 
 	if (.not. allocated(temperature_prof_model)) then    
 		allocate( temperature_prof_model(0:nspec) )
@@ -71,16 +71,20 @@ contains
 		alphat1 = 0. 
 		alphat2 = 0. 
     end if
-    
+
+! Read input namelist    
     if (read_input .eqv. .true.) then    
     	input_unit = get_unit_number()
         open(unit=input_unit, file='rays.in',action='read', status='old', form='formatted')
         read(input_unit, axisym_toroid_eq_list)
         close(unit=input_unit)
-        write(message_unit, axisym_toroid_eq_list)
     end if
 
-    write(*, axisym_toroid_eq_list)
+! Write input namelist
+    if (verbosity > 0) then
+		write(message_unit, axisym_toroid_eq_list)
+		if (messages_to_stdout) write(*, axisym_toroid_eq_list)
+    end if
     
     magnetics: select case (trim(magnetics_model))
        case ('solovev_magnetics')
@@ -124,7 +128,7 @@ contains
 ! and their gradients based on density_prof_model and temperature_prof_model
 
     use species_m, only : nspec, n0s, t0s
-    use diagnostics_m, only : message_unit, message
+    use diagnostics_m, only : message_unit, message, verbosity
 
     use solovev_magnetics_m, only : solovev_magnetics
     use eqdsk_magnetics_lin_interp_m, only : eqdsk_magnetics_lin_interp
@@ -229,9 +233,13 @@ contains
           end if
 
        case default
-          write(0,*) 'axisym_toroid_eq: Unknown temperature_prof_model: ', &
+			if (verbosity > 0) then
+				write(message_unit, *) 'axisym_toroid_eq: Unknown temperature_prof_model: ', &
                      & temperature_prof_model(0:nspec)
-          stop 1
+				write(*,*) 'axisym_toroid_eq: Unknown temperature_prof_model: ', &
+                     & temperature_prof_model(0:nspec)
+			end if
+            stop 1
 
        end select temperature
     end do
@@ -281,7 +289,7 @@ contains
  subroutine write_axisym_toroid_profiles
     use constants_m, only : rkind
     use species_m, only : nspec
-    use diagnostics_m, only : message_unit
+    use diagnostics_m, only : message_unit, messages_to_stdout
 
     implicit none
     
@@ -307,6 +315,10 @@ contains
     
     write (message_unit,*) '    x', b9,'ne', b12, 'bx', b9, 'by', b9, 'bz', b9, 'psi', &
             & b8, 'psiN', b8,  'Te',b9, 'Ti(s)'
+    if (messages_to_stdout) then
+		write (*,*) '    x', b9,'ne', b12, 'bx', b9, 'by', b9, 'bz', b9, 'psi', &
+				& b8, 'psiN', b8,  'Te',b9, 'Ti(s)'
+    end if
 
     do ip = 1, nx_points
         x = inner_bound + (ip-1)*dx
@@ -315,6 +327,11 @@ contains
         call axisym_toroid_psi(rvec, psi, gradpsi, psiN, gradpsiN)  
         write (message_unit,'(f11.5, a, e12.5, 3f11.5, f11.5, f11.5,  7f11.5)') &
                & x,'  ', ns(0), bvec, psi, psiN, (ts(i), i=0, nspec)
+		if (messages_to_stdout) then
+			write (*,'(f11.5, a, e12.5, 3f11.5, f11.5, f11.5,  7f11.5)') &
+				   & x,'  ', ns(0), bvec, psi, psiN, (ts(i), i=0, nspec)
+		end if
+
 !        write(*,*) 'x = ', x, '  gradpsi = ', gradpsi
 !        write(*,*) 'gradbtensor = ', gradbtensor
     end do

@@ -33,14 +33,14 @@ contains
 
   module subroutine initialize_SG_ode(read_input)
 
-     use diagnostics_m, only : message_unit
+     use diagnostics_m, only : message_unit, message, text_message, messages_to_stdout, verbosity
     
     implicit none
     logical, intent(in) :: read_input
 	integer :: input_unit, get_unit_number ! External, free unit finder   
 
-    write(*,*) ' '
-    write(*,*) 'initialize_SG_ode '
+    call message()
+    call text_message('Initializing SG_ode_m ', 1)
 
 	if (read_input .eqv. .true.) then        
 	! Read and write input namelist
@@ -48,8 +48,13 @@ contains
 		open(unit=input_unit, file='rays.in',action='read', status='old', form='formatted')
 		read(input_unit, SG_ode_list)
 		close(unit=input_unit)
-		write(message_unit, SG_ode_list)
 	end if
+
+! Write input namelist
+    if (verbosity > 0) then
+		write(message_unit, SG_ode_list)
+		if (messages_to_stdout) write(*, SG_ode_list)
+    end if
 
 !   Check error criterion for the ODE solver.  Put a limit on how small target error can be.
     if ( rel_err0 < 1.e-10 .or. abs_err0 < 1.e-10 ) then

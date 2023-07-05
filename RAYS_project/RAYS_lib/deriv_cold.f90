@@ -4,7 +4,7 @@
 !   dddx = dD/dx, dddk = dD/dk, dddw = dD/d(omega).
 
     use constants_m, only : rkind
-    use equilibrium_m, only : eq_point
+    use equilibrium_m, only : eq_point, write_eq_point
     use rf_m, only : omgrf, k0
     use species_m, only : nspec
     use diagnostics_m, only : message_unit, verbosity
@@ -48,16 +48,7 @@
     dn12dx = -2.*n3*dn3dx
     do ivec = 1, 3
         do is = 0, nspec
-
-           if (verbosity > 4) then
-                write(*,*) 'ivec = ', ivec, 'is = ', is
-                write(*,*) 'alpha(is) = ', eq%alpha(is)
-                write(*,*) 'gradns(ivec,is) = ', eq%gradns(ivec,is)
-                write(*,*) 'ns(is) = ', eq%ns(is)
-                write(*,*) 'gamma(is) = ', eq%gamma(is)
-                write(*,*) 'gradbmag(ivec) = ', eq%gradbmag(ivec)
-            end if
-
+           if (verbosity > 4) call write_eq_point(eq)
            dadx(ivec,is) = eq%alpha(is) * eq%gradns(ivec,is)/eq%ns(is)
            dgdx(ivec,is) = eq%gamma(is) * eq%gradbmag(ivec)/eq%bmag
         end do
@@ -215,10 +206,10 @@
 !        write(*,'(a,1p3e12.4)') 'dn3dk =', dn3dk
 !        write(*,'(a,1p3e12.4)') 'dn12dk =', dn12dk
 
-       write(*,'(a,1p3e12.4)') 'dddx =', dddx
-       write(*,'(a,1p3e12.4)') 'dddk =', dddk
-       write(*,'(a,1p1e12.4)') 'dddw =', dddw
-       write(*,*) ''   
+!       write(*,'(a,1p3e12.4)') 'dddx =', dddx
+!       write(*,'(a,1p3e12.4)') 'dddk =', dddk
+!       write(*,'(a,1p1e12.4)') 'dddw =', dddw
+!       write(*,*) ''   
 
     end if verb
     return

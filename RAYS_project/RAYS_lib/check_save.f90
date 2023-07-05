@@ -2,8 +2,9 @@
 !   Does checking for ray stop criteria and saves output after each step.
 !   External routines: deriv_cold (deriv_cold.f90)
 
-    use constants_m, only : rkind, output_unit
-    use diagnostics_m, only : integrate_eq_gradients, message, text_message
+    use constants_m, only : rkind
+    use diagnostics_m, only : integrate_eq_gradients, message, text_message, &
+                            & write_formatted_ray_files, output_unit
     use species_m, only : nspec, n0s
     use equilibrium_m, only : equilibrium, eq_point
     use ode_m, only : ds, ode_stop
@@ -79,6 +80,7 @@
 !      Derivatives of D for a cold plasma.
        call deriv_cold(eq, nvec, dddx, dddk, dddw)      
     else
+       call text_message('CHECK_SAVE: ray_dispersion_model = ', ray_dispersion_model)
        write(*,*) 'CHECK_SAVE: ray_dispersion_model = ', ray_dispersion_model
        stop 'check_save: unimplemented ray_dispersion_model'
     end if
@@ -92,16 +94,15 @@
 !         Note that when ray_param = 'time', "ds" in the code is "dt". Time steps are a
 !         fraction of a nonosecond.
           if ( vg0*ds > 1. ) then
-             write(*,'(a,1p1e12.4)') 'CHECK_SAVE: time step too big,&
-                & Vg*dt (m) =', vg0 * ds
+             call message('CHECK_SAVE: time step too big, Vg*dt (m) =', vg0 * ds, 1)
           end if
        end if
        
        call message('check_save: Vg',vg, 3, 1)
        
     else
-       write(*,*) 'CHECK_SAVE: dddw = ', dddw
-       call text_message('check_save: infinite group velocity, dddw = 0')
+       call message('CHECK_SAVE: dddw = ', dddw)
+       call text_message('check_save: infinite group velocity, dddw = 0', 1)
        ray_stop%stop_ode = .true.
        ray_stop%ode_stop_flag = 'infinite_Vg'       
     end if
@@ -119,7 +120,7 @@
         if (total_absorption > total_damping_limit) then
  	       ray_stop%stop_ode = .true.
            ray_stop%ode_stop_flag = 'total_absorption'
-            write (*,*) 'ray_stop%ode_stop_flag = ', ray_stop%ode_stop_flag
+           call text_message('ray_stop%ode_stop_flag = ', ray_stop%ode_stop_flag, 1)
         end if
 
 !       Check if the sum of all by species absorption is equal to the total.        
@@ -145,11 +146,11 @@
     end if integrate_gradients
 
     
-!****** write step ray vector to output file *********************************    
+!****** write ray vector for this step to output file *********************************    
     
-    write(output_unit, *) s, v
-    
-!    write(94) s, v  ! Write for binary file.  For now use formatted
+    if (write_formatted_ray_files) then
+		write(output_unit, *) s, v
+    end if
 
     return
 
