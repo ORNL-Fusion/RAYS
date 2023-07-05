@@ -39,8 +39,8 @@
 
  subroutine initialize_post_processing_m(read_input)
 
-    use diagnostics_m, only : message_unit, message, text_message, verbosity
-    use constants_m, only : output_unit, ray_list_unit
+    use diagnostics_m, only : message_unit, message, text_message, verbosity, &
+                            & output_unit, ray_list_unit
     use slab_processor_m, only : initialize_slab_processor
     use solovev_processor_m, only : initialize_solovev_processor
     use axisym_toroid_processor_m, only : initialize_axisym_toroid_processor
@@ -138,8 +138,8 @@
 
  subroutine read_ray_data
 
-    use diagnostics_m, only : message_unit, message, text_message, verbosity
-    use constants_m, only : output_unit, ray_list_unit
+    use diagnostics_m, only : message_unit, message, text_message, verbosity, &
+                            & output_unit, ray_list_unit
     use ray_init_m, only : nray_ray_init => nray
 
     implicit none

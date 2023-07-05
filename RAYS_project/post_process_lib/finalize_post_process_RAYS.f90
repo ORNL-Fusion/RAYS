@@ -1,14 +1,12 @@
  subroutine finalize_post_process_RAYS
 !   Finish up, do post processing if any
 
-    use constants_m, only : ray_list_unit, output_unit
-    use diagnostics_m, only : message_unit, message, text_message 
+    use diagnostics_m, only : message_unit, message, text_message, ray_list_unit, output_unit
 
     implicit none
 
     close(ray_list_unit)
     close(output_unit)
-
         
     call message()
     call text_message('Post processing RAYS finished')

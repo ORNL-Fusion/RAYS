@@ -7,9 +7,9 @@
 !      called.  Therefore this routine should be called from the host program with 
 !      initialize_post_processing_m = .false.
 
-    use constants_m, only : ray_list_unit, output_unit, initialize_constants_m
-    use diagnostics_m, only : initialize_diagnostics, date_v, message_unit, message,&
-        & text_message, run_description, run_label
+    use constants_m, only : initialize_constants_m
+    use diagnostics_m, only : initialize_diagnostics, date_v, message_unit, message, &
+                & ray_list_unit, output_unit, text_message, run_description, run_label
     use equilibrium_m, only : equilib_model, initialize_equilibrium_m
     use ode_m, only : initialize_ode_solver_m
     use ray_init_m, only : initialize_ray_init_m

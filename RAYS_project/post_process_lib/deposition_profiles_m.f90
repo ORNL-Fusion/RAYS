@@ -302,7 +302,6 @@ subroutine initialize_deposition_profiles(read_input)
 		
 		xQ = psiN
 		Q = ray_vec(8, ix, iray)
-	write(*,*) 'ix, ray_vec(1:3, ix, iray), xQ, Q = ', ix, ray_vec(1:3, ix, iray), xQ, Q
 
  	return
     end subroutine Ptotal_axisym_evaluator
