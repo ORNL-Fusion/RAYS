@@ -1,7 +1,7 @@
  program component_test_RAYS
 
-    use diagnostics_m, only : message_unit, message, text_message, verbosity
-    use constants_m, only : output_unit, ray_list_unit
+    use diagnostics_m, only : message_unit, message, text_message, verbosity, &
+                            & output_unit, ray_list_unit
     
     use damping_slab_test_m, only : init_damping_slab_test, damping_slab_test
     use read_results_LD_test_m, only : init_read_results_LD_test, read_results_LD_test

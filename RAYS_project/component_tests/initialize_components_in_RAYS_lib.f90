@@ -9,9 +9,9 @@
 ! component of a host code, the host code may modify initial values by directly using
 ! the modules and not want data reread from files.
 
-    use constants_m, only : ray_list_unit, output_unit, initialize_constants_m
+    use constants_m, only : initialize_constants_m
     use diagnostics_m, only : initialize_diagnostics, date_v, message_unit, message,&
-        & text_message, run_description, run_label
+        & text_message, run_description, run_label, ray_list_unit, output_unit
     use equilibrium_m, only : equilib_model, initialize_equilibrium_m
     use rf_m, only : initialize_rf_m
     use damping_m, only : initialize_damping_m
