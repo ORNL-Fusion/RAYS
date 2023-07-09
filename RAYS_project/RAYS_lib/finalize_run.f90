@@ -31,7 +31,7 @@
 
     call message(1)
     call text_message('RAYS run finished', 1)
-    call message()
+    call message(1)
     close(message_unit)
 
 ! Copy messages file to log.RAYS so it won't get clobbered by post processing

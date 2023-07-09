@@ -238,29 +238,29 @@ contains
     
     type(eq_point), intent(in) :: eq
     integer, intent(in), optional :: unit
-    integer :: out_unit 
+    integer :: write_unit 
     
-    out_unit = stdout
-    if (present(unit)) out_unit = unit
+    write_unit = stdout
+    if (present(unit)) write_unit = unit
  
-    write(out_unit, *) ' '
-    write(out_unit, *) 'eq_point = '
-    write(out_unit, *) 'bvec = ', eq%bvec
-    write(out_unit, *) 'gradbtensor = ', eq%gradbtensor
-    write(out_unit, *) 'ns = ', eq%ns
-    write(out_unit, *) 'gradns = ', eq%gradns
-    write(out_unit, *) 'ts = ', eq%ts
-    write(out_unit, *) 'gradts = ', eq%gradts
-    write(out_unit, *) 'bmag = ', eq%bmag
-    write(out_unit, *) 'bunit = ', eq%bunit
-    write(out_unit, *) 'gradbmag = ', eq%gradbmag
-    write(out_unit, *) 'gradbunit = ', eq%gradbunit
-    write(out_unit, *) 'omgc = ', eq%omgc
-    write(out_unit, *) 'omgp2 = ', eq%omgp2
-    write(out_unit, *) 'alpha = ', eq%omgp2
-    write(out_unit, *) 'gamma = ', eq%gamma
+    write(write_unit, *) ' '
+    write(write_unit, *) 'eq_point = '
+    write(write_unit, *) 'bvec = ', eq%bvec
+    write(write_unit, *) 'gradbtensor = ', eq%gradbtensor
+    write(write_unit, *) 'ns = ', eq%ns
+    write(write_unit, *) 'gradns = ', eq%gradns
+    write(write_unit, *) 'ts = ', eq%ts
+    write(write_unit, *) 'gradts = ', eq%gradts
+    write(write_unit, *) 'bmag = ', eq%bmag
+    write(write_unit, *) 'bunit = ', eq%bunit
+    write(write_unit, *) 'gradbmag = ', eq%gradbmag
+    write(write_unit, *) 'gradbunit = ', eq%gradbunit
+    write(write_unit, *) 'omgc = ', eq%omgc
+    write(write_unit, *) 'omgp2 = ', eq%omgp2
+    write(write_unit, *) 'alpha = ', eq%omgp2
+    write(write_unit, *) 'gamma = ', eq%gamma
    
-!     call message()
+!     call message(1)
 !     call text_message('eq_point')
 !     call message('bvec = ', eq%bvec)
 !     call message('gradbtensor = ', eq%gradbtensor, 3, 3)

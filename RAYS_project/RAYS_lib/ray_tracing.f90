@@ -233,9 +233,6 @@
 
     end do ray_loop
 
-!   Signature.
-!    write(94) -12345
-
 !   Write ray file description
     if (write_formatted_ray_files) then
        write(ray_list_unit, *) nray

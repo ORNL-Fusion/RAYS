@@ -20,6 +20,7 @@
 
     implicit none
     logical, intent(in) :: read_input
+	integer :: input_unit, get_unit_number ! External, free unit finder
 
 !************* read input data and set up for messages and diagnostic output  **************
 
@@ -38,56 +39,47 @@
     end if
     call text_message('run_description = ',trim(run_description), 1)
     call text_message('run_label = ', trim(run_label), 1)
-    call message()
+    call message(1)
 
 ! ****** Initialize the modules, they read input data from module namelists   ***********
 
     call initialize_constants_m
-    call message()
+    call message(1)
 
     call initialize_species_m(read_input)
-    call message()
+    call message(1)
     
     call initialize_rf_m(read_input)
-    call message()
+    call message(1)
     
     call initialize_damping_m(read_input)
-    call message()
+    call message(1)
 
     call initialize_equilibrium_m(read_input)
-    call message()
+    call message(1)
 
     call initialize_ray_init_m(read_input)
-    call message()
+    call message(1)
     
     call initialize_ode_solver_m(read_input)
-    call message()
+    call message(1)
 
     call initialize_ray_results_m(read_input)    
-    call message()
+    call message(1)
 
 !*************** Open output files ******************************
 
 !   Open a formatted file to receive number of rays and number of steps per ray
 !   File written in ray_tracing()
+	ray_list_unit = get_unit_number()
     open(unit=ray_list_unit, file='ray_list.'//trim(run_label),action='write', &
                 & status='replace', form='formatted')
 
 
 !   Open a file for formatted ray output. File written in check_save()
+	output_unit = get_unit_number()
     open(unit=output_unit, file='ray_out.'//trim(run_label),action='write', &
                 & status='replace', form='formatted')
-
-! Nota Bene: For now don't write binary output files since nothing uses them.  In long term
-!            should replace with netCDF or something.
-!   Open a binary file for post-processing.
-!     open(unit=94, file='rays.bin',                    &
-!        & action='write', status='replace', form='unformatted')
-    
-!   Open a binary file to receive number of rays and number of steps per ray
-!     open(unit=95, file='ray_list.bin',                  &
-!        & action='write', status='replace', form='unformatted')
-!    write(95) date_v
     
     return 
  end subroutine initialize
