@@ -140,7 +140,6 @@
 
     use diagnostics_m, only : message_unit, message, text_message, verbosity, &
                             & output_unit, ray_list_unit
-    use ray_init_m, only : nray_ray_init => nray
 
     implicit none
 
@@ -149,21 +148,12 @@
     real(KIND=rkind), allocatable :: v(:)
     real(KIND=rkind), allocatable :: end_residuals(:) 
     character(len = 20), allocatable :: ray_stop(:)
- 
+
     read(ray_list_unit, *) nray
+    write(*,*) 'nray = ', nray
     allocate(npoints(nray))
     read(ray_list_unit, *) nv
     allocate(v(nv))    
-
-! Check for consistency between nray and the value obtained in ray_init.  This is a weak 
-! check that the rays.in and the ray_list.bin file are from the same run.
-    If (nray .ne. nray_ray_init) then
-        write (*,*) 'initialize_post_processing: nray = ', nray,&
-        & ' inconsistent with nray_ray_init = ', nray_ray_init
-        write (message_unit,*) 'initialize_post_processing: nray = ', nray,&
-        & ' inconsistent with nray_ray_init = ', nray_ray_init
-        !stop 1
-    end if
 
     read(ray_list_unit, *) npoints
     npoints_max = maxval(npoints)
