@@ -9,7 +9,7 @@
 
     use constants_m, only : initialize_constants_m
     use diagnostics_m, only : initialize_diagnostics, date_v, message_unit, message, &
-                & messages_to_stdout, ray_list_unit, output_unit, text_message,&
+                & messages_to_stdout, ray_list_unit, output_unit, text_message, verbosity, &
                 & run_description, run_label
     use equilibrium_m, only : equilib_model, initialize_equilibrium_m
     use ode_m, only : initialize_ode_solver_m
@@ -28,19 +28,25 @@
 
 !************* read input data and set up for messages and diagnostic output  **************
 
+!   Find date and time
+! N.B. This will give date of post process, date of ray generation.  I need to fix this.
+    call date_and_time (values=date_v)
+
 !   Read data to set up diagnostic output
     call initialize_diagnostics(read_input)
 
-    call text_message('Starting post_processing_RAYS')
-    write (message_unit,fmt="(i2,'-',i2,'-',i4,'   ',i2,':',i2,':',i2,'.',i3)") &
-     & date_v(2), date_v(3), date_v(1), date_v(5), date_v(6), date_v(7), date_v(8)
-    if (messages_to_stdout) then
-		write (*,fmt="(i2,'-',i2,'-',i4,'   ',i2,':',i2,':',i2,'.',i3)") &
+    call text_message('Starting post_processing_RAYS',1)
+    if (verbosity > 0) then
+		write (message_unit,fmt="(i2,'-',i2,'-',i4,'   ',i2,':',i2,':',i2,'.',i3)") &
 		 & date_v(2), date_v(3), date_v(1), date_v(5), date_v(6), date_v(7), date_v(8)
+		if (messages_to_stdout) then
+			write (*,fmt="(i2,'-',i2,'-',i4,'   ',i2,':',i2,':',i2,'.',i3)") &
+			 & date_v(2), date_v(3), date_v(1), date_v(5), date_v(6), date_v(7), date_v(8)
+		end if
     end if
     call text_message('run_description = ',trim(run_description), 1)
     call text_message('run_label = ', trim(run_label), 1)
-    call message()
+    call message(1)
 
 !*************** Open Input files containing ray data ******************************
 
@@ -67,31 +73,31 @@
 ! ****** Initialize the modules, they read input data from module namelists   ***********
 
     call initialize_constants_m
-    call message()
+    call message(1)
 
     call initialize_species_m(read_input)
-    call message()
+    call message(1)
     
     call initialize_rf_m(read_input)
-    call message()
+    call message(1)
     
     call initialize_damping_m(read_input)
-    call message()
+    call message(1)
 
     call initialize_equilibrium_m(read_input)
-    call message()
+    call message(1)
 
     call initialize_ray_init_m(read_input)
-    call message()
+    call message(1)
     
     call initialize_ode_solver_m(read_input)
-    call message()
+    call message(1)
 
     call initialize_ray_results_m(read_input)    
-    call message()
+    call message(1)
     
     call initialize_post_processing_m(.true.)
-    call message()
+    call message(1)
     
 
     return 

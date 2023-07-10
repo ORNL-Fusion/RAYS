@@ -106,21 +106,20 @@
     select case (trim(processor))
 
        case ('slab')
-          write(*,*) 'calling slab_processor'
+          call text_message('calling slab_processor', 1)
           call slab_processor
 
        case ('solovev')
-          write(*,*) 'calling solovev_processor'
+          call text_message('calling solovev_processor', 1)
           call solovev_processor
 
  
        case ('axisym_toroid')
-          write(*,*) 'calling axisym_toroid_processor'
+          call text_message('calling axisym_toroid_processor', 1)
           call axisym_toroid_processor
 
       case default
-          write(0,*) 'post_process_rays: unimplemented post_processor =', trim(processor)
-          call text_message('post_process_rays: unimplemented post_processor', trim(processor))
+          call text_message('post_process_rays: unimplemented post_processor =', trim(processor))
           stop 1
 
        end select
@@ -150,7 +149,7 @@
     character(len = 20), allocatable :: ray_stop(:)
 
     read(ray_list_unit, *) nray
-    write(*,*) 'nray = ', nray
+    call message('nray = ', nray, 1)
     allocate(npoints(nray))
     read(ray_list_unit, *) nv
     allocate(v(nv))    
@@ -176,7 +175,7 @@
 
 ! Write data to an ASCII file for diagnostic    
     if (verbosity >= 3) then
-       call message()
+       call message(1)
        call text_message('Ray data')    
        do iray = 1, nray
             call message('ray number = ', iray)
@@ -210,10 +209,10 @@
     in_filename = 'run_results.'//trim(run_label)
 	call read_results_LD(in_filename)
 
-	write(*,*)	
-	write(*,*) 'read_results_data: RAYS_run_label = ', RAYS_run_label
-	write(*,*) 'read_results_data: date_vector = ', date_vector
-	write(*,*)
+	call message(1)	
+	call text_message('read_results_data: RAYS_run_label = ', RAYS_run_label, 1)
+	call message('read_results_data: date_vector = ', date_vector, 3, 1)
+	call message(1)
 			
  end subroutine read_results_data
  

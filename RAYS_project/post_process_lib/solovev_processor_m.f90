@@ -2,11 +2,11 @@
 ! Post processing for solovev equilibrium
 
     use constants_m, only : rkind
+    use diagnostics_m, only : message_unit, message, text_message, messages_to_stdout, verbosity
 
     implicit none
 
     character(len=80) :: processor = ''
-    integer, parameter :: graphics_descrip_unit = 96
 
 ! Number of k vectors to plot for each ray in graphics
     integer :: num_plot_k_vectors
@@ -35,8 +35,8 @@
         open(unit=input_unit, file='post_process_rays.in',action='read', status='old', form='formatted')
         read(input_unit, solovev_processor_list)
         close(unit=input_unit)
-        write(message_unit, solovev_processor_list)
-        call text_message('Finished initialize_solovev_processor ', processor)
+        if (verbosity > 0) write(message_unit, solovev_processor_list)
+        call text_message('Finished initialize_solovev_processor ', processor, 1)
     end if
     
     return
@@ -47,13 +47,13 @@
   subroutine solovev_processor
 
     use constants_m, only : rkind
-    use diagnostics_m, only : message_unit, message, text_message
+    use diagnostics_m, only : text_message
 
     implicit none
     
     call write_graphics_description_file
     
-    call text_message('Finished solovev_processor work')
+    call text_message('Finished solovev_processor work', 1)
 
     return
  end subroutine solovev_processor
@@ -71,7 +71,11 @@
                           & box_rmin, box_rmax, box_zmin, box_zmax, &
                           & inner_bound, outer_bound, vert_bound, r_Zmax, &
                           &  psiB
-  
+
+   implicit none
+   integer :: graphics_descrip_unit, get_unit_number
+     
+   graphics_descrip_unit = get_unit_number()
    open(unit = graphics_descrip_unit, file = 'graphics_description_solovev.dat')
   
    write(graphics_descrip_unit, *) 'run_description = ', run_description

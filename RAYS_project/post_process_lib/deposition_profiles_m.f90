@@ -65,7 +65,7 @@ contains
 subroutine initialize_deposition_profiles(read_input)
 
 	use constants_m, only : rkind
-	use diagnostics_m, only : message_unit, text_message, run_label, date_v
+	use diagnostics_m, only : message_unit, text_message, verbosity, run_label, date_v
 	use ray_init_m, only : nray
 	use equilibrium_m, only : equilib_model
 	use slab_eq_m, only : xmin_slab => xmin, xmax_slab => xmax
@@ -78,8 +78,7 @@ subroutine initialize_deposition_profiles(read_input)
     real(KIND=rkind) :: delta
 	
 
-	write(*,*) 'initialize_deposition_profiles'     
-	call text_message('initialize_deposition_profiles', 3)
+	call text_message('initialize_deposition_profiles', 1)
 	
 	calc_Ptotal = .false.
 	n_bins_Ptotal = 0
@@ -90,7 +89,7 @@ subroutine initialize_deposition_profiles(read_input)
 		open(unit=input_unit, file='post_process_rays.in',action='read', status='old', form='formatted')
 		read(input_unit, deposition_profiles_list)
 		close(unit=input_unit)
-		write(message_unit, deposition_profiles_list)
+		if (verbosity > 0) write(message_unit, deposition_profiles_list)
 	end if
 		
     ! These hold for all profiles
@@ -114,9 +113,7 @@ subroutine initialize_deposition_profiles(read_input)
           grid_name  = 'psi'
 
        case default
-          write(0,*) 'initialize_deposition_profiles: improper equilib_model =',&
-                     & trim(equilib_model)
-          call text_message('initialize_deposition_profiles: improper equilib_model',&
+          call text_message('initialize_deposition_profiles: unimplemented equilib_model',&
           & trim(equilib_model), 0)
           stop 1
 
@@ -153,6 +150,7 @@ subroutine initialize_deposition_profiles(read_input)
     subroutine calculate_deposition_profiles
     
 		use constants_m, only : rkind
+	    use diagnostics_m, only : text_message
 		use ray_results_m
 		use ray_init_m, only : nray
 		use equilibrium_m, only : equilib_model
@@ -160,7 +158,8 @@ subroutine initialize_deposition_profiles(read_input)
 		implicit none
 	
 		integer :: iray
-		write(*,*) 'Calculating deposition profiles '
+
+		call text_message('Calculating deposition profiles ', 1)
 	
 		ray_loop: do iray = 1, nray
 		

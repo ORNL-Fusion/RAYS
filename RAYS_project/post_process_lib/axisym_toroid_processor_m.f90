@@ -31,7 +31,7 @@
 
  subroutine initialize_axisym_toroid_processor(read_input)
 
-    use diagnostics_m, only : message_unit, message, text_message
+    use diagnostics_m, only : message_unit, message, text_message, verbosity
 	use deposition_profiles_m, only : initialize_deposition_profiles
 
     implicit none
@@ -44,8 +44,8 @@
         open(unit=input_unit, file='post_process_rays.in',action='read', status='old', form='formatted')
         read(input_unit, axisym_toroid_processor_list)
         close(unit=input_unit)
-        write(message_unit, axisym_toroid_processor_list)
-        call text_message('Finished initialize_axisym_toroid_processor ', processor)
+        if (verbosity > 0 )write(message_unit, axisym_toroid_processor_list)
+        call text_message('Finished initialize_axisym_toroid_processor ', processor, 1)
     end if
 
 	if (calculate_dep_profiles .eqv. .true.) call initialize_deposition_profiles(read_input)
@@ -58,7 +58,7 @@
   subroutine axisym_toroid_processor
 
     use constants_m, only : rkind
-    use diagnostics_m, only : message_unit, message, text_message
+    use diagnostics_m, only : message_unit, message, text_message, verbosity
     use deposition_profiles_m, only : calculate_deposition_profiles, write_deposition_profiles
 
     implicit none
@@ -69,7 +69,7 @@
 
     if (write_dep_profiles .eqv. .true.) call write_deposition_profiles
     
-    call text_message('Finished axisym_toroid_processor work')
+    if (verbosity > 0) call text_message('Finished axisym_toroid_processor work')
 
     return
  end subroutine axisym_toroid_processor
