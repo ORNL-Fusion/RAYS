@@ -18,8 +18,8 @@
     run_trace_time = t_finish_tracing - t_start_tracing 
     code_time = t_finish_rays - t_start_rays
     call message(1)
-    call message('CPU time ray tracing', run_trace_time,1)
-    call message('CPU time RAYS code', code_time,1)
+    call message('CPU time ray tracing', run_trace_time, 0)
+    call message('CPU time RAYS code', code_time, 0)
     
     
     if (write_results_list_directed .eqv. .true.) then
@@ -30,7 +30,7 @@
     close(output_unit)
 
     call message(1)
-    call text_message('RAYS run finished', 1)
+    call text_message('RAYS run finished', 0)
     call message(1)
     close(message_unit)
 
