@@ -61,7 +61,7 @@ contains
 
     real(KIND=rkind) :: bp0
 
-    call message()
+    call message(1)
     call text_message('initializing_axisym_toroid_eq ', 1)
 
 	if (.not. allocated(temperature_prof_model)) then    

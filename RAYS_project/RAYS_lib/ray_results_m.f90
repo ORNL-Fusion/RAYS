@@ -55,7 +55,7 @@ contains
         logical, intent(in) :: read_input
  		integer :: input_unit, get_unit_number ! External, free unit finder   
         
-		call message()
+		call message(1)
 		call text_message('Initializing solovev_eq_m ', 1)
      
         if (read_input .eqv. .true.) then    

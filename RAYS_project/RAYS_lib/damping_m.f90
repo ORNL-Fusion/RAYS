@@ -34,7 +34,7 @@
 
   subroutine initialize_damping_m(read_input)
  
-    use diagnostics_m, only : message_unit
+    use diagnostics_m, only : message_unit, verbosity
     
     implicit none
     logical, intent(in) :: read_input
@@ -47,7 +47,7 @@
         read(input_unit, damping_list)
         close(unit=input_unit)
     end if
-    write(message_unit, damping_list)
+    if (verbosity > 0) write(message_unit, damping_list)
 
     return
   end subroutine initialize_damping_m

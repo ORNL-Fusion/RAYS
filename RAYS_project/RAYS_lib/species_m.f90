@@ -82,7 +82,7 @@ contains
 !   Called from initialize()
  
         use constants_m, only : e, me
-        use diagnostics_m, only : message_unit, message
+        use diagnostics_m, only : message_unit, message, verbosity
         
         implicit none
         logical, intent(in) :: read_input
@@ -98,7 +98,7 @@ contains
             read(input_unit, species_list)    
             close(unit=input_unit)
         end if
-        write(message_unit, species_list)
+        if (verbosity > 0) write(message_unit, species_list)
     
 ! Electrons:   
         spec_name(0) = 'electron'
@@ -140,11 +140,13 @@ contains
 !   Convert temperature unit from eV to Joules:
         t0s = e * t0s_eV
 
-        write(message_unit,*) ' is      qs         ms         eta        t0s(eV)      n0s'
-        do is = 0, nspec
-           write(message_unit,'(1x,i2,1p5e12.4)')                   &
-           & is, qs(is), ms(is), eta(is), t0s(is)/e, n0s(is)
+        if (verbosity > 0) then
+			write(message_unit,*) ' is      qs         ms         eta        t0s(eV)      n0s'
+			do is = 0, nspec
+			   write(message_unit,'(1x,i2,1p5e12.4)')                   &
+			   & is, qs(is), ms(is), eta(is), t0s(is)/e, n0s(is)
         end do
+        end if
     
     end subroutine initialize_species_m
 

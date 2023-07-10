@@ -57,7 +57,7 @@ contains
 
     subroutine initialize_ray_init_m(read_input)
 
-        use diagnostics_m, only : message_unit, message, text_message
+        use diagnostics_m, only : message_unit, message, text_message, verbosity
         use simple_slab_ray_init_m, only : simple_slab_ray_init
         use solovev_ray_init_nphi_ntheta_m, only : ray_init_solovev_nphi_ntheta
         use axisym_toroid_ray_init_nphi_ntheta_m, only : ray_init_axisym_toroid_nphi_ntheta
@@ -74,7 +74,7 @@ contains
             read(input_unit, ray_init_list)
             close(unit=input_unit)
         end if
-        write(message_unit, ray_init_list)
+        if (verbosity > 0) write(message_unit, ray_init_list)
 
         init_model: select case (trim(ray_init_model))
     

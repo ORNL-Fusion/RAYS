@@ -48,7 +48,7 @@ contains
 
      real(KIND=rkind) :: bp0
 
-    call message()
+    call message(1)
     call text_message('Initializing solovev_magnetics_m ', 1)
 
     if (read_input .eqv. .true.) then 

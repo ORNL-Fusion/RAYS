@@ -153,9 +153,9 @@ contains
         
         call message(3)
         call message('count =  ' , count, 3)
-        call message('ray_init_axisym_toroid_nphi_ntheta: rvec = ', rvec, 3)
-        call message('ray_init_axisym_toroid_nphi_ntheta: psiN = ', psiN, 3)
-        call message('ray_init_axisym_toroid_nphi_ntheta: gradpsiN = ', gradpsiN, 3)
+        call message('ray_init_axisym_toroid_nphi_ntheta: rvec', rvec, 3, 3)
+        call message('ray_init_axisym_toroid_nphi_ntheta: psiN', psiN, 3)
+        call message('ray_init_axisym_toroid_nphi_ntheta: gradpsiN', gradpsiN, 3, 3)
         if (verbosity > 2) call write_eq_point(eq)
                     
 ! Calculate a bunch of unit vectors, parallel and transverse components of k

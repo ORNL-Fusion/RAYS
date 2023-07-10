@@ -105,7 +105,7 @@ contains
     open(unit=input_unit, file='rays.in',action='read', status='old', form='formatted')
     read(input_unit, axisym_toroid_ray_init_R_Z_nphi_ntheta_list)
     close(unit=input_unit)
-    write(message_unit, axisym_toroid_ray_init_R_Z_nphi_ntheta_list)
+    if (verbosity > 0) write(message_unit, axisym_toroid_ray_init_R_Z_nphi_ntheta_list)
 
 ! Allocate maximum space for the initial condition vectors rvec0, rindex_vec0
 ! N.B. Not all of these may successfully initialize because of errors.  So count successful
@@ -139,17 +139,18 @@ contains
 
         call equilibrium(rvec, eq)
 		if (trim(eq%equib_err) /= '') then
-		   write (*,*) 'ray_init_axisym_toroid_nphi_ntheta: equib_err = ', trim(eq%equib_err)
+		   call text_message('ray_init_axisym_toroid_nphi_ntheta: equib_err = ', &
+		                    & trim(eq%equib_err), 1)
 		   cycle rindex_phi_loop
 		end if
 
         call axisym_toroid_psi(rvec, psi, gradpsi, psiN, gradpsiN)  
 
-        call message()
+        call message(3)
         call message('count =  ' , count, 3)
-        call message('ray_init_axisym_toroid_nphi_ntheta: rvec = ', rvec, 3)
-        call message('ray_init_axisym_toroid_nphi_ntheta: psiN = ', psiN, 3)
-        call message('ray_init_axisym_toroid_nphi_ntheta: gradpsiN = ', gradpsiN, 3)
+        call message('ray_init_axisym_toroid_R_Z_nphi_ntheta: rvec', rvec, 3,3)
+        call message('ray_init_axisym_toroid_R_Z_nphi_ntheta: psiN', psiN, 3)
+        call message('ray_init_axisym_toroid_R_Z_nphi_ntheta: gradpsiN', gradpsiN, 3, 3)
         if (verbosity > 2) call write_eq_point(eq)
                     
 ! Calculate a bunch of unit vectors, parallel and transverse components of k
@@ -212,7 +213,7 @@ contains
     end do R_loop
 
     nray = count
-    call message('axisym_toroid_ray_init: nray', nray)
+    call message('ray_init_axisym_toroid_R_Z_nphi_ntheta: nray', nray, 1)
 
     if (nray == 0) then
         stop 'No successful ray initializations'

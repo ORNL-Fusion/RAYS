@@ -49,7 +49,7 @@ contains
     allocate( t_prof_model(0:nspec) )
     allocate( alphat1(0:nspec), alphat2(0:nspec) )
 
-    call message()
+    call message(1)
     call text_message('Initializing solovev_eq_m ', 1)
 
     if (read_input .eqv. .true.) then    

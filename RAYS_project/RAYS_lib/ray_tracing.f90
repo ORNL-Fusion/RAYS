@@ -39,7 +39,7 @@
        
     ray_loop: do iray = 1, nray  
 
-         call message()
+         call message(1)
          call message ('trace_rays: ray #', iray, 1)
 
          call cpu_time(t_start_ray)
