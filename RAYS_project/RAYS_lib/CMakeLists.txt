@@ -46,8 +46,11 @@ target_include_directories (RAYS_lib
                             $<TARGET_PROPERTY:math_functions,BINARY_DIR>
 )
 
-target_link_libraries(RAYS_lib spline math_functions)
-
+target_link_libraries(RAYS_lib 
+                      PUBLIC
+                      spline math_functions
+                      $<$<BOOL:${OpenMP_Fortran_FOUND}>:OpenMP::OpenMP_Fortran>
+)
 # 
 # target_sources (RAYS_lib
 #                 PRIVATE

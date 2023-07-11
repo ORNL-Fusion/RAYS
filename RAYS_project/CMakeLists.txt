@@ -2,6 +2,8 @@ cmake_minimum_required (VERSION 3.21)
 
 project (RAYS_project Fortran)
 
+find_package (OpenMP)
+
 # sets path for executables
 SET(CMAKE_RUNTIME_OUTPUT_DIRECTORY "../../bin")
 SET(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "../../lib")

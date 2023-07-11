@@ -36,7 +36,11 @@
     end interface
 
     call cpu_time(t_start_tracing)
-       
+
+!$OMP PARALLEL DEFAULT(PRIVATE) &
+!$OMP& SHARED(npoints, ray_trace_time, end_residuals, max_residuals, end_ray_parameter, &
+!$OMP& ray_stop_flag, start_ray_vec, end_ray_vec)
+                       
     ray_loop: do iray = 1, nray  
 
          call message(1)
@@ -232,6 +236,8 @@
         end_ray_vec(:, iray) = v(:)
 
     end do ray_loop
+
+ !$OMP END PARALLEL
 
 !   Write ray file description
     if (write_formatted_ray_files) then
