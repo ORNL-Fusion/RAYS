@@ -40,9 +40,7 @@
 
     call message ('check_save: ne', eq%ns(0), 1)
     call message ('check_save: B(tesla)', eq%bmag, 1)
-    write(*,*) 'check_save: Got to 1'
     call message ('check_save: alpha s', eq%alpha(0:nspec), nspec+1, 1)
-    write(*,*) 'check_save: Got to 2'
     call message ('check_save: gamma s', eq%gamma(0:nspec), nspec+1, 1)
 
 
@@ -153,7 +151,6 @@
     if (write_formatted_ray_files) then
 		write(output_unit, *) s, v
     end if
-    write(*,*) 'check_save: Got to 3, ray_stop%ode_stop_flag = ', ray_stop%ode_stop_flag
 
     return
 

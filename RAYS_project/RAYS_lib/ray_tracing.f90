@@ -15,7 +15,7 @@
     use ray_results_m, only : ray_stop_flag, ray_vec, residual, npoints, end_residuals,&
                             & max_residuals, end_ray_parameter, start_ray_vec, end_ray_vec,&
                             & ray_trace_time, run_trace_time
-
+    use omp_lib
     implicit none
 
     integer :: iray, nstep
@@ -36,15 +36,14 @@
     end interface
 
     call cpu_time(t_start_tracing)
-    write(*,*) 'ray_tracing: Got to 0,  ds = ', ds
 
-!$OMP parallel num_threads(1) DEFAULT(PRIVATE) &
+!$OMP parallel num_threads(8) DEFAULT(FIRSTPRIVATE) &
 !$OMP& SHARED(ray_stop_flag, ray_vec, npoints, residual, ray_trace_time,  &
 !$OMP& end_residuals,max_residuals, end_ray_parameter, start_ray_vec, end_ray_vec)
 
 !$OMP DO
     ray_loop: do iray = 1, nray
-    write(*,*) 'ray_tracing: Got to 1,  ds = ', ds
+!    write(*,*) 'ray_tracing: omp_get_thread_num = ', omp_get_thread_num(), ' ds = ', ds
 
          call message(1)
          call message ('trace_rays: ray #', iray, 1)
@@ -93,7 +92,6 @@
 
             s = sout
             sout = sout + ds
-    write(*,*) 'ray_tracing: Got to 2,  ds = ', ds
 
             call message(1)
             call message ('trace_rays: start step', nstep + 1, 1)
