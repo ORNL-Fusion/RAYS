@@ -37,13 +37,14 @@
 
     call cpu_time(t_start_tracing)
 
-!$OMP parallel num_threads(8) DEFAULT(FIRSTPRIVATE) &
+!!$OMP parallel num_threads(2) DEFAULT(FIRSTPRIVATE) &
+!$OMP parallel DEFAULT(FIRSTPRIVATE) &
 !$OMP& SHARED(ray_stop_flag, ray_vec, npoints, residual, ray_trace_time,  &
 !$OMP& end_residuals,max_residuals, end_ray_parameter, start_ray_vec, end_ray_vec)
 
 !$OMP DO
     ray_loop: do iray = 1, nray
-!    write(*,*) 'ray_tracing: omp_get_thread_num = ', omp_get_thread_num(), ' ds = ', ds
+    write(12,*) 'ray_tracing: omp_get_thread_num = ', omp_get_thread_num()
 
          call message(1)
          call message ('trace_rays: ray #', iray, 1)
@@ -222,10 +223,6 @@
 	    call cpu_time(t_finish_ray)
 
 ! Save in ray_results_m
-
-! Tricky point: The number of points in the ray = point 0 + number of valid steps.
-! nstep is incremented at the top of the loop, but "exit trajectory" above means last
-! step failed, and so is 1 too big, so actual npoints = nstep, not nstep + 1
 
         npoints(iray) = nstep + 1
 	    ray_trace_time(iray) = t_finish_ray - t_start_ray

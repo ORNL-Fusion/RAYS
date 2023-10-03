@@ -14,7 +14,7 @@ module scanner_m
 
 
     use constants_m, only : rkind
-    
+
     implicit none
 
     character(len=60) :: scan_parameter
@@ -24,16 +24,16 @@ module scanner_m
     real(KIND=rkind), allocatable :: p_values(:)
     character(len=60), allocatable :: file_name_suffix(:)
     integer :: scan_date_v(8)
-     
-   
+
+
 ! data for fixed increment scan algorithm
     real(KIND=rkind) :: p_start, p_incr
-   
+
 ! data for pwr_of_2 scan algorithm and integer_divide
     real(KIND=rkind) :: p_max
     integer :: max_divide
     real(KIND=rkind) :: delta = 1.e-14
-   
+
 ! data for algorithm_1
     real(KIND=rkind) :: S_max
     integer :: n_max, k_factor
@@ -41,8 +41,8 @@ module scanner_m
 ! Scan summary data
     real(KIND=rkind), allocatable :: trace_time_run(:)
     real(KIND=rkind), allocatable :: end_ray_param_run(:)
-    real(KIND=rkind), allocatable :: end_resid_run(:) 
-    real(KIND=rkind), allocatable :: max_resid_run(:) 
+    real(KIND=rkind), allocatable :: end_resid_run(:)
+    real(KIND=rkind), allocatable :: max_resid_run(:)
     real(KIND=rkind), allocatable :: start_ray_vec_run(:,:)
     real(KIND=rkind), allocatable :: end_ray_vec_run(:,:)
     character(len=60), allocatable :: ray_stop_flag_run(:)
@@ -52,7 +52,7 @@ module scanner_m
  namelist /scanner_list/ &
      & scan_id, scan_parameter, scan_algorithm, n_runs, p_start, p_incr, p_max, max_divide,&
      & S_max, n_max, k_factor
-     
+
 !********************************************************************
 
 contains
@@ -63,18 +63,18 @@ contains
 
     use diagnostics_m, only : message_unit, verbosity, run_label
 	use ode_m, only : nv ! dimension of ray vector
-   
+
     implicit none
     logical, intent(in) :: read_input
-	integer :: input_unit, get_unit_number ! External, free unit finder   
+	integer :: input_unit, get_unit_number ! External, free unit finder
 
     integer :: i_run
     character (len=4) :: chr_iter_number
 
-        
+
     write(*,*) 'initialize_scanner_m'
 
-    if (read_input .eqv. .true.) then    
+    if (read_input .eqv. .true.) then
    		input_unit = get_unit_number()
         open(unit=input_unit, file='rays.in',action='read', status='old', form='formatted')
         read(input_unit, scanner_list)
@@ -104,10 +104,10 @@ contains
         max_resid_run = 0.
         start_ray_vec_run = 0.
         end_ray_vec_run = 0.
-        ray_stop_flag_run = ''        
+        ray_stop_flag_run = ''
         scan_trace_time = 0.
-        
-!   Calculate parameter values and 
+
+!   Calculate parameter values and
     algorithm: select case (trim(scan_algorithm))
 
        case ('fixed_increment')
@@ -138,10 +138,18 @@ contains
 		   file_name_suffix(i_run) = 'run_'//adjustl(trim(chr_iter_number))
 		end do
 
+
+       case ('double_num_threads')
+		do i_run = 1, n_runs
+		   p_values(i_run) = 2.**(i_run-1)
+		   write (chr_iter_number, '(I4)') i_run
+		   file_name_suffix(i_run) = 'run_'//adjustl(trim(chr_iter_number))
+		end do
+
 	   case default
 		  write(0,*) 'initialize_scanner_m: unknown scan algorithm = ', scan_algorithm
 		  stop 1
-    
+
     end select algorithm
 
   write(*,*) 'p_values = ', p_values
@@ -157,10 +165,14 @@ contains
 
     use diagnostics_m, only : message_unit, verbosity, run_label
     use ode_m, only : ds
-    
+
     implicit none
-    
+
     integer, intent(in) :: i_run
+    integer :: stat, num_threads
+    character(len=*),parameter :: left = 'export OMP_NUM_THREADS='
+    character(len=10):: right
+    character(len=256) :: mess, line, value
 
     param: select case (trim(scan_parameter))
 
@@ -168,10 +180,26 @@ contains
        	ds = p_values(i_run)
        	run_label = trim(file_name_suffix(i_run))
 
+       case ('double_num_threads')
+       	num_threads = nint(p_values(i_run))
+       	write (right, '(I10)') num_threads
+       	line = left//adjustl(trim(right))
+       	write(12,*) 'command line = ', line
+       	call execute_command_line(left//trim(right),cmdstat=stat,cmdmsg=mess)
+       	write(12,*) 'cmdstat= ', stat
+       	call get_environment_variable('OMP_NUM_THREADS', value)
+       	write(12,*) 'OMP_NUM_THREADS, value = ', value
+
+       	run_label = trim(file_name_suffix(i_run))
+       	if (stat .ne. 0) then
+       		write(0,*) trim(mess)
+       		stop 1
+       	end if
+
 	   case default
 		  write(0,*) 'initialize_scanner_m: unknown scan parameter = ', scan_parameter
 		  stop 1
-    
+
     end select param
 
  end subroutine update_scan_parameter
@@ -188,7 +216,7 @@ contains
 
 
     implicit none
-    
+
     integer, intent(in) :: i_run
 
     trace_time_run(i_run) = ray_trace_time(1)
@@ -197,33 +225,33 @@ contains
 	max_resid_run(i_run) = max_residuals(1)
 	start_ray_vec_run(:, i_run) = start_ray_vec(:, 1)
 	end_ray_vec_run(:, i_run) = end_ray_vec(:, 1)
-	ray_stop_flag_run(i_run) = ray_stop_flag(1)     
-   
+	ray_stop_flag_run(i_run) = ray_stop_flag(1)
+
     scan_trace_time = scan_trace_time + run_trace_time
-    
+
  end subroutine aggregate_run_data
 
 !********************************************************************
 
     subroutine write_scan_summary
 
-    use diagnostics_m, only : message_unit, run_label   
+    use diagnostics_m, only : message_unit, run_label
  	use ode_m, only : nv ! dimension of ray vector
     use ray_results_m, only : end_residuals, max_residuals, end_ray_parameter, end_ray_vec,&
                             & ray_trace_time
-        
+
     implicit none
-    
+
     integer :: scan_star_unit, get_unit_number ! External, free unit finder
-    
+
  !  File name for  output
     character(len=80) :: out_filename
-   
+
     ! Open fortran ascii file for results output
-    scan_star_unit = get_unit_number() 
+    scan_star_unit = get_unit_number()
     out_filename = 'scan_summary.'//trim(scan_id)
     open(unit=scan_star_unit, file=trim(out_filename), &
-       & action='write', status='replace', form='formatted')     
+       & action='write', status='replace', form='formatted')
 
     write (scan_star_unit,*) 'scan_id'
     write (scan_star_unit,*) scan_id
@@ -257,7 +285,7 @@ contains
 
 !********************************************************************
 
-    
+
 !********************************************************************
 
     subroutine deallocate_scanner_m
