@@ -7,14 +7,11 @@
 !   But it confuses make not to use ode_m since it thinks SG_ode_m doesn't depend on it.
 !   Therefore:
     use ode_m, only : ode_stop
-    
+
     implicit none
 
-!   Target relative and absolute errors for the ODE solver.
+!   Target relative and absolute error tolerances for the ODE solver.
     real(KIND=rkind) :: rel_err0, abs_err0
-
-!   Evolving relative and absolute errors from the ODE solver.
-    real(KIND=rkind) :: rel_err, abs_err
 
 !   Total ODE error limit abs(rel_err)+abs(abs_err) above which to bail.
     real(KIND=rkind) :: SG_error_limit = 0.1  ! Default
@@ -34,15 +31,15 @@ contains
   module subroutine initialize_SG_ode(read_input)
 
      use diagnostics_m, only : message_unit, message, text_message, messages_to_stdout, verbosity
-    
+
     implicit none
     logical, intent(in) :: read_input
-	integer :: input_unit, get_unit_number ! External, free unit finder   
+	integer :: input_unit, get_unit_number ! External, free unit finder
 
     call message(1)
     call text_message('Initializing SG_ode_m ', 1)
 
-	if (read_input .eqv. .true.) then        
+	if (read_input .eqv. .true.) then
 	! Read and write input namelist
   		input_unit = get_unit_number()
 		open(unit=input_unit, file='rays.in',action='read', status='old', form='formatted')
@@ -67,12 +64,15 @@ contains
 
 !********************************************************************
 
-  module subroutine ray_init_SG_ode
+  module subroutine ray_init_SG_ode(ray_stop)
   ! Resets SG_ode solver to appropriate state for start of ray.
   ! This is nothing but resetting rel_err and abs_err
 
-    rel_err = rel_err0
-    abs_err = abs_err0
+    implicit none
+    type(ode_stop) :: ray_stop
+
+    ray_stop%rel_err = rel_err0
+    ray_stop%abs_err = abs_err0
 
     return
   end subroutine ray_init_SG_ode
@@ -93,19 +93,26 @@ contains
     integer, intent(in) :: nv
     real(KIND=rkind), intent(inout) :: v(nv)
     real(KIND=rkind), intent(inout) :: s, sout
-    type(ode_stop), intent(out)  :: ray_stop
+    type(ode_stop) :: ray_stop
 
     real(KIND=rkind) :: work(100+21*nv)
     integer :: iwork(5)
-    
+
+    real(KIND=rkind) :: rel_err, abs_err
     real(KIND=rkind) :: total_error
+
+    rel_err = ray_stop%rel_err
+    abs_err = ray_stop%abs_err
 
     odeloop: do
 
        iflag = 1
- 
+
        call ode(eqn_ray, nv, v, s, sout, rel_err, abs_err, &
             & iflag, work, iwork, ray_stop)
+
+		ray_stop%rel_err = rel_err
+		ray_stop%abs_err = abs_err
 
        if (verbosity > 2) write(message_unit,'(/,1(a,i4),2(a,g12.6),2(a,1pe10.4))') &
             & ' iflag =', iflag,'  s=', s, '  sout=',sout,  &
@@ -119,7 +126,7 @@ contains
          if (iflag == 2) then ! Normal return with s = sout
              exit odeloop
          else if (iflag == 3) then ! rel_err/abs_err have been adjusted try again
-         
+
              total_error = abs(rel_err) + abs(abs_err)
              if (total_error > SG_error_limit) then
                call message('SG_ode: Total error too big', total_error, 0)
@@ -127,7 +134,7 @@ contains
                ray_stop%stop_ode = .true.
                exit odeloop
              end if
-             
+
              cycle odeloop
          else ! error return
               ray_stop%stop_ode = .true.

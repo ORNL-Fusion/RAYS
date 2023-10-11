@@ -8,7 +8,7 @@ module  eqdsk_magnetics_lin_interp_m
 ! N.B. Values of Psi are shifted on initialization so that Psi is zero on axis.
 
     use constants_m, only : rkind
-    
+
     implicit none
 
     character (len = 100) :: eqdsk_file_name
@@ -19,7 +19,7 @@ module  eqdsk_magnetics_lin_interp_m
     real(KIND=rkind) :: psiB
 
   namelist / eqdsk_magnetics_lin_interp_list/ eqdsk_file_name
-     
+
 !********************************************************************
 
 contains
@@ -41,7 +41,7 @@ contains
         & GetPsi, GetRBphi, GetPsiR, GetPsiZ, GetPsiRR, GetPsiZZ, GetPsiRZ, GetRBphiR
 
     implicit none
-    
+
     logical, intent(in) :: read_input
 	integer :: input_unit, get_unit_number ! External, free unit finder
 
@@ -54,22 +54,22 @@ contains
     real(KIND=rkind), intent(out) :: inner_bound, outer_bound, upper_bound, lower_bound
 
     integer :: i
-    
-    write(*,*) 'initialize_eqdsk_magnetics_lin_interp'   
 
-    if (read_input .eqv. .true.) then 
+    write(*,*) 'initialize_eqdsk_magnetics_lin_interp'
+
+    if (read_input .eqv. .true.) then
     	input_unit = get_unit_number()
         open(unit=input_unit, file='rays.in',action='read', status='old', form='formatted')
         read(input_unit, eqdsk_magnetics_lin_interp_list)
         close(unit=input_unit)
         write(message_unit, eqdsk_magnetics_lin_interp_list)
     end if
-    
+
     call ReadgFile(eqdsk_file_name)
 
 	r_axis = RAXIS
 	z_axis = ZAXIS
-	
+
 	box_rmin = RBOXLFT
 	box_rmax = box_rmin + RBOXLEN
 	box_zmin = ZOFF - ZBOXLEN/2.
@@ -89,7 +89,7 @@ contains
     write(*,*) 'Outer boundary = ', outer_bound
     write(*,*) 'Lower boundary = ', lower_bound
     write(*,*) 'Upper boundary = ', upper_bound
-    
+
     ! radial and Z grids that Psi is defined on
     if (.not. allocated(R_grid)) then
 		allocate (R_grid(NRBOX))
@@ -111,8 +111,8 @@ contains
     Psi = Psi - PSIAXIS
     PSIBOUND = PSIBOUND - PSIAXIS
     psiB = PSIBOUND
-    
-    return    
+
+    return
   end subroutine initialize_eqdsk_magnetics_lin_interp
 
 
@@ -128,10 +128,10 @@ contains
 
     implicit none
 
-    real(KIND=rkind), intent(in) :: rvec(3) 
+    real(KIND=rkind), intent(in) :: rvec(3)
     real(KIND=rkind), intent(out) :: bvec(3), gradbtensor(3,3)
     real(KIND=rkind), intent(out) :: psi, gradpsi(3), psiN, gradpsiN(3)
-    character(len=20), intent(out) :: equib_err
+    character(len=60), intent(out) :: equib_err
 
 
     real(KIND=rkind) :: x, y, z, r
@@ -145,7 +145,7 @@ contains
     z = rvec(3)
     r = sqrt(x**2+y**2)
 
-!   Poloidfal flux function 
+!   Poloidfal flux function
     psi = GetPsi(R, z)
 
 !   Magnetic field
@@ -165,11 +165,11 @@ contains
 !   dbrdr = d(Br)/dr, dbrdz = d(Br)/dz.
     dbrdr = -br/r - GetPsiRZ(r,z)/r
     dbrdz = -GetPsiZZ(r, z)/r
-    
+
 !   dbzdr = d(Bz)/dr, dbzdz = d(Bz)/dz.
     dbzdr = -bz/r + GetPsiRR(r, z)/r
     dbzdz = GetPsiRZ(r,z)/r
-    
+
 !   dbphidr = d(Bphi)/dr.
     dbphidr = (GetRBphiR(r)-bphi)/r
 
@@ -179,13 +179,13 @@ contains
     bvec(3) = bz
 
 !   d(Bx)/dx, d(Bx)/dy, and d(Bx)/dz:
-    gradbtensor(1,1) = ( dbrdr*x**2 + br*y**2/r + (-dbphidr+bphi/r)*x*y ) / r**2 
-    gradbtensor(2,1) = ( (dbrdr-br/r)*x*y - dbphidr*y**2 - bphi*x**2/r ) / r**2 
+    gradbtensor(1,1) = ( dbrdr*x**2 + br*y**2/r + (-dbphidr+bphi/r)*x*y ) / r**2
+    gradbtensor(2,1) = ( (dbrdr-br/r)*x*y - dbphidr*y**2 - bphi*x**2/r ) / r**2
     gradbtensor(3,1) = dbrdz*x/r
 
 !   d(By)/dx, d(By)/dy, and d(By)/dz:
-    gradbtensor(1,2) = ( (dbrdr-br/r)*x*y + dbphidr*x**2 + bphi*y**2/r ) / r**2 
-    gradbtensor(2,2) = ( dbrdr*y**2 + br*x**2/r + (dbphidr-bphi/r)*x*y ) / r**2 
+    gradbtensor(1,2) = ( (dbrdr-br/r)*x*y + dbphidr*x**2 + bphi*y**2/r ) / r**2
+    gradbtensor(2,2) = ( dbrdr*y**2 + br*x**2/r + (dbphidr-bphi/r)*x*y ) / r**2
     gradbtensor(3,2) = dbrdz*y/r
 
 !   d(Bz)/dx, d(Bz)/dy, and d(Bz)/dz:
@@ -200,7 +200,7 @@ contains
 
   subroutine  eqdsk_magnetics_lin_interp_psi(rvec, psi, gradpsi, psiN, gradpsiN)
 !   Simple  eqdsk equilibrium model originally based on notes from 7/28/1995 by Cai-ye Wang.
-!   Reworked extensively by DBB.  See notes of 2-12-2022. 
+!   Reworked extensively by DBB.  See notes of 2-12-2022.
 !
 !   Checks for some error conditions and sets equib_err for outside handling.  Does not
 !   stop.
@@ -209,10 +209,10 @@ contains
     use species_m, only : nspec, n0s, t0s
     use diagnostics_m, only : message_unit, message
     use eqdsk_utilities_m, only :   GetPsi, GetPsiR, GetPsiZ, PSIBOUND
-   
+
     implicit none
 
-    real(KIND=rkind), intent(in) :: rvec(3) 
+    real(KIND=rkind), intent(in) :: rvec(3)
     real(KIND=rkind), intent(out) :: psi, gradpsi(3), psiN, gradpsiN(3)
 
 
@@ -223,8 +223,8 @@ contains
     y = rvec(2)
     z = rvec(3)
     R = sqrt(x**2+y**2)
- 
-!   Poloidfal flux function 
+
+!   Poloidfal flux function
     psi = GetPsi(R, z)
 
 
@@ -236,13 +236,13 @@ contains
 !   Normalized Flux function x, y, z normalized to 1.0 at last surface
     psiN = psi/PSIBOUND
     gradpsiN = gradpsi/PSIBOUND
-    
-    return 
+
+    return
   end subroutine  eqdsk_magnetics_lin_interp_psi
 !********************************************************************
 
     subroutine deallocate_eqdsk_magnetics_lin_interp_m
 		return ! Nothing to deallocate. R_grid,Z_grid deallocated in eqdsk_utilities_m
     end subroutine deallocate_eqdsk_magnetics_lin_interp_m
- 
+
 end module  eqdsk_magnetics_lin_interp_m

@@ -40,11 +40,11 @@
 !!$OMP parallel num_threads(2) DEFAULT(FIRSTPRIVATE) &
 !$OMP parallel DEFAULT(FIRSTPRIVATE) &
 !$OMP& SHARED(ray_stop_flag, ray_vec, npoints, residual, ray_trace_time,  &
-!$OMP& end_residuals,max_residuals, end_ray_parameter, start_ray_vec, end_ray_vec)
+!$OMP& end_residuals, max_residuals, end_ray_parameter, start_ray_vec, end_ray_vec)
 
 !$OMP DO
     ray_loop: do iray = 1, nray
-    write(12,*) 'ray_tracing: omp_get_thread_num = ', omp_get_thread_num()
+    write(12,*) 'ray_tracing: ray# = ',iray,'  omp_get_thread_num = ', omp_get_thread_num()
 
          call message(1)
          call message ('trace_rays: ray #', iray, 1)
@@ -59,8 +59,8 @@
          ray_stop%ode_stop_flag = ''
          ray_stop_flag(iray) = ray_stop%ode_stop_flag
 
-    !    Reset ode solver for beginning of ray
-         call ray_init_ode_solver
+    !    Reset ode solver for beginning of ray. (For SG_ode this resets rel_err,abs_err)
+         call ray_init_ode_solver(ray_stop)
 
     !    Initialization of ray vector v.
          call initialize_ode_vector(iray, nv, v)

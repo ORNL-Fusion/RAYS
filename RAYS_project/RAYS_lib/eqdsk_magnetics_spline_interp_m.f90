@@ -8,7 +8,7 @@ module  eqdsk_magnetics_spline_interp_m
 ! N.B. Values of Psi are shifted on initialization so that Psi is zero on axis.
 
     use constants_m, only : rkind
-    
+
     implicit none
 
     character (len = 100) :: eqdsk_file_name
@@ -22,7 +22,7 @@ module  eqdsk_magnetics_spline_interp_m
     ! bcspeval arguments, if not already declared above
     real(KIND=rkind) :: fval(6)
     integer :: iselect(6)
-   
+
 ! Stuff for 1D splines
 ! cspeval arguments
 
@@ -30,12 +30,12 @@ module  eqdsk_magnetics_spline_interp_m
     real(KIND=rkind), allocatable ::  wk_1D(:)
     real(KIND=rkind) ::  fval_1D(3)
     integer :: iselect_1D(3)
-    
+
     ! Flux function psi at plasma boundary
     real(KIND=rkind) :: psiB
 
   namelist / eqdsk_magnetics_spline_interp_list/ eqdsk_file_name
-     
+
 !********************************************************************
 
 contains
@@ -48,16 +48,16 @@ contains
 
     use species_m, only : nspec
     use diagnostics_m, only : message, message_unit, verbosity
- 
+
     use eqdsk_utilities_m, only : ReadgFile, WritegFile, R_grid, Z_grid, dR, dZ, &
         & string, i3, NRBOX, NZBOX, RBOXLEN, ZBOXLEN, R0, RBOXLFT, ZOFF, RAXIS, ZAXIS, &
         & PSIAXIS, PSIBOUND, B0, CURRENT, T, P, TTp, Pp, Q, Psi, NBOUND, NLIM, RBOUND, &
         & ZBOUND, RLIM, ZLIM
 
     implicit none
-    
+
     logical, intent(in) :: read_input
- 	integer :: input_unit, get_unit_number ! External, free unit finder   
+ 	integer :: input_unit, get_unit_number ! External, free unit finder
 
 ! Geometry data
     ! Magnetic axis
@@ -71,22 +71,22 @@ contains
      integer ibcxmin,ibcxmax,ibcthmin,ibcthmax,ilinx, ilinth,ier
 
     integer :: i, j, nwk
-    
-    write(*,*) 'initialize_eqdsk_magnetics_spline_interp'   
 
-    if (read_input .eqv. .true.) then 
+    write(*,*) 'initialize_eqdsk_magnetics_spline_interp'
+
+    if (read_input .eqv. .true.) then
   		input_unit = get_unit_number()
         open(unit=input_unit, file='rays.in',action='read', status='old', form='formatted')
         read(input_unit, eqdsk_magnetics_spline_interp_list)
         close(unit=input_unit)
         write(message_unit, eqdsk_magnetics_spline_interp_list)
     end if
-    
+
     call ReadgFile(eqdsk_file_name)
 
 	r_axis = RAXIS
 	z_axis = ZAXIS
-	
+
 	box_rmin = RBOXLFT
 	box_rmax = box_rmin + RBOXLEN
 	box_zmin = ZOFF - ZBOXLEN/2.
@@ -106,7 +106,7 @@ contains
     write(*,*) 'Outer boundary = ', outer_bound
     write(*,*) 'Lower boundary = ', lower_bound
     write(*,*) 'Upper boundary = ', upper_bound
-    
+
 ! Allocate arrays
     ! radial and Z grids that Psi is defined on
     if (.not. allocated(R_grid)) then
@@ -117,7 +117,7 @@ contains
 	    nwk = 4*NRBOX*NZBOX +5*max(NRBOX,NZBOX)
 		allocate (wk(nwk))
 		allocate (wk_1D(NRBOX))
-		allocate (bcxmin(1),bcxmax(1),bcthmin(1),bcthmax(1)) ! not used but must be allocated	
+		allocate (bcxmin(1),bcxmax(1),bcthmin(1),bcthmax(1)) ! not used but must be allocated
     end if
 
     do i = 1, NRBOX
@@ -157,7 +157,7 @@ contains
     bcthmax = 0.
     ilinx = 1
     ilinth = 1
-    
+
     call bcspline(R_grid,NRBOX,Z_grid,NZBOX,fspl,NRBOX, &
          ibcxmin,bcxmin,ibcxmax,bcxmax, &
          ibcthmin,bcthmin,ibcthmax,bcthmax, &
@@ -165,11 +165,11 @@ contains
          if (ier .ne. 0) write (*,*) 'bcspline: ier = ', ier
 
 ! Set up spline coefficients for RBphi
-    
-    call cspline(R_grid,NRBOX,fspl_1D,ibcxmin,bcxmin,ibcxmax,bcxmax,wk_1D,NRBOX,ilinx,ier)         
+
+    call cspline(R_grid,NRBOX,fspl_1D,ibcxmin,bcxmin,ibcxmax,bcxmax,wk_1D,NRBOX,ilinx,ier)
          if (ier .ne. 0) write (*,*) 'bcspline: ier = ', ier
-    
-    return    
+
+    return
   end subroutine initialize_eqdsk_magnetics_spline_interp
 
 
@@ -184,10 +184,10 @@ contains
 
     implicit none
 
-    real(KIND=rkind), intent(in) :: rvec(3) 
+    real(KIND=rkind), intent(in) :: rvec(3)
     real(KIND=rkind), intent(out) :: bvec(3), gradbtensor(3,3)
     real(KIND=rkind), intent(out) :: Psi, gradpsi(3), psiN, gradpsiN(3)
-    character(len=20), intent(out) :: equib_err
+    character(len=60), intent(out) :: equib_err
 
 ! Spline variables
     integer :: iselect(6) = 1 ! Selector for pspline outputs. Output everthing.
@@ -200,7 +200,7 @@ contains
     real(KIND=rkind) :: x, y, z, r
     real(KIND=rkind) :: br, bz, bphi, bp0
     real(KIND=rkind) :: dd_psi, dbrdr, dbrdz, dbzdr, dbzdz, dbphidr
- 
+
     equib_err = ''
     x = rvec(1)
     y = rvec(2)
@@ -208,7 +208,7 @@ contains
     r = sqrt(x**2+y**2)
 
 ! evaluate spline fits
-	call bcspeval(r,z,iselect,fval,R_grid,NRBOX,Z_grid,NZBOX,ilinx,ilinth,fspl,NRBOX,ier)            
+	call bcspeval(r,z,iselect,fval,R_grid,NRBOX,Z_grid,NZBOX,ilinx,ilinth,fspl,NRBOX,ier)
     if (ier .ne. 0) write (*,*) 'bcspeval: ier = ', ier
 
     Psi = fval(1)
@@ -220,7 +220,7 @@ contains
 
     call cspeval(r,iselect_1D,fval_1D,R_grid,NRBOX,ilinx,fspl_1D,ier)
     if (ier .ne. 0) write (*,*) 'cspeval: ier = ', ier
-    
+
     RBphi = fval_1D(1)
     RBphiR = fval_1D(2)
 
@@ -229,7 +229,7 @@ contains
     bz = PsiR/r
     bphi = RBphi/r
     gradpsi = (/x*bz, y*bz, -R*br/)
- 
+
 !   Normalized Flux function x, y, z normalized to 1.0 at last surface
     psiN = psi/PSIBOUND
     gradpsiN = gradpsi/PSIBOUND
@@ -241,11 +241,11 @@ contains
 !   dbrdr = d(Br)/dr, dbrdz = d(Br)/dz.
     dbrdr = -br/r - PsiRZ/r
     dbrdz = -PsiZZ/r
-    
+
 !   dbzdr = d(Bz)/dr, dbzdz = d(Bz)/dz.
     dbzdr = -bz/r + PsiRR/r
     dbzdz = PsiRZ/r
-    
+
 !   dbphidr = d(Bphi)/dr.
     dbphidr = (RBphiR-bphi)/r
 
@@ -255,13 +255,13 @@ contains
     bvec(3) = bz
 
 !   d(Bx)/dx, d(Bx)/dy, and d(Bx)/dz:
-    gradbtensor(1,1) = ( dbrdr*x**2 + br*y**2/r + (-dbphidr+bphi/r)*x*y ) / r**2 
-    gradbtensor(2,1) = ( (dbrdr-br/r)*x*y - dbphidr*y**2 - bphi*x**2/r ) / r**2 
+    gradbtensor(1,1) = ( dbrdr*x**2 + br*y**2/r + (-dbphidr+bphi/r)*x*y ) / r**2
+    gradbtensor(2,1) = ( (dbrdr-br/r)*x*y - dbphidr*y**2 - bphi*x**2/r ) / r**2
     gradbtensor(3,1) = dbrdz*x/r
 
 !   d(By)/dx, d(By)/dy, and d(By)/dz:
-    gradbtensor(1,2) = ( (dbrdr-br/r)*x*y + dbphidr*x**2 + bphi*y**2/r ) / r**2 
-    gradbtensor(2,2) = ( dbrdr*y**2 + br*x**2/r + (dbphidr-bphi/r)*x*y ) / r**2 
+    gradbtensor(1,2) = ( (dbrdr-br/r)*x*y + dbphidr*x**2 + bphi*y**2/r ) / r**2
+    gradbtensor(2,2) = ( dbrdr*y**2 + br*x**2/r + (dbphidr-bphi/r)*x*y ) / r**2
     gradbtensor(3,2) = dbrdz*y/r
 
 !   d(Bz)/dx, d(Bz)/dy, and d(Bz)/dz:
@@ -276,7 +276,7 @@ contains
 
   subroutine  eqdsk_magnetics_spline_interp_psi(rvec, Psi, gradpsi, psiN, gradpsiN)
 !   Simple  eqdsk equilibrium model originally based on notes from 7/28/1995 by Cai-ye Wang.
-!   Reworked extensively by DBB.  See notes of 2-12-2022. 
+!   Reworked extensively by DBB.  See notes of 2-12-2022.
 !
 !   Checks for some error conditions and sets equib_err for outside handling.  Does not
 !   stop.
@@ -286,10 +286,10 @@ contains
     use diagnostics_m, only : message_unit, message
     use eqdsk_utilities_m, only :   PSIBOUND
     use eqdsk_utilities_m, only : R_grid, Z_grid, NRBOX, NZBOX, PSIBOUND
-   
+
     implicit none
 
-    real(KIND=rkind), intent(in) :: rvec(3) 
+    real(KIND=rkind), intent(in) :: rvec(3)
     real(KIND=rkind), intent(out) :: Psi, gradpsi(3), psiN, gradpsiN(3)
 
     integer, parameter, dimension(6) :: psi_select = (/ 1, 1, 1, 0, 0, 0 /)
@@ -308,10 +308,10 @@ contains
     fval = 0.
 
 ! evaluate spline fit
-	call bcspeval(R,z,psi_select,fval,R_grid,NRBOX,Z_grid,NZBOX,ilinx,ilinth,fspl,NRBOX,ier)            
+	call bcspeval(R,z,psi_select,fval,R_grid,NRBOX,Z_grid,NZBOX,ilinx,ilinth,fspl,NRBOX,ier)
     if (ier .ne. 0) write (*,*) 'bcspeval: ier = ', ier
 
-    Psi = fval(1) ! Poloidfal flux function 
+    Psi = fval(1) ! Poloidfal flux function
     PsiR = fval(2)
     PsiZ = fval(3)
 
@@ -325,8 +325,8 @@ contains
     psiN = Psi/PSIBOUND
     gradpsiN = gradpsi/PSIBOUND
 
-    
-    return 
+
+    return
   end subroutine  eqdsk_magnetics_spline_interp_psi
 !********************************************************************
 

@@ -6,7 +6,7 @@
     use diagnostics_m, only : integrate_eq_gradients, message, text_message, &
                             & write_formatted_ray_files, output_unit
     use species_m, only : nspec, n0s
-    use equilibrium_m, only : equilibrium, eq_point
+    use equilibrium_m, only : equilibrium, eq_point, write_eq_point
     use ode_m, only : ds, ode_stop
     use rf_m, only : ray_dispersion_model, ray_param, k0, dispersion_resid_limit
     use damping_m, only : damping_model, damping, multi_spec_damping, total_damping_limit
@@ -17,7 +17,7 @@
     integer, intent(in) :: nv
     real(KIND=rkind), intent(in) :: v(nv)
     real(KIND=rkind), intent(out) :: resid
-    type(ode_stop), intent(out)  :: ray_stop
+    type(ode_stop) :: ray_stop
 
     type(eq_point(nspec=nspec)) :: eq
 
@@ -66,14 +66,10 @@
     end if
 
 
-
-
 !   Calculate the group velocity. It's a piece of useful information,
 !   especially, when iray_param = 'time', i.e., integrate the ray equations with
 !   respect to time.  This part is extracted from EQN_RAY.
 !   First, calculate dD/dk, dD/dx, and dD/d(omega)
-
-
 
     if ( ray_dispersion_model == 'cold' ) then
 
