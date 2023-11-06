@@ -1,6 +1,4 @@
  program rays
-!   simple_RAYS greatly simplified version of the MORAYS code to serve
-!   as test bed for ray tracing code development.  (DBB 5/2021)
 !
 !   External procedures: initialize (initialize.f90), trace_rays (trace_rays.f90)
 !                        finalize (finalize.f90), all in RAYS_lib
