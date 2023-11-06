@@ -15,6 +15,8 @@
     use ray_results_m, only : ray_stop_flag, ray_vec, residual, npoints, end_residuals,&
                             & max_residuals, end_ray_parameter, start_ray_vec, end_ray_vec,&
                             & ray_trace_time, run_trace_time
+    use openmp_m, only : num_threads
+    use omp_lib
     implicit none
 
     integer :: iray, nstep
@@ -35,10 +37,20 @@
     end interface
 
     call cpu_time(t_start_tracing)
+!$  call omp_set_num_threads(num_threads)
+
+!!$OMP parallel num_threads(8) DEFAULT(FIRSTPRIVATE) &
+!$OMP parallel DEFAULT(FIRSTPRIVATE) &
+!$OMP& SHARED(ray_stop_flag, ray_vec, npoints, residual, ray_trace_time,  &
+!$OMP& end_residuals, max_residuals, end_ray_parameter, start_ray_vec, end_ray_vec)
+
+!$OMP DO
     ray_loop: do iray = 1, nray
+!$  write(12,*) 'ray_tracing: ray# = ',iray,'  omp_get_thread_num = ', omp_get_thread_num()
 
          call message(1)
          call message ('ray_tracing: ray #', iray, 1)
+         call message ('ray_tracing: omp_thread_num = ', omp_get_thread_num(), 1)
 
          call cpu_time(t_start_ray)
 
@@ -227,6 +239,8 @@
 
     end do ray_loop
 
+!$OMP END DO
+!$omp end parallel
 
 !   Write ray file description
     if (write_formatted_ray_files) then
