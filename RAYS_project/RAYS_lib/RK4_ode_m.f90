@@ -7,7 +7,7 @@
 !   But it confuses make not to use ode_m since it thinks RK4_ode_m doesn't depend on it.
 !   Therefore:
     use ode_m, only : ode_stop
-    
+
     implicit none
 
 
@@ -21,20 +21,20 @@ contains
 
   module subroutine initialize_RK4_ode
 
-     use diagnostics_m, only : message_unit, text_message
-    
+     use diagnostics_m, only : message_unit, text_message, verbosity
+
     implicit none
-    
-! N.B. RK4 has no parameters so there is no namelist to read    
+
+! N.B. RK4 has no parameters so there is no namelist to read
 ! Read and write input namelist
 !     open(unit=input_unit, file='rays.in',action='read', status='old', form='formatted')
 !     read(input_unit, RK4_ode_list)
 !     close(unit=input_unit)
 !     write(message_unit, RK4_ode_list)
 
-    call text_message('RK4: RK4 has no initialization')
-    write(*,*) 'RK4: RK4 has no initialization'
-    
+    call text_message('initialize_RK4_ode: RK4 needs no initialization',1)
+    if (verbosity > 0) write(*,*) 'initialize_RK4_ode: RK4 needs no initialization'
+
     return
   end subroutine initialize_RK4_ode
 
@@ -42,13 +42,13 @@ contains
 
   module subroutine ray_init_RK4_ode
   ! Resets RK4_ode solver to appropriate state for start of ray.
-  ! N.B. RK4 has no parameters so there is nothing to set. 
+  ! N.B. RK4 has no parameters so there is nothing to set.
     implicit none
     return
   end subroutine ray_init_RK4_ode
 
 !********************************************************************
- 
+
    module subroutine RK4_ode(eqn_ray, nv, v, s, sout, ray_stop)
   ! Simple RK4_ode solver
 
@@ -63,14 +63,14 @@ contains
         integer, intent(in) :: nv
         real(KIND=rkind), intent(inout) :: v(nv)
         real(KIND=rkind), intent(inout) :: s, sout
-        type(ode_stop), intent(out)  :: ray_stop
-  
-        real (  kind = rkind )::  ds  
+        type(ode_stop) :: ray_stop
+
+        real (  kind = rkind )::  ds
         real (  kind = rkind ) :: f1(nv)
         real (  kind = rkind ) :: f2(nv)
         real (  kind = rkind ) :: f3(nv)
         real (  kind = rkind ) :: f4(nv)
-  
+
         ds = sout-s
 
         call eqn_ray ( s, v(:), f1(:), ray_stop )
