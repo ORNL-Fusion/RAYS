@@ -16,10 +16,6 @@
 !   Total ODE error limit abs(rel_err)+abs(abs_err) above which to bail.
     real(KIND=rkind) :: SG_error_limit = 0.1  ! Default
 
-!   Return status flag
-    integer :: iflag
-
-
  namelist /SG_ode_list/ rel_err0, abs_err0, SG_error_limit
 
 !********************************************************************
@@ -70,7 +66,8 @@ contains
 
     implicit none
     type(ode_stop) :: ray_stop
-
+    ray_stop%stop_ode = .false.
+    ray_stop%ode_stop_flag = ''
     ray_stop%rel_err = rel_err0
     ray_stop%abs_err = abs_err0
 
@@ -95,11 +92,15 @@ contains
     real(KIND=rkind), intent(inout) :: s, sout
     type(ode_stop) :: ray_stop
 
+!    real(KIND=rkind), save :: work(100+21*nv)
     real(KIND=rkind) :: work(100+21*nv)
     integer :: iwork(5)
 
     real(KIND=rkind) :: rel_err, abs_err
     real(KIND=rkind) :: total_error
+
+!   Return status flag
+    integer :: iflag
 
     rel_err = ray_stop%rel_err
     abs_err = ray_stop%abs_err
@@ -139,8 +140,7 @@ contains
          else ! error return
               ray_stop%stop_ode = .true.
               call message('SG_ode: Error return: iflag', iflag, 0)
-              if (iflag == 5) call text_message('Equation is stiff', 0)
-              ray_stop%ode_stop_flag = 'ODE iflag error'
+              call text_message('SG_ode: ode_stop_flag = '//ray_stop%ode_stop_flag, 0)
               exit odeloop
          end if
 

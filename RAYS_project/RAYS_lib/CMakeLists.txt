@@ -32,11 +32,12 @@ list (APPEND lib_sources
 	solovev_eq_m.f90
 	solovev_ray_init_nphi_ntheta_m.f90
 	eqdsk_utilities_m.f90
-	eqdsk_magnetics_lin_interp_m.f90	
-	eqdsk_magnetics_spline_interp_m.f90	
+	eqdsk_magnetics_lin_interp_m.f90
+	eqdsk_magnetics_spline_interp_m.f90
 	species_m.f90
 	suscep_m.f90
 	ray_results_m.f90
+	openmp_m.f90
 )
 
 add_library (RAYS_lib ${lib_sources})
@@ -46,12 +47,12 @@ target_include_directories (RAYS_lib
                             $<TARGET_PROPERTY:math_functions,BINARY_DIR>
 )
 
-target_link_libraries(RAYS_lib 
+target_link_libraries(RAYS_lib
                       PUBLIC
                       spline math_functions
                       $<$<BOOL:${OpenMP_Fortran_FOUND}>:OpenMP::OpenMP_Fortran>
 )
-# 
+#
 # target_sources (RAYS_lib
 #                 PRIVATE
 #                 $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/*.f90>

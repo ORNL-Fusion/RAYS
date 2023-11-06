@@ -32,8 +32,9 @@
 !  which may evolve along the ray e.g. as set by the SG ODE solver.
 
     type ode_stop
-        logical :: stop_ode = .false.
-        character(len=30) :: ode_stop_flag = ''
+!        logical :: stop_ode = .false.
+        logical :: stop_ode
+        character(len=30) :: ode_stop_flag
         real(KIND=rkind) :: rel_err, abs_err
    end type ode_stop
 

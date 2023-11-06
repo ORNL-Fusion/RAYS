@@ -424,17 +424,19 @@ subroutine de ( f, neqn, y, t, tout, relerr, abserr, iflag, yy, wt, p, yp, &
 
   if ( neqn < 1 ) then
     iflag = 6
+    ray_stop%ode_stop_flag = 'neqn < 1'
     return
   end if
 
   if ( t == tout ) then
     iflag = 6
-  write(*,*) 't == tout'
+    ray_stop%ode_stop_flag = 't == tout'
     return
   end if
 
   if ( relerr < 0.0e+00 .or. abserr < 0.0e+00 ) then
     iflag = 6
+    ray_stop%ode_stop_flag = 'relerr or abserr < 0'
     return
   end if
 
@@ -442,12 +444,14 @@ subroutine de ( f, neqn, y, t, tout, relerr, abserr, iflag, yy, wt, p, yp, &
 
   if ( eps <= 0.0e+00 ) then
     iflag = 6
+    ray_stop%ode_stop_flag = 'eps <= 0'
     return
   end if
 
   if ( iflag == 0 ) then
     iflag = 6
-    return
+    ray_stop%ode_stop_flag = 'iflag == 0'
+   return
   end if
 
   isn = sign ( 1, iflag )
@@ -457,11 +461,13 @@ subroutine de ( f, neqn, y, t, tout, relerr, abserr, iflag, yy, wt, p, yp, &
 
     if ( t /= told ) then
       iflag = 6
+      ray_stop%ode_stop_flag = 't /= told'
       return
     end if
 
     if ( iflag < 2 .or. 5 < iflag ) then
       iflag = 6
+      ray_stop%ode_stop_flag = 'iflag < 2 or < 5'
       return
     end if
   end if
@@ -529,8 +535,10 @@ subroutine de ( f, neqn, y, t, tout, relerr, abserr, iflag, yy, wt, p, yp, &
 !
     if ( maxnum <= nostep ) then
       iflag = isn * 4
+      ray_stop%ode_stop_flag = 'step number .ge. maxnum'
       if ( stiff ) then
         iflag = isn * 5
+        ray_stop%ode_stop_flag = 'equations stiff'
       end if
       y(1:neqn) = yy(1:neqn)
       t = x

@@ -3,14 +3,18 @@ module scanner_m
 ! Modifies data in modules to implement a scan of ray runs with varying input data.
 ! scan_parameter selects which parameter is to be varied.  Presently only supported are:
 !   ode_m -> 'ds'
+!   openmp_m -> num_threads
 ! scan_algorithm selects the algorithm by which the parameter is varied.  Presently only
-! supported are: 'fixed_increment', 'pwr_of_2'
+! supported are:
+!   ode_m -> 'ds' -> 'fixed_increment', 'pwr_of_2', 'integer_divide', 'algorithm_1'
+!   openmp_m -> num_threads -> 'increment_num_threads', 'double_num_threads'
 !
 ! Reads standard rays.in namelist file with added /scanner_list/.  Serves as template for
 ! all data that is not varied during scan.
 !
 ! N.B.  For now we only aggregate data for ray # 1 per run.  A parameter scan varying only
 ! simulation parameters might reasonably only consist of one ray per run.
+! Except that trace_time_run is for the whole run.
 
 
     use constants_m, only : rkind
@@ -138,6 +142,12 @@ contains
 		   file_name_suffix(i_run) = 'run_'//adjustl(trim(chr_iter_number))
 		end do
 
+       case ('increment_num_threads')
+		do i_run = 1, n_runs
+		   p_values(i_run) = i_run
+		   write (chr_iter_number, '(I4)') i_run
+		   file_name_suffix(i_run) = 'run_'//adjustl(trim(chr_iter_number))
+		end do
 
        case ('double_num_threads')
 		do i_run = 1, n_runs
@@ -165,14 +175,12 @@ contains
 
     use diagnostics_m, only : message_unit, verbosity, run_label
     use ode_m, only : ds
+    use openmp_m, only : num_threads
 
     implicit none
 
     integer, intent(in) :: i_run
-    integer :: stat, num_threads
-    character(len=*),parameter :: left = 'export OMP_NUM_THREADS='
-    character(len=10):: right
-    character(len=256) :: mess, line, value
+    integer :: stat
 
     param: select case (trim(scan_parameter))
 
@@ -180,21 +188,13 @@ contains
        	ds = p_values(i_run)
        	run_label = trim(file_name_suffix(i_run))
 
-       case ('double_num_threads')
+       case ('double_num_threads', 'increment_num_threads')
        	num_threads = nint(p_values(i_run))
-       	write (right, '(I10)') num_threads
-       	line = left//adjustl(trim(right))
-       	write(12,*) 'command line = ', line
-       	call execute_command_line(left//trim(right),cmdstat=stat,cmdmsg=mess)
-       	write(12,*) 'cmdstat= ', stat
-       	call get_environment_variable('OMP_NUM_THREADS', value)
-       	write(12,*) 'OMP_NUM_THREADS, value = ', value
-
        	run_label = trim(file_name_suffix(i_run))
-       	if (stat .ne. 0) then
-       		write(0,*) trim(mess)
-       		stop 1
-       	end if
+!
+!        case ('increment_num_threads')
+!        	num_threads = nint(p_values(i_run))
+!        	run_label = trim(file_name_suffix(i_run))
 
 	   case default
 		  write(0,*) 'initialize_scanner_m: unknown scan parameter = ', scan_parameter
@@ -219,7 +219,7 @@ contains
 
     integer, intent(in) :: i_run
 
-    trace_time_run(i_run) = ray_trace_time(1)
+    trace_time_run(i_run) = run_trace_time
 	end_ray_param_run(i_run) = end_ray_parameter(1)
 	end_resid_run(i_run) = end_residuals(1)
 	max_resid_run(i_run) = max_residuals(1)

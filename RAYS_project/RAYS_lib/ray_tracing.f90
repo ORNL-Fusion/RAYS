@@ -15,6 +15,7 @@
     use ray_results_m, only : ray_stop_flag, ray_vec, residual, npoints, end_residuals,&
                             & max_residuals, end_ray_parameter, start_ray_vec, end_ray_vec,&
                             & ray_trace_time, run_trace_time
+    use openmp_m, only : num_threads
     use omp_lib
     implicit none
 
@@ -36,18 +37,20 @@
     end interface
 
     call cpu_time(t_start_tracing)
+!$  call omp_set_num_threads(num_threads)
 
-!!$OMP parallel num_threads(2) DEFAULT(FIRSTPRIVATE) &
+!!$OMP parallel num_threads(8) DEFAULT(FIRSTPRIVATE) &
 !$OMP parallel DEFAULT(FIRSTPRIVATE) &
 !$OMP& SHARED(ray_stop_flag, ray_vec, npoints, residual, ray_trace_time,  &
 !$OMP& end_residuals, max_residuals, end_ray_parameter, start_ray_vec, end_ray_vec)
 
 !$OMP DO
     ray_loop: do iray = 1, nray
-    write(12,*) 'ray_tracing: ray# = ',iray,'  omp_get_thread_num = ', omp_get_thread_num()
+!$  write(12,*) 'ray_tracing: ray# = ',iray,'  omp_get_thread_num = ', omp_get_thread_num()
 
          call message(1)
-         call message ('trace_rays: ray #', iray, 1)
+         call message ('ray_tracing: ray #', iray, 1)
+         call message ('ray_tracing: omp_thread_num = ', omp_get_thread_num(), 1)
 
          call cpu_time(t_start_ray)
 
@@ -59,7 +62,7 @@
          ray_stop%ode_stop_flag = ''
          ray_stop_flag(iray) = ray_stop%ode_stop_flag
 
-    !    Reset ode solver for beginning of ray. (For SG_ode this resets rel_err,abs_err)
+    !    Reset ode solver for beginning of ray.
          call ray_init_ode_solver(ray_stop)
 
     !    Initialization of ray vector v.
@@ -95,6 +98,7 @@
             sout = sout + ds
 
             call message(1)
+            call message ('trace_rays: ray #', iray, 1)
             call message ('trace_rays: start step', nstep + 1, 1)
             call message ('trace_rays: s', s, 1)
             call message ('trace_rays: sout', sout, 1)
