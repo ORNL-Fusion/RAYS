@@ -6,7 +6,7 @@
     use diagnostics_m, only : integrate_eq_gradients, message, text_message, &
                             & write_formatted_ray_files, output_unit
     use species_m, only : nspec, n0s
-    use equilibrium_m, only : equilibrium, eq_point
+    use equilibrium_m, only : equilibrium, eq_point, write_eq_point
     use ode_m, only : ds, ode_stop
     use rf_m, only : ray_dispersion_model, ray_param, k0, dispersion_resid_limit
     use damping_m, only : damping_model, damping, multi_spec_damping, total_damping_limit
@@ -17,21 +17,21 @@
     integer, intent(in) :: nv
     real(KIND=rkind), intent(in) :: v(nv)
     real(KIND=rkind), intent(out) :: resid
-    type(ode_stop), intent(out)  :: ray_stop
+    type(ode_stop) :: ray_stop
 
     type(eq_point(nspec=nspec)) :: eq
-   
+
     real(KIND=rkind) :: kvec(3), k1, k3
-    real(KIND=rkind) :: nvec(3), n1, n3  
+    real(KIND=rkind) :: nvec(3), n1, n3
 
     integer :: nv0
     real(KIND=rkind) :: dddx(3), dddk(3), dddw, vg(3), vg0
     real(KIND=rkind) :: ksi(0:nspec), ki
     real(KIND=rkind) :: total_absorption, total_species_absorption
     real(KIND=rkind) :: bmod, diff_vec(3)
-  
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!  
- 
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
 !   Calculate the plasma equilibrium.
     call equilibrium(v(1:3), eq)
     if (eq%equib_err .ne. '') then
@@ -57,28 +57,24 @@
     call message ('check_save: ray n-perp', n1, 1)
 
 !   Calculate the residual.
-    
+
     resid = residual(eq, k1,k3)
     call message ('check_save: residual', resid, 1)
     if (resid > dispersion_resid_limit) then
         ray_stop%stop_ode = .true.
         ray_stop%ode_stop_flag = 'dispersion_residual'
     end if
-        
-
 
 
 !   Calculate the group velocity. It's a piece of useful information,
-!   especially, when iray_param = 'time', i.e., integrate the ray equations with 
+!   especially, when iray_param = 'time', i.e., integrate the ray equations with
 !   respect to time.  This part is extracted from EQN_RAY.
 !   First, calculate dD/dk, dD/dx, and dD/d(omega)
 
-
-       
     if ( ray_dispersion_model == 'cold' ) then
 
 !      Derivatives of D for a cold plasma.
-       call deriv_cold(eq, nvec, dddx, dddk, dddw)      
+       call deriv_cold(eq, nvec, dddx, dddk, dddw)
     else
        call text_message('CHECK_SAVE: ray_dispersion_model = ', ray_dispersion_model)
        write(*,*) 'CHECK_SAVE: ray_dispersion_model = ', ray_dispersion_model
@@ -97,20 +93,20 @@
              call message('CHECK_SAVE: time step too big, Vg*dt (m) =', vg0 * ds, 1)
           end if
        end if
-       
+
        call message('check_save: Vg',vg, 3, 1)
-       
+
     else
        call message('CHECK_SAVE: dddw = ', dddw)
        call text_message('check_save: infinite group velocity, dddw = 0', 1)
        ray_stop%stop_ode = .true.
-       ray_stop%ode_stop_flag = 'infinite_Vg'       
+       ray_stop%ode_stop_flag = 'infinite_Vg'
     end if
 
 ! Start counting length of v(:) i.e. nv0
     nv0 = 7
 
-    damp : if (damping_model /= 'no_damp') then    
+    damp : if (damping_model /= 'no_damp') then
         call damping(eq, v, vg, ksi, ki)
         nv0 = nv0 + 1
 
@@ -123,7 +119,7 @@
            call text_message('ray_stop%ode_stop_flag = ', ray_stop%ode_stop_flag, 1)
         end if
 
-!       Check if the sum of all by species absorption is equal to the total.        
+!       Check if the sum of all by species absorption is equal to the total.
         if (multi_spec_damping .eqv. .true.) then
            total_species_absorption =  sum(v(nv0+1:nv0+1+nspec))
            call message ('check_save: Total species absorption', total_species_absorption, 1)
@@ -145,9 +141,9 @@
         call message('check_save: Te difference',  v(nv0+5)-eq%ts(0),1)
     end if integrate_gradients
 
-    
-!****** write ray vector for this step to output file *********************************    
-    
+
+!****** write ray vector for this step to output file *********************************
+
     if (write_formatted_ray_files) then
 		write(output_unit, *) s, v
     end if
@@ -155,10 +151,10 @@
     return
 
 
-!*************************************************************************     
+!*************************************************************************
 
 contains
- 
+
     real(KIND=rkind) function residual(eq, k1, k3)
 !      calculates the residual for given k1 and k3.
 !      get dielectric tensor from module suscep_m
@@ -166,10 +162,10 @@ contains
        use species_m, only : nspec
        use suscep_m, only :  dielectric_cold
 
-       implicit none 
-       
+       implicit none
+
        type(eq_point(nspec=nspec)), intent(in) :: eq
- 
+
        real(KIND=rkind) :: k1, k3
 
        complex(KIND=rkind) :: eps(3,3), eps_h(3,3), epsn(3,3), ctmp
@@ -184,7 +180,7 @@ contains
     if (ray_dispersion_model == "cold") then
         call dielectric_cold(eq, eps)
     end if
-    
+
 !    write(*,*) 'eps = ', eps
 
 !      Hermitian part.
@@ -220,10 +216,10 @@ contains
           & + eps_norm(3,2)*(eps_norm(1,1)*eps_norm(2,3)) &
           & + eps_norm(3,2)*(eps_norm(2,1)*eps_norm(1,3)) &
           & + eps_norm(3,1)*(eps_norm(1,2)*eps_norm(2,3)) &
-          & + eps_norm(3,1)*(eps_norm(2,2)*eps_norm(1,3)) ) 
-      
+          & + eps_norm(3,1)*(eps_norm(2,2)*eps_norm(1,3)) )
+
 
        return
     end function residual
- 
+
  end subroutine check_save

@@ -4,13 +4,13 @@
 !   By default there are seven equations; three for r(s), three for k(s) and one for s
 !   v(1:3) = r, v(4:6) = k,  v(7) = s.
 !
-!   The v(7) equation integrates v_group along the ray and serves as a diagnostic.  
+!   The v(7) equation integrates v_group along the ray and serves as a diagnostic.
 !   If ray_param = 'arcl' it serves as a check on the consistency of v_group with s.
 !   If ray_param = 'time' it gives arc length s(t) along the ray trajectory.
 !
 !   Optionally v(8) integrates total absorption, ki(s)
 !   Optionally v(9:9+nspec)integrates absorption by species, kis(s)
-!   Optionally v(5 more elements)integrates gradients of the equilibrium quantities to check 
+!   Optionally v(5 more elements)integrates gradients of the equilibrium quantities to check
 !   consistency
 !
 !   Selects between different ray dispersion models to calculate derivatives of D(r,x,omega)
@@ -18,23 +18,23 @@
 !   N.B. In integrating v(7), damping, or diagnostic gradients the integral is with respect
 !        to arc length, so introduce parameter, dsd_ray_param = 1 for ray_param = 'arcl',
 !        dsd_ray_param = |v group| == vg0 for ray_param = 'time'
- 
+
 !   External procedures: deriv_cold (deriv_cold)
 
     use constants_m, only : rkind
     use diagnostics_m, only : integrate_eq_gradients, verbosity, message_unit, message
     use species_m, only : nspec
-    use equilibrium_m, only : equilibrium, eq_point
+    use equilibrium_m, only : equilibrium, eq_point, write_eq_point
     use ode_m, only : nv, ray_deriv_name, ode_stop
     use rf_m, only : k0, ray_dispersion_model, ray_param
     use damping_m, only : damping_model, damping, multi_spec_damping
-    
+
      implicit none
-     
+
     real(KIND=rkind), intent(in) :: s
     real(KIND=rkind), intent(in) :: v(nv)
-    real(KIND=rkind), intent(out) :: dvds(nv) 
-    type(ode_stop), intent(out)  :: ray_stop
+    real(KIND=rkind), intent(out) :: dvds(nv)
+    type(ode_stop)  :: ray_stop
 
     real(KIND=rkind) :: rvec(3)
     real(KIND=rkind) :: kvec(3), k1, k3
@@ -52,7 +52,7 @@
     integer :: is
 
 !***********************************
- 
+
     interface deriv_cold
        subroutine deriv_cold(eq, nvec, dddx, dddk, dddw)
           use constants_m, only : rkind
@@ -62,7 +62,7 @@
           real(KIND=rkind), intent(out) :: dddx(3), dddk(3), dddw
        end subroutine deriv_cold
     end interface deriv_cold
- 
+
     interface deriv_num
        subroutine deriv_num(eq, v, dddx, dddk, dddw)
             use constants_m, only : rkind, clight
@@ -93,11 +93,12 @@
         return
     end if
 
-!   Calculate dD/dk, dD/dx, and dD/d(omega) 
+!   Calculate dD/dk, dD/dx, and dD/d(omega)
 
     dispersion_model: select case (trim(ray_deriv_name))
 
         case ('cold' )
+
     !      Derivatives of D for a cold plasma.
          call deriv_cold(eq, nvec, dddx, dddk, dddw)
 
@@ -112,14 +113,14 @@
            write(*,*) 'EQN_RAY: invalid value, ray_deriv_name = ', ray_deriv_name
            stop 1
     end select dispersion_model
-       
+
    if (verbosity > 3) then  ! Debugging diagnostics
        write (*,*) 'eqn_ray: rvec = ', rvec, '  kvec = ', kvec
        write (*,*) 'eqn_ray: dddx = ', dddx, 'dddk = ', dddk, 'dddw = ', dddw
    end if
 
 
-!   Group velocity. 
+!   Group velocity.
 
     if ( dddw /= 0. ) then
        vg = -dddk / dddw
@@ -142,14 +143,14 @@
 !         Integrate with respect to the arclength along the ray.
           if ( any(dddk/=0.) ) then
 !            dr/ds:
-             dvds(1:3) = -sign(real(1.,KIND=rkind),dddw) * dddk / sqrt(sum(dddk**2)) 
+             dvds(1:3) = -sign(real(1.,KIND=rkind),dddw) * dddk / sqrt(sum(dddk**2))
 
 !            dk/ds:
              dvds(4:6) =  sign(real(1.,KIND=rkind),dddw) * dddx / sqrt(sum(dddk**2))
 
 !            ds/d(ray parameter)
              dsd_ray_param = 1.
-             
+
 !            Unit vector along the group velocity.
              vg_unit = vg / vg0
 !            write(6,'(a,1p3e12.4)') 'EQN_RAY: vg/|vg| =', vg_unit
@@ -170,7 +171,7 @@
 
 !         ds/d(ray parameter)
           dsd_ray_param = vg0
-          
+
 !         Calculate ksi and ki.
           call damping(eq, v, vg, ksi, ki)
 
@@ -188,14 +189,14 @@
     nv0 = 7
 
 ! Damping Calculate ksi and ki.
-    damp : if (damping_model /= 'no_damp') then    
-    
+    damp : if (damping_model /= 'no_damp') then
+
         v_xk = v(1:6) ! N.B. damping() needs x and k from v(:), not the rest of it.
         call damping(eq, v_xk, vg, ksi, ki)
 
 !       Differential equation for total power absorption.
         nv0 = nv0 + 1
-        dvds(nv0) = dsd_ray_param * 2.*ki*(1.-v(nv0))        
+        dvds(nv0) = dsd_ray_param * 2.*ki*(1.-v(nv0))
 
 
 !       Differential equation for power absorption for each species.
@@ -206,7 +207,7 @@
           nv0 = nv0 +1 +nspec
         end if
     end if damp
-    
+
 ! Optionally integrate additional diagnostic equations along ray
 
     if (integrate_eq_gradients .eqv..true.) then
@@ -217,15 +218,15 @@
         dvds(nv0+3) = sum(dsd_ray_param*vg_unit*eq%gradbtensor(:,3))
 
 !       Check if grad(ne) and grad(Te) are consistent with ne and Te.
-!       ne normalized to peak electron density 
+!       ne normalized to peak electron density
         dvds(nv0+4) = sum(dsd_ray_param*vg_unit*eq%gradns(:,0))
         dvds(nv0+5) = sum(dsd_ray_param*vg_unit*eq%gradts(:,0))
-     
+
     end if
 
     if (verbosity > 3) then  ! Debugging diagnostics
         write (*, *) 'eqn_ray: dvds = ', dvds
     end if
-                
+
     return
  end subroutine eqn_ray

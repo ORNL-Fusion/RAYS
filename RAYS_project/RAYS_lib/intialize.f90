@@ -1,5 +1,5 @@
  subroutine initialize(read_input)
- 
+
 ! Calls the initialize routines for all other components, and opens some output files.
 ! The argument read_input determines whether or not the initialization routines read the
 ! input data files.  Normally on startup this will be true, but when used as an internal
@@ -17,6 +17,7 @@
     use damping_m, only : initialize_damping_m
     use species_m, only : initialize_species_m
     use ray_results_m, only : initialize_ray_results_m
+!$  use openmp_m, only : initialize_openmp_m
 
     implicit none
     logical, intent(in) :: read_input
@@ -46,28 +47,31 @@
 ! ****** Initialize the modules, they read input data from module namelists   ***********
 
     call initialize_constants_m
-    call message(1)
+    call message(0)
 
     call initialize_species_m(read_input)
-    call message(1)
-    
+    call message(0)
+
     call initialize_rf_m(read_input)
-    call message(1)
-    
+    call message(0)
+
     call initialize_damping_m(read_input)
-    call message(1)
+    call message(0)
 
     call initialize_equilibrium_m(read_input)
-    call message(1)
+    call message(0)
 
     call initialize_ray_init_m(read_input)
-    call message(1)
-    
-    call initialize_ode_solver_m(read_input)
-    call message(1)
+    call message(0)
 
-    call initialize_ray_results_m(read_input)    
-    call message(1)
+    call initialize_ode_solver_m(read_input)
+    call message(0)
+
+    call initialize_ray_results_m(read_input)
+    call message(0)
+
+!$  call initialize_openmp_m(read_input)
+!$  call message(0)
 
 !*************** Open output files ******************************
 
@@ -82,6 +86,6 @@
 	output_unit = get_unit_number()
     open(unit=output_unit, file='ray_out.'//trim(run_label),action='write', &
                 & status='replace', form='formatted')
-    
-    return 
+
+    return
  end subroutine initialize

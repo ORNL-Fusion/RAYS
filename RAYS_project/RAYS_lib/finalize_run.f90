@@ -11,21 +11,22 @@
                             & write_results_LD, run_trace_time
 
     implicit none
-    
+
     real(KIND=rkind) :: trace_time, code_time
 
     call cpu_time(t_finish_rays)
-    run_trace_time = t_finish_tracing - t_start_tracing 
+
+    run_trace_time = t_finish_tracing - t_start_tracing
     code_time = t_finish_rays - t_start_rays
     call message(1)
     call message('CPU time ray tracing', run_trace_time, 0)
     call message('CPU time RAYS code', code_time, 0)
-    
-    
+
+
     if (write_results_list_directed .eqv. .true.) then
         call write_results_LD
     end if
-    
+
     close(ray_list_unit)
     close(output_unit)
 
@@ -35,6 +36,6 @@
     close(message_unit)
 
 ! Copy messages file to log.RAYS so it won't get clobbered by post processing
-    call system('mv messages log.RAYS.'//trim(run_label)) 
+    call system('mv messages log.RAYS.'//trim(run_label))
 
  end subroutine finalize_run

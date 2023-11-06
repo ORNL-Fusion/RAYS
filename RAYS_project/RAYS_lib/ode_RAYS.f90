@@ -1,5 +1,5 @@
 subroutine ode ( f, neqn, y, t, tout, relerr, abserr, iflag, work, iwork, ray_stop)
-! A fortran 90 implementation of the vemnerable Shampine and Gordon ODE package, 
+! A fortran 90 implementation of the vemnerable Shampine and Gordon ODE package,
 ! subsequently modified to support ray (integration) termination conditions from the
 ! derivative subroutine f()
 
@@ -7,7 +7,7 @@ subroutine ode ( f, neqn, y, t, tout, relerr, abserr, iflag, work, iwork, ray_st
 ! (DBB 2/4/2022) To allow thread safety removed 'stop_ode' from module ode_m and made
 ! a derived type 'ode_stop', made 'ray_stop' and argument of all subroutines.
 ! (DBB 12/2021) Converted to use KIND = rkind for all reals.
-! (DBB 10/28/2021)  Added error return 'stop_ode' to trap error conditions in 
+! (DBB 10/28/2021)  Added error return 'stop_ode' to trap error conditions in
 ! derivative subroutine (referred to as f() here, is deriv() in RAYS code)
 !
 !*****************************************************************************80
@@ -122,9 +122,9 @@ subroutine ode ( f, neqn, y, t, tout, relerr, abserr, iflag, work, iwork, ray_st
 !      abs ( local error ) <= abs ( y ) * relerr + abserr
 !    for each component of the local error and solution vectors.
 !
-!    Input/output, integer ( kind = 4 ) IFLAG, indicates the status of 
-!    integration.  On input, IFLAG is normally 1 (or -1 in the special case 
-!    where TOUT is not to be exceeded.)  On normal output, IFLAG is 2.  Other 
+!    Input/output, integer ( kind = 4 ) IFLAG, indicates the status of
+!    integration.  On input, IFLAG is normally 1 (or -1 in the special case
+!    where TOUT is not to be exceeded.)  On normal output, IFLAG is 2.  Other
 !    output values are:
 !    * 3, integration did not reach TOUT because the error tolerances
 !      were too small.  But RELERR and ABSERR were increased appropriately
@@ -141,18 +141,18 @@ subroutine ode ( f, neqn, y, t, tout, relerr, abserr, iflag, work, iwork, ray_st
 !    Input/output, integer ( kind = 4 ) IWORK(5), workspace.
 !
 
-  
+
 
   use constants_m, only : rkind
   use ode_m, only : ode_stop
-    
+
   implicit none
 
   integer ( kind = 4 ) neqn
 
   real(KIND=rkind) abserr
   external f
-  
+
   type(ode_stop)  :: ray_stop
 
   integer ( kind = 4 ), parameter :: ialpha = 1
@@ -289,9 +289,9 @@ subroutine de ( f, neqn, y, t, tout, relerr, abserr, iflag, yy, wt, p, yp, &
 !      abs ( local error ) <= abs ( Y ) * RELERR + ABSERR
 !    for each component of the local error and solution vectors.
 !
-!    Input/output, integer ( kind = 4 ) IFLAG, indicates the status of 
-!    integration.  On input, IFLAG is normally 1 (or -1 in the special case 
-!    where TOUT is not to be exceeded.)  On normal output, IFLAG is 2.  Other 
+!    Input/output, integer ( kind = 4 ) IFLAG, indicates the status of
+!    integration.  On input, IFLAG is normally 1 (or -1 in the special case
+!    where TOUT is not to be exceeded.)  On normal output, IFLAG is 2.  Other
 !    output values are:
 !    * 3, integration did not reach TOUT because the error tolerances were
 !         too small.
@@ -344,17 +344,17 @@ subroutine de ( f, neqn, y, t, tout, relerr, abserr, iflag, yy, wt, p, yp, &
 !    Input/output, real(KIND=rkind) DELSGN, the sign (+1 or -1) of
 !    TOUT - T.
 !
-!    Input/output, integer ( kind = 4 ) NS, the number of steps taken with 
+!    Input/output, integer ( kind = 4 ) NS, the number of steps taken with
 !    stepsize H.
 !
 !    Input/output, logical NORND, ?
 !
 !    Input, integer ( kind = 4 ) K, the order of the current ODE method.
 !
-!    Input, integer ( kind = 4 ) KOLD, the order of the ODE method on the 
+!    Input, integer ( kind = 4 ) KOLD, the order of the ODE method on the
 !    previous step.
 !
-!    Input/output, integer ( kind = 4 ) ISNOLD, the previous value of ISN, the 
+!    Input/output, integer ( kind = 4 ) ISNOLD, the previous value of ISN, the
 !    sign of IFLAG.
 !
 !  Local parameters:
@@ -365,12 +365,12 @@ subroutine de ( f, neqn, y, t, tout, relerr, abserr, iflag, yy, wt, p, yp, &
 
   use constants_m, only : rkind
   use ode_m, only : ode_stop
-  
+
   implicit none
 
   integer ( kind = 4 ) neqn
-  
-  type(ode_stop), intent(out)  :: ray_stop
+
+  type(ode_stop) :: ray_stop
 
   real(KIND=rkind) absdel
   real(KIND=rkind) abseps
@@ -424,17 +424,19 @@ subroutine de ( f, neqn, y, t, tout, relerr, abserr, iflag, yy, wt, p, yp, &
 
   if ( neqn < 1 ) then
     iflag = 6
+    ray_stop%ode_stop_flag = 'neqn < 1'
     return
   end if
 
   if ( t == tout ) then
     iflag = 6
-  write(*,*) 't == tout'
+    ray_stop%ode_stop_flag = 't == tout'
     return
   end if
 
   if ( relerr < 0.0e+00 .or. abserr < 0.0e+00 ) then
     iflag = 6
+    ray_stop%ode_stop_flag = 'relerr or abserr < 0'
     return
   end if
 
@@ -442,12 +444,14 @@ subroutine de ( f, neqn, y, t, tout, relerr, abserr, iflag, yy, wt, p, yp, &
 
   if ( eps <= 0.0e+00 ) then
     iflag = 6
+    ray_stop%ode_stop_flag = 'eps <= 0'
     return
   end if
 
   if ( iflag == 0 ) then
     iflag = 6
-    return
+    ray_stop%ode_stop_flag = 'iflag == 0'
+   return
   end if
 
   isn = sign ( 1, iflag )
@@ -457,11 +461,13 @@ subroutine de ( f, neqn, y, t, tout, relerr, abserr, iflag, yy, wt, p, yp, &
 
     if ( t /= told ) then
       iflag = 6
+      ray_stop%ode_stop_flag = 't /= told'
       return
     end if
 
     if ( iflag < 2 .or. 5 < iflag ) then
       iflag = 6
+      ray_stop%ode_stop_flag = 'iflag < 2 or < 5'
       return
     end if
   end if
@@ -529,8 +535,10 @@ subroutine de ( f, neqn, y, t, tout, relerr, abserr, iflag, yy, wt, p, yp, &
 !
     if ( maxnum <= nostep ) then
       iflag = isn * 4
+      ray_stop%ode_stop_flag = 'step number .ge. maxnum'
       if ( stiff ) then
         iflag = isn * 5
+        ray_stop%ode_stop_flag = 'equations stiff'
       end if
       y(1:neqn) = yy(1:neqn)
       t = x
@@ -711,7 +719,7 @@ subroutine step ( x, y, f, neqn, h, eps, wt, start, hold, k, kold, crash, &
 !    Input/output, real(KIND=rkind) HOLD, the step size used on the last
 !    successful step.
 !
-!    Input/output, integer ( kind = 4 ) K, the appropriate order for the 
+!    Input/output, integer ( kind = 4 ) K, the appropriate order for the
 !    next step.
 !
 !    Input/output, integer ( kind = 4 ) KOLD, the order used on the last
@@ -745,11 +753,11 @@ subroutine step ( x, y, f, neqn, h, eps, wt, start, hold, k, kold, crash, &
 
   use constants_m, only : rkind
   use ode_m, only : ode_stop
-  
+
   implicit none
 
   integer ( kind = 4 ) neqn
-  
+
   type(ode_stop)  :: ray_stop
 
   real(KIND=rkind) absh
@@ -848,12 +856,12 @@ subroutine step ( x, y, f, neqn, h, eps, wt, start, hold, k, kold, crash, &
 !  Initialize.  Compute an appropriate step size for the first step.
 !
   if ( start ) then
-  
+
      call f ( x, y, yp, ray_stop)
 
 ! Error return (DBB)
      if (ray_stop%stop_ode .eqv. .true.) return
-!  
+!
     phi(1:neqn,1) = yp(1:neqn)
     phi(1:neqn,2) = 0.0e+00
     total = sqrt ( sum ( ( yp(1:neqn) / wt(1:neqn) )**2 ) )
@@ -1132,11 +1140,11 @@ subroutine step ( x, y, f, neqn, h, eps, wt, start, hold, k, kold, crash, &
     y(1:neqn) = p(1:neqn) + h * g(kp1) * ( yp(1:neqn) - phi(1:neqn,1) )
   end if
   call f ( x, y, yp, ray_stop)
- 
+
 ! Error return (DBB)
     if (ray_stop%stop_ode .eqv. .true.) return
 !
-  
+
 !
 !  Update differences for the next step.
 !

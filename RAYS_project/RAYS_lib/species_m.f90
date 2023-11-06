@@ -2,18 +2,18 @@
 !   contains species data.
 
     use constants_m, only : rkind
-    
+
     implicit none
 
 !   Electron density at reference point (e.g. at magnetic axis or peak electron density)
     real(KIND=rkind) :: n0
-    
+
 !   Maximum No. of ion species: nspec0;
 !   Actual No. of ion species: nspec
 
     integer, parameter :: nspec0 = 5
     integer :: nspec  ! Calculated from species contained in namelist species_list
-    
+
 !   is = species number
 !   is=0 is reserved for electrons and the rest for ions.
 !   qs: charge          ms: mass
@@ -52,24 +52,24 @@
     real(KIND=rkind), dimension(0:nspec0) :: alfas = 0.
     real(KIND=rkind), dimension(0:nspec0) :: v0s = 0.
     real(KIND=rkind), dimension(0:nspec0) :: nus = 0.
-    
+
 !   An array indicating which plasma model is to be used for each species
 !   spec_model(is) = 'cold' susceptibility model is cold plasma
 !   spec_model(is) = 'bessel' susceptibility model is full besssel function
 
     character(len=12) :: spec_model(0:nspec0) = ''
-        
- 
+
+
 !   nmins, nmaxs: minimum and maximum harmonics kept in susceptibility tensor for
 !   for species is.  +/- n_limit is size of nimns,nmax arrays
 
     integer, parameter :: n_limit = 5
     integer, dimension(-n_limit:n_limit) :: nmins, nmaxs
- 
- 
+
+
     namelist /species_list/ &
       & n0, spec_name, spec_model, qs, ms, t0s_eV, tseps_eV, eta, neutrality
-     
+
 
 !********************************************************************
 
@@ -80,32 +80,32 @@ contains
     subroutine initialize_species_m(read_input)
 !   Loads charge and mass values for common plasma species from species names in namelist file
 !   Called from initialize()
- 
+
         use constants_m, only : e, me
         use diagnostics_m, only : message_unit, message, verbosity
-        
+
         implicit none
         logical, intent(in) :: read_input
 
-	 	integer :: input_unit, get_unit_number ! External, free unit finder   
+	 	integer :: input_unit, get_unit_number ! External, free unit finder
         integer :: is, j
         real(KIND=rkind) :: charge
 
 ! Read and write input namelist
-        if (read_input .eqv. .true.) then    
+        if (read_input .eqv. .true.) then
   		  	input_unit = get_unit_number()
             open(unit=input_unit, file='rays.in',action='read', status='old', form='formatted')
-            read(input_unit, species_list)    
+            read(input_unit, species_list)
             close(unit=input_unit)
         end if
         if (verbosity > 0) write(message_unit, species_list)
-    
-! Electrons:   
+
+! Electrons:
         spec_name(0) = 'electron'
         ms(0) = 1.
         qs(0) = -1.
         eta(0) = 1.
-    
+
 ! load up arrays with values from non-zero eta
 
         nspec=0
@@ -113,7 +113,7 @@ contains
           if (eta(is) > 0.) then
             nspec = nspec+1
             do j = 1, nspec0
-                if ( trim(spec_name(nspec)) == trim(spec_name0(j)) ) then        
+                if ( trim(spec_name(nspec)) == trim(spec_name0(j)) ) then
                     ms(nspec) = ms0(j)
                     qs(nspec) = qs0(j)
                 end if
@@ -147,7 +147,7 @@ contains
 			   & is, qs(is), ms(is), eta(is), t0s(is)/e, n0s(is)
         end do
         end if
-    
+
     end subroutine initialize_species_m
 
     subroutine deallocate_species_m

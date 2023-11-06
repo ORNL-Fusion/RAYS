@@ -2,27 +2,33 @@
 ! namelist /equilibrium_list/ equilib_model.
 !
 ! Working notes:
-! 2/21/2022 (DBB) Organizational decision: The purpose of this module is to provide the 
-! equilibrium data needed for ray tracing for any plasma geometry.  So I have decided to 
+!
+! 10/3/2023 (DBB) Changed plasma species data to be dimensioned 0:nspec0 rather than
+! allocated.  The implicit allocations in loading data into the eq_point type may be
+! slowing down parallel execution.
+!
+! 2/21/2022 (DBB) Organizational decision: The purpose of this module is to provide the
+! equilibrium data needed for ray tracing for any plasma geometry.  So I have decided to
 ! eliminate any data that is geometry specific, most notably flux functions.  Specific
 ! equilibrium modules are required to provide all data for type eq_point, but are free
 ! to provide other data and services in their own module structure such as flux functions
 ! or boundary data that make sense for that particular geometry.  The hope is that this
 ! module will therefore never require modification other than addition of new equilibrium
-! models to the case constructs below. 
-! N.B. A consequence is that the specific geometries must be provided by modules, not 
+! models to the case constructs below.
+! N.B. A consequence is that the specific geometries must be provided by modules, not
 ! submodules, so that their entities are accessible outside the equilibrium_m module.
 !
-! 1/10/2022 (DBB) converted magnetic and species data at a spatial pint to derived 
+! 1/10/2022 (DBB) converted magnetic and species data at a spatial pint to derived
 ! type -> eq_point so we can have multiple instances of equilibrium data in memory at
 ! the same time.
 
  module equilibrium_m
- 
+
 !   contains equilibrium quantities.
 
     use constants_m, only : rkind
-    
+    use species_m, only : nspec0
+
     implicit none
 
 !   Switch to select specific equilibrium model.
@@ -30,29 +36,29 @@
 
 ! Derived type containing equilibrium data for a spatial point in the plasma
     type eq_point
-        
+
     !   B field. Note that bvec = B, bmag = |B|, gradbmag(i) = d(bmag)/d[x(i)],
     !   bunit = B/|B|, and gradbunit(i,j) = d[B(j)/bmag]/d[x(i)],
     !   gradbtensor(i,j) = d[B(j)]/d[x(i)].
         real(KIND=rkind) :: bvec(3), bmag, gradbmag(3), bunit(3), gradbunit(3,3), gradbtensor(3,3)
 
-    !   Density.
-        real(KIND=rkind), allocatable :: ns(:), gradns(:,:)
+	!   Density.
+		real(KIND=rkind) :: ns(0:nspec0), gradns(3, 0:nspec0)
 
-    !   Temperature.
-        real(KIND=rkind), allocatable :: ts(:), gradts(:,:)
+	!   Temperature.
+		real(KIND=rkind)  :: ts(0:nspec0), gradts(3, 0:nspec0)
 
-    !   Some often used plasma parameters.
-        real(KIND=rkind), allocatable :: omgc(:), omgp2(:)
-        real(KIND=rkind), allocatable :: alpha(:), gamma(:)
+	!   Some often used plasma parameters.
+		real(KIND=rkind)  :: omgc(0:nspec0), omgp2(0:nspec0)
+		real(KIND=rkind)  :: alpha(0:nspec0), gamma(0:nspec0)
 
     !   Error returns
         character(len=60) :: equib_err = ''
 
     end type eq_point
-          
+
     namelist /equilibrium_list/ equilib_model
-    
+
 !********************************************************************
 
 contains
@@ -62,6 +68,7 @@ contains
   subroutine initialize_equilibrium_m(read_input)
 
     use diagnostics_m, only : message_unit, message, text_message, messages_to_stdout, verbosity
+    use species_m, only : nspec0
     use slab_eq_m, only : initialize_slab_eq_m
     use solovev_eq_m, only : initialize_solovev_eq_m
     use axisym_toroid_eq_m, only : initialize_axisym_toroid_eq_m
@@ -70,7 +77,7 @@ contains
     logical, intent(in) :: read_input
 	integer :: input_unit, get_unit_number ! External, free unit finder
 
-    if (read_input .eqv. .true.) then    
+    if (read_input .eqv. .true.) then
     ! Read and write input namelist
     	input_unit = get_unit_number()
         open(unit=input_unit, file='rays.in',action='read', status='old', form='formatted')
@@ -96,7 +103,7 @@ contains
 
 
        case ('axisym_toroid')
-    
+
 !         A generic axisymmetric toroidal plasma model
           call initialize_axisym_toroid_eq_m(read_input)
 
@@ -123,13 +130,13 @@ contains
 
     use constants_m, only : eps0
     use rf_m, only : omgrf
-    use species_m, only : nspec, ms, qs 
+    use species_m, only : nspec, ms, qs
     use diagnostics_m, only : message, text_message
-    
+
     use slab_eq_m, only : slab_eq
     use solovev_eq_m, only : solovev_eq
     use axisym_toroid_eq_m, only : axisym_toroid_eq
- 
+
     implicit none
 
     real(KIND=rkind), intent(in) :: rvec(3)
@@ -171,7 +178,7 @@ contains
           stop 1
 
     end select equilibria
-                           
+
 !   If equilibrium subroutine has set equib_err then return for outside handling. Do not crash.
     if (equib_err /= '') then
         eq%equib_err = equib_err
@@ -179,13 +186,38 @@ contains
         return
     end if
 
+! Initialize eq values
+    eq%bvec = 0.
+    eq%gradbtensor = 0.
+    eq%ns = 0.
+    eq%gradns = 0.
+    eq%ts = 0.
+    eq%gradts = 0.
+
+!   bmag = |B|, and bunit = B/|B|.
+    bmag = 0.
+    bunit = 0.
+    eq%bmag = 0.
+    eq%bunit = 0.
+    eq%gradbmag = 0.
+    eq%gradbunit = 0.
+
+    omgc = 0.
+    omgp2 = 0.
+    alpha = 0.
+    gamma = 0.
+    eq%omgc = 0.
+    eq%omgp2 = 0.
+    eq%alpha = 0.
+    eq%gamma = 0.
+
 ! Load up eq values
     eq%bvec = bvec
     eq%gradbtensor = gradbtensor
-    eq%ns = ns
-    eq%gradns = gradns
-    eq%ts = ts
-    eq%gradts = gradts
+    eq%ns(0:nspec) = ns(0:nspec)
+    eq%gradns(:,0:nspec) = gradns(:,0:nspec)
+    eq%ts(0:nspec) = ts(0:nspec)
+    eq%gradts(:,0:nspec) = gradts(:,0:nspec)
 
 !   bmag = |B|, and bunit = B/|B|.
     bmag = sqrt( sum(bvec**2) )
@@ -198,7 +230,7 @@ contains
        gradbmag(ivec) = sum( gradbtensor(ivec,:)*bunit )
     end do
     eq%gradbmag = gradbmag
-    
+
 !     write(*,*) 'gradbtensor = ', gradbtensor
 !     write(*,*) 'gradbmag = ', gradbmag
 !     write(*,*) 'eq%gradbmag = ', eq%gradbmag
@@ -207,19 +239,19 @@ contains
     do ivec1 = 1, 3; do ivec2 = 1, 3
        gradbunit(ivec1, ivec2) &
        & = ( gradbtensor(ivec1,ivec2) - gradbmag(ivec1)*bunit(ivec2) ) / bmag
-    end do; end do 
+    end do; end do
     eq%gradbunit = gradbunit
 
 !   Calculate some often used plasma parameters.
 
-    omgc = qs(:nspec)*bmag/ms(:nspec)
-    omgp2 = ns(:nspec)*qs(:nspec)**2/(eps0*ms(:nspec))
-    alpha = omgp2/omgrf**2
-    gamma = omgc/omgrf
-    eq%omgc = omgc
-    eq%omgp2 = omgp2
-    eq%alpha = alpha
-    eq%gamma = gamma
+    omgc(:nspec) = qs(:nspec)*bmag/ms(:nspec)
+    omgp2(:nspec) = ns(:nspec)*qs(:nspec)**2/(eps0*ms(:nspec))
+    alpha(:nspec) = omgp2(:nspec)/omgrf**2
+    gamma(:nspec) = omgc(:nspec)/omgrf
+    eq%omgc(:nspec) = omgc(:nspec)
+    eq%omgp2(:nspec) = omgp2(:nspec)
+    eq%alpha(:nspec) = alpha(:nspec)
+    eq%gamma(:nspec) = gamma(:nspec)
 
     return
  end subroutine equilibrium
@@ -233,16 +265,16 @@ contains
     use, intrinsic :: iso_fortran_env, only : stdout=>output_unit
     use diagnostics_m, only : message, message_unit, text_message, verbosity
     use species_m, only : nspec
-    
+
     implicit none
-    
+
     type(eq_point), intent(in) :: eq
     integer, intent(in), optional :: unit
-    integer :: write_unit 
-    
-    write_unit = stdout
+    integer :: write_unit
+
+    write_unit = 6
     if (present(unit)) write_unit = unit
- 
+
     write(write_unit, *) ' '
     write(write_unit, *) 'eq_point = '
     write(write_unit, *) 'bvec = ', eq%bvec
@@ -259,7 +291,7 @@ contains
     write(write_unit, *) 'omgp2 = ', eq%omgp2
     write(write_unit, *) 'alpha = ', eq%omgp2
     write(write_unit, *) 'gamma = ', eq%gamma
-   
+
 !     call message(1)
 !     call text_message('eq_point')
 !     call message('bvec = ', eq%bvec)
@@ -278,7 +310,7 @@ contains
 !     call message('gamma = ', eq%gamma)
 
  end  subroutine write_eq_point
-    
+
 !********************************************************************
 
     subroutine deallocate_equilibrium_m
