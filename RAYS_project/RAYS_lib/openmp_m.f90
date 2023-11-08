@@ -32,8 +32,9 @@
 			close(unit=input_unit)
 1       	continue ! error return, no namelist
             if (num_threads == 0) then ! Calculate num_threads
-			   num_threads = min(num_procs,nray)
-			   call omp_set_num_threads(num_threads)
+!			   num_threads = min(num_procs,nray)
+			   num_threads = min(8,nray)
+!			   call omp_set_num_threads(num_threads)
 			end if
        end if
        ! read_input = false, use num_threads value set from outside

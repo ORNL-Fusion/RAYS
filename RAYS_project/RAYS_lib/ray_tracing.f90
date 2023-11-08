@@ -36,23 +36,26 @@
        end subroutine eqn_ray
     end interface
 
-    call cpu_time(t_start_tracing)
-!$  call omp_set_num_threads(num_threads)
+ !   call cpu_time(t_start_tracing)
+!$    t_start_tracing = omp_get_wtime()
+    
+!!$  call omp_set_num_threads(num_threads)
 
 !!$OMP parallel num_threads(8) DEFAULT(FIRSTPRIVATE) &
-!$OMP parallel DEFAULT(FIRSTPRIVATE) &
+!$OMP parallel do schedule(static) DEFAULT(FIRSTPRIVATE) &
 !$OMP& SHARED(ray_stop_flag, ray_vec, npoints, residual, ray_trace_time,  &
 !$OMP& end_residuals, max_residuals, end_ray_parameter, start_ray_vec, end_ray_vec)
 
-!$OMP DO
+!!$OMP DO
     ray_loop: do iray = 1, nray
-!$  write(12,*) 'ray_tracing: ray# = ',iray,'  omp_get_thread_num = ', omp_get_thread_num()
+!!$  write(12,*) 'ray_tracing begin: ray# = ',iray,'  omp_get_thread_num = ', omp_get_thread_num()
 
          call message(1)
          call message ('ray_tracing: ray #', iray, 1)
          call message ('ray_tracing: omp_thread_num = ', omp_get_thread_num(), 1)
 
-         call cpu_time(t_start_ray)
+!         call cpu_time(t_start_ray)
+!$      t_start_ray = omp_get_wtime()
 
          nstep=0
          s = 0.
@@ -224,7 +227,8 @@
 
         end do trajectory
 
-	    call cpu_time(t_finish_ray)
+	 !   call cpu_time(t_finish_ray)
+!$      t_finish_ray = omp_get_wtime()
 
 ! Save in ray_results_m
 
@@ -237,11 +241,15 @@
         start_ray_vec(:,iray) = ray_vec(:,1,iray)
         end_ray_vec(:, iray) = v(:)
 
+!!$  write(12,*) 'ray_tracing end: ray# = ',iray,'  omp_get_thread_num = ', omp_get_thread_num()
+
     end do ray_loop
 
-!$OMP END DO
-!$omp end parallel
+!!$OMP END DO
+!$omp end parallel do
+!$      t_finish_tracing = omp_get_wtime()
 
+ write(*,*) 'end parallel do'
 !   Write ray file description
     if (write_formatted_ray_files) then
        write(ray_list_unit, *) nray
@@ -257,7 +265,8 @@
 !      write (95) nv
 !      write (95) ray_stop
 
-	call cpu_time(t_finish_tracing)
+!	call cpu_time(t_finish_tracing)
+
 	run_trace_time = t_finish_tracing - t_start_tracing
 
     return
