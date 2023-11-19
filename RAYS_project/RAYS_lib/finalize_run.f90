@@ -5,23 +5,16 @@
 
     use constants_m, only : rkind
     use diagnostics_m, only : message_unit, message, text_message, run_label, &
-           & ray_list_unit, output_unit, &
-           & t_start_rays, t_finish_rays, t_start_tracing, t_finish_tracing
+           & ray_list_unit, output_unit, t_start_RAYS, t_finish_RAYS, day_to_seconds, &
+           & date_to_julian
     use ray_results_m, only : write_results_list_directed,&
-                            & write_results_LD, run_trace_time
+                            & write_results_LD
 
     implicit none
 
-    real(KIND=rkind) :: trace_time, code_time
-
-    call cpu_time(t_finish_rays)
-
-    run_trace_time = t_finish_tracing - t_start_tracing
-    code_time = t_finish_rays - t_start_rays
-    call message(1)
-    call message('CPU time ray tracing', run_trace_time, 0)
-    call message('CPU time RAYS code', code_time, 0)
-
+! Time and date vector - local, not the one loaded in subroutine initialize()
+    integer :: date_v(8), ierr
+    real(KIND=rkind) :: code_time
 
     if (write_results_list_directed .eqv. .true.) then
         call write_results_LD
@@ -29,6 +22,18 @@
 
     close(ray_list_unit)
     close(output_unit)
+
+!   Find date and time after writing results files
+    call date_and_time (values=date_v)
+    !   Convert end date_v to Julian
+        call date_to_julian(date_v,t_finish_RAYS,ierr)
+        if (ierr .ne. 0) then
+            write(*,*) 'julian finish, ierr = ', ierr
+            stop
+        end if
+
+    code_time = (t_finish_RAYS - t_start_RAYS)*day_to_seconds
+    call message('Wall time including file writes', code_time, 0)
 
     call message(1)
     call text_message('RAYS run finished', 0)

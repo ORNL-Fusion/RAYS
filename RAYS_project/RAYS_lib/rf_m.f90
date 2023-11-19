@@ -1,7 +1,7 @@
  module rf_m
 
     use constants_m, only : rkind
-     
+
     implicit none
 
 !   Name of dispersion model used in ray tracing
@@ -10,9 +10,9 @@
 !   RF wave frequency: omgrf = 2*pi*frf, frf in Hz, and wave number
 !   in vacuum: k0 = clight / omgrf
     real(KIND=rkind) :: omgrf, frf, k0
- 
+
 !   A switch to select which root from the dispersion to be used for
-!   k initialization: i.e., fast wave, slow wave, IBW, or KAW, etc. 
+!   k initialization: i.e., fast wave, slow wave, IBW, or KAW, etc.
 !   Cold plasma gives quadratic for nx^2(nz).  So can choose wave mode = plus, minus
 !   fast or slow, where fast is the smaller of |nx|
     character(len=60) :: wave_mode
@@ -28,10 +28,10 @@
 
 !   Maximum allowable residual of dispersion function. Used in checksave()
     real(KIND=rkind) :: dispersion_resid_limit
-    
+
     namelist /rf_list/ ray_dispersion_model, frf, wave_mode, k0_sign, ray_param, &
                      & dispersion_resid_limit
-    
+
 !********************************************************************
 
 contains
@@ -39,27 +39,27 @@ contains
 !********************************************************************
 
   subroutine initialize_rf_m(read_input)
- 
+
     use constants_m, only : pi, clight
     use diagnostics_m, only : message_unit, message, text_message,  &
                             & messages_to_stdout, verbosity
-    
+
     implicit none
     logical, intent(in) :: read_input
- 	integer :: input_unit, get_unit_number ! External, free unit finder   
- 	
-    if (read_input .eqv. .true.) then    
+ 	integer :: input_unit, get_unit_number ! External, free unit finder
+
+    if (read_input .eqv. .true.) then
 		! Read and write input namelist
   		  	input_unit = get_unit_number()
 			open(unit=input_unit, file='rays.in',action='read', status='old', form='formatted')
 			read(input_unit, rf_list)
 			close(unit=input_unit)
     end if
-    
+
     call text_message('initializing rf_m', 1)
 
 ! Write input namelist
-    if (verbosity > 0) then
+    if (verbosity >= 0) then
 		write(message_unit, rf_list)
 		if (messages_to_stdout) write(*, rf_list)
     end if
@@ -72,7 +72,7 @@ contains
     end if
 
 !   Wave number in vacuum.
-    k0 = omgrf/clight 
+    k0 = omgrf/clight
     call message ('initialize_rf: k0', k0, 1)
 
     return

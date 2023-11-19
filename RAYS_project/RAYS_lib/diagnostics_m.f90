@@ -13,6 +13,8 @@
 
 !   External procedures: cpu_time (intrinsic)
 
+   use constants_m, only : rkind
+
 ! Specifications
 
     implicit none
@@ -80,7 +82,8 @@
     integer :: max_diag_count = 5
 
 !   Timing variables
-    real :: t_start_rays, t_finish_rays, t_start_tracing, t_finish_tracing
+    real(KIND=rkind) :: t_start_RAYS, t_finish_RAYS
+    real(KIND=rkind), parameter :: day_to_seconds = 86400.
 
     namelist /diagnostics_list/ verbosity, messages_to_stdout, write_formatted_ray_files, &
            & run_description, run_label, integrate_eq_gradients
@@ -98,8 +101,20 @@ contains
     integer :: n_args ! number of command line arguments
     character(len=80) :: namelist_file = ''
 	integer :: input_unit, get_unit_number ! External, free unit finder
+	integer :: ierr ! Error return for date-to_julian()
 
-    call cpu_time(t_start_rays)
+   ! Find date and time
+    call date_and_time (values=date_v)
+
+    ! Convert start date_v to Julian
+	call date_to_julian(date_v,t_start_RAYS,ierr)
+	if (ierr .ne. 0) then
+		write(*,*) 'julian start, ierr = ', ierr
+		stop
+	end if
+
+
+!    call cpu_time(t_start_rays)
 
 ! Default filename is 'rays.in'.  Optionally get input file name from command line. then
 ! copy that file to 'ray.in'
@@ -128,7 +143,7 @@ contains
     call text_message('Initializing diagnostics', 1)
 
 ! Write input namelist
-    if (verbosity > 0) then
+    if (verbosity >= 0) then
 		write(message_unit, diagnostics_list)
 		if (messages_to_stdout) write(*, diagnostics_list)
 		call message(1)
@@ -984,6 +999,66 @@ contains
             stop
         end if
     end subroutine diagnostic_counter
+
+!********************************************************************
+
+subroutine date_to_julian(dat,julian,ierr)
+! Convert proleptic Gregorian DAT date-time array to Julian Date
+! Fortran intrinsic cpu_time() gives unreliable wall-clock time for parallel codes. This
+! subroutine converts a date array from intrinsic date_and_time() to Julian calendar which
+! is days since the beginning of time and fractions of days.  The difference of 2 julian
+! dates times 24*60*60 gives difference in seconds.
+
+	implicit none
+
+	! array like returned by DATE_AND_TIME(3f)
+	integer,intent(in)               :: dat(8)
+
+	! Julian Date (non-negative, but may be non-integer)
+    integer,parameter :: realtime=kind(0.0d0)
+	real(kind=realtime),intent(out)  :: julian
+
+	! Error return: 0 =successful execution,-1=invalid year,-2=invalid month,
+	! -3=invalid day -4=invalid date (29th Feb, non leap-year)
+
+	integer,intent(out)              :: ierr
+	integer                          :: year, month, day, utc, hour, minute
+	real(kind=realtime)              :: second
+	integer                          :: A, Y, M, JDN
+	   year   = dat(1)
+	   month  = dat(2)
+	   day    = dat(3)
+	   utc    = dat(4)*60 ! Delta from UTC, convert from minutes to seconds
+	   hour   = dat(5)
+	   minute = dat(6)
+	   second = dat(7)-utc+dat(8)/1000.0d0 ! correct for time zone and milliseconds
+										   ! and IERR is < 0
+	   if(year==0 .or. year .lt. -4713) then
+		  julian = -HUGE(99999_realtime) ! this is the date if an error occurs
+		  ierr=-1
+		  return
+	   endif
+	!  You must compute first the number of years (Y) and months (M) since
+	!  March 1st -4800 (March 1, 4801 BC)
+	   A=(14-month)/12 ! A will be 1 for January or February, and 0 for
+					   ! other months, with integer truncation
+	   Y=year+4800-A
+	   M=month+12*A-3  ! M will be 0 for March and 11 for February
+	!  All years in the BC era must be converted to astronomical years,
+	!  so that 1BC is year 0, 2 BC is year "-1", etc.
+	!  Convert to a negative number, then increment towards zero
+	!  Staring from a Gregorian calendar date
+	   !  intentional integer truncation
+	   JDN=day + (153*M+2)/5 + 365*Y + Y/4 - Y/100 + Y/400 - 32045
+	!  Finding the Julian Calendar date given the JDN (Julian day number)
+	!  and time of day
+	   julian=JDN + dble(hour-12)/24.0d0 + dble(minute)/1440.0d0 + second/86400.0d0
+	   if(julian.lt.0.d0) then                  ! Julian Day must be non-negative
+		  ierr=1
+	   else
+		  ierr=0
+	   endif
+end subroutine date_to_julian
 
 !********************************************************************
 

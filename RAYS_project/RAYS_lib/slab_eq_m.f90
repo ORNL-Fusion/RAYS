@@ -1,17 +1,17 @@
 module slab_eq_m
 ! Simple models for plasma stratified in x and uniform in y and z useful for testing and
-! benchmarking.  There are several different models for each quantity.  
+! benchmarking.  There are several different models for each quantity.
 
 ! The coding is self explanatory, however some comments about the linear_2 models might be
 ! useful.  For these one specifies the quantity at x = rmin and the slope there.  If any
-! of the models are linear_2, then to make the x ranges consistent, all the models should 
-! be linear_2, zero, or constant.  The only complication is that in the subroutine 
-! write_slab_profiles() rmaj now serves the role of max value of x for writing.  The 
+! of the models are linear_2, then to make the x ranges consistent, all the models should
+! be linear_2, zero, or constant.  The only complication is that in the subroutine
+! write_slab_profiles() rmaj now serves the role of max value of x for writing.  The
 ! motivation for linear_2 is added flexibility in specifying the independent coordinate,
 ! for example using the density or B field as a plotting axis coordinate.
 
     use constants_m, only : rkind
-    
+
     implicit none
 
 ! data for slab magnetics
@@ -24,12 +24,12 @@ module slab_eq_m
     character(len=60) :: dens_prof_model
     real(KIND=rkind) :: rmaj, rmin
     real(KIND=rkind) :: alphan1
-    real(KIND=rkind) :: alphan2  
+    real(KIND=rkind) :: alphan2
     character(len=20), allocatable :: t_prof_model(:)
     real(KIND=rkind), allocatable :: alphat1(:)
     real(KIND=rkind), allocatable :: alphat2(:)
-    
-! data for boundary    
+
+! data for boundary
     real(KIND=rkind) :: xmin, xmax, ymin, ymax, zmin, zmax
 
  namelist /slab_eq_list/ &
@@ -37,7 +37,7 @@ module slab_eq_m
      & rmaj, rmin, dens_prof_model, alphan1, alphan2, t_prof_model, alphat1, alphat2, &
      & Ln_scale, LT_scale, LBy_shear_scale, LBz_scale, dBzdx, dndx, dtdx, &
      & xmin, xmax, ymin, ymax, zmin, zmax
-     
+
 !********************************************************************
 
 contains
@@ -47,36 +47,41 @@ contains
   subroutine initialize_slab_eq_m(read_input)
 
     use species_m, only : nspec
-    use diagnostics_m, only : message_unit, verbosity
-    
+    use diagnostics_m, only : message_unit, messages_to_stdout, verbosity
+
     implicit none
     logical, intent(in) :: read_input
- 	integer :: input_unit, get_unit_number ! External, free unit finder   
+ 	integer :: input_unit, get_unit_number ! External, free unit finder
 
     allocate( t_prof_model(0:nspec) )
     allocate( alphat1(0:nspec), alphat2(0:nspec) )
     alphat1 = 0.
     alphat2 = 0.
 
-    if (read_input .eqv. .true.) then    
+    if (read_input .eqv. .true.) then
   		input_unit = get_unit_number()
         open(unit=input_unit, file='rays.in',action='read', status='old', form='formatted')
         read(input_unit, slab_eq_list)
         close(unit=input_unit)
-        write(message_unit, slab_eq_list)
+    end if
+
+! Write input namelist
+    if (verbosity >= 0) then
+		write(message_unit, slab_eq_list)
+		if (messages_to_stdout) write(*, slab_eq_list)
     end if
 
     if (verbosity > 2)  then
         call write_slab_profiles
     end if
-    
+
     return
   end subroutine initialize_slab_eq_m
 
 !********************************************************************
 
  subroutine slab_eq(rvec, bvec, gradbtensor, ns, gradns, ts, gradts, equib_err)
-!   A simple slab plasma equilibrium with B(x) = By(x)*ey + Bz(x)*ez, 
+!   A simple slab plasma equilibrium with B(x) = By(x)*ey + Bz(x)*ez,
 !   where ey and ez are unit vectors along y and z.
 !   Note that bvec = B and gradbtensor(i,j) = d[B(j)]/d[x(i)].
 !
@@ -89,10 +94,10 @@ contains
 
     use species_m, only : nspec, n0s, t0s, eta
     use diagnostics_m, only : message_unit, message
-    
+
     implicit none
 
-    real(KIND=rkind), intent(in) :: rvec(3) 
+    real(KIND=rkind), intent(in) :: rvec(3)
     real(KIND=rkind), intent(out) :: bvec(3), gradbtensor(3,3)
     real(KIND=rkind), intent(out) :: ns(0:nspec), gradns(3,0:nspec)
     real(KIND=rkind), intent(out) :: ts(0:nspec), gradts(3,0:nspec)
@@ -127,7 +132,7 @@ contains
           stop 1
 
     end select bx
- 
+
 !   Calculate By, and d(By)/dx.
     by: select case (trim(by_prof_model))
 
@@ -181,7 +186,7 @@ contains
     end select bz
 
 !   Density profile.
-   
+
     density: select case (trim(dens_prof_model))
 
         case ('constant')
@@ -206,7 +211,7 @@ contains
             gradns = 0.
             gradns(1,:) = -n0s(:nspec)/rmin*alphan1*alphan2*(x/rmin-1)**(alphan2-1)* &
                          & (1-(1-(x/rmin-1)**alphan2)**(alphan1-1))
-            gradns(2:3,:) = 0. 
+            gradns(2:3,:) = 0.
 
         case ('Gaussian')
 !         Gaussian (default: alphan1=1.).
@@ -273,9 +278,9 @@ contains
     use diagnostics_m, only : message_unit
 
     implicit none
-    
+
     real(KIND=rkind) :: dx, x, xstart
-    real(KIND=rkind) :: rvec(3) 
+    real(KIND=rkind) :: rvec(3)
     real(KIND=rkind) :: bvec(3), gradbtensor(3,3)
     real(KIND=rkind) :: ns(0:nspec), gradns(3,0:nspec)
     real(KIND=rkind) :: ts(0:nspec), gradts(3,0:nspec)
@@ -283,11 +288,11 @@ contains
 
     integer, parameter :: nx_points = 51
     integer :: ip, i
-    
+
     character (len = *), parameter :: b9 = '         '
     character (len = *), parameter :: b10 = '          '
     character (len = *), parameter :: b12 = '            '
-    
+
     dx = 2.*rmin/(nx_points-1)
     xstart = -rmin
 
@@ -295,7 +300,7 @@ contains
 		xstart = rmin
 		dx = (rmaj - rmin)/(nx_points-1)
     end if
-    
+
     write (message_unit,*) '    x', b9,'ne', b12, 'bx', b9, 'by', b9, 'bz', b9, 'Te',b9, 'Ti(s)'
 
     do ip = 1, nx_points
@@ -305,9 +310,9 @@ contains
         write (message_unit,'(f11.5, a, e12.5, 3f11.5, 7f11.5)') &
                & x,'  ', ns(0), bvec, (ts(i), i=0, nspec)
     end do
-       
+
  end subroutine write_slab_profiles
-    
+
 !********************************************************************
 
     subroutine deallocate_slab_eq_m

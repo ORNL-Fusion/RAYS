@@ -47,7 +47,7 @@ contains
                & inner_bound, outer_bound, upper_bound, lower_bound)
 
     use species_m, only : nspec
-    use diagnostics_m, only : message, message_unit, verbosity
+    use diagnostics_m, only : message, message_unit,messages_to_stdout, verbosity
 
     use eqdsk_utilities_m, only : ReadgFile, WritegFile, R_grid, Z_grid, dR, dZ, &
         & string, i3, NRBOX, NZBOX, RBOXLEN, ZBOXLEN, R0, RBOXLFT, ZOFF, RAXIS, ZAXIS, &
@@ -79,7 +79,13 @@ contains
         open(unit=input_unit, file='rays.in',action='read', status='old', form='formatted')
         read(input_unit, eqdsk_magnetics_spline_interp_list)
         close(unit=input_unit)
-        write(message_unit, eqdsk_magnetics_spline_interp_list)
+    end if
+
+! Write input namelist
+    if (verbosity >= 0) then
+		write(message_unit, eqdsk_magnetics_spline_interp_list)
+		if (messages_to_stdout) write(*, eqdsk_magnetics_spline_interp_list)
+		call message(1)
     end if
 
     call ReadgFile(eqdsk_file_name)

@@ -6,21 +6,26 @@
 
     use constants_m, only : rkind
     use diagnostics_m, only : message_unit, message, verbosity, write_formatted_ray_files, &
-                             & messages_to_stdout, &
-                             & ray_list_unit, t_start_tracing, t_finish_tracing
+                             & messages_to_stdout,ray_list_unit, day_to_seconds, &
+                             & date_to_julian
     use ode_m, only : ode_solver, ray_init_ode_solver, nv, ds, s_max, nstep_max, ode_stop
     use ray_init_m, only : nray
     use damping_m, only : damping_model, multi_spec_damping
     use species_m, only : nspec
     use ray_results_m, only : ray_stop_flag, ray_vec, residual, npoints, end_residuals,&
                             & max_residuals, end_ray_parameter, start_ray_vec, end_ray_vec,&
-                            & ray_trace_time, run_trace_time
+                            & ray_trace_time, total_trace_time
     use openmp_m, only : num_threads
     use omp_lib
     implicit none
 
+! Time and date vector - local, not the one loaded in subroutine initialize()
+    integer :: date_v(8), ierr
+    real(KIND=rkind) :: trace_time, code_time
+
     integer :: iray, nstep
     real(KIND=rkind) :: s, sout, resid, t_start_ray, t_finish_ray
+    real(KIND=rkind) :: t_start_tracing, t_finish_tracing
 
 !   v: Vector to be integrated by ode solver
     real(KIND=rkind) :: v(nv)
@@ -36,19 +41,23 @@
        end subroutine eqn_ray
     end interface
 
- !   call cpu_time(t_start_tracing)
-!$    t_start_tracing = omp_get_wtime()
-    
-!!$  call omp_set_num_threads(num_threads)
+!   Get date and time i.e. before ray loop, convert to Julian -> t_start_tracing
+    call date_and_time (values=date_v)
+	call date_to_julian(date_v,t_start_tracing,ierr)
+	if (ierr .ne. 0) then
+		write(*,*) 'julian t_start_tracing, ierr = ', ierr
+		stop
+	end if
 
-!!$OMP parallel num_threads(8) DEFAULT(FIRSTPRIVATE) &
+!!$    t_start_tracing = omp_get_wtime()
+
 !$OMP parallel do schedule(static) DEFAULT(FIRSTPRIVATE) &
 !$OMP& SHARED(ray_stop_flag, ray_vec, npoints, residual, ray_trace_time,  &
 !$OMP& end_residuals, max_residuals, end_ray_parameter, start_ray_vec, end_ray_vec)
 
 !!$OMP DO
     ray_loop: do iray = 1, nray
-!!$  write(12,*) 'ray_tracing begin: ray# = ',iray,'  omp_get_thread_num = ', omp_get_thread_num()
+!$  write(12,*) 'ray_tracing begin: ray# = ',iray,'  omp_get_thread_num = ', omp_get_thread_num()
 
          call message(1)
          call message ('ray_tracing: ray #', iray, 1)
@@ -245,11 +254,20 @@
 
     end do ray_loop
 
-!!$OMP END DO
 !$omp end parallel do
 !$      t_finish_tracing = omp_get_wtime()
 
- write(*,*) 'end parallel do'
+!   Get date and time i.e. after ray loop, convert to Julian -> t_finish_tracing
+    call date_and_time (values=date_v)
+	call date_to_julian(date_v,t_finish_tracing,ierr)
+	if (ierr .ne. 0) then
+		write(*,*) 'julian t_finish_tracing, ierr = ', ierr
+		stop
+	end if
+	total_trace_time = (t_finish_tracing - t_start_tracing)*day_to_seconds
+    call message('Wall time ray tracing', total_trace_time, 0)
+
+! write(*,*) 'end parallel do'
 !   Write ray file description
     if (write_formatted_ray_files) then
        write(ray_list_unit, *) nray
@@ -267,7 +285,6 @@
 
 !	call cpu_time(t_finish_tracing)
 
-	run_trace_time = t_finish_tracing - t_start_tracing
 
     return
  end subroutine trace_rays

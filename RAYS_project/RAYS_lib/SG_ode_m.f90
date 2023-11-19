@@ -44,7 +44,7 @@ contains
 	end if
 
 ! Write input namelist
-    if (verbosity > 0) then
+    if (verbosity >= 0) then
 		write(message_unit, SG_ode_list)
 		if (messages_to_stdout) write(*, SG_ode_list)
     end if

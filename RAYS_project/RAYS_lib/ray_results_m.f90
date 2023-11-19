@@ -34,7 +34,7 @@
     real(KIND=rkind), allocatable :: end_ray_vec(:,:)
     character(len=60), allocatable :: ray_stop_flag(:)
 
-    real(KIND=rkind)  :: run_trace_time
+    real(KIND=rkind)  :: total_trace_time
 
 ! Derived type containing same data as above so can have multiple run results in memory
     type run_results
@@ -61,7 +61,7 @@
 		real(KIND=rkind), allocatable :: end_ray_vec(:,:)
 		character(len=60), allocatable :: ray_stop_flag(:)
 
-		real(KIND=rkind)  :: run_trace_time
+		real(KIND=rkind)  :: total_trace_time
 
     end type run_results
 
@@ -107,7 +107,7 @@ contains
         end if
 
 ! Write input namelist
-		if (verbosity > 0) then
+		if (verbosity >= 0) then
 			write(message_unit, ray_results_list)
 			if (messages_to_stdout) write(*, ray_results_list)
 		end if
@@ -165,8 +165,8 @@ contains
     write (results_star_unit,*) 'npoints'
     write (results_star_unit,*) npoints
 
-    write (results_star_unit,*) 'run_trace_time'
-    write (results_star_unit,*) run_trace_time
+    write (results_star_unit,*) 'total_trace_time'
+    write (results_star_unit,*) total_trace_time
     write (results_star_unit,*) 'ray_trace_time'
     write (results_star_unit,*) ray_trace_time
     write (results_star_unit,*) 'end_ray_parameter'
@@ -273,11 +273,11 @@ contains
     read (results_star_unit,*) npoints
 
     read (results_star_unit,*) var_name
-    if (var_name .ne. 'run_trace_time') then
+    if (var_name .ne. 'total_trace_time') then
     	write(*,*) 'read_results_LD: inconsistent variable name = ', var_name
     	stop
     end if
-    read (results_star_unit,*) run_trace_time
+    read (results_star_unit,*) total_trace_time
 
     read (results_star_unit,*) var_name
     if (var_name .ne. 'ray_trace_time') then
@@ -388,7 +388,7 @@ contains
     this_run%dim_v_vector = dim_v_vector
     this_run%npoints = npoints
 
-    this_run%run_trace_time = run_trace_time
+    this_run%total_trace_time = total_trace_time
     this_run%ray_trace_time = ray_trace_time
     this_run%end_ray_parameter = end_ray_parameter
     this_run%end_residuals = end_residuals

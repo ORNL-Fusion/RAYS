@@ -59,7 +59,13 @@ contains
         open(unit=input_unit, file='rays.in',action='read', status='old', form='formatted')
         read(input_unit, eqdsk_magnetics_list)
         close(unit=input_unit)
-        write(message_unit, eqdsk_magnetics_list)
+    end if
+
+! Write input namelist
+    if (verbosity >= 0) then
+		write(message_unit, eqdsk_magnetics_list)
+		if (messages_to_stdout) write(*, eqdsk_magnetics_list)
+		call message(1)
     end if
 
     call ReadgFile (string, i3, NRBOX, NZBOX, RBOXLEN, ZBOXLEN, R0, RBOXLFT, ZOFF, RAXIS, ZAXIS, PSIAXIS, PSIBOUND,&

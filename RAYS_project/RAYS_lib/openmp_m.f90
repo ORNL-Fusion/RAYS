@@ -6,11 +6,12 @@
 
     use ray_init_m, only : nray
     use omp_lib
-    use diagnostics_m, only : message
+    use diagnostics_m, only : message, text_message
 
     implicit none
 
     integer :: num_threads, num_procs
+    logical :: have_OMP
 
  namelist /openmp_list/ num_threads
 
@@ -21,7 +22,13 @@
        logical, intent(in) :: read_input
  	   integer :: input_unit, get_unit_number ! External, free unit finder
 
- write(*,*) 'num_threads = ',num_threads
+	   have_OMP = .false.
+!$     have_OMP = .true.
+       if (.not. have_OMP) then
+           call text_message('Not using Open MP', 0)
+           return
+        end if
+
 	   num_procs = OMP_get_num_procs()
        if (read_input .eqv. .true.) then  !See if there is num_threads != 0 in namelist
             num_threads = 0
@@ -32,10 +39,10 @@
 			close(unit=input_unit)
 1       	continue ! error return, no namelist
             if (num_threads == 0) then ! Calculate num_threads
-!			   num_threads = min(num_procs,nray)
-			   num_threads = min(8,nray)
-!			   call omp_set_num_threads(num_threads)
-			end if
+ 			   num_threads = min(num_procs,nray)
+!			   num_threads = min(8,nray)
+            end if
+	        call omp_set_num_threads(num_threads)
        end if
        ! read_input = false, use num_threads value set from outside
 
