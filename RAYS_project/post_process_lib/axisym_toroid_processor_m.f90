@@ -23,7 +23,7 @@
     real(KIND=rkind), allocatable :: R_boundary(:), Z_boundary(:)
 
 	logical :: calculate_dep_profiles, write_dep_profiles
-    
+
     namelist /axisym_toroid_processor_list/ processor, num_plot_k_vectors, scale_k_vec,&
              & set_XY_lim, calculate_dep_profiles, write_dep_profiles
 
@@ -36,9 +36,9 @@
 
     implicit none
     logical, intent(in) :: read_input
-	 integer :: input_unit, get_unit_number ! External, free unit finder   
- 
-    if (read_input .eqv. .true.) then    
+	 integer :: input_unit, get_unit_number ! External, free unit finder
+
+    if (read_input .eqv. .true.) then
     ! Read and write input namelist
   		input_unit = get_unit_number()
         open(unit=input_unit, file='post_process_rays.in',action='read', status='old', form='formatted')
@@ -49,33 +49,34 @@
     end if
 
 	if (calculate_dep_profiles .eqv. .true.) call initialize_deposition_profiles(read_input)
-    
+
     return
  end subroutine initialize_axisym_toroid_processor
 
-!*************************************************************************     
+!*************************************************************************
 
   subroutine axisym_toroid_processor
 
     use constants_m, only : rkind
     use diagnostics_m, only : message_unit, message, text_message, verbosity
-    use deposition_profiles_m, only : calculate_deposition_profiles, write_deposition_profiles
+    use deposition_profiles_m, only : calculate_deposition_profiles, &
+                         & write_deposition_profiles_list_directed
 
     implicit none
-    
+
     call write_graphics_description_file
 
     if (calculate_dep_profiles .eqv. .true.) call calculate_deposition_profiles
 
-    if (write_dep_profiles .eqv. .true.) call write_deposition_profiles
-    
+    if (write_dep_profiles .eqv. .true.) call write_deposition_profiles_list_directed
+
     if (verbosity > 0) call text_message('Finished axisym_toroid_processor work')
 
     return
  end subroutine axisym_toroid_processor
 
 
-!*************************************************************************     
+!*************************************************************************
 
   subroutine find_plasma_boundary
     use constants_m, only : rkind
@@ -83,12 +84,12 @@
 	use solovev_magnetics_m, only : rmaj, kappa
     use diagnostics_m, only : message_unit, message, text_message
     use eqdsk_utilities_m, only : NBOUND, RBOUND, ZBOUND
-	
+
 	implicit none
-	
+
 	integer :: i
 	real(KIND=rkind) :: R, dR, Zsq
-	 
+
     magnetics: select case (trim(magnetics_model))
 
     case ('solovev_magnetics')  ! N.B.  This is up-down symmetric
@@ -127,12 +128,12 @@
 		allocate(Z_boundary(n_boundary_points))
         R_boundary(:) = RBOUND(:)
         Z_boundary(:) = ZBOUND(:)
-        
-        
+
+
 	do i = 1, n_boundary_points
 		write(*,*) 'i = ', i, '   R_boundary = ', R_boundary(i), '   Z_boundary', Z_boundary(i)
 	end do
-  
+
     case default
 	  write(0,*) 'initialize_axisym_toroid_eq: unknown magnetics model =', magnetics_model
 	  call text_message('initialize_axisym_toroid_eq: unknown magnetics model',&
@@ -141,37 +142,37 @@
     end select magnetics
 
   end subroutine find_plasma_boundary
- 
-!*************************************************************************     
+
+!*************************************************************************
 
   subroutine write_graphics_description_file
-  
+
    use diagnostics_m, only : run_description, run_label
    use axisym_toroid_eq_m, only : r_axis, z_axis, &
                           & box_rmin, box_rmax, box_zmin, box_zmax, &
                           & inner_bound, outer_bound, upper_bound, lower_bound
-  
+
    open(unit = graphics_descrip_unit, file = 'graphics_description_axisym_toroid.dat')
-  
+
    write(graphics_descrip_unit, *) 'run_description = ', run_description
    write(graphics_descrip_unit, *) 'run_label = ', run_label
-  
+
    write(graphics_descrip_unit, *) 'r_axis = ', r_axis
    write(graphics_descrip_unit, *) 'z_axis = ', z_axis
    write(graphics_descrip_unit, *) 'inner_bound = ', inner_bound
    write(graphics_descrip_unit, *) 'outer_bound = ', outer_bound
    write(graphics_descrip_unit, *) 'upper_bound = ', upper_bound
    write(graphics_descrip_unit, *) 'lower_bound = ', lower_bound
-     
+
    write(graphics_descrip_unit, *) 'box_rmin = ', box_rmin
    write(graphics_descrip_unit, *) 'box_rmax = ', box_rmax
    write(graphics_descrip_unit, *) 'box_zmin = ', box_zmin
    write(graphics_descrip_unit, *) 'box_zmax = ', box_zmax
-  
+
    write(graphics_descrip_unit, *) 'num_plot_k_vectors = ', num_plot_k_vectors
    write(graphics_descrip_unit, *) 'scale_k_vec = ', trim(scale_k_vec)
    write(graphics_descrip_unit, *) 'set_XY_lim = ', trim(set_XY_lim)
-   
+
    call find_plasma_boundary
 
    write(graphics_descrip_unit, *) ' '

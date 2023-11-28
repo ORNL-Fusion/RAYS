@@ -57,7 +57,7 @@ contains
 
     subroutine initialize_ray_init_m(read_input)
 
-        use diagnostics_m, only : message_unit, message, text_message, verbosity
+        use diagnostics_m, only : message_unit, messages_to_stdout, message, text_message, verbosity
         use simple_slab_ray_init_m, only : simple_slab_ray_init
         use solovev_ray_init_nphi_ntheta_m, only : ray_init_solovev_nphi_ntheta
         use axisym_toroid_ray_init_nphi_ntheta_m, only : ray_init_axisym_toroid_nphi_ntheta
@@ -67,6 +67,9 @@ contains
         logical, intent(in) :: read_input
  		integer :: input_unit, get_unit_number ! External, free unit finder
 
+		call message(1)
+		call text_message('Initializing ray_init_m ', 1)
+
         if (read_input .eqv. .true.) then
         ! Read and write input namelist
   		  	input_unit = get_unit_number()
@@ -74,7 +77,10 @@ contains
             read(input_unit, ray_init_list)
             close(unit=input_unit)
         end if
-        if (verbosity >= 0) write(message_unit, ray_init_list)
+		if (verbosity >= 0) then
+			write(message_unit, ray_init_list)
+			if (messages_to_stdout) write(*, ray_init_list)
+		end if
 
         init_model: select case (trim(ray_init_model))
 
@@ -96,8 +102,8 @@ contains
                 write(0,*) 'initialize_ray_init: invalid ray_init_model = ', trim(ray_init_model)
                 call text_message('initialize_ray_init: invalid ray_init_model = ', trim(ray_init_model),0)
                 stop 1
-
         end select init_model
+  write(*,*) 'ray_pwr_wt = ', ray_pwr_wt
 
     return
     end subroutine initialize_ray_init_m

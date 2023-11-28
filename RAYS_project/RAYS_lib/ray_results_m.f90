@@ -26,6 +26,7 @@
     integer, allocatable :: npoints(:)              ! nray
 
 ! Summary data
+    real(KIND=rkind), allocatable :: initial_ray_power(:)
     real(KIND=rkind), allocatable :: ray_trace_time(:)
     real(KIND=rkind), allocatable :: end_residuals(:)
     real(KIND=rkind), allocatable :: max_residuals(:)
@@ -53,6 +54,7 @@
 		integer, allocatable :: npoints(:)              ! nray
 
 	! Summary data
+        real(KIND=rkind), allocatable :: initial_ray_power(:)
 		real(KIND=rkind), allocatable :: ray_trace_time(:)
 		real(KIND=rkind), allocatable :: end_residuals(:)
 		real(KIND=rkind), allocatable :: max_residuals(:)
@@ -97,6 +99,7 @@ contains
 			allocate (ray_vec(nv, nstep_max+1, nray))
 			allocate (residual(nstep_max, nray))
 			allocate (npoints(nray))
+			allocate (initial_ray_power(nray))
 			allocate (ray_trace_time(nray))
 			allocate (end_ray_parameter(nray))
 			allocate (end_residuals(nray))
@@ -121,6 +124,7 @@ contains
         ray_vec = 0.
         residual = 0.
         npoints = 0
+        initial_ray_power = 0.
         ray_trace_time = 0.
         end_ray_parameter = 0.
         end_residuals = 0.
@@ -167,6 +171,8 @@ contains
 
     write (results_star_unit,*) 'total_trace_time'
     write (results_star_unit,*) total_trace_time
+    write (results_star_unit,*) 'initial_ray_power'
+    write (results_star_unit,*) initial_ray_power
     write (results_star_unit,*) 'ray_trace_time'
     write (results_star_unit,*) ray_trace_time
     write (results_star_unit,*) 'end_ray_parameter'
@@ -254,6 +260,7 @@ contains
 	allocate (ray_vec(nv, nstep_max+1, nray))
 	allocate (residual(nstep_max, nray))
 	allocate (npoints(nray))
+	allocate (initial_ray_power(nray))
 	allocate (ray_trace_time(nray))
 	allocate (end_ray_parameter(nray))
 	allocate (end_residuals(nray))
@@ -278,6 +285,13 @@ contains
     	stop
     end if
     read (results_star_unit,*) total_trace_time
+
+    read (results_star_unit,*) var_name
+    if (var_name .ne. 'initial_ray_power') then
+    	write(*,*) 'read_results_LD: inconsistent variable name = ', var_name
+    	stop
+    end if
+    read (results_star_unit,*) initial_ray_power
 
     read (results_star_unit,*) var_name
     if (var_name .ne. 'ray_trace_time') then
@@ -352,6 +366,7 @@ contains
         deallocate (ray_vec)
         deallocate (residual)
         deallocate (npoints)
+        deallocate (initial_ray_power)
         deallocate (ray_trace_time)
         deallocate (end_ray_parameter)
         deallocate (end_residuals)
@@ -373,6 +388,7 @@ contains
 	allocate (this_run%ray_vec(dim_v_vector, max_number_of_steps+1, number_of_rays))
 	allocate (this_run%residual(max_number_of_steps, number_of_rays))
 	allocate (this_run%npoints(number_of_rays))
+	allocate (this_run%initial_ray_power(number_of_rays))
 	allocate (this_run%ray_trace_time(number_of_rays))
 	allocate (this_run%end_ray_parameter(number_of_rays))
 	allocate (this_run%end_residuals(number_of_rays))
@@ -389,6 +405,7 @@ contains
     this_run%npoints = npoints
 
     this_run%total_trace_time = total_trace_time
+    this_run%ray_trace_time = initial_ray_power
     this_run%ray_trace_time = ray_trace_time
     this_run%end_ray_parameter = end_ray_parameter
     this_run%end_residuals = end_residuals

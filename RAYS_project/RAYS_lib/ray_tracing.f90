@@ -9,12 +9,12 @@
                              & messages_to_stdout,ray_list_unit, day_to_seconds, &
                              & date_to_julian
     use ode_m, only : ode_solver, ray_init_ode_solver, nv, ds, s_max, nstep_max, ode_stop
-    use ray_init_m, only : nray
+    use ray_init_m, only : nray, ray_pwr_wt
     use damping_m, only : damping_model, multi_spec_damping
     use species_m, only : nspec
     use ray_results_m, only : ray_stop_flag, ray_vec, residual, npoints, end_residuals,&
                             & max_residuals, end_ray_parameter, start_ray_vec, end_ray_vec,&
-                            & ray_trace_time, total_trace_time
+                            & initial_ray_power, ray_trace_time, total_trace_time
     use openmp_m, only : num_threads
     use omp_lib
     implicit none
@@ -52,7 +52,7 @@
 !!$    t_start_tracing = omp_get_wtime()
 
 !$OMP parallel do schedule(static) DEFAULT(FIRSTPRIVATE) &
-!$OMP& SHARED(ray_stop_flag, ray_vec, npoints, residual, ray_trace_time,  &
+!$OMP& SHARED(ray_stop_flag, ray_vec, npoints, residual, ray_trace_time, initial_ray_power, &
 !$OMP& end_residuals, max_residuals, end_ray_parameter, start_ray_vec, end_ray_vec)
 
 !!$OMP DO
@@ -242,6 +242,7 @@
 ! Save in ray_results_m
 
         npoints(iray) = nstep + 1
+	    initial_ray_power(iray) = ray_pwr_wt(iray)
 	    ray_trace_time(iray) = t_finish_ray - t_start_ray
         end_residuals(iray) = residual(nstep,iray)
         max_residuals(iray) = maxval(abs(residual(1:nstep,iray)))
@@ -267,7 +268,6 @@
 	total_trace_time = (t_finish_tracing - t_start_tracing)*day_to_seconds
     call message('Wall time ray tracing', total_trace_time, 0)
 
-! write(*,*) 'end parallel do'
 !   Write ray file description
     if (write_formatted_ray_files) then
        write(ray_list_unit, *) nray
@@ -284,7 +284,6 @@
 !      write (95) ray_stop
 
 !	call cpu_time(t_finish_tracing)
-
 
     return
  end subroutine trace_rays

@@ -2,7 +2,7 @@
 ! The specific geometry. It does the initializations for the specific processor.
 ! This also reads the data from a given RAYS run.  For now this is done both of 2 ways.
 ! 1) Read an ASCII (or binary) pair of files as specified by unit numbers: ray_list_unit and
-!    output_unit,  These files are written incrementally as the rays are traced and 
+!    output_unit,  These files are written incrementally as the rays are traced and
 !    therefore are still available if the code crashes.  The data read is put into this
 !    module variables: npoints, s_vec, and v_vec.  For now the older processors use this
 !    data.
@@ -21,7 +21,7 @@
     use constants_m, only : rkind
 
     implicit none
-    
+
 ! Calculated below from data in input files
     integer :: npoints_max
     integer, allocatable :: npoints(:)
@@ -32,7 +32,7 @@
 
 ! Switches to control reading of ray data
     logical :: read_ray_data_file, read_ray_results_file
-    
+
     namelist /post_process_list/ processor, read_ray_data_file, read_ray_results_file
 
  contains
@@ -48,11 +48,11 @@
 
     implicit none
     logical, intent(in) :: read_input
-	integer :: input_unit, get_unit_number ! External, free unit finder   
+	integer :: input_unit, get_unit_number ! External, free unit finder
 
     call text_message('initialize_post_process_rays', 3)
 
-    if (read_input .eqv. .true.) then    
+    if (read_input .eqv. .true.) then
 	! Read and write input namelist
   		input_unit = get_unit_number()
         open(unit=input_unit, file='post_process_rays.in',action='read', status='old', form='formatted')
@@ -79,16 +79,16 @@
 
        end select
 
-!****** Read in all ray data *********************************    
+!****** Read in all ray data *********************************
 
 	if (read_ray_data_file) call read_ray_data
 
 	if (read_ray_data_file) call read_results_data
-   
+
     return
  end subroutine initialize_post_processing_m
 
-!*************************************************************************     
+!*************************************************************************
 
   subroutine post_process
 
@@ -102,7 +102,7 @@
                           & inner_bound, outer_bound, upper_bound, lower_bound
 
     implicit none
-   
+
     select case (trim(processor))
 
        case ('slab')
@@ -113,7 +113,7 @@
           call text_message('calling solovev_processor', 1)
           call solovev_processor
 
- 
+
        case ('axisym_toroid')
           call text_message('calling axisym_toroid_processor', 1)
           call axisym_toroid_processor
@@ -127,7 +127,7 @@
     return
  end subroutine post_process
 
-!*************************************************************************     
+!*************************************************************************
 
 !  Read number of rays and number of points points on each ray from file: ray_list.<run label>
 !  Then read the ray data from file: ray_out.<run_label>.
@@ -145,14 +145,14 @@
     integer :: nray, nv, iray, ipoint
     real(KIND=rkind) :: s
     real(KIND=rkind), allocatable :: v(:)
-    real(KIND=rkind), allocatable :: end_residuals(:) 
+    real(KIND=rkind), allocatable :: end_residuals(:)
     character(len = 20), allocatable :: ray_stop(:)
 
     read(ray_list_unit, *) nray
     call message('nray = ', nray, 1)
     allocate(npoints(nray))
     read(ray_list_unit, *) nv
-    allocate(v(nv))    
+    allocate(v(nv))
 
     read(ray_list_unit, *) npoints
     npoints_max = maxval(npoints)
@@ -173,10 +173,10 @@
         end do
     end do ray_loop
 
-! Write data to an ASCII file for diagnostic    
+! Write data to an ASCII file for diagnostic
     if (verbosity >= 3) then
        call message(1)
-       call text_message('Ray data')    
+       call text_message('Ray data')
        do iray = 1, nray
             call message('ray number = ', iray)
             do ipoint = 1, npoints(iray)
@@ -188,7 +188,7 @@
 
  end subroutine read_ray_data
 
-!*************************************************************************     
+!*************************************************************************
 
 !  Read number of rays and number of points points on each ray from file: ray_list.<run label>
 !  Then read the ray data from file: ray_out.<run_label>.
@@ -202,21 +202,21 @@
     use ray_results_m, only : read_results_LD, RAYS_run_label, date_vector
 
     implicit none
-    
+
  !  File name for input
     character(len=80) :: in_filename
 
     in_filename = 'run_results.'//trim(run_label)
 	call read_results_LD(in_filename)
 
-	call message(1)	
-	call text_message('read_results_data: RAYS_run_label = ', RAYS_run_label, 1)
-	call message('read_results_data: date_vector = ', date_vector, 3, 1)
 	call message(1)
-			
+	call text_message('read_results_data: RAYS_run_label = ', RAYS_run_label, 1)
+	call message('read_results_data: date_vector', date_vector, 3, 1)
+	call message(1)
+
  end subroutine read_results_data
- 
-!*************************************************************************     
+
+!*************************************************************************
 
  end module post_processing_m
 

@@ -1,7 +1,7 @@
  MODULE bin_to_uniform_grid_m
 
 ! generic procedure: uniform grid binner to accumulate an extensive quantity, Q, into a
-! set of uniformly spaced bins in coordinate x (such as psi).  For example to discretize 
+! set of uniformly spaced bins in coordinate x (such as psi).  For example to discretize
 ! the power absorbed from a wave as it propagates in space, giving the local profile of
 ! power deposition in psi.
 
@@ -21,31 +21,31 @@
     integer, parameter :: rkind = selected_real_kind(15,307) ! kind parameter for reals
     integer, parameter :: skind = selected_real_kind(6,37) ! kind parameter single precision
 
-    interface bin_to_uniform_grid 
+    interface bin_to_uniform_grid
         module procedure binner_single, binner_real
     end interface
-    
+
     CONTAINS
  !*********************************************************************************
 
     SUBROUTINE binner_single(Q, xQ, xmin, xmax, binned_Q, ierr)
-    
+
         IMPLICIT NONE
         REAL(kind = skind), INTENT(IN) :: Q(:), xQ(:)
         REAL(kind = skind), INTENT(IN) :: xmin, xmax
         REAL(kind = skind), INTENT(INOUT) :: binned_Q(:)
         INTEGER, INTENT(OUT) :: ierr
-        
+
         INTEGER :: nx, n_bins, is
         REAL(kind = skind) :: x_low, x_high, x_range, x_bin_width
-        
+
         INTEGER :: index_low, index_high, index_temp, i, delta_i
         REAL(kind = skind) :: delta_Q, Q_density, Q_incrL, Q_incrH
         REAL(kind = skind) :: ix_low, ix_high, delta_ix
         REAL(kind = skind) :: fraction_low, fraction_high, fraction_in
-        
+
         ierr = 0
-        
+
 ! Check that Q(:), xQ(:) are the same size
 		if (size(xQ) .ne. size(Q)) then
 			write(*,*) 'uniform_grid_binner: Input arrays sizes inconsistent ', &
@@ -53,13 +53,13 @@
 			ierr = 1
 			return
 		end if
-		
-		nx = size(xQ)
-		
-		x_low = minval(xQ)
-		x_high = maxval(xQ)		
 
-		
+		nx = size(xQ)
+
+		x_low = minval(xQ)
+		x_high = maxval(xQ)
+
+
 		n_bins = size(binned_Q)
         binned_Q = 0.  	! Empty all bins
 
@@ -69,20 +69,20 @@
 		! xmax-x_bin_width < x .le. xmax -> bin #n_bins
 
 	x_loop: do is = 2, nx
-		x_low = min(xQ(is-1), xQ(is))  ! N.B. Reusing x_low, x_high to avoid inventing 
+		x_low = min(xQ(is-1), xQ(is))  ! N.B. Reusing x_low, x_high to avoid inventing
 		x_high = max(xQ(is-1), xQ(is)) ! new names.
-		
+
 		! convert to index space (N.B. ix_low,ix_low are real numbers)
 		ix_low = (x_low -xmin)/x_bin_width   ! real number index of bottom point
 		ix_high = (x_high -xmin)/x_bin_width ! real number index of top point
 		delta_ix = ix_high-ix_low            ! interval in index space
-		
-		! Find integer index (bin number) of ix_low, ix_high) 
+
+		! Find integer index (bin number) of ix_low, ix_high)
 		index_low = floor(ix_low) + 1
 		index_high = floor(ix_low) + 1
 		if (x_high .ge. xmax) index_high = n_bins ! special case x_high = xmax
 
-		delta_i = index_high - index_low			
+		delta_i = index_high - index_low
 		delta_Q = Q(is) - Q(is-1)
 		Q_density = delta_Q/delta_ix
 
@@ -114,12 +114,12 @@
 		end if
 
 
-	! Typical cases	
+	! Typical cases
 		if (delta_i == 0) then  ! Put all delta_Q in that one bin
 			binned_Q(index_low) = binned_Q(index_low) + delta_Q
 
 		else if (delta_i > 0) then  ! Divide between bins
-			
+
 			fraction_low = (real(index_low) - ix_low)/delta_ix
 			Q_incrL = delta_Q*fraction_low ! contribution to bin index_low
 			binned_Q(index_low) = binned_Q(index_low) + Q_incrL
@@ -127,39 +127,39 @@
 			fraction_high = (ix_high - real(index_high - 1))/delta_ix
 			Q_incrH = delta_q*fraction_high ! contribution to bin index_high
 			binned_Q(index_high) = binned_Q(index_high) + Q_incrH
-		
-			if (delta_i > 1) then ! increment middle bins by Q_density					
+
+			if (delta_i > 1) then ! increment middle bins by Q_density
 				do i = index_low + 1, index_high - 1
 					binned_Q(i) = binned_Q(i) + Q_density
 				end do
 			end if
 		end if
-						
+
 	end do x_loop
-    
+
     RETURN
     END SUBROUTINE binner_single
  !*********************************************************************************
-    
+
 
     SUBROUTINE binner_real(Q, xQ, xmin, xmax, binned_Q, ierr)
-    
+
         IMPLICIT NONE
         REAL(kind = rkind), INTENT(IN) :: Q(:), xQ(:)
         REAL(kind = rkind), INTENT(IN) :: xmin, xmax
         REAL(kind = rkind), INTENT(INOUT) :: binned_Q(:)
         INTEGER, INTENT(OUT) :: ierr
-        
+
         INTEGER :: nx, n_bins, is
         REAL(kind = rkind) :: x_low, x_high, x_range, x_bin_width
-        
+
         INTEGER :: index_low, index_high, index_temp, i, delta_i
         REAL(kind = rkind) :: delta_Q, Q_density, Q_incrL, Q_incrH
         REAL(kind = rkind) :: ix_low, ix_high, delta_ix
         REAL(kind = rkind) :: fraction_low, fraction_high, fraction_in
-        
+
         ierr = 0
-        
+
 ! Check that Q(:), xQ(:) are the same size
 		if (size(xQ) .ne. size(Q)) then
 			write(*,*) 'uniform_grid_binner: Input arrays sizes inconsistent ', &
@@ -167,13 +167,13 @@
 			ierr = 1
 			return
 		end if
-		
-		nx = size(xQ)
-		
-		x_low = minval(xQ)
-		x_high = maxval(xQ)		
 
-		
+		nx = size(xQ)
+
+		x_low = minval(xQ)
+		x_high = maxval(xQ)
+
+
 		n_bins = size(binned_Q)
         binned_Q = 0.  	! Empty all bins
 
@@ -183,20 +183,20 @@
 		! xmax-x_bin_width < x .le. xmax -> bin #n_bins
 
 	x_loop: do is = 2, nx
-		x_low = min(xQ(is-1), xQ(is))  ! N.B. Reusing x_low, x_high to avoid inventing 
+		x_low = min(xQ(is-1), xQ(is))  ! N.B. Reusing x_low, x_high to avoid inventing
 		x_high = max(xQ(is-1), xQ(is)) ! new names.
-		
+
 		! convert to index space (N.B. ix_low,ix_low are real numbers)
 		ix_low = (x_low -xmin)/x_bin_width   ! real number index of bottom point
 		ix_high = (x_high -xmin)/x_bin_width ! real number index of top point
 		delta_ix = ix_high-ix_low            ! interval in index space
-		
-		! Find integer index (bin number) of ix_low, ix_high) 
+
+		! Find integer index (bin number) of ix_low, ix_high)
 		index_low = floor(ix_low) + 1
 		index_high = floor(ix_low) + 1
 		if (x_high .ge. xmax) index_high = n_bins ! special case x_high = xmax
 
-		delta_i = index_high - index_low			
+		delta_i = index_high - index_low
 		delta_Q = Q(is) - Q(is-1)
 		Q_density = delta_Q/delta_ix
 
@@ -228,12 +228,12 @@
 		end if
 
 
-	! Typical cases	
+	! Typical cases
 		if (delta_i == 0) then  ! Put all delta_Q in that one bin
 			binned_Q(index_low) = binned_Q(index_low) + delta_Q
 
 		else if (delta_i > 0) then  ! Divide between bins
-			
+
 			fraction_low = (real(index_low) - ix_low)/delta_ix
 			Q_incrL = delta_Q*fraction_low ! contribution to bin index_low
 			binned_Q(index_low) = binned_Q(index_low) + Q_incrL
@@ -241,20 +241,20 @@
 			fraction_high = (ix_high - real(index_high - 1))/delta_ix
 			Q_incrH = delta_q*fraction_high ! contribution to bin index_high
 			binned_Q(index_high) = binned_Q(index_high) + Q_incrH
-		
-			if (delta_i > 1) then ! increment middle bins by Q_density					
+
+			if (delta_i > 1) then ! increment middle bins by Q_density
 				do i = index_low + 1, index_high - 1
 					binned_Q(i) = binned_Q(i) + Q_density
 				end do
 			end if
 		end if
-						
+
 	end do x_loop
-    
+
     RETURN
     END SUBROUTINE binner_real
  !*********************************************************************************
-    
 
-        
+
+
 END MODULE bin_to_uniform_grid_m

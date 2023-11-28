@@ -56,7 +56,7 @@ contains
 			close(unit=input_unit)
     end if
 
-    call text_message('initializing rf_m', 1)
+    call text_message('Initializing rf_m', 1)
 
 ! Write input namelist
     if (verbosity >= 0) then
