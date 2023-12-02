@@ -1,12 +1,12 @@
     program test_psplines
-    
+
     implicit none
 
     integer, parameter :: rkind = selected_real_kind(15,307) ! kind parameter for reals
 
 ! setup
-    
-    integer, parameter :: nxMax = 21, nyMax = 21    
+
+    integer, parameter :: nxMax = 101, nyMax = 101
     integer, parameter :: nx = nxMax, ny = nyMax, nr = 5, nTheta = 10, nx1D = 11
 
     integer :: i, j
@@ -41,10 +41,10 @@
 
 ! Load grids and function array
     do j = 1, ny
-        y(j) = real(j-11)
+        y(j) = real(j-11)/10.
     end do
     do i = 1, nx
-        x(i) = real(i-11)
+        x(i) = real(i-11)/10.
     end do
 
     do j = 1, ny
@@ -67,14 +67,14 @@
     bcthmax = 0.
     ilinx = 0
     ilinth = 0
-    
+
     call bcspline(x,inx,th,inth,fspl_2D,inf3, &
          ibcxmin,bcxmin,ibcxmax,bcxmax, &
          ibcthmin,bcthmin,ibcthmax,bcthmax, &
          wk,nwk,ilinx,ilinth,ier)
          if (ier .ne. 0) write (*,*) 'bcspline: ier = ', ier
-         
-    
+
+
     write (*,*) 'ilinx = ', ilinx, '  ilinth = ', ilinth
 !    write (*,*) f(1,1,:,:)
 
@@ -87,23 +87,23 @@
         do j = 1, nTheta
             r = real(i)
             theta = (j-1)*pi/nTheta
-            
+
             xget = r*cos(theta)
             yget = r*sin(theta)
             rget = sqrt(xget**2 + yget**2)
-            
+
             call bcspeval(xget,yget,iselect,fval, &
-                  x,inx,th,inth,ilinx,ilinth,fspl_2D,inf3,ier)            
+                  x,inx,th,inth,ilinx,ilinth,fspl_2D,inf3,ier)
             if (ier .ne. 0) write (*,*) 'bcspeval: ier = ', ier
 
-            call spline_test_fn(xget, yget, fget, fx, fy, fxx, fxy, fyy)            
+            call spline_test_fn(xget, yget, fget, fx, fy, fxx, fxy, fyy)
             write (*,*)
             write (*,*) 'xget = ',xget, '  yget = ', yget, '  fget = ', fget, '  fval(1) = ', fval(1)
             write (*,*) 'fx = ', fx, '  fval(2) = ', fval(2),'fy = ', fy, '  fval(3) = ', fval(3)
             write (*,*) 'fxx = ', fxx, '  fval(4) = ', fval(4),'fxy = ', fxy, &
             &  '  fval(6) = ', fval(6), '  fyy = ', fyy, '  fval(5) = ', fval(5)
 
-            
+
         end do
     end do
 
@@ -112,14 +112,14 @@
 ! 1D splines
     write (*,*)
     write (*,*) '1D results'
-  
+
 ! Grid is generated above, evaluate function array
 
     do i = 1, nx
         call spline_test_fn_1D(x(i), ff, fx, fxx)
         fspl_1D(1,i) = ff
     end do
- 
+
 ! Get spline coefficients
     ibcxmin = 0
     bcxmin = 0.
@@ -131,7 +131,7 @@
     bcthmax = 0.
     ilinx = 0
 
-    call cspline(x,nx,fspl_1D,ibcxmin,bcxmin,ibcxmax,bcxmax,wk,iwk,ilinx,ier)         
+    call cspline(x,nx,fspl_1D,ibcxmin,bcxmin,ibcxmax,bcxmax,wk,iwk,ilinx,ier)
     write (*,*) 'ilinx = ', ilinx
 
 ! Evaluate splined function on data
@@ -139,16 +139,18 @@
     iselect1D = (/ 1, 1, 1 /)
 
     do i = 1, nx1D
-     
+
         xget = 0.4*(i - int(real(nx1D-1)/2.))
 
         call cspeval(xget,iselect1D,fval1D,x,nx,ilinx,fspl_1D,ier)
         if (ier .ne. 0) write (*,*) 'cspeval: ier = ', ier
 
-        call spline_test_fn_1D(xget,fget, fx, fxx)            
-        write (*,*) 'xget = ',xget, '  fget = ', fget, '  fval(1) = ', fval1D(1)
-        write (*,*) 'fx = ', fx, '  fval(2) = ', fval1D(2),'fxx = ', fxx, '  fval(3) = ', fval1D(3)
- 
+        call spline_test_fn_1D(xget,fget, fx, fxx)
+        write (*,*) 'x =   ',xget
+        write (*,*) 'f =   ', fget, '  fval(1) = ', fval1D(1), '  err = ', fval1D(1) - fget
+        write (*,*) 'fx =  ', fx, '  fval(2) = ', fval1D(2), '  err = ', fval1D(2) - fx
+        write (*,*) 'fxx = ', fxx, '  fval(3) = ', fval1D(3), '  err = ', fval1D(3) - fxx
+
     end do
 
     end program test_psplines
