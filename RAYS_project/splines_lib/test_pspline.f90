@@ -4,15 +4,23 @@
 
     integer, parameter :: rkind = selected_real_kind(15,307) ! kind parameter for reals
 
-! setup
+! Setup
+! Stuff for 2D splines
 
-    integer, parameter :: nxMax = 101, nyMax = 101
-    integer, parameter :: nx = nxMax, ny = nyMax, nr = 5, nTheta = 10, nx1D = 11
+    integer, parameter :: nx = 21, ny = 21
+    real(KIND=rkind) ::  x_grid_min = -10., x_grid_max = 10., y_grid_min = -10., y_grid_max = 10.
+
+    integer, parameter :: nx_get = 21, ny_get = 21
+    real(KIND=rkind) ::  x_get_min = -10., x_get_max = 10., y_get_min = -10., y_get_max = 10.
+    integer :: nr = 5, nTheta = 10
+    real(KIND=rkind) :: r, theta, rget
 
     integer :: i, j
-    real(KIND=rkind) ::  ff, fx, fy, fxx, fxy, fyy
-    real(KIND=rkind) :: r, theta, rget
-    real(KIND=rkind) :: pi = 3.1415926
+    real(KIND=rkind) ::  f, fx, fy, fxx, fxy, fyy
+    real(KIND=rkind) :: pi = 3.1415926535897932385
+
+    real :: start_time_coef, end_time_coef, start_time_fn, end_time_fn, &
+                            & start_time_spline, end_time_spline
 
 ! bcspline arguments
 
@@ -31,32 +39,45 @@
     integer :: iselect(6)
 
 ! Stuff for 1D splines
+
+    integer, parameter :: nx1D =1001
+    real(KIND=rkind) ::  x1D_grid_min = -10., x1D_grid_max = 10., x1D_grid(nx1D)
+
+    integer, parameter :: nx1D_get = 1000
+    real(KIND=rkind) ::  x1D_get_min = -10., x1D_get_max = 10., x1D(nx1D_get)
+    real(KIND=rkind) ::  f1D(nx1D_get), fx1D(nx1D_get), fxx1D(nx1D_get)
+
 ! bcspeval arguments, if not already declared above
 
-    real(KIND=rkind) ::  fspl_1D(4, nx), fval1D(3)
-    integer :: iselect1D(3), iwk
+    real(KIND=rkind) ::  fspl1D(4, nx1D), fval1D(3)
+    integer :: iselect1D(3)
+    integer, parameter :: iwk = nx1D
+    real(KIND=rkind) ::  wk1D(iwk)
+
+! Statistics
+
+    real(KIND=rkind) ::  random, rel_err, abs_err, s_abs, s_rel
 
 !***************************************************************************************
 ! 2D splines
 
 ! Load grids and function array
     do j = 1, ny
-        y(j) = real(j-11)/10.
+        y(j) = y_grid_min + (j-1)*(y_grid_max - y_grid_min)/(ny-1)
     end do
     do i = 1, nx
-        x(i) = real(i-11)/10.
+        x(i) = x_grid_min + (i-1)*(x_grid_max - x_grid_min)/(nx-1)
     end do
 
     do j = 1, ny
         do i = 1, nx
-            call spline_test_fn(x(i), y(j), ff, fx, fy, fxx, fxy, fyy)
-            fspl_2D(1,1,i,j) = ff
-        end do
+            call spline_test_fn(x(i), y(j), f, fx, fy, fxx, fxy, fyy)
+            fspl_2D(1,1,i,j) = f
+         end do
     end do
 
 ! Get spline coefficients
     th = y
-
     ibcxmin = 0
     bcxmin = 0.
     ibcxmax = 0
@@ -96,10 +117,12 @@
                   x,inx,th,inth,ilinx,ilinth,fspl_2D,inf3,ier)
             if (ier .ne. 0) write (*,*) 'bcspeval: ier = ', ier
 
-            call spline_test_fn(xget, yget, fget, fx, fy, fxx, fxy, fyy)
+            call spline_test_fn(xget, yget, f, fx, fy, fxx, fxy, fyy)
             write (*,*)
-            write (*,*) 'xget = ',xget, '  yget = ', yget, '  fget = ', fget, '  fval(1) = ', fval(1)
-            write (*,*) 'fx = ', fx, '  fval(2) = ', fval(2),'fy = ', fy, '  fval(3) = ', fval(3)
+            write (*,*) 'xget = ', xget, '     yget = ', yget
+            write (*,*) 'fget = ', f, '  fval(1) = ', fval(1)
+            write (*,*) 'fx = ', fx, '  fval(2) = ', fval(2)
+            write (*,*) 'fy = ', fy, '  fval(3) = ', fval(3)
             write (*,*) 'fxx = ', fxx, '  fval(4) = ', fval(4),'fxy = ', fxy, &
             &  '  fval(6) = ', fval(6), '  fyy = ', fyy, '  fval(5) = ', fval(5)
 
@@ -110,14 +133,21 @@
 
 !***************************************************************************************
 ! 1D splines
+
     write (*,*)
     write (*,*) '1D results'
 
-! Grid is generated above, evaluate function array
+    call cpu_time(start_time_coef)
 
-    do i = 1, nx
-        call spline_test_fn_1D(x(i), ff, fx, fxx)
-        fspl_1D(1,i) = ff
+! 1D Grid
+    do i = 1, nx1D
+        x1D_grid(i) = x1D_grid_min + (i-1)*(x1D_grid_max - x1D_grid_min)/(nx1D-1)
+    end do
+
+! Grid is generated above, evaluate function array
+    do i = 1, nx1D
+        call spline_test_fn_1D(x1D_grid(i), f, fx, fxx)
+        fspl1D(1,i) = f
     end do
 
 ! Get spline coefficients
@@ -131,26 +161,56 @@
     bcthmax = 0.
     ilinx = 0
 
-    call cspline(x,nx,fspl_1D,ibcxmin,bcxmin,ibcxmax,bcxmax,wk,iwk,ilinx,ier)
+    call cspline(x1D_grid,nx1D,fspl1D,ibcxmin,bcxmin,ibcxmax,bcxmax,wk1D,iwk,ilinx,ier)
     write (*,*) 'ilinx = ', ilinx
+
+    call cpu_time(end_time_coef)
 
 ! Evaluate splined function on data
 
     iselect1D = (/ 1, 1, 1 /)
 
-    do i = 1, nx1D
+    do i = 1, nx1D_get
+        call random_number(random)
+        x1D(i) = x1D_get_min + (x1D_get_max - x1D_get_min)*random
+    end do
 
-        xget = 0.4*(i - int(real(nx1D-1)/2.))
+! Evaluate the function analytically for timing
+    call cpu_time(start_time_fn)
+    do i = 1, nx1D_get
+        call spline_test_fn_1D(x1D(i), f1D(i), fx1D(i), fxx1D(i))
+    end do
+    call cpu_time(end_time_fn)
 
-        call cspeval(xget,iselect1D,fval1D,x,nx,ilinx,fspl_1D,ier)
+! Evaluate using splines
+    call cpu_time(start_time_spline)
+
+    s_abs = 0.; s_rel = 0.
+    do i = 1, nx1D_get
+        call cspeval(x1D(i),iselect1D,fval1D,x1D_grid,nx1D,ilinx,fspl1D,ier)
         if (ier .ne. 0) write (*,*) 'cspeval: ier = ', ier
 
-        call spline_test_fn_1D(xget,fget, fx, fxx)
-        write (*,*) 'x =   ',xget
-        write (*,*) 'f =   ', fget, '  fval(1) = ', fval1D(1), '  err = ', fval1D(1) - fget
-        write (*,*) 'fx =  ', fx, '  fval(2) = ', fval1D(2), '  err = ', fval1D(2) - fx
-        write (*,*) 'fxx = ', fxx, '  fval(3) = ', fval1D(3), '  err = ', fval1D(3) - fxx
+        abs_err = fval1D(1) - f1D(i)
+        rel_err = (fval1D(1) - f1D(i))/f1D(i)
+        s_abs = s_abs + abs(abs_err)
+        s_rel = s_rel + abs(rel_err)
+
+        write (*,*) 'x = ', x1D(i), '  f1D(i) = ', f1D(i), '  f spline = ', fval1D(1)
+        write (*,*) 'abs_err = ', abs_err, '  rel_err = ', rel_err
+        write (*,*) 'fx = ', fx, '  fx spline = ', fval1D(2),'  fxx = ', fxx,&
+               &  '  fxx spline = ', fval1D(3)
 
     end do
+    call cpu_time(end_time_spline)
+
+    write(*,*) ' '
+   write(*,*) '1 + SIN(k x)  grid points = ', nx1D, '  sample points = ', nx1D_get
+    write(*,*) 'CPU time coeff eval = ', end_time_coef - start_time_coef
+    write(*,*) 'CPU time function eval = ', end_time_fn - start_time_fn
+    write(*,*) 'CPU time spline eval = ', end_time_spline - start_time_spline
+    write(*,*) 'Average absolute error = ', s_abs/nx1D_get
+    write(*,*) 'Average relative error = ', s_rel/nx1D_get
+
+! write(*,*) 'x1D_grid = ',x1D_grid
 
     end program test_psplines
