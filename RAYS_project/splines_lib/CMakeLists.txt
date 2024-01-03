@@ -25,9 +25,11 @@ target_include_directories (test_pspline
                             PUBLIC
                             $<TARGET_PROPERTY:RAYS_lib,BINARY_DIR>
                             $<TARGET_PROPERTY:spline,BINARY_DIR>
+                            $<TARGET_PROPERTY:math_functions,BINARY_DIR>
 )
 target_link_libraries (test_pspline
                        PUBLIC
                        RAYS_lib
                        spline
+                       math_functions
 )
