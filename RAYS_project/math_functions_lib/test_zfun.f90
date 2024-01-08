@@ -59,7 +59,7 @@ program test_zfun
     write(6,*) 'Results for real argument, zfun_real_arg_D '
 7	format (' z real = ',(f12.5),'  ', a,'  = ',2(1pe20.12))
 
-	do i = -10, 10
+	do i = -15, 15
 
  	fname = 'zfun_D'
  	zReD = real(i,rkind)

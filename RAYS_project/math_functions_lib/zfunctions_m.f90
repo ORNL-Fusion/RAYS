@@ -349,7 +349,9 @@ module zfunctions_m
 
  complex(kind = rkind) function zfun_real_arg_spline_D(z)
 ! Calculates plasma dispersion function for real argument.
-! The real part of Z(x) is calculated by spline interpolation of Zfun(x) on a grid, x_grid.
+! For |x| <= spline_range, the real part of Z(x) is calculated by spline interpolation
+! of Zfun(x) on grid -> x_grid.
+! For |x| > spline_range, the real part of Z(x) is calculated from the asymptotic expansion.
 ! The imaginary part of Z(x) is analytical = sqrt(pi)*i*exp(-x**2)
 ! Grid parameters are set below: nx, x_grid_min, x_grid_max.
 ! N.B. Calling with x outside [x_grid_min, x_grid_max] will produce an error.
@@ -372,8 +374,20 @@ module zfunctions_m
 ! Stuff for Cubic splines
 ! Grid definition
     integer, parameter :: nx = 2001
-    real(KIND=rkind), parameter ::  x_grid_min = -10., x_grid_max = 10.
+    real(KIND=rkind), parameter ::  spline_range = 10.0_rkind
+    real(KIND=rkind), parameter ::  x_grid_min = -spline_range, x_grid_max = spline_range
     real(KIND=rkind) ::  x_grid(nx)
+
+! Stuff for asymptotic expansion
+! Order of the expansion is specified by N_asymp = number of terms in expansion.
+! N_asymp = 6 (i.e. 1/x**11) gives accuracy ~10**-11. Coefficients are provided up to
+! N_asymp = 8.
+    integer, parameter :: N_asymp = 6
+    real(KIND=rkind), parameter ::  A_coef(8)= (/1._rkind, 1._rkind/2._rkind, &
+     & 3._rkind/4._rkind, 15._rkind/8._rkind, 105._rkind/16._rkind, 945._rkind/32._rkind, &
+     & 10395._rkind/64._rkind, 135135._rkind/128._rkind/)
+    real(KIND=rkind) :: z_inv
+
 
 ! bcspeval arguments
 	integer ibcxmin, ibcxmax, ibcthmin, ibcthmax, ilinx, ilnx,ier
@@ -414,8 +428,16 @@ module zfunctions_m
 		initialized = .true.
 	end if init
 
-	call cspeval(z,iselect,fvalRe,x_grid,nx,ilinx,fsplRe,ier)
-!    call cspeval(xC(i),iselectC,fvalIm,xC_grid,nxC,ilinx,fsplIm,ier) ! Use analytic instead
+	if (abs(z) <= spline_range) then ! spline real part
+		call cspeval(z,iselect,fvalRe,x_grid,nx,ilinx,fsplRe,ier)
+	else ! asymptotic expansion of real part
+		z_inv = one/z
+		fvalRe(1) = zero
+		do i = 1, N_asymp
+			fvalRe(1) = fvalRe(1) - z_inv**(2*i - 1)* A_coef(i)
+		end do
+	end if
+
 	fvalIm(1) = sqrt_pi*exp(-z**2)
 	if (ier .ne. 0) write (*,*) 'cspeval: ier = ', ier
 

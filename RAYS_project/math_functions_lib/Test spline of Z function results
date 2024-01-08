@@ -1,8 +1,9 @@
- Splined Z function results.  
+ Splined Z function results.
  Evaluation time is independent of number of sample points
  Taking 2001 sample points improves accuracy by ~ factor of 10 over 1001 sample points.
- N.B. Question is: how accurate is the Zfun routine that is being splined?
- 
+ N.B. Question is: how accurate is the Zfun routine that is being splined?  For answer
+      see "Test spline of Z function results"
+
  Splined Zfunction results
  ilinx =            1
 
