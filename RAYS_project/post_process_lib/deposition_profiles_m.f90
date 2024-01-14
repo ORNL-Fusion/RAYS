@@ -79,7 +79,8 @@ contains
 subroutine initialize_deposition_profiles(read_input)
 
 	use constants_m, only : rkind
-	use diagnostics_m, only : message_unit, text_message, verbosity, run_label, date_v
+	use diagnostics_m, only : message_unit, text_message, verbosity, run_label, date_v, &
+	                  & messages_to_stdout
 	use ray_init_m, only : nray
 	use equilibrium_m, only : equilib_model
 	use slab_eq_m, only : xmin_slab => xmin, xmax_slab => xmax
@@ -104,8 +105,13 @@ subroutine initialize_deposition_profiles(read_input)
 		open(unit=input_unit, file='post_process_rays.in',action='read', status='old', form='formatted')
 		read(input_unit, deposition_profiles_list)
 		close(unit=input_unit)
-		if (verbosity > 0) write(message_unit, deposition_profiles_list)
 	end if
+
+! Write input namelist
+    if (verbosity >= 0) then
+		write(message_unit, deposition_profiles_list)
+		if (messages_to_stdout) write(*, deposition_profiles_list)
+    end if
 
 	if (n_bins == 0) n_bins = default_n_bins
 

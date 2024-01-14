@@ -83,7 +83,7 @@
 
 	if (read_ray_data_file) call read_ray_data
 
-	if (read_ray_data_file) call read_results_data
+	if (read_ray_results_file) call read_results_data
 
     return
  end subroutine initialize_post_processing_m

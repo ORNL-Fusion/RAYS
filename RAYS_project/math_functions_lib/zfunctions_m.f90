@@ -21,6 +21,10 @@ module zfunctions_m
         module procedure zfun_real_arg_spline_D
     end interface
 
+    interface zfun0_real_arg
+        module procedure zfun0_real_arg_D
+    end interface
+
 !    private
 !    public zfun, zfun0
      contains
@@ -335,9 +339,9 @@ module zfunctions_m
 
 !   See Eq.(8-82).
     if ( kz > 0. ) then
-          zfun0_real_arg_D = zfun_real_arg(z)
+          zfun0_real_arg_D = zfun_real_arg_spline_D(z)
     else if ( kz < 0. ) then
-          zfun0_real_arg_D = -zfun_real_arg(-z)
+          zfun0_real_arg_D = -zfun_real_arg_spline_D(-z)
     else
        write(0, *) 'ZFUN0_real_arg_D: Error, kz must be real and non-zero, kz= ', kz
        stop 1
@@ -348,6 +352,9 @@ module zfunctions_m
  !***********************************************************************
 
  complex(kind = rkind) function zfun_real_arg_spline_D(z)
+
+! N.B. !!  This thing is not thread safe.  Maybe work on it more later.
+
 ! Calculates plasma dispersion function for real argument.
 ! For |x| <= spline_range, the real part of Z(x) is calculated by spline interpolation
 ! of Zfun(x) on grid -> x_grid.
@@ -376,7 +383,7 @@ module zfunctions_m
     integer, parameter :: nx = 2001
     real(KIND=rkind), parameter ::  spline_range = 10.0_rkind
     real(KIND=rkind), parameter ::  x_grid_min = -spline_range, x_grid_max = spline_range
-    real(KIND=rkind) ::  x_grid(nx)
+    real(KIND=rkind), save ::  x_grid(nx)
 
 ! Stuff for asymptotic expansion
 ! Order of the expansion is specified by N_asymp = number of terms in expansion.
@@ -393,7 +400,8 @@ module zfunctions_m
 	integer ibcxmin, ibcxmax, ibcthmin, ibcthmax, ilinx, ilnx,ier
     real(KIND=rkind) :: bcxmin(nx),bcxmax(nx)      ! (nx) if used
     real(KIND=rkind) :: bcthmin(nx),bcthmax(nx)  ! (inx) if used
-    real(KIND=rkind) ::  fsplRe(4, nx)=0., fsplIm(4, nx)=0., fvalRe(3)=0., fvalIm(3)=0.
+    real(KIND=rkind) ::  fsplRe(4, nx)=0., fsplIm(4, nx)=0.
+    real(KIND=rkind) ::  fvalRe(3)=0., fvalIm(3)=0.
     integer :: iselect(3) = (/ 1, 0, 0 /) ! Can change to /1,1,1/ to get derivatives
     real(KIND=rkind) ::  wk(nx)
 
@@ -426,6 +434,8 @@ module zfunctions_m
 		call cspline(x_grid,nx,fsplIm,ibcxmin,bcxmin,ibcxmax,bcxmax,wk,nx,ilinx,ier)
 
 		initialized = .true.
+! 		write(*,*) 'initialized = ',initialized
+! 		stop
 	end if init
 
 	if (abs(z) <= spline_range) then ! spline real part

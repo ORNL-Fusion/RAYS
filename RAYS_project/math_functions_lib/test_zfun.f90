@@ -1,6 +1,6 @@
 program test_zfun
 
-	use zfunctions_m, only : zfun, zfun0, zfun_real_arg
+	use zfunctions_m, only : zfun, zfun0, zfun_real_arg, zfun0_real_arg
 
 	implicit none
 
@@ -59,11 +59,16 @@ program test_zfun
     write(6,*) 'Results for real argument, zfun_real_arg_D '
 7	format (' z real = ',(f12.5),'  ', a,'  = ',2(1pe20.12))
 
-	do i = -15, 15
+	do i = -10, 10
 
- 	fname = 'zfun_D'
+ 	fname = 'zfun_real_arg_D'
  	zReD = real(i,rkind)
  	zfD = zfun_real_arg(zReD)
+ 	write (6,7) zReD, fname, zfD
+
+ 	fname = 'zfun0_real_arg_D'
+ 	zReD = real(i,rkind)
+ 	zfD = zfun0_real_arg(zReD, 1._rkind)
  	write (6,7) zReD, fname, zfD
 
  	end do
