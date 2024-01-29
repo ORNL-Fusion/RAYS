@@ -9,6 +9,24 @@ module zfunctions_m
     real(KIND=rkind), parameter :: zero = 0.0_rkind, one = 1.0_rkind, two = 2.0_rkind
     real(KIND=rkind), parameter :: pi = atan(zero, -one), sqrt_pi = sqrt(pi)
 
+! Stuff for Cubic splines
+	logical :: initialized = .false.
+
+! Grid definition
+    integer, parameter :: nx = 2001
+    real(KIND=rkind), parameter ::  spline_range = 10.0_rkind
+    real(KIND=rkind), parameter ::  x_grid_min = -spline_range, x_grid_max = spline_range
+    real(KIND=rkind) ::  x_grid(nx)
+
+! bcspeval arguments
+	integer ibcxmin, ibcxmax, ibcthmin, ibcthmax, ilinx, ilnx,ier
+    real(KIND=rkind) :: bcxmin(nx),bcxmax(nx)      ! (nx) if used
+    real(KIND=rkind) :: bcthmin(nx),bcthmax(nx)  ! (inx) if used
+    real(KIND=rkind) ::  fsplRe(4, nx)=0., fsplIm(4, nx)=0.
+    integer, parameter :: iselect(3) = (/ 1, 0, 0 /) ! Can change to /1,1,1/ to get derivatives
+    real(KIND=rkind) ::  wk(nx)
+
+
     interface zfun0
         module procedure zfun0_S, zfun0_D
     end interface
@@ -374,16 +392,9 @@ module zfunctions_m
 
 	implicit none
 	real(kind = rkind) :: z
+    real(KIND=rkind) ::  fvalRe(3)=0., fvalIm(3)=0.
 
-	logical, save :: initialized = .false.
     integer :: i
-
-! Stuff for Cubic splines
-! Grid definition
-    integer, parameter :: nx = 2001
-    real(KIND=rkind), parameter ::  spline_range = 10.0_rkind
-    real(KIND=rkind), parameter ::  x_grid_min = -spline_range, x_grid_max = spline_range
-    real(KIND=rkind), save ::  x_grid(nx)
 
 ! Stuff for asymptotic expansion
 ! Order of the expansion is specified by N_asymp = number of terms in expansion.
@@ -395,48 +406,8 @@ module zfunctions_m
      & 10395._rkind/64._rkind, 135135._rkind/128._rkind/)
     real(KIND=rkind) :: z_inv
 
-
-! bcspeval arguments
-	integer ibcxmin, ibcxmax, ibcthmin, ibcthmax, ilinx, ilnx,ier
-    real(KIND=rkind) :: bcxmin(nx),bcxmax(nx)      ! (nx) if used
-    real(KIND=rkind) :: bcthmin(nx),bcthmax(nx)  ! (inx) if used
-    real(KIND=rkind) ::  fsplRe(4, nx)=0., fsplIm(4, nx)=0.
-    real(KIND=rkind) ::  fvalRe(3)=0., fvalIm(3)=0.
-    integer :: iselect(3) = (/ 1, 0, 0 /) ! Can change to /1,1,1/ to get derivatives
-    real(KIND=rkind) ::  wk(nx)
-
-    complex(KIND=rkind)  :: fC
-
 ! If this is first call initialize splines
-	init: if (.not. initialized) then
-
-! Generate spline grid and evaluate function
-		do i = 1, nx
-			x_grid(i) = x_grid_min + (i-1)*(x_grid_max - x_grid_min)/(nx-1)
-			fC = zfun(cmplx(x_grid(i), 0.0_rkind, kind=rkind))
-			fsplRe(1,i) = real(fC, rkind)
-			fsplIm(1,i) = aimag(fC)
-
-		end do
-
-! Get spline coefficients
-		ibcxmin = 0
-		bcxmin = zero
-		ibcxmax = 0
-		bcxmax = zero
-		ibcthmin = 0
-		bcthmin = zero
-		ibcthmax = 0
-		bcthmax =zero
-		ilinx = 0
-
-		call cspline(x_grid,nx,fsplRe,ibcxmin,bcxmin,ibcxmax,bcxmax,wk,nx,ilinx,ier)
-		call cspline(x_grid,nx,fsplIm,ibcxmin,bcxmin,ibcxmax,bcxmax,wk,nx,ilinx,ier)
-
-		initialized = .true.
-! 		write(*,*) 'initialized = ',initialized
-! 		stop
-	end if init
+	if (.not. initialized) call initialize_spline_coeffs
 
 	if (abs(z) <= spline_range) then ! spline real part
 		call cspeval(z,iselect,fvalRe,x_grid,nx,ilinx,fsplRe,ier)
@@ -455,6 +426,40 @@ module zfunctions_m
 	return
 
  end function zfun_real_arg_spline_D
+
+ !***********************************************************************
+
+	subroutine initialize_spline_coeffs
+
+    implicit none
+    integer :: i
+    complex(KIND=rkind)  :: fC
+
+! Generate spline grid and evaluate function
+		do i = 1, nx
+			x_grid(i) = x_grid_min + (i-1)*(x_grid_max - x_grid_min)/(nx-1)
+			fC = zfun(cmplx(x_grid(i), 0.0_rkind, kind=rkind))
+			fsplRe(1,i) = real(fC, rkind)
+			fsplIm(1,i) = aimag(fC)
+		end do
+
+! Get coefficients
+		ibcxmin = 0
+		bcxmin = zero
+		ibcxmax = 0
+		bcxmax = zero
+		ibcthmin = 0
+		bcthmin = zero
+		ibcthmax = 0
+		bcthmax =zero
+		ilinx = 0
+
+		call cspline(x_grid,nx,fsplRe,ibcxmin,bcxmin,ibcxmax,bcxmax,wk,nx,ilinx,ier)
+		call cspline(x_grid,nx,fsplIm,ibcxmin,bcxmin,ibcxmax,bcxmax,wk,nx,ilinx,ier)
+
+		initialized = .true.
+
+	end subroutine initialize_spline_coeffs
 
  end module zfunctions_m
 
