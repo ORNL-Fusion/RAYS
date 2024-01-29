@@ -68,8 +68,8 @@
 
 ! Check if arg too large to produce damping
     if (abs(xi)> 5.) return
-    zf = zfun0(cmplx(xi,kind=rkind), real(k3,kind=rkind))
-!    zf = zfun0_real_arg(xi, real(k3,kind=rkind))
+!    zf = zfun0(cmplx(xi,kind=rkind), real(k3,kind=rkind))
+    zf = zfun0_real_arg(xi, real(k3,kind=rkind))
 
 	P=eq%alpha(0)
 	Q=P/2./(1-B1)

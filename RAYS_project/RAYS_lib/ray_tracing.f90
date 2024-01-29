@@ -41,6 +41,8 @@
        end subroutine eqn_ray
     end interface
 
+	write(*,*) 'Start ray_tracing'
+
 !   Get date and time i.e. before ray loop, convert to Julian -> t_start_tracing
     call date_and_time (values=date_v)
 	call date_to_julian(date_v,t_start_tracing,ierr)
