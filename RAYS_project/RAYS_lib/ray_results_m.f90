@@ -64,7 +64,10 @@
     real(KIND=rkind), allocatable :: end_ray_vec(:,:)     ! nray
     character(len=60), allocatable :: ray_stop_flag(:)    ! nray
 
-		real(KIND=rkind)  :: total_trace_time
+	real(KIND=rkind)  :: total_trace_time
+
+	contains
+		procedure :: from_module, to_module
 
     end type run_results
 
@@ -101,23 +104,23 @@ contains
             read(input_unit, ray_results_list)
             close(unit=input_unit)
 
-! 			allocate (ray_vec(nv, max_number_of_points, nray))
-! 			allocate (residual(nstep_max, nray))
-! 			allocate (npoints(nray))
-! 			allocate (initial_ray_power(nray))
-! 			allocate (ray_trace_time(nray))
-! 			allocate (end_ray_parameter(nray))
-! 			allocate (end_residuals(nray))
-! 			allocate (max_residuals(nray))
-! 			allocate (start_ray_vec(nv, nray))
-! 			allocate (end_ray_vec(nv, nray))
-! 			allocate (ray_stop_flag(nray))
+			allocate (ray_vec(nv, max_number_of_points, nray))
+			allocate (residual(nstep_max, nray))
+			allocate (npoints(nray))
+			allocate (initial_ray_power(nray))
+			allocate (ray_trace_time(nray))
+			allocate (end_ray_parameter(nray))
+			allocate (end_residuals(nray))
+			allocate (max_residuals(nray))
+			allocate (start_ray_vec(nv, nray))
+			allocate (end_ray_vec(nv, nray))
+			allocate (ray_stop_flag(nray))
         end if
 
         dim_v_vector = nv
         number_of_rays = nray
         max_number_of_points = nstep_max+1
-		call allocate_ray_results_m
+!		call allocate_ray_results_m
 
 ! Write input namelist
 		if (verbosity >= 0) then
@@ -139,8 +142,6 @@ contains
         start_ray_vec = 0.
         end_ray_vec = 0.
         ray_stop_flag = ''
-
-			write(*,*) 'Got to 2'
 
     return
     end subroutine initialize_ray_results_m
@@ -195,11 +196,11 @@ contains
     call check( nf90_def_var(ncid, 'end_ray_parameter', NF90_FLOAT, [number_of_rays_id], end_ray_parameter_id))
     call check( nf90_def_var(ncid, 'start_ray_vec', NF90_FLOAT, [dim_v_vector_id,number_of_rays_id], start_ray_vec_id))
     call check( nf90_def_var(ncid, 'end_ray_vec', NF90_FLOAT, [dim_v_vector_id,number_of_rays_id], end_ray_vec_id))
-    call check( nf90_def_var(ncid, 'ray_stop_flag', NF90_CHAR, [d60_id], ray_stop_flag_id))
+    call check( nf90_def_var(ncid, 'ray_stop_flag', NF90_CHAR, [d60_id,number_of_rays_id], ray_stop_flag_id))
     call check( nf90_def_var(ncid, 'total_trace_time', NF90_FLOAT, total_trace_time_id))
 
 ! Put global attributes
-    call check( nf90_put_att(ncid, NF90_GLOBAL, 'RAYS_run_label', 'RAYS_run_label'))
+    call check( nf90_put_att(ncid, NF90_GLOBAL, 'RAYS_run_label', RAYS_run_label))
 
 call check( nf90_enddef(ncid))
 
@@ -248,7 +249,7 @@ call check( nf90_enddef(ncid))
     character(len=80) :: out_filename
 
     ! Open fortran ascii file for results output
-    results_star_unit = get_unit_number
+    results_star_unit = get_unit_number()
     out_filename = 'run_results.'//trim(run_label)
     open(unit=results_star_unit, file=trim(out_filename), &
        & action='write', status='replace', form='formatted')
@@ -495,45 +496,88 @@ call check( nf90_enddef(ncid))
 
 !****************************************************************************
 
-    subroutine results_type_from_module_data_m(this_run)
+    subroutine from_module(this)
 
     implicit none
-    type (run_results), intent(out) :: this_run
 
-	allocate (this_run%ray_vec(dim_v_vector, max_number_of_points, number_of_rays))
-	allocate (this_run%residual(max_number_of_points, number_of_rays))
-	allocate (this_run%npoints(number_of_rays))
-	allocate (this_run%initial_ray_power(number_of_rays))
-	allocate (this_run%ray_trace_time(number_of_rays))
-	allocate (this_run%end_ray_parameter(number_of_rays))
-	allocate (this_run%end_residuals(number_of_rays))
-	allocate (this_run%max_residuals(number_of_rays))
-	allocate (this_run%start_ray_vec(dim_v_vector, number_of_rays))
-	allocate (this_run%end_ray_vec(dim_v_vector, number_of_rays))
-	allocate (this_run%ray_stop_flag(number_of_rays))
+    class (run_results) ::  this
 
-    this_run%RAYS_run_label = RAYS_run_label
-    this_run%date_vector = date_vector
-    this_run%number_of_rays = number_of_rays
-    this_run%max_number_of_points = max_number_of_points
-    this_run%dim_v_vector = dim_v_vector
-    this_run%npoints = npoints
+ write(*,*) 'from_module'
+! 	allocate ( this%ray_vec(dim_v_vector, max_number_of_points, number_of_rays))
+! 	allocate ( this%residual(max_number_of_points, number_of_rays))
+! 	allocate ( this%npoints(number_of_rays))
+! 	allocate ( this%initial_ray_power(number_of_rays))
+! 	allocate ( this%ray_trace_time(number_of_rays))
+! 	allocate ( this%end_ray_parameter(number_of_rays))
+! 	allocate ( this%end_residuals(number_of_rays))
+! 	allocate ( this%max_residuals(number_of_rays))
+! 	allocate ( this%start_ray_vec(dim_v_vector, number_of_rays))
+! 	allocate ( this%end_ray_vec(dim_v_vector, number_of_rays))
+! 	allocate ( this%ray_stop_flag(number_of_rays))
 
-    this_run%total_trace_time = total_trace_time
-    this_run%ray_trace_time = initial_ray_power
-    this_run%ray_trace_time = ray_trace_time
-    this_run%end_ray_parameter = end_ray_parameter
-    this_run%end_residuals = end_residuals
-    this_run%max_residuals = max_residuals
-    this_run%start_ray_vec = start_ray_vec
-    this_run%end_ray_vec = end_ray_vec
-    this_run%residual = residual
-    this_run%ray_vec = ray_vec
+     this%RAYS_run_label = RAYS_run_label
+     this%date_vector = date_vector
+     this%number_of_rays = number_of_rays
+     this%max_number_of_points = max_number_of_points
+     this%dim_v_vector = dim_v_vector
+     this%npoints = npoints
 
-    end subroutine results_type_from_module_data_m
+     this%total_trace_time = total_trace_time
+     this%initial_ray_power = initial_ray_power
+     this%ray_trace_time = ray_trace_time
+     this%end_ray_parameter = end_ray_parameter
+     this%end_residuals = end_residuals
+     this%max_residuals = max_residuals
+     this%start_ray_vec = start_ray_vec
+     this%end_ray_vec = end_ray_vec
+     this%residual = residual
+     this%ray_vec = ray_vec
+     this%ray_stop_flag = ray_stop_flag
 
+    end subroutine from_module
 
+!****************************************************************************
+
+    subroutine to_module(this)
+
+    implicit none
+
+    class (run_results) ::  this
+
+ write(*,*) 'to_module'
+! 	allocate ( this%ray_vec(dim_v_vector, max_number_of_points, number_of_rays))
+! 	allocate ( this%residual(max_number_of_points, number_of_rays))
+! 	allocate ( this%npoints(number_of_rays))
+! 	allocate ( this%initial_ray_power(number_of_rays))
+! 	allocate ( this%ray_trace_time(number_of_rays))
+! 	allocate ( this%end_ray_parameter(number_of_rays))
+! 	allocate ( this%end_residuals(number_of_rays))
+! 	allocate ( this%max_residuals(number_of_rays))
+! 	allocate ( this%start_ray_vec(dim_v_vector, number_of_rays))
+! 	allocate ( this%end_ray_vec(dim_v_vector, number_of_rays))
+! 	allocate ( this%ray_stop_flag(number_of_rays))
+
+    call deallocate_ray_results_m
+
+     RAYS_run_label = this%RAYS_run_label
+     date_vector = this%date_vector
+     number_of_rays = this%number_of_rays
+     max_number_of_points = this%max_number_of_points
+     dim_v_vector = this%dim_v_vector
+     npoints = this%npoints
+
+     total_trace_time = this%total_trace_time
+     initial_ray_power = this%initial_ray_power
+     ray_trace_time = this%ray_trace_time
+     end_ray_parameter = this%end_ray_parameter
+     end_residuals = this%end_residuals
+     max_residuals = this%max_residuals
+     start_ray_vec = this%start_ray_vec
+     end_ray_vec = this%end_ray_vec
+     residual = this%residual
+     ray_vec = this%ray_vec
+     ray_stop_flag = this%ray_stop_flag
+
+    end subroutine to_module
 
  end module ray_results_m
-
-!********************************************************************

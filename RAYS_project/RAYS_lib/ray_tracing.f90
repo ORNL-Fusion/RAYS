@@ -41,8 +41,6 @@
        end subroutine eqn_ray
     end interface
 
-	write(*,*) 'Start ray_tracing'
-
 !   Get date and time i.e. before ray loop, convert to Julian -> t_start_tracing
     call date_and_time (values=date_v)
 	call date_to_julian(date_v,t_start_tracing,ierr)
@@ -59,7 +57,7 @@
 
 !!$OMP DO
     ray_loop: do iray = 1, nray
-!$  write(12,*) 'ray_tracing begin: ray# = ',iray,'  omp_get_thread_num = ', omp_get_thread_num()
+!!$  write(12,*) 'ray_tracing begin: ray# = ',iray,'  omp_get_thread_num = ', omp_get_thread_num()
 
          call message(1)
          call message ('ray_tracing: ray #', iray, 1)
