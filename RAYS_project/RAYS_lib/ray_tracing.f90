@@ -1,8 +1,16 @@
  subroutine trace_rays
 ! Does all ray tracing.  Outer loop iterates over different rays.  Inner loop iterates
-! over ray parameter step, s, to calculate ray trajectory.  Output is saved after each step/
+! over ray parameter step, s, to calculate ray trajectory.
+!
+! Note: ray loop is parallelized with OpenMP.  Results for each ray are written thread-safe
+!       to arrays in module ray_results_M ater each step
+!
+!       All output to file or stdout in the parallel region is suppressed by setting
+!       verbosity = 0 in diagnostics_m. Primarily for debugging purposes, with a single
+!       thread, incremental output after each ray step can be turned on by setting namelist
+!       variable, write_formatted_ray_files = .true.
 
-! External procedures: cpu_time (intrinsic), check_save (check_save.f90)
+! External procedures: cpu_time (intrinsic), check_save (check_save.f90),
 
     use constants_m, only : rkind
     use diagnostics_m, only : message_unit, message, verbosity, write_formatted_ray_files, &
@@ -277,13 +285,6 @@
        write(ray_list_unit, *) ray_stop_flag
     end if
 
-! Below are writes for binary file.  For now use formatted
-!      write (95) nray
-!      write (95) npoints
-!      write (95) nv
-!      write (95) ray_stop
-
-!	call cpu_time(t_finish_tracing)
 
     return
  end subroutine trace_rays

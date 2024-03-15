@@ -11,14 +11,12 @@
                             & write_results_LD, write_results_NC, run_results
 
     implicit none
+    character(len=80) :: NC_filename
 
 ! Time and date vector - local, not the one loaded in subroutine initialize()
     integer :: date_v(8), ierr
     real(KIND=rkind) :: code_time
     type(run_results) :: res
-
-     call res%from_module
-     call res%to_module
 
     if (write_results_list_directed .eqv. .true.) then
         call write_results_LD

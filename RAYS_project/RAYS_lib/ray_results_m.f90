@@ -16,7 +16,7 @@
 ! Time and date vector, get from diagnostics_m
     integer :: date_vector(8)
 
-!  Run label (N.B. should be legal in file name, get from diagnostics_m)
+!  Run label (N.B. should be legal in a file name, get from diagnostics_m)
     character(len=60) :: RAYS_run_label = ''
 
     integer :: number_of_rays, max_number_of_points, dim_v_vector
@@ -32,8 +32,8 @@
     real(KIND=rkind), allocatable :: end_residuals(:)     ! nray
     real(KIND=rkind), allocatable :: max_residuals(:)     ! nray
     real(KIND=rkind), allocatable :: end_ray_parameter(:) ! nray
-    real(KIND=rkind), allocatable :: start_ray_vec(:,:)   ! nray
-    real(KIND=rkind), allocatable :: end_ray_vec(:,:)     ! nray
+    real(KIND=rkind), allocatable :: start_ray_vec(:,:)   ! nv, nray
+    real(KIND=rkind), allocatable :: end_ray_vec(:,:)     ! nv, nray
     character(len=60), allocatable :: ray_stop_flag(:)    ! nray
 
     real(KIND=rkind)  :: total_trace_time
@@ -60,14 +60,14 @@
     real(KIND=rkind), allocatable :: end_residuals(:)     ! nray
     real(KIND=rkind), allocatable :: max_residuals(:)     ! nray
     real(KIND=rkind), allocatable :: end_ray_parameter(:) ! nray
-    real(KIND=rkind), allocatable :: start_ray_vec(:,:)   ! nray
-    real(KIND=rkind), allocatable :: end_ray_vec(:,:)     ! nray
+    real(KIND=rkind), allocatable :: start_ray_vec(:,:)   ! nv, nray
+    real(KIND=rkind), allocatable :: end_ray_vec(:,:)     ! nv, nray
     character(len=60), allocatable :: ray_stop_flag(:)    ! nray
 
 	real(KIND=rkind)  :: total_trace_time
 
 	contains
-		procedure :: from_module, to_module
+		procedure :: from_module, to_module, read_results_instance_NC
 
     end type run_results
 
@@ -117,11 +117,6 @@ contains
 			allocate (ray_stop_flag(nray))
         end if
 
-        dim_v_vector = nv
-        number_of_rays = nray
-        max_number_of_points = nstep_max+1
-!		call allocate_ray_results_m
-
 ! Write input namelist
 		if (verbosity >= 0) then
 			write(message_unit, ray_results_list)
@@ -149,6 +144,7 @@ contains
 !****************************************************************************
 
   subroutine write_results_NC
+! writes a netCDF file containing all module data
 
     use diagnostics_m, only : run_label
     use netcdf
@@ -164,7 +160,7 @@ contains
 
 ! Declarations: variables
     integer, parameter :: n_vars =  12
-    integer :: date_vector_id, ray_vec_id, residual_id, initial_ray_power_id,&
+    integer :: date_vector_id, ray_vec_id, residual_id, npoints_id, initial_ray_power_id,&
              & ray_trace_time_id, end_residuals_id, max_residuals_id, end_ray_parameter_id,&
              & start_ray_vec_id, end_ray_vec_id, ray_stop_flag_id, total_trace_time_id
 
@@ -173,8 +169,6 @@ contains
 
     out_filename = 'run_results.'//trim(run_label)//'.nc'
 
-	d8 = 8; d60 = 60
-
 !   Open NC file
     call check( nf90_create(trim(out_filename), nf90_clobber, ncid) )
 
@@ -182,13 +176,14 @@ contains
     call check( nf90_def_dim(ncid, 'number_of_rays', number_of_rays, number_of_rays_id))
     call check( nf90_def_dim(ncid, 'max_number_of_points', max_number_of_points, max_number_of_points_id))
     call check( nf90_def_dim(ncid, 'dim_v_vector', dim_v_vector, dim_v_vector_id))
-    call check( nf90_def_dim(ncid, 'd8', d8, d8_id))
-    call check( nf90_def_dim(ncid, 'd60', d60, d60_id))
+    call check( nf90_def_dim(ncid, 'd8', 8, d8_id))
+    call check( nf90_def_dim(ncid, 'd60', 60, d60_id))
 
 ! Define NC variables
     call check( nf90_def_var(ncid, 'date_vector', NF90_INT, [d8_id], date_vector_id))
     call check( nf90_def_var(ncid, 'ray_vec', NF90_DOUBLE, [dim_v_vector_id,max_number_of_points_id,number_of_rays_id], ray_vec_id))
     call check( nf90_def_var(ncid, 'residual', NF90_DOUBLE, [max_number_of_points_id,number_of_rays_id], residual_id))
+    call check( nf90_def_var(ncid, 'npoints', NF90_INT, [number_of_rays_id], npoints_id))
     call check( nf90_def_var(ncid, 'initial_ray_power', NF90_FLOAT, [number_of_rays_id], initial_ray_power_id))
     call check( nf90_def_var(ncid, 'ray_trace_time', NF90_FLOAT, [number_of_rays_id], ray_trace_time_id))
     call check( nf90_def_var(ncid, 'end_residuals', NF90_FLOAT, [number_of_rays_id], end_residuals_id))
@@ -208,6 +203,7 @@ call check( nf90_enddef(ncid))
     call check( nf90_put_var(ncid, date_vector_id, date_vector))
     call check( nf90_put_var(ncid, ray_vec_id, ray_vec))
     call check( nf90_put_var(ncid, residual_id, residual))
+    call check( nf90_put_var(ncid, npoints_id, npoints))
     call check( nf90_put_var(ncid, initial_ray_power_id, initial_ray_power))
     call check( nf90_put_var(ncid, ray_trace_time_id, ray_trace_time))
     call check( nf90_put_var(ncid, end_residuals_id, end_residuals))
@@ -222,6 +218,103 @@ call check( nf90_enddef(ncid))
     call check( nf90_close(ncid) )
 
   end subroutine write_results_NC
+
+!****************************************************************************
+
+  subroutine read_results_instance_NC(this, in_filename)
+! writes a netCDF file containing all module data
+
+    use diagnostics_m, only : run_label
+    use netcdf
+
+    implicit none
+    class (run_results) ::  this
+
+! netCDF Declarations
+    integer :: ncid
+    integer, parameter :: n_dims = 5
+    integer :: number_of_rays_id, max_number_of_points_id, dim_v_vector_id, d8_id, d60_id
+    integer :: d8, d60 ! Need these declarations, they are not in the module data
+
+! Declarations: variables
+    integer, parameter :: n_vars =  13
+    integer :: date_vector_id, ray_vec_id, residual_id, npoints_id, initial_ray_power_id,&
+             & ray_trace_time_id, end_residuals_id, max_residuals_id, end_ray_parameter_id,&
+             & start_ray_vec_id, end_ray_vec_id, ray_stop_flag_id, total_trace_time_id
+
+ !  File name for  output
+    character(len=80) :: in_filename
+
+! If this instance is already allocated deallocate its arrays
+  if (allocated(this%ray_vec)) deallocate(this%ray_vec)
+  if (allocated(this%residual)) deallocate(this%residual)
+  if (allocated(this%npoints)) deallocate(this%npoints)
+  if (allocated(this%initial_ray_power)) deallocate(this%initial_ray_power)
+  if (allocated(this%ray_trace_time)) deallocate(this%ray_trace_time)
+  if (allocated(this%end_residuals)) deallocate(this%end_residuals)
+  if (allocated(this%max_residuals)) deallocate(this%max_residuals)
+  if (allocated(this%end_ray_parameter)) deallocate(this%end_ray_parameter)
+  if (allocated(this%start_ray_vec)) deallocate(this%start_ray_vec)
+  if (allocated(this%end_ray_vec)) deallocate(this%end_ray_vec)
+  if (allocated(this%ray_stop_flag)) deallocate(this%ray_stop_flag)
+
+!   Open NC file
+    call check( nf90_open(in_filename, nf90_nowrite, ncid) )
+
+!   Inquire NC dimensions
+    call check( nf90_inq_dimid(ncid, 'number_of_rays', number_of_rays_id))
+    call check(nf90_inquire_dimension(ncid, number_of_rays_id, len=this%number_of_rays))
+    call check( nf90_inq_dimid(ncid, 'max_number_of_points', max_number_of_points_id))
+    call check(nf90_inquire_dimension(ncid, max_number_of_points_id, len=this%max_number_of_points))
+    call check( nf90_inq_dimid(ncid, 'dim_v_vector', dim_v_vector_id))
+    call check(nf90_inquire_dimension(ncid, dim_v_vector_id, len=this%dim_v_vector))
+
+!   Allocate arrays
+    allocate(this%ray_vec(this%dim_v_vector,this%max_number_of_points,this%number_of_rays))
+    allocate(this%residual(this%max_number_of_points,this%number_of_rays))
+    allocate(this%npoints(this%number_of_rays))
+    allocate(this%initial_ray_power(this%number_of_rays))
+    allocate(this%ray_trace_time(this%number_of_rays))
+    allocate(this%end_residuals(this%number_of_rays))
+    allocate(this%max_residuals(this%number_of_rays))
+    allocate(this%end_ray_parameter(this%number_of_rays))
+    allocate(this%start_ray_vec(this%dim_v_vector,this%number_of_rays))
+    allocate(this%end_ray_vec(this%dim_v_vector,this%number_of_rays))
+    allocate(this%ray_stop_flag(this%number_of_rays))
+
+!   Get varids and variable values
+    call check(nf90_inq_varid(ncid, 'date_vector', date_vector_id))
+    call check( nf90_get_var(ncid, date_vector_id, this%date_vector))
+    call check(nf90_inq_varid(ncid, 'ray_vec', ray_vec_id))
+    call check( nf90_get_var(ncid, ray_vec_id, this%ray_vec))
+    call check(nf90_inq_varid(ncid, 'residual', residual_id))
+    call check( nf90_get_var(ncid, residual_id, this%residual))
+    call check(nf90_inq_varid(ncid, 'npoints', npoints_id))
+    call check( nf90_get_var(ncid, npoints_id, this%npoints))
+    call check(nf90_inq_varid(ncid, 'npoints', npoints_id))
+    call check(nf90_inq_varid(ncid, 'initial_ray_power', initial_ray_power_id))
+    call check( nf90_get_var(ncid, initial_ray_power_id, this%initial_ray_power))
+    call check(nf90_inq_varid(ncid, 'ray_trace_time', ray_trace_time_id))
+    call check( nf90_get_var(ncid, ray_trace_time_id, this%ray_trace_time))
+    call check(nf90_inq_varid(ncid, 'end_residuals', end_residuals_id))
+    call check( nf90_get_var(ncid, end_residuals_id, this%end_residuals))
+    call check(nf90_inq_varid(ncid, 'max_residuals', max_residuals_id))
+    call check( nf90_get_var(ncid, max_residuals_id, this%max_residuals))
+    call check(nf90_inq_varid(ncid, 'end_ray_parameter', end_ray_parameter_id))
+    call check( nf90_get_var(ncid, end_ray_parameter_id, this%end_ray_parameter))
+    call check(nf90_inq_varid(ncid, 'start_ray_vec', start_ray_vec_id))
+    call check( nf90_get_var(ncid, start_ray_vec_id, this%start_ray_vec))
+    call check(nf90_inq_varid(ncid, 'end_ray_vec', end_ray_vec_id))
+    call check( nf90_get_var(ncid, end_ray_vec_id, this%end_ray_vec))
+    call check(nf90_inq_varid(ncid, 'ray_stop_flag', ray_stop_flag_id))
+    call check( nf90_get_var(ncid, ray_stop_flag_id, this%ray_stop_flag))
+    call check(nf90_inq_varid(ncid, 'total_trace_time', total_trace_time_id))
+    call check( nf90_get_var(ncid, total_trace_time_id, this%total_trace_time))
+
+!   Close the NC file
+    call check( nf90_close(ncid) )
+
+  end subroutine read_results_instance_NC
 
 !****************************************************************************
 
@@ -502,7 +595,6 @@ call check( nf90_enddef(ncid))
 
     class (run_results) ::  this
 
- write(*,*) 'from_module'
 ! 	allocate ( this%ray_vec(dim_v_vector, max_number_of_points, number_of_rays))
 ! 	allocate ( this%residual(max_number_of_points, number_of_rays))
 ! 	allocate ( this%npoints(number_of_rays))
@@ -544,7 +636,6 @@ call check( nf90_enddef(ncid))
 
     class (run_results) ::  this
 
- write(*,*) 'to_module'
 ! 	allocate ( this%ray_vec(dim_v_vector, max_number_of_points, number_of_rays))
 ! 	allocate ( this%residual(max_number_of_points, number_of_rays))
 ! 	allocate ( this%npoints(number_of_rays))
