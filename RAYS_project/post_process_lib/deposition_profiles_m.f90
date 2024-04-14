@@ -17,7 +17,7 @@
 ! "slab" and "axisym_toroid" geometries.  For now assume that all profiles will be calculated
 ! that we know how to calculate (although there are ideas on how to let the user can select
 ! which profiles to calculate.  This is sitting in a previous version, in spare_parts)
-!!
+!
 ! Every profile needs:
 ! 1) An entry in the list of known profile names and the name of the grid that goes with it
 ! 2) An evaluator subroutine to calculate the grid and profile quantity at each ray step
@@ -79,7 +79,8 @@ contains
 subroutine initialize_deposition_profiles(read_input)
 
 	use constants_m, only : rkind
-	use diagnostics_m, only : message_unit, text_message, verbosity, run_label, date_v
+	use diagnostics_m, only : message_unit, text_message, verbosity, run_label, date_v, &
+	                  & messages_to_stdout
 	use ray_init_m, only : nray
 	use equilibrium_m, only : equilib_model
 	use slab_eq_m, only : xmin_slab => xmin, xmax_slab => xmax
@@ -104,8 +105,13 @@ subroutine initialize_deposition_profiles(read_input)
 		open(unit=input_unit, file='post_process_rays.in',action='read', status='old', form='formatted')
 		read(input_unit, deposition_profiles_list)
 		close(unit=input_unit)
-		if (verbosity > 0) write(message_unit, deposition_profiles_list)
 	end if
+
+! Write input namelist
+    if (verbosity >= 0) then
+		write(message_unit, deposition_profiles_list)
+		if (messages_to_stdout) write(*, deposition_profiles_list)
+    end if
 
 	if (n_bins == 0) n_bins = default_n_bins
 
@@ -278,7 +284,7 @@ subroutine initialize_deposition_profiles(read_input)
 
 !****************************************************************************
 
-    subroutine write_deposition_profiles_list_directed
+    subroutine write_deposition_profiles_LD
 
 		use diagnostics_m, only : run_label
 		use ode_m, only : nstep_max
@@ -313,7 +319,108 @@ subroutine initialize_deposition_profiles(read_input)
     close(unit = dep_profile_unit)
 
 	return
-    end subroutine write_deposition_profiles_list_directed
+    end subroutine write_deposition_profiles_LD
+
+
+!****************************************************************************
+
+ subroutine write_deposition_profiles_NC
+
+	use diagnostics_m, only : date_v, run_label
+	use ode_m, only : nstep_max
+	use ray_results_m, only : npoints
+	use ray_init_m, only : nray
+	use netcdf
+
+	implicit none
+
+	integer :: dep_profile_unit, get_unit_number
+	integer :: i_profile
+
+	!  File name for output
+	character(len=80) :: out_filename
+
+! netCDF Declarations
+	integer :: ncid
+	integer :: nf90_put_var, dim_len, ierr
+	integer :: start1(1)
+	character(len = 20) :: dim_name
+! Declarations: dimensions
+	integer, parameter :: n_dims = 5, d8 = 8, d20 = 20
+!	integer :: n_profiles, n_bins, n_bins_p1
+	integer :: n_bins_p1
+	integer :: n_profiles_id, n_bins_id, n_bins_p1_id, d8_id, d20_id
+! Declarations: variables
+	integer, parameter :: n_vars =  8
+	integer :: Q_sum_id, date_vector_id, profile_name_id, grid_name_id, grid_min_id,&
+		         & grid_max_id, grid_id, profile_id
+
+!   Open NC file
+	dep_profile_unit = get_unit_number()
+	out_filename = 'deposition_profiles.'//trim(run_label)//'.nc'
+	call check( nf90_create(trim(out_filename), nf90_clobber, ncid) )
+
+!   Define NC dimensions
+    call check( nf90_def_dim(ncid, 'n_profiles', NF90_UNLIMITED, n_profiles_id))
+    call check( nf90_def_dim(ncid, 'n_bins', n_bins, n_bins_id))
+    call check( nf90_def_dim(ncid, 'n_bins_p1', n_bins+1, n_bins_p1_id))
+    call check( nf90_def_dim(ncid, 'd20', d20, d20_id))
+
+! Define NC variables
+    call check( nf90_def_var(ncid, 'Q_sum', NF90_DOUBLE, n_profiles_id, Q_sum_id))
+    call check( nf90_def_var(ncid, 'n_bins', NF90_INT, [n_profiles_id], n_bins_id))
+    call check( nf90_def_var(ncid, 'grid_min', NF90_DOUBLE, [n_profiles_id], grid_min_id))
+    call check( nf90_def_var(ncid, 'grid_max', NF90_DOUBLE, [n_profiles_id], grid_max_id))
+    call check( nf90_def_var(ncid, 'profile_name', NF90_CHAR, [d20_id,n_profiles_id], profile_name_id))
+    call check( nf90_def_var(ncid, 'grid_name', NF90_CHAR, [d20_id,n_profiles_id], grid_name_id))
+    call check( nf90_def_var(ncid, 'grid', NF90_DOUBLE, [n_bins_p1_id,n_profiles_id], grid_id))
+    call check( nf90_def_var(ncid, 'profile', NF90_DOUBLE, [n_bins_id,n_profiles_id], profile_id))
+
+! Put global attributes
+    call check( nf90_put_att(ncid, NF90_GLOBAL, 'RAYS_run_label', run_label))
+    call check( nf90_put_att(ncid, NF90_GLOBAL, 'date_vector', date_v))
+
+    call check( nf90_enddef(ncid))
+
+! Put NC variables
+	profile_loop: do i_profile = 1, n_profiles
+
+		call check( nf90_put_var(ncid, Q_sum_id, profiles_1D(i_profile)%Q_sum,&
+					start=[i_profile]))
+		call check( nf90_put_var(ncid, n_bins_id, profiles_1D(i_profile)%n_bins,&
+					start=[i_profile]))
+		call check( nf90_put_var(ncid, grid_min_id, profiles_1D(i_profile)%grid_min,&
+					start=[i_profile]))
+ 		call check( nf90_put_var(ncid, grid_max_id, profiles_1D(i_profile)%grid_max,&
+					start=[i_profile]))
+		call check( nf90_put_var(ncid, profile_name_id, profiles_1D(i_profile)%profile_name,&
+					start=[1,i_profile], count = [d20,1]))
+ 		call check( nf90_put_var(ncid, grid_name_id, profiles_1D(i_profile)%grid_name,&
+					start=[1,i_profile], count = [d20,1]))
+		call check( nf90_put_var(ncid, grid_id, profiles_1D(i_profile)%grid,&
+					start=[1,i_profile], count = [n_bins+1,1]))
+		call check( nf90_put_var(ncid, profile_id, profiles_1D(i_profile)%profile,&
+					start=[1,i_profile], count = [n_bins,1]))
+
+	end do profile_loop
+
+!   Close the NC file
+    call check( nf90_close(ncid) )
+
+	return
+    end subroutine write_deposition_profiles_NC
+
+!****************************************************************************
+
+  subroutine check(status)
+    use netcdf
+    integer, intent ( in) :: status
+
+    if(status /= nf90_noerr) then
+      print *, trim(nf90_strerror(status))
+      stop 2
+    end if
+  end subroutine check
 
 !****************************************************************************
 ! Evaluators

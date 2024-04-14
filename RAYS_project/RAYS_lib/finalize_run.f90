@@ -7,17 +7,23 @@
     use diagnostics_m, only : message_unit, message, text_message, run_label, &
            & ray_list_unit, output_unit, t_start_RAYS, t_finish_RAYS, day_to_seconds, &
            & date_to_julian
-    use ray_results_m, only : write_results_list_directed,&
-                            & write_results_LD
+    use ray_results_m, only : write_results_list_directed, write_results_netCDF,&
+                            & write_results_LD, write_results_NC, run_results
 
     implicit none
+    character(len=80) :: NC_filename
 
 ! Time and date vector - local, not the one loaded in subroutine initialize()
     integer :: date_v(8), ierr
     real(KIND=rkind) :: code_time
+    type(run_results) :: res
 
     if (write_results_list_directed .eqv. .true.) then
         call write_results_LD
+    end if
+
+    if (write_results_netCDF .eqv. .true.) then
+        call write_results_NC
     end if
 
     close(ray_list_unit)

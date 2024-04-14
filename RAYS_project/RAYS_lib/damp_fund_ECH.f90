@@ -13,7 +13,7 @@
     use species_m, only : nspec, qs, ms
     use ode_m, only : nv
     use equilibrium_m, only : eq_point, write_eq_point
-    use zfunctions_m, only : zfun, zfun0
+    use zfunctions_m, only : zfun, zfun0, zfun0_real_arg
 
     implicit none
 
@@ -22,9 +22,9 @@
     real(KIND=rkind), intent(in) :: vg(3)
     real(KIND=rkind), intent(out) :: ksi(0:nspec), ki
 
-    real(KIND=rkind) :: kvec(3), nvec(3), vth, vg_unit(3), expand_z0
+    real(KIND=rkind) :: kvec(3), nvec(3), vth, vg_unit(3), expand_z0, xi
 
-    complex(KIND=rkind) :: xi, zf, zfun0
+    complex(KIND=rkind) :: zf, zfun0, zfun0_real_arg
 
 	REAL(KIND=rkind)  :: ALFAE, BETAE, VT
 	REAL(KIND=rkind)  :: B1, P, Q, R1, R3, k1, k3, RDX, R1S, R3S, RS
@@ -64,12 +64,12 @@
 
 !      Z function.
 
-    xi = (omgrf+eq%omgc(0)) / (k3*vth)
+    xi = (omgrf+eq%omgc(0))/(k3*vth)
 
 ! Check if arg too large to produce damping
     if (abs(xi)> 5.) return
-    zf = zfun0(cmplx(xi), real(k3))
-!    zf = zfun(cmplx(xi))
+!    zf = zfun0(cmplx(xi,kind=rkind), real(k3,kind=rkind))
+    zf = zfun0_real_arg(xi, real(k3,kind=rkind))
 
 	P=eq%alpha(0)
 	Q=P/2./(1-B1)

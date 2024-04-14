@@ -35,6 +35,7 @@
   subroutine initialize_damping_m(read_input)
 
     use diagnostics_m, only : message_unit, verbosity
+    use zfunctions_m, only : initialized, initialize_spline_coeffs
 
     implicit none
     logical, intent(in) :: read_input
@@ -48,6 +49,9 @@
         close(unit=input_unit)
     end if
     if (verbosity >= 0) write(message_unit, damping_list)
+
+! initialize splines
+	if (.not. initialized) call initialize_spline_coeffs
 
     return
   end subroutine initialize_damping_m

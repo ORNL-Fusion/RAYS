@@ -51,6 +51,7 @@ target_link_libraries(RAYS_lib
                       PUBLIC
                       spline math_functions
                       $<$<BOOL:${OpenMP_Fortran_FOUND}>:OpenMP::OpenMP_Fortran>
+                      $<$<BOOL:${NetCDF_FOUND}>:NetCDF::NetCDF>
 )
 #
 # target_sources (RAYS_lib

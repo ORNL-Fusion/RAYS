@@ -22,7 +22,8 @@
 !   External procedures: deriv_cold (deriv_cold)
 
     use constants_m, only : rkind
-    use diagnostics_m, only : integrate_eq_gradients, verbosity, message_unit, message
+    use diagnostics_m, only : integrate_eq_gradients, messages_to_stdout, verbosity,&
+                            & message_unit, message
     use species_m, only : nspec
     use equilibrium_m, only : equilibrium, eq_point, write_eq_point
     use ode_m, only : nv, ray_deriv_name, ode_stop
@@ -86,11 +87,16 @@
 ! Check if equib_err has been set in equilibrium
     if (trim(eq%equib_err) /= '') then
         ray_stop%stop_ode = .true.
-        write (*,*) 'eqn_ray: s = ', s, '  equib_err = ', eq%equib_err
-        write (message_unit,'(a,g12.4,3a,3g12.4)') 'eqn_ray: s = ', s, '  equib_err = ',&
-              & trim(eq%equib_err), '  r_end = ', rvec
         ray_stop%ode_stop_flag = eq%equib_err
-        return
+
+		if (verbosity > 0) then
+          write (message_unit,'(a,g12.4,3a,3g12.4)') 'eqn_ray: s = ', s, '  equib_err = ',&
+              & trim(eq%equib_err), '  r_end = ', rvec
+		  if (messages_to_stdout) then
+			 write (*,*) 'eqn_ray: s = ', s, '  equib_err = ', eq%equib_err
+		  end if
+		end if
+         return
     end if
 
 !   Calculate dD/dk, dD/dx, and dD/d(omega)

@@ -18,11 +18,6 @@ target_include_directories (post_process_lib
 )
 target_link_libraries (post_process_lib
                       PUBLIC
-                      RAYS_lib math_functions)
-
-# target_include_directories (RAYS_lib
-#                             PUBLIC
-#                             $<TARGET_PROPERTY:math_functions,BINARY_DIR>
-# )
-# 
-# target_link_libraries(RAYS_lib)
+                      RAYS_lib math_functions
+                      $<$<BOOL:${NetCDF_FOUND}>:NetCDF::NetCDF>
+)

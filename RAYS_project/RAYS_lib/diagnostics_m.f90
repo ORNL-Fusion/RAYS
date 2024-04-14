@@ -106,7 +106,7 @@ contains
    ! Find date and time
     call date_and_time (values=date_v)
 
-    ! Convert start date_v to Julian
+    ! Convert start date_v to Julian to get process start time
 	call date_to_julian(date_v,t_start_RAYS,ierr)
 	if (ierr .ne. 0) then
 		write(*,*) 'julian start, ierr = ', ierr

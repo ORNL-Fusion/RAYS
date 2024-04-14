@@ -20,6 +20,7 @@ target_sources (test_zfun
 target_link_libraries (test_zfun
                        PUBLIC
                        math_functions
+                       spline
 )
 
 add_executable (test_trapezoid)

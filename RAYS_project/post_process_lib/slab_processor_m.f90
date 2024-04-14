@@ -72,7 +72,7 @@
     use constants_m, only : rkind
     use diagnostics_m, only : message_unit, message, text_message
     use deposition_profiles_m, only : calculate_deposition_profiles, &
-                        & write_deposition_profiles_list_directed
+                        & write_deposition_profiles_LD
 
     implicit none
 
@@ -86,7 +86,7 @@
 
     if (calculate_dep_profiles .eqv. .true.) call calculate_deposition_profiles
 
-    if (write_dep_profiles .eqv. .true.) call write_deposition_profiles_list_directed
+    if (write_dep_profiles .eqv. .true.) call write_deposition_profiles_LD
 
     call text_message('Finished slab_processor work')
 

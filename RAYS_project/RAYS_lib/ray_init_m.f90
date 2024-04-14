@@ -103,7 +103,6 @@ contains
                 call text_message('initialize_ray_init: invalid ray_init_model = ', trim(ray_init_model),0)
                 stop 1
         end select init_model
-  write(*,*) 'ray_pwr_wt = ', ray_pwr_wt
 
     return
     end subroutine initialize_ray_init_m
