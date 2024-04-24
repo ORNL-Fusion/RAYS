@@ -1,10 +1,22 @@
  module ray_results_m
 
 ! A module that contains results from ray tracing for storage in memory or for writing
-! at the end of the run.
+! at the end of the run.  The is a derived type 'run_results' that can accept the results
+! module data so we can have multiple instances (maybe useful for analysis). And there are
+! routines to write the data to files in either netCDF or list-directed ascii format.
 !
-! N.B. ray_vec(:,:,:) is allocated ray_vec(nv, nstep_max+1, nray) to accomodate the
-! initial point (step zero) plus nstep_max steps beyond that.
+! N.B. ray_vec(:,:,:) is allocated ray_vec(nv, max_number_of_points, nray) where
+! max_number_of_points = nstep_max+1 to accomodate the initial point (step zero)
+! plus nstep_max steps beyond that.  Save for residual(max_number_of_points, nray)
+! and presumably the residual at step 0 is 0.
+!
+! Note also that nstep_max may be much bigger than the actual number of steps taken by
+! any of the rays.  We typically set nstep_max large so we won't have to worry too much
+! about how big it is.  However when we write out the results to file there is no point in
+! keeping the superflous points.  So on output we just keep up to the largest value of
+! npoints(:).  Something to be alert to is that when data is read back in and put into the
+! module, max_number_of_points will equal 'actual_max_npoints' = the largest value of
+! npoints(:).
 
     use constants_m, only : rkind
 
@@ -51,7 +63,7 @@
 
 	! ray data
 		real(KIND=rkind), allocatable :: ray_vec(:,:,:) ! nv, nstep_max+1, nray
-		real(KIND=rkind), allocatable :: residual(:,:)  ! nstep_max, nray
+		real(KIND=rkind), allocatable :: residual(:,:)  ! nstep_max+1, nray
 		integer, allocatable :: npoints(:)              ! nray
 
 	! Summary data
@@ -105,7 +117,7 @@ contains
             close(unit=input_unit)
 
 			allocate (ray_vec(nv, max_number_of_points, nray))
-			allocate (residual(nstep_max, nray))
+			allocate (residual(max_number_of_points, nray))
 			allocate (npoints(nray))
 			allocate (initial_ray_power(nray))
 			allocate (ray_trace_time(nray))
@@ -151,6 +163,8 @@ contains
 
     implicit none
 
+    integer :: actual_max_npoints
+
 ! netCDF Declarations
     integer :: ncid
 ! Declarations: dimensions
@@ -172,9 +186,11 @@ contains
 !   Open NC file
     call check( nf90_create(trim(out_filename), nf90_clobber, ncid) )
 
+    actual_max_npoints = maxval(npoints) ! see discussion above
+
 !   Define NC dimensions
     call check( nf90_def_dim(ncid, 'number_of_rays', number_of_rays, number_of_rays_id))
-    call check( nf90_def_dim(ncid, 'max_number_of_points', max_number_of_points, max_number_of_points_id))
+    call check( nf90_def_dim(ncid, 'max_number_of_points', actual_max_npoints, max_number_of_points_id))
     call check( nf90_def_dim(ncid, 'dim_v_vector', dim_v_vector, dim_v_vector_id))
     call check( nf90_def_dim(ncid, 'd8', 8, d8_id))
     call check( nf90_def_dim(ncid, 'd60', 60, d60_id))
@@ -201,8 +217,8 @@ call check( nf90_enddef(ncid))
 
 ! Put NC variables
     call check( nf90_put_var(ncid, date_vector_id, date_vector))
-    call check( nf90_put_var(ncid, ray_vec_id, ray_vec))
-    call check( nf90_put_var(ncid, residual_id, residual))
+    call check( nf90_put_var(ncid, ray_vec_id, ray_vec(:,1:actual_max_npoints,:)))
+    call check( nf90_put_var(ncid, residual_id, residual(1:actual_max_npoints,:)))
     call check( nf90_put_var(ncid, npoints_id, npoints))
     call check( nf90_put_var(ncid, initial_ray_power_id, initial_ray_power))
     call check( nf90_put_var(ncid, ray_trace_time_id, ray_trace_time))
@@ -310,6 +326,9 @@ call check( nf90_enddef(ncid))
     call check( nf90_get_var(ncid, ray_stop_flag_id, this%ray_stop_flag))
     call check(nf90_inq_varid(ncid, 'total_trace_time', total_trace_time_id))
     call check( nf90_get_var(ncid, total_trace_time_id, this%total_trace_time))
+
+! Get global attributes
+    call check( nf90_get_att(ncid, NF90_GLOBAL, 'RAYS_run_label', this%RAYS_run_label))
 
 !   Close the NC file
     call check( nf90_close(ncid) )

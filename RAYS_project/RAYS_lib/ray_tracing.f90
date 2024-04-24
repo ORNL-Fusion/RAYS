@@ -90,6 +90,7 @@
 
     !    Save in ray_results_m
 		 ray_vec(:,1,iray) = v(:)
+		 residual(1, iray) = resid ! Assume initial k really solves dispersion relation
 
          call message(1)
          call message ('trace_rays: initial (x,y,z)', v(1:3), 3, 1)
