@@ -210,7 +210,7 @@ subroutine initialize_deposition_profiles(read_input)
           & trim(equilib_model), 0)
           stop 1
     end select equilibria
-
+ write(*,*) 'Finished initialize_deposition_profiles'
 	return
 	end subroutine initialize_deposition_profiles
 
@@ -315,7 +315,7 @@ subroutine initialize_deposition_profiles(read_input)
 			write(dep_profile_unit, *) profiles_1D(i_profile)%Q_sum
 
 		end do profile_loop
-
+ write(*,*) 'Q_sum = ', profiles_1D(1)%Q_sum
     close(unit = dep_profile_unit)
 
 	return
