@@ -21,7 +21,7 @@ contains
 
   module subroutine initialize_RK4_ode
 
-     use diagnostics_m, only : message_unit, text_message, verbosity
+     use diagnostics_m, only : message_unit, text_message, messages_to_stdout, verbosity
 
     implicit none
 
@@ -32,8 +32,11 @@ contains
 !     close(unit=input_unit)
 !     write(message_unit, RK4_ode_list)
 
-    call text_message('initialize_RK4_ode: RK4 needs no initialization',1)
-    if (verbosity > 0) write(*,*) 'initialize_RK4_ode: RK4 needs no initialization'
+! Write input namelist
+    if (verbosity >= 0) then
+		call text_message('initialize_RK4_ode: RK4 needs no initialization',0)
+		if (messages_to_stdout) write(*,*) 'initialize_RK4_ode: RK4 needs no initialization'
+    end if
 
     return
   end subroutine initialize_RK4_ode

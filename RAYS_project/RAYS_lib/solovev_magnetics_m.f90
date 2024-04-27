@@ -59,7 +59,7 @@ contains
     end if
 
 ! Write input namelist
-    if (verbosity > 0) then
+    if (verbosity >= 0) then
 		write(message_unit, solovev_magnetics_list)
 		if (messages_to_stdout) write(*, solovev_magnetics_list)
     end if

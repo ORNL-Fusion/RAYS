@@ -86,7 +86,7 @@ contains
     end if
 
 ! Write input namelist
-    if (verbosity > 0) then
+    if (verbosity >= 0) then
 		write(message_unit, equilibrium_list)
 		if (messages_to_stdout) write(*, equilibrium_list)
     end if

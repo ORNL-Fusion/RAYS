@@ -31,7 +31,7 @@ contains
                & inner_bound, outer_bound, upper_bound, lower_bound)
 
     use species_m, only : nspec
-    use diagnostics_m, only : message, message_unit, verbosity
+    use diagnostics_m, only : message, message_unit,messages_to_stdout, verbosity
  !   use eqdsk_utilities_m, only : ReadgFile, R_grid, Z_grid, dR, dZ
 
     use eqdsk_utilities_m, only : ReadgFile, WritegFile, R_grid, Z_grid, dR, dZ, &
@@ -63,6 +63,13 @@ contains
         read(input_unit, eqdsk_magnetics_lin_interp_list)
         close(unit=input_unit)
         write(message_unit, eqdsk_magnetics_lin_interp_list)
+    end if
+
+! Write input namelist
+    if (verbosity >= 0) then
+		write(message_unit, eqdsk_magnetics_lin_interp_list)
+		if (messages_to_stdout) write(*, eqdsk_magnetics_lin_interp_list)
+		call message(1)
     end if
 
     call ReadgFile(eqdsk_file_name)

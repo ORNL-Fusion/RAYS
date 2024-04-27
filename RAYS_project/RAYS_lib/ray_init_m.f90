@@ -1,15 +1,15 @@
  module ray_init_m
- 
-! Generates intitial position for each ray: rvec0(1:3, iray = 1:nray) and 
+
+! Generates intitial position for each ray: rvec0(1:3, iray = 1:nray) and
 ! initial refractive index vector for each ray: rindex_vec0(1:3, iray = 1:nray)
 !
 ! How the starting points for the rays are set depends on the plasma geometry e.g
-! slab, tokamak, mirror machine, ionosphere, etc and on the geometry of the antenna 
-! There are several reasonable ways to initialize k values. In toroidal geometry at low  
-! frequencies toroidal and poloidal mode numbers are meaningful.  At higher frequencies the 
-! launch angle is more useful e.g. for ECH one launches a beam with a distribution of rays  
-! around a central beam axis. Also initialization of k requires solution of the dispersion  
-! relation, of which several different ones might be supported.  So initialization depends 
+! slab, tokamak, mirror machine, ionosphere, etc and on the geometry of the antenna
+! There are several reasonable ways to initialize k values. In toroidal geometry at low
+! frequencies toroidal and poloidal mode numbers are meaningful.  At higher frequencies the
+! launch angle is more useful e.g. for ECH one launches a beam with a distribution of rays
+! around a central beam axis. Also initialization of k requires solution of the dispersion
+! relation, of which several different ones might be supported.  So initialization depends
 ! geometry, antenna model, and dispersion model, at least.  These details are delegated to
 ! more specialized ray_init modules, this subroutine merely serves as a selector for
 ! those more specialized functions.  The dispersion solvers typically work with refractive
@@ -29,8 +29,8 @@
 
     use constants_m, only : rkind
 
-    implicit none   
-    
+    implicit none
+
     character(len=60) :: ray_init_model
 
 !   Initial position and wavenumber of the ray.  The number of rays to be traced, nray,
@@ -57,27 +57,33 @@ contains
 
     subroutine initialize_ray_init_m(read_input)
 
-        use diagnostics_m, only : message_unit, message, text_message, verbosity
+        use diagnostics_m, only : message_unit, messages_to_stdout, message, text_message, verbosity
         use simple_slab_ray_init_m, only : simple_slab_ray_init
         use solovev_ray_init_nphi_ntheta_m, only : ray_init_solovev_nphi_ntheta
         use axisym_toroid_ray_init_nphi_ntheta_m, only : ray_init_axisym_toroid_nphi_ntheta
         use axisym_toroid_ray_init_R_Z_nphi_ntheta_m, only : ray_init_axisym_toroid_R_Z_nphi_ntheta
- 
+
         implicit none
         logical, intent(in) :: read_input
- 		integer :: input_unit, get_unit_number ! External, free unit finder   
-     
-        if (read_input .eqv. .true.) then    
+ 		integer :: input_unit, get_unit_number ! External, free unit finder
+
+		call message(1)
+		call text_message('Initializing ray_init_m ', 1)
+
+        if (read_input .eqv. .true.) then
         ! Read and write input namelist
   		  	input_unit = get_unit_number()
             open(unit=input_unit, file='rays.in',action='read', status='old', form='formatted')
             read(input_unit, ray_init_list)
             close(unit=input_unit)
         end if
-        if (verbosity > 0) write(message_unit, ray_init_list)
+		if (verbosity >= 0) then
+			write(message_unit, ray_init_list)
+			if (messages_to_stdout) write(*, ray_init_list)
+		end if
 
         init_model: select case (trim(ray_init_model))
-    
+
             case ('simple_slab')
                 call simple_slab_ray_init(nray_max, nray, rvec0, rindex_vec0, ray_pwr_wt)
 
@@ -96,9 +102,8 @@ contains
                 write(0,*) 'initialize_ray_init: invalid ray_init_model = ', trim(ray_init_model)
                 call text_message('initialize_ray_init: invalid ray_init_model = ', trim(ray_init_model),0)
                 stop 1
-
         end select init_model
- 
+
     return
     end subroutine initialize_ray_init_m
 
@@ -116,7 +121,7 @@ contains
         call deallocate_solovev_ray_init_nphi_ntheta_m
         call deallocate_axisym_toroid_ray_init_nphi_ntheta_m
         call deallocate_axisym_toroid_ray_init_R_Z_nphi_ntheta_m
-        
+
         return
     end subroutine deallocate_ray_init_m
 

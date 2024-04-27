@@ -211,7 +211,7 @@ contains
 
     use diagnostics_m, only : message_unit, verbosity, run_label
     use ray_results_m, only : end_residuals, max_residuals, end_ray_parameter, start_ray_vec,&
-                            & end_ray_vec, run_trace_time, ray_trace_time, ray_stop_flag
+                            & end_ray_vec, total_trace_time, ray_trace_time, ray_stop_flag
 
 
 
@@ -219,7 +219,7 @@ contains
 
     integer, intent(in) :: i_run
 
-    trace_time_run(i_run) = run_trace_time
+    trace_time_run(i_run) = total_trace_time
 	end_ray_param_run(i_run) = end_ray_parameter(1)
 	end_resid_run(i_run) = end_residuals(1)
 	max_resid_run(i_run) = max_residuals(1)
@@ -227,7 +227,7 @@ contains
 	end_ray_vec_run(:, i_run) = end_ray_vec(:, 1)
 	ray_stop_flag_run(i_run) = ray_stop_flag(1)
 
-    scan_trace_time = scan_trace_time + run_trace_time
+    scan_trace_time = scan_trace_time + total_trace_time
 
  end subroutine aggregate_run_data
 

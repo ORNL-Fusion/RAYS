@@ -5,10 +5,10 @@
 
     integer, parameter :: rkind = selected_real_kind(15,307) ! kind parameter for reals
     integer, parameter :: skind = selected_real_kind(6,37) ! kind parameter single precision
- 
+
     complex :: i                ! positive square root of -1
 
-    real(KIND=rkind) :: pi                  ! usual pi= 3.14159.....
+    real(KIND=rkind) :: pi, sqrt_pi         ! usual pi= 3.14159.....
     real(KIND=rkind) :: clight, mu0, eps0   ! consistent electro-magnetic constants
     real(KIND=rkind) :: me, mp, e           ! electron mass, proton mass and unit charge
     real(KIND=rkind) :: epsmach             ! measure of machine precision
@@ -23,6 +23,7 @@
 
        i = (0.,1.)
        pi = 3.1415926535897932385
+       sqrt_pi = sqrt(pi)
 
        clight = 2.997930e8
        mu0 = pi * 4.e-7
@@ -40,10 +41,10 @@
           & (/ 3, 3 /) )
 
        unlike = - sqrt(1.5) * 1.e25
-       nlike = -123454321 
-      
+       nlike = -123454321
+
     end subroutine initialize_constants_m
-    
+
 !********************************************************************
 
     subroutine deallocate_constants_m

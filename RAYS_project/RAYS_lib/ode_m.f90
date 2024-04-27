@@ -120,7 +120,7 @@
     end if
 
 ! Write input namelist
-    if (verbosity > 0) then
+    if (verbosity >= 0) then
 		write(message_unit, ode_list)
 		if (messages_to_stdout) write(*, ode_list)
     end if

@@ -98,7 +98,7 @@ contains
             read(input_unit, species_list)
             close(unit=input_unit)
         end if
-        if (verbosity > 0) write(message_unit, species_list)
+        if (verbosity >= 0) write(message_unit, species_list)
 
 ! Electrons:
         spec_name(0) = 'electron'
