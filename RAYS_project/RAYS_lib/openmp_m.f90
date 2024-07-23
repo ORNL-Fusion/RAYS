@@ -44,9 +44,8 @@
             end if
 	        call omp_set_num_threads(num_threads)
        end if
-       ! read_input = false, use num_threads value set from outside
+       ! read_input = false, use num_threads value set from outside e.g. environment
 
-    write(12,*) 'initialize_openmp_m: num_procs = ',num_procs,'  num threads = ', num_threads
         call message ('initialize_openmp_m: num_procs', num_procs, 0)
         call message ('initialize_openmp_m: num threads', num_threads, 0)
 

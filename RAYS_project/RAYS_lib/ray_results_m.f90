@@ -67,16 +67,16 @@
 		integer, allocatable :: npoints(:)              ! nray
 
 	! Summary data
-    real(KIND=rkind), allocatable :: initial_ray_power(:) ! nray
-    real(KIND=rkind), allocatable :: ray_trace_time(:)    ! nray
-    real(KIND=rkind), allocatable :: end_residuals(:)     ! nray
-    real(KIND=rkind), allocatable :: max_residuals(:)     ! nray
-    real(KIND=rkind), allocatable :: end_ray_parameter(:) ! nray
-    real(KIND=rkind), allocatable :: start_ray_vec(:,:)   ! nv, nray
-    real(KIND=rkind), allocatable :: end_ray_vec(:,:)     ! nv, nray
-    character(len=60), allocatable :: ray_stop_flag(:)    ! nray
+		real(KIND=rkind), allocatable :: initial_ray_power(:) ! nray
+		real(KIND=rkind), allocatable :: ray_trace_time(:)    ! nray
+		real(KIND=rkind), allocatable :: end_residuals(:)     ! nray
+		real(KIND=rkind), allocatable :: max_residuals(:)     ! nray
+		real(KIND=rkind), allocatable :: end_ray_parameter(:) ! nray
+		real(KIND=rkind), allocatable :: start_ray_vec(:,:)   ! nv, nray
+		real(KIND=rkind), allocatable :: end_ray_vec(:,:)     ! nv, nray
+		character(len=60), allocatable :: ray_stop_flag(:)    ! nray
 
-	real(KIND=rkind)  :: total_trace_time
+		real(KIND=rkind)  :: total_trace_time
 
 	contains
 		procedure :: from_module, to_module, read_results_instance_NC
