@@ -8,7 +8,8 @@ list (APPEND lib_sources
 	cspeval.f90
 	constants_m.f90
 	splinck.f90
-	zonfind.f90)
+	zonfind.f90
+	quick_cube_splines_m.f90)
 
 add_library (spline ${lib_sources})
 
