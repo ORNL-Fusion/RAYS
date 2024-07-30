@@ -7,6 +7,13 @@ DBB 11/19/2021
 """
 # Working notes:
 #
+# DBB (7/28/2024)
+# Added optional command line args to specify multiple input ray data input netCDF files
+# That makes it possible to combine ray plots from multiple runs. (Actually that was done
+# a while ago). With no command line args the default file name is:
+# 'run_results.' + run_label + '.nc' where run_label comes from file
+# graphics_description_axisym_toroid.dat.
+#
 # DBB (4/21/2024)
 # Changed input from reading the ASCII files 'ray_out.' + run_label to read the netCDF file
 # 'ray_results.' + run_label + '.nc'.  The old version is stashed in spare parts.
@@ -111,7 +118,7 @@ results_file_list = []
 n_arg = len(sys.argv)
 if n_arg == 1: # No arg, get run_label from graphics description file
     n_results_files = 1
-    results_file_list.append('ray_results.' + run_label + '.nc')
+    results_file_list.append('run_results.' + run_label + '.nc')
 
 if n_arg > 1: # Get ray file names from command line
     n_results_files = n_arg-1
