@@ -7,6 +7,10 @@ DBB 11/19/2021
 """
 # Working notes:
 #
+# DBB (7/29/2024)
+# Adding plot of psi contours and cyclotron resonance contours to the R-Z ray plot figure.
+# So far only electron cyclotron resonances are plotted.  Will do ions later.
+#
 # DBB (7/28/2024)
 # Added optional command line args to specify multiple input ray data input netCDF files
 # That makes it possible to combine ray plots from multiple runs. (Actually that was done
@@ -30,6 +34,7 @@ import os
 import math
 from netCDF4 import *
 import matplotlib.pyplot as plt
+import matplotlib.cm as cm
 import numpy as np
 import numpy.ma as ma
 
@@ -276,7 +281,7 @@ Z_boundary = dict_variable_to_list_of_floats(graphics_variable_dict, 'Z_boundary
 #     print('R_boundary[i] = ', R_boundary[i], '   Z_boundary[i] = ', Z_boundary[i] )
 
 lbl = ''
-new_curve = XY_curve(R_boundary, Z_boundary, label = lbl)
+new_curve = XY_curve(R_boundary, Z_boundary, label = lbl, color='black')
 Rz_curve_list.append(new_curve)
 
 n_Bpoints = len(R_boundary)
@@ -289,6 +294,55 @@ print(' ')
 print('min(Z_boundary) = ', min(Z_boundary))
 print('max(Z_boundary) = ', max(Z_boundary))
 
+#----------------------------------------------------------------------------------------------
+# Add eq contours to  RZ ray plot
+#----------------------------------------------------------------------------------------------
+
+CDF_file_name = 'eq_contours.' + run_label + '.nc'
+if os.path.exists(CDF_file_name):
+    print('Processing CDF file ', CDF_file_name)
+    CDF = Dataset(CDF_file_name, 'r', format = 'NETCDF3_CLASSIC')
+
+    CDF_dim_names = list(CDF.dimensions.keys())
+    CDF_dims = CDF.dimensions
+    CDF_var_names = list(CDF.variables.keys())
+#   print('\n***** CDF_dim_names = ' , CDF_dim_names)
+#   print('\n***** CDF_dims = ' , CDF_dims)
+#   print('\n***** CDF_var_names = ' , CDF_var_names)
+#   print('\n***** CDF.variables = ' , CDF.variables)
+#   print('***************')
+
+    R = ma.getdata(CDF.variables['R'])
+    # print('R = ', R)
+    Z = ma.getdata(CDF.variables['Z'])
+
+# Stuff for psiN plot
+    # print('Z= ', Z)
+    psiN = ma.getdata(CDF.variables['psiN'])
+#     print('ma.shape(psiN) = ', ma.shape(psiN))
+
+    levels = [0.25, 0.5, .75, 1.25, 1.5]
+    plt.contour(R, Z, psiN, levels, colors='k', linewidths=0.5, linestyles='dashed')
+
+# Stuff for resonance contours
+    gamma_array = ma.getdata(CDF.variables['gamma_array'])
+#     print('ma.shape(gamma_array) = ', ma.shape(gamma_array))
+
+    # Do electron resonances
+    abs_gamma = np.absolute(gamma_array[0,:,:])
+    print('ma.shape(abs_gamma) = ', ma.shape(abs_gamma))
+    gamma_min = ma.min(abs_gamma)
+    gamma_max = ma.max(abs_gamma)
+    levels = [0.5, 1.0]
+    plt.contour(R, Z, abs_gamma, levels, colors='red', linewidths=0.5, linestyles='solid')
+
+    # Do ion resonances later
+
+#     print('gamma_min = ', gamma_min, '  gamma_max = ', gamma_max)
+
+#----------------------------------------------------------------------------------------------
+# Plot fig RZ plot
+#----------------------------------------------------------------------------------------------
 
 plot_XY_Curves_Fig(plotZX)
 
