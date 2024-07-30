@@ -161,7 +161,7 @@ contains
     character(len=60) :: equib_err
 
     integer :: ivec, ivec1, ivec2
-
+!  write(*,*) 'Got to equilibrium'
     equilibria: select case (trim(equilib_model))
        case ('slab')
 !         A 1-D slab equilibrium with stratification in x
@@ -171,7 +171,9 @@ contains
           call solovev_eq(rvec, bvec, gradbtensor, ns, gradns, ts, gradts, equib_err)
 
        case ('axisym_toroid')
+!  write(*,*) 'calling axisym_toroid'
           call axisym_toroid_eq(rvec, bvec, gradbtensor, ns, gradns, ts, gradts, equib_err)
+!  write(*,*) 'back from calling axisym_toroid'
 
        case default
           write(0,*) 'equilibrium_m: invalid equilibrium model = ', trim(equilib_model)
@@ -210,6 +212,7 @@ contains
     eq%omgp2 = 0.
     eq%alpha = 0.
     eq%gamma = 0.
+!  write(*,*) 'Got to equilibrium 1'
 
 ! Load up eq values
     eq%bvec = bvec
@@ -252,6 +255,7 @@ contains
     eq%omgp2(:nspec) = omgp2(:nspec)
     eq%alpha(:nspec) = alpha(:nspec)
     eq%gamma(:nspec) = gamma(:nspec)
+!  write(*,*) 'Got to equilibrium 2'
 
     return
  end subroutine equilibrium

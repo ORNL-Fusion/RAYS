@@ -4,6 +4,9 @@ module  eqdsk_magnetics_spline_interp_m
 !
 ! N.B. Values of Psi are shifted on initialization so that Psi is zero on axis.
 
+! Working notes
+! DBB (7/28/2024) Removed error return if psi > 1
+
     use constants_m, only : rkind
     use quick_cube_splines_m, only : cube_spline_function_1D, cube_spline_function_2D
 
@@ -182,7 +185,7 @@ contains
     psiN = psi/PSIBOUND
     gradpsiN = gradpsi/PSIBOUND
     ! Check that we are in the plasma. Set equib_err but don't stop
-    if (psiN > 1.) equib_err = 'psi >1 out_of_plasma'
+!    if (psiN > 1.) equib_err = 'psi >1 out_of_plasma'
 
 !   Magnetic field derivatives.
 
