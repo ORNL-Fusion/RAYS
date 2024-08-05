@@ -178,10 +178,6 @@
 !         ds/d(ray parameter)
           dsd_ray_param = vg0
 
-!         Calculate ksi and ki.
-          call damping(eq, v, vg, ksi, ki)
-
-
        case default
           write(0,*) 'EQN_RAY: invalid ray parameter = ', ray_param
           stop 1

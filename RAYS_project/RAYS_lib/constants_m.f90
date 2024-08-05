@@ -17,8 +17,8 @@
     real(KIND=rkind) :: unitmat3(3,3)   ! 3X3 unit matrix
     real(KIND=rkind) :: unlike      ! a real number unlikely set by input file
     real(KIND=rkind) :: nlike       ! an integer number unlikely set by input file
-    real(KIND=rkind) :: zero = 0.0_rkind
-    real(KIND=rkind) :: one = 1.0_rkind
+    real(KIND=rkind),parameter :: zero = 0.0_rkind
+    real(KIND=rkind),parameter :: one = 1.0_rkind
  contains
     subroutine initialize_constants_m
 
@@ -43,6 +43,9 @@
 
        unlike = - sqrt(1.5) * 1.e25
        nlike = -123454321
+
+! 	   rzero = 0.0_rkind
+! 	   one = 1.0_rkind
 
     end subroutine initialize_constants_m
 

@@ -161,11 +161,9 @@ contains
     bphi = GetRBphi(r)/r
     gradpsi = (/x*bz, y*bz, -R*br/)
 
-!   Normalized Flux function x, y, z normalized to 1.0 at last surface
+!   Normalized Flux function x, y, z normalized to 1.0 at last closed flux surface
     psiN = psi/PSIBOUND
     gradpsiN = gradpsi/PSIBOUND
-    ! Check that we are in the plasma. Set equib_err but don't stop
-    if (psiN > 1.) equib_err = 'psi >1 out_of_plasma'
 
 !   Magnetic field derivatives.
 
@@ -240,7 +238,7 @@ contains
     bz = GetPsiR(R,z)/r
     gradpsi = (/x*bz, y*bz, -R*br/)
 
-!   Normalized Flux function x, y, z normalized to 1.0 at last surface
+!   Normalized Flux function x, y, z normalized to 1.0 at last closed flux surface
     psiN = psi/PSIBOUND
     gradpsiN = gradpsi/PSIBOUND
 
