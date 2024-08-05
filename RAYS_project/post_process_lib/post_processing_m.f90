@@ -45,7 +45,7 @@
  subroutine initialize_post_processing_m(read_input)
 
     use diagnostics_m, only : message_unit, message, text_message, verbosity, &
-                            & output_unit, ray_list_unit
+                            & messages_to_stdout, output_unit, ray_list_unit
     use slab_processor_m, only : initialize_slab_processor
     use solovev_processor_m, only : initialize_solovev_processor
     use axisym_toroid_processor_m, only : initialize_axisym_toroid_processor
@@ -63,8 +63,13 @@
         open(unit=input_unit, file='post_process_rays.in',action='read', status='old', form='formatted')
         read(input_unit, post_process_list)
         close(unit=input_unit)
-        write(message_unit, post_process_list)
 	end if
+
+! Write input namelist
+    if (verbosity >= 0) then
+		write(message_unit, post_process_list)
+		if (messages_to_stdout) write(*, post_process_list)
+    end if
 
     select case (trim(processor))
 

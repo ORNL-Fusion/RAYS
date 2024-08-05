@@ -161,7 +161,6 @@ contains
     character(len=60) :: equib_err
 
     integer :: ivec, ivec1, ivec2
-
     equilibria: select case (trim(equilib_model))
        case ('slab')
 !         A 1-D slab equilibrium with stratification in x

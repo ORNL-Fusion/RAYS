@@ -1,7 +1,7 @@
 #! /usr/bin/env python
 
 """
-Plot_ray_diags.py -> Plot ray diagnostic data from RAYS. It reads a netCDF file generated
+plot_ray_diags.py -> Plot ray diagnostic data from RAYS. It reads a netCDF file generated
 by the post_process_m module and produces plots which are written to a .pdf file.
 The code takes one command-line argument -> a  CDF file path, expected extension is ".nc"
 

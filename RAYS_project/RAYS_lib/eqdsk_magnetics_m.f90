@@ -152,8 +152,8 @@ contains
 ! Get poloidal flux
     call  eqdsk_magnetics_psi(rvec, psi, gradpsi, psiN, gradpsiN)
 
-! Check that we are in the plasma
-    if (psiN > 1.) equib_err = 'psi >1 out_of_plasma'
+! Check that we are in the plasma. Set equib_err but don't stop.
+    if (psiN > plasma_psi_limit) equib_err = 'out_of_plasma'
 
     if (equib_err /= '') then
         write (message_unit, *) ' eqdsk_magnetics:  equib_err ', equib_err

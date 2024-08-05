@@ -29,7 +29,7 @@ import numpy.ma as ma
 from plt_XY_Curves import *
 from netCDF4 import *
 
-debug = True
+debug = False
 
 #----------------------------------------------------------------------------------------------
 # Utility functions

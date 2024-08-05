@@ -210,7 +210,6 @@ subroutine initialize_deposition_profiles(read_input)
           & trim(equilib_model), 0)
           stop 1
     end select equilibria
- write(*,*) 'Finished initialize_deposition_profiles'
 	return
 	end subroutine initialize_deposition_profiles
 

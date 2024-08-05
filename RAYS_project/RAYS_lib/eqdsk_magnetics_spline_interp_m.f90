@@ -4,6 +4,11 @@ module  eqdsk_magnetics_spline_interp_m
 !
 ! N.B. Values of Psi are shifted on initialization so that Psi is zero on axis.
 
+! Working notes
+! DBB (8/2/2024) Changed error return 'if psi > 1' to 'if psi > plasma_psi_limit' to
+! allow rays outside last closed flux surface. plasma_psi_limit defaults to 1.0 but can be
+! reset in namelist
+
     use constants_m, only : rkind
     use quick_cube_splines_m, only : cube_spline_function_1D, cube_spline_function_2D
 
@@ -168,9 +173,6 @@ contains
 	call Psi_profile%eval_2D_fpp(r, z, Psi, PsiR, PsiZ, PsiRR, PsiRZ, PsiZZ)
 
     call T_profile%eval_1D_fp(r, RBphi, RBphiR)
-!     call T_profile%eval_1D_fp(r, Tsp, Tsp_x)
-!     RBphi = Tsp
-!     RBphiR = Tsp_x
 
 !   Magnetic field
     br = -PsiZ/r
@@ -178,11 +180,9 @@ contains
     bphi = RBphi/r
     gradpsi = (/x*bz, y*bz, -R*br/)
 
-!   Normalized Flux function x, y, z normalized to 1.0 at last surface
+!   Normalized Flux function x, y, z normalized to 1.0 at last closed flux surface
     psiN = psi/PSIBOUND
     gradpsiN = gradpsi/PSIBOUND
-    ! Check that we are in the plasma. Set equib_err but don't stop
-    if (psiN > 1.) equib_err = 'psi >1 out_of_plasma'
 
 !   Magnetic field derivatives.
 
@@ -256,7 +256,7 @@ contains
     bz = PsiR/r
     gradpsi = (/x*bz, y*bz, -R*br/)
 
-!   Normalized Flux function x, y, z normalized to 1.0 at last surface
+!   Normalized Flux function x, y, z normalized to 1.0 at last closed flux surface
     psiN = Psi/PSIBOUND
     gradpsiN = gradpsi/PSIBOUND
 
