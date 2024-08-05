@@ -218,7 +218,7 @@
 ! a set of data values for each step along the ray (e.g. ne, omega_ce/omega_rf, psi...).
 ! That data is then written to a netcdf file for analysis or plotting by a graphics code.
 ! There is a lot of data, and this subroutine is probably only useful for small numbers
-! of rays.
+! of rays.  The data can be plotted using plot_ray_diags.py which is located in RAYS/graphics_RAYS
 
     use constants_m, only : rkind
     use diagnostics_m, only : integrate_eq_gradients, message, text_message
@@ -367,7 +367,7 @@
 					P_absorbed(istep, iray) = ray_vec(8, istep, iray)
 		   end if damp
 
-		! Zfunction arguments
+		! Zfunction arguments for electrons
 			if (eq%ts(0) > 0. .and. abs(k3) > 0.) then
 				! Thermal speed:
 				vth = sqrt( 2.*eq%ts(0)/ms(0) )
@@ -456,7 +456,7 @@ call check( nf90_enddef(ncid))
     use species_m, only : nspec, spec_name
 	use equilibrium_m, only : eq_point, equilibrium, write_eq_point
     use axisym_toroid_eq_m, only : box_rmin, box_rmax, box_zmin, box_zmax, &
-         & axisym_toroid_psi, axisym_toroid_eq
+         & plasma_psi_limit, axisym_toroid_psi, axisym_toroid_eq
     use netcdf
 
     implicit none
@@ -466,6 +466,10 @@ call check( nf90_enddef(ncid))
 	integer i,j
     real(KIND=rkind) :: psi, gradpsi(3), psiN, gradpsiN(3)
     real(KIND=rkind) :: rvec(3)
+
+! Stash plasma_psi_limit from axisym_toroid_eq_m.  Danger of circularity, equilibrium_m
+! uses axisym_toroid_eq_m.
+    real(KIND=rkind) ::plasma_psi_limit_temp
 
 !   Derived type containing equilibrium data for a spatial point in the plasma
     type(eq_point) :: eq
@@ -535,7 +539,11 @@ call check( nf90_enddef(ncid))
 		call axisym_toroid_psi(rvec, psi, gradpsi, psiN, gradpsiN)
 		psiN_out(i,j) = psiN
 
+		plasma_psi_limit_temp = plasma_psi_limit ! Stash plasma_psi_limit
+		plasma_psi_limit = 5.0 ! Set plasma_psi_limit high so resonance contours go out to box
 		call equilibrium(rvec, eq)
+		plasma_psi_limit = plasma_psi_limit_temp ! Restore plasma_psi_limit
+
 		gamma(:) = eq%gamma(0:nspec)
 		gamma_array(i, j, :) = gamma
 	end do ; end do

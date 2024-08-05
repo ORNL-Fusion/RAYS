@@ -322,6 +322,7 @@ if os.path.exists(CDF_file_name):
 #     print('ma.shape(psiN) = ', ma.shape(psiN))
 
     levels = [0.25, 0.5, .75, 1.25, 1.5]
+#     levels = [0.5, 0.6, 0.7, 0.8]
     plt.contour(R, Z, psiN, levels, colors='k', linewidths=0.5, linestyles='dashed')
 
 # Stuff for resonance contours

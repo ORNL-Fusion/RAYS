@@ -24,7 +24,7 @@ module axisym_toroid_eq_m
 ! data for plasma boundary
     real(KIND=rkind) :: inner_bound, outer_bound, upper_bound, lower_bound
 ! Maximum value of psi considered to be inside of plasma.  Defaults to 1.0 but can be
-! reset in namelist.  Not actually used anywhere right now.
+! reset in namelist.
     real(KIND=rkind) :: plasma_psi_limit = one
 
 ! data for density and temperature
