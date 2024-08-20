@@ -10,6 +10,8 @@ module axisym_toroid_eq_m
 ! Outputs from axisym_toroid_eq() are all quantities needed to fill an eq_point type
 
     use constants_m, only : rkind, one, zero
+    use quick_cube_splines_m, only : cube_spline_function_1D
+    use density_spline_interp_m, only : initialize_density_spline_interp
 
     implicit none
 
@@ -27,13 +29,16 @@ module axisym_toroid_eq_m
 ! reset in namelist.
     real(KIND=rkind) :: plasma_psi_limit = one
 
-! data for density and temperature
+! data for density
     character(len=60) :: density_prof_model
     real(KIND=rkind) :: alphan1 ! parameters for parabolic model
     real(KIND=rkind) :: alphan2
 ! Density outside psi = 1 as a fraction of ne0, defaults to 0. but can be set in namelist
     real(KIND=rkind) :: d_scrape_off = zero
+! Type declaration for density_spline_ionterp_model
+    type(cube_spline_function_1D) :: ne_profile_N  ! ne profile normalized to 1. on axis
 
+! data temperature
     character(len=20), allocatable :: temperature_prof_model(:)
     real(KIND=rkind), allocatable :: alphat1(:) ! Can be dfferent for different species
     real(KIND=rkind), allocatable :: alphat2(:) ! Can be dfferent for different species
@@ -62,6 +67,7 @@ contains
     use solovev_magnetics_m, only : initialize_solovev_magnetics
     use eqdsk_magnetics_lin_interp_m, only : initialize_eqdsk_magnetics_lin_interp
     use eqdsk_magnetics_spline_interp_m, only : initialize_eqdsk_magnetics_spline_interp
+    use density_spline_interp_m, only : initialize_density_spline_interp
 
     implicit none
     logical, intent(in) :: read_input
@@ -117,9 +123,11 @@ contains
           stop 1
     end select magnetics
 
-! Densities and temperatures.  No initialization needed beyond reading the namelist at
-! this time.  If I add something to read profiles from a data file I might need to add
-! an initialization routine for densities and temperatures.
+! Density and temperature only need initialization for spline interpolation
+    density: select case (trim(density_prof_model))
+        case ('density_spline_interp')
+        	call initialize_density_spline_interp(read_input, ne_profile_N)
+    end select density
 
   end subroutine initialize_axisym_toroid_eq_m
 
@@ -157,12 +165,13 @@ contains
     real(KIND=rkind) :: dens, dd_psi
     integer :: is
 
+!    type(cube_spline_function_1D) :: ne_profile_N
+
     equib_err = ''
     x = rvec(1)
     y = rvec(2)
     z = rvec(3)
     r = sqrt(x**2+y**2)
-
 
 ! Check that we are in the box
     if (r < box_rmin .or. r > box_rmax) equib_err = 'R_out_of_box'
@@ -189,7 +198,6 @@ contains
     if (psiN > plasma_psi_limit) equib_err = 'out_of_plasma'
 
 !   Density profile.
-
     density: select case (trim(density_prof_model))
 
         case ('constant')
@@ -198,6 +206,13 @@ contains
 
         case ('parabolic')
             call parabolic_prof(psiN, d_scrape_off, alphan1, alphan2, dens, dd_psi)
+			ns(0:nspec) = n0s(0:nspec) * dens
+			gradns(1, 0:nspec) = n0s(0:nspec)*dd_psi*grad_psiN(1)
+			gradns(2, 0:nspec) = n0s(0:nspec)*dd_psi*grad_psiN(2)
+			gradns(3, 0:nspec) = n0s(0:nspec)*dd_psi*grad_psiN(3)
+
+        case ('density_spline_interp')
+            call ne_profile_N%eval_1D_fp(psiN, dens, dd_psi)
 			ns(0:nspec) = n0s(0:nspec) * dens
 			gradns(1, 0:nspec) = n0s(0:nspec)*dd_psi*grad_psiN(1)
 			gradns(2, 0:nspec) = n0s(0:nspec)*dd_psi*grad_psiN(2)

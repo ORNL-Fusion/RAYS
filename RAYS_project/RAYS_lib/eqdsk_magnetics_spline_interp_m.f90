@@ -64,7 +64,7 @@ contains
 
     integer :: i, j, nwk
 
-    if (verbosity >= 0) then
+    if (verbosity > 0) then
 		write(*,*) 'initialize_eqdsk_magnetics_spline_interp'
     end if
 
@@ -76,7 +76,7 @@ contains
     end if
 
 ! Write input namelist
-    if (verbosity >= 0) then
+    if (verbosity > 0) then
 		write(message_unit, eqdsk_magnetics_spline_interp_list)
 		if (messages_to_stdout) write(*, eqdsk_magnetics_spline_interp_list)
 		call message(1)
@@ -97,7 +97,7 @@ contains
     lower_bound = minval(ZBOUND)
     upper_bound = maxval(ZBOUND)
 
-    if (verbosity >= 0) then
+    if (verbosity > 0) then
 		call message('Inner boundary = ', inner_bound)
 		call message('Outer boundary = ', outer_bound)
 		call message('Upper boundary = ', upper_bound)
