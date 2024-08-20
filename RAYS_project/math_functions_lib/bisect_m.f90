@@ -1,0 +1,142 @@
+ MODULE bisect_m
+
+! generic procedure: solve_bisection() to sole an equation by the bisection method.
+! This is slightly different in that it solves f(x)=y rather than f(x)=0
+! Usual caveats for non-linar solvers apply.  May fail if inverse function is
+! multi-valued in search domain.  There is no attempt to find multiple solutions.
+!
+! f = objective function y = f(x)
+! x = solution
+! x0_in = lower search bound
+! x1_in = upper search bound
+! y = equation rhs
+! eps = error tolerance: ABS(f(x)-y) <= eps
+! ierr return:
+! ierr = -1 => (y(x1)-y(x0))(x1-x0) > 0 => no solution or multiple solutions in [x0,x1]
+! ierr = 0 => no convergence after max_iter iterations
+! ierr >= 1 => sucessful solution, ierr = number of iterations
+
+    IMPLICIT NONE
+
+    integer, parameter :: rkind = selected_real_kind(15,307) ! kind parameter for reals
+    integer, parameter :: skind = selected_real_kind(6,37) ! kind parameter single precision
+	INTEGER, PARAMETER :: max_iter = 1000
+
+    interface solve_bisection
+        module procedure bisect_single, bisect_real
+    end interface
+
+    CONTAINS
+ !*********************************************************************************
+
+  SUBROUTINE bisect_single(f, x,  x0_in, x1_in, y, eps, ierr)
+
+	IMPLICIT NONE
+
+	REAL(kind = skind),	EXTERNAL :: f
+	REAL(kind = skind), INTENT(IN) :: x0_in
+	REAL(kind = skind), INTENT(IN) :: x1_in
+	REAL(kind = skind), INTENT(IN) :: y
+	REAL(kind = skind), INTENT(IN) :: eps
+	REAL(kind = skind), INTENT(out) :: x
+	INTEGER, INTENT(out) :: ierr
+
+! Local variables
+	REAL(kind = skind) :: y0, y1, y2, x0, x1, x2
+	INTEGER :: i
+
+	x0 = x0_in
+	x1 = x1_in
+
+	DO i = 1, max_iter
+		ierr = i
+		y0 = f(x0) - y
+		y1 = f(x1) - y
+
+		if (abs(y0) <= eps) then
+			x = x0
+			exit
+		end if
+
+		if (abs(y1) <= eps) then
+			x = x1
+			exit
+		end if
+
+		if (y0*y1 > 0.) then
+			ierr = -1
+			exit
+		end if
+
+		x2 = (x0 + x1)/2.0
+		y2 = f(x2) - y
+
+		if(y0*y2<0)then
+		   x1=x2
+		else
+		   x0=x2
+		endif
+	END DO
+
+	if (i >= max_iter)ierr = 0 ! No convergence in mac_iter iterations
+
+  RETURN
+  END SUBROUTINE bisect_single
+
+ !*********************************************************************************
+
+  SUBROUTINE bisect_real(f, x,  x0_in, x1_in, y, eps, ierr)
+
+	IMPLICIT NONE
+
+	REAL(kind = rkind),	EXTERNAL :: f
+	REAL(kind = rkind), INTENT(IN) :: x0_in
+	REAL(kind = rkind), INTENT(IN) :: x1_in
+	REAL(kind = rkind), INTENT(IN) :: y
+	REAL(kind = rkind), INTENT(IN) :: eps
+	REAL(kind = rkind), INTENT(out) :: x
+	INTEGER, INTENT(out) :: ierr
+
+	REAL(kind = rkind) :: y0, y1, y2, x0, x1, x2
+	INTEGER :: i
+
+	ierr = 0
+	x0 = x0_in
+	x1 = x1_in
+
+	DO i = 1, max_iter
+		ierr = i
+		y0 = f(x0) - y
+		y1 = f(x1) - y
+
+		if (abs(y0) <= eps) then
+			x = x0
+			exit
+		end if
+
+		if (abs(y1) <= eps) then
+			x = x1
+			exit
+		end if
+
+		if (y0*y1 > 0.0_rkind) then
+			ierr = -1
+			exit
+		end if
+
+		x2 = (x0 + x1)/2.0_rkind
+		y2 = f(x2) - y
+
+		if(y0*y2<0)then
+		   x1=x2
+		else
+		   x0=x2
+		endif
+	END DO
+
+	if (i >= max_iter)ierr = 0 ! No convergence in mac_iter iterations
+
+  RETURN
+  END SUBROUTINE bisect_real
+
+  END MODULE bisect_m
