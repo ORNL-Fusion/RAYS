@@ -1,7 +1,7 @@
  module axisym_toroid_processor_m
 ! Post processing for axisym_toroid equilibrium
 
-    use constants_m, only : rkind
+    use constants_m, only : rkind, zero, one
 
     implicit none
 
@@ -25,17 +25,22 @@
 ! Number of points in R,Z grid for normalized psi netCDF file
 	integer ::  N_pointsR_eq, N_pointsZ_eq
 
-! Flags determining what to do besides plot rays.  Can be overridden (i.e. turned off)
-! in namelist file
+! Number of points in psi grid for plotting profiles like density and temperature.
+	integer ::  N_points_psiN
+
+! Flags determining what to do besides write graphics description file.  Can be overridden
+! (ie. turned off) in namelist file
 	logical :: calculate_dep_profiles = .true. ! Calculate all depositon profiles
 	logical :: write_dep_profiles = .true. ! Write depositon profile netCDF file
 	logical :: calculate_ray_diag = .true. ! Write detailed ray diagnostic netCDF file
 	logical :: write_contour_data = .true.  ! Write data needed to plot contours netCDF file
+	logical :: write_profiles_vs_psi = .true.  ! Write data needed to plot plasma profiles
 
     namelist /axisym_toroid_processor_list/ num_plot_k_vectors, scale_k_vec,&
              & k_vec_base_length, set_XY_lim, &
              & calculate_dep_profiles, write_dep_profiles, calculate_ray_diag, &
-             & write_contour_data, N_pointsR_eq, N_pointsZ_eq
+             & write_contour_data, N_pointsR_eq, N_pointsZ_eq, &
+             & write_profiles_vs_psi, N_points_psiN
 
  contains
 
@@ -83,6 +88,8 @@
 	if (calculate_ray_diag .eqv. .true.) call ray_detailed_diagnostics
 
 	if (write_contour_data .eqv. .true.) call write_eq_contour_data_NC
+
+	if (write_profiles_vs_psi .eqv. .true.) call write_profiles_vs_psi_NC
 
     if (verbosity > 0) call text_message('Finished axisym_toroid_processor work')
 
@@ -564,6 +571,113 @@ call check( nf90_enddef(ncid))
     return
  end subroutine write_eq_contour_data_NC
 
+!****************************************************************************
+
+ subroutine write_profiles_vs_psi_NC
+! Write a netcdf file ('profiles_vs_psi.<run_label>.nc') containing data needed to plot
+! radial profiles like density and temperature on a uniformly spaced grid in psi
+! ranging from 0. to plasma_psi_limit
+!
+! To get the profiles versus psi use equilibrium_m eq_point, equilibrium().  But
+! equilibrium() takes plasma position, rvec, as input, not psi. So need to first invert
+! psi versus position (i.e. R, Z = 0).
+
+	use constants_m, only : zero, one, eps0
+    use diagnostics_m, only : message_unit, message, text_message, verbosity, run_label
+    use species_m, only : nspec, spec_name, qs, ms, n0s
+    use rf_m, only : omgrf
+	use equilibrium_m, only : eq_point, equilibrium, write_eq_point
+    use axisym_toroid_eq_m, only : box_rmin, box_rmax, box_zmin, box_zmax, r_axis, z_axis, &
+      & plasma_psi_limit, axisym_toroid_psi, axisym_toroid_eq
+	use bisect_m, only : solve_bisection
+	use mono_funct_inversion_m, only : list_invert
+!    use quick_cube_splines_m, only : cube_spline_function_1D
+
+    use netcdf
+
+    implicit none
+
+! Profile data to plot versus psiN
+    real(KIND=rkind) :: ne_psi(N_points_psiN), Te_psi(N_points_psiN)
+!	omega_plasma_e/omega
+    real(KIND=rkind) :: sqrt_alpha_psi(N_points_psiN)
+
+! Derived type containing equilibrium data for a spatial point in the plasma
+    type(eq_point) :: eq
+
+    integer :: i
+    real(KIND=rkind) :: omgp2
+    real(KIND=rkind) :: dpsi_ne, dens
+
+! Variables for inverting psiN(R) to get R(psiN)
+    real(KIND=rkind) :: R_edge, eps = 1.e-10
+    real(KIND=rkind) :: psi_grid(N_points_psiN), R_grid(N_points_psiN)
+    integer :: ierr
+
+! netCDF Declarations
+    integer :: ncid
+! Declarations: dimensions
+    integer, parameter :: n_dims = 1
+    integer :: n_psi
+    integer :: n_psi_id
+! Declarations: variable IDs
+    integer, parameter :: n_vars =  4
+    integer :: psi_grid_id, ne_psi_id, sqrt_alpha_psi_id, Te_psi_id
+! File name for  output
+    character(len=80) :: out_filename
+
+! Generate profile vectors.  First get mapping between psi_grid and major radius, R_maj
+! Use bisect() to find R_edge = R_maj, where psi = psi_limit and Z = x_axis
+
+	call solve_bisection(psiN_of_R, R_edge, r_axis, box_rmax, plasma_psi_limit, eps, ierr)
+!	R_edge = R_edge - one*10e-6  ! Back off a little so don't get error with parablolic prof
+
+! Generate psi_grid
+	DO i = 1, N_points_psiN
+		psi_grid(i) = zero + (i-1)*plasma_psi_limit/(N_points_psiN-1)
+	END DO
+
+! Generate R_grid
+	CALL list_invert(psiN_of_R, N_points_psiN, psi_grid,  r_axis, R_edge, eps, R_grid)
+
+! Generate profiles vectors
+	DO i = 1, N_points_psiN
+		call equilibrium((/R_grid(i), zero, z_axis/), eq)
+		ne_psi(i) = eq%ns(0)
+		Te_psi(i) = eq%Ts(0)
+		sqrt_alpha_psi(i) = sqrt(eq%alpha(0))
+	END DO
+
+!   Open NC file
+    out_filename = 'profiles_vs_psi.'//trim(run_label)//'.nc'
+    call check( nf90_create(trim(out_filename), nf90_clobber, ncid) )
+
+!   Define NC dimensions
+    call check( nf90_def_dim(ncid, 'n_psi', N_points_psiN, n_psi_id))
+
+! Define NC variables
+    call check( nf90_def_var(ncid, 'psi_grid', NF90_DOUBLE, [n_psi_id], psi_grid_id))
+    call check( nf90_def_var(ncid, 'ne_psi', NF90_DOUBLE, [n_psi_id], ne_psi_id))
+    call check( nf90_def_var(ncid, 'sqrt_alpha_psi', NF90_DOUBLE, [n_psi_id], sqrt_alpha_psi_id))
+    call check( nf90_def_var(ncid, 'Te_psi', NF90_DOUBLE, [n_psi_id], Te_psi_id))
+
+! Put global attributes
+    call check( nf90_put_att(ncid, NF90_GLOBAL, 'RAYS_run_label', run_label))
+
+! Finished NC definition
+	call check( nf90_enddef(ncid))
+
+! Put NC variables
+    call check( nf90_put_var(ncid, psi_grid_id, psi_grid))
+    call check( nf90_put_var(ncid, ne_psi_id, ne_psi))
+    call check( nf90_put_var(ncid, sqrt_alpha_psi_id, sqrt_alpha_psi))
+    call check( nf90_put_var(ncid, Te_psi_id, Te_psi))
+
+!   Close the NC file
+    call check( nf90_close(ncid) )
+    return
+ end subroutine write_profiles_vs_psi_NC
+
 !*************************************************************************
 
   subroutine check(status)
@@ -576,6 +690,30 @@ call check( nf90_enddef(ncid))
     end if
   end subroutine check
 
+!*************************************************************************
+
+  function psiN_of_R(R)
+! Function to provide psiN as a function of major radius at Z = z_axis. For use in
+! inverting R of psiN. Finding R(psi) is done by bisect(), which takes functions of one
+! argument, whereas axisym_toroid_psi() has lots of arguments.
+
+    use axisym_toroid_eq_m, only : axisym_toroid_psi, z_axis
+
+  	implicit none
+
+    real(KIND=rkind) :: R, psiN_of_R
+    real(KIND=rkind) :: rvec(3)
+    real(KIND=rkind) :: psi, gradpsi(3), psiN, grad_psiN(3)
+
+    rvec = (/R, zero, z_axis/)
+    call axisym_toroid_psi(rvec, psi, gradpsi, psiN, grad_psiN)
+    psiN_of_R = psiN
+!    write(*,*) 'R = ', R, 'psiN = ', psiN
+    return
+
+ end function psiN_of_R
+
+!*************************************************************************
 
  end module axisym_toroid_processor_m
 
