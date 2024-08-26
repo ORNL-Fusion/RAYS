@@ -17,7 +17,7 @@ module  density_spline_interp_m
 
     implicit none
 
-	integer, parameter :: n_grid_max = 1000 ! Max dimension of input arrays, truncated later
+	integer, parameter :: n_grid_max = 200 ! Max dimension of input arrays, truncated later
 
 ! namelist /density_spline_interp_list/ variables
     character (len = 60) :: spline_density_model
