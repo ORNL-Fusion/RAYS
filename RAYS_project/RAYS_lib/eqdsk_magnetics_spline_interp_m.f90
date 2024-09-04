@@ -98,11 +98,15 @@ contains
     upper_bound = maxval(ZBOUND)
 
     if (verbosity >= 0) then
+		call message('r_axis = ', r_axis)
+		call message('z_axis = ', z_axis)
 		call message('Inner boundary = ', inner_bound)
 		call message('Outer boundary = ', outer_bound)
 		call message('Upper boundary = ', upper_bound)
 		call message('Lower boundary = ', lower_bound)
 
+		write(*,*) 'r_axis = ', r_axis
+		write(*,*) 'z_axis = ', z_axis
 		write(*,*) 'Inner boundary = ', inner_bound
 		write(*,*) 'Outer boundary = ', outer_bound
 		write(*,*) 'Lower boundary = ', lower_bound
@@ -175,10 +179,10 @@ contains
     call T_profile%eval_1D_fp(r, RBphi, RBphiR)
 
 !   Magnetic field
-    br = -PsiZ/r
-    bz = PsiR/r
+    br = PsiZ/r
+    bz = -PsiR/r
     bphi = RBphi/r
-    gradpsi = (/x*bz, y*bz, -R*br/)
+    gradpsi = (/-x*bz, -y*bz, r*br/)
 
 !   Normalized Flux function x, y, z normalized to 1.0 at last closed flux surface
     psiN = psi/PSIBOUND
@@ -187,12 +191,12 @@ contains
 !   Magnetic field derivatives.
 
 !   dbrdr = d(Br)/dr, dbrdz = d(Br)/dz.
-    dbrdr = -br/r - PsiRZ/r
-    dbrdz = -PsiZZ/r
+    dbrdr = -br/r + PsiRZ/r
+    dbrdz = PsiZZ/r
 
 !   dbzdr = d(Bz)/dr, dbzdz = d(Bz)/dz.
-    dbzdr = -bz/r + PsiRR/r
-    dbzdz = PsiRZ/r
+    dbzdr = -bz/r - PsiRR/r
+    dbzdz = - PsiRZ/r
 
 !   dbphidr = d(Bphi)/dr.
     dbphidr = (RBphiR-bphi)/r
@@ -252,9 +256,9 @@ contains
 	call Psi_profile%eval_2D_fp(r, z, Psi, PsiR, PsiZ)
 
 !   Magnetic field
-    br = -PsiZ/r
-    bz = PsiR/r
-    gradpsi = (/x*bz, y*bz, -R*br/)
+    br = PsiZ/r
+    bz = -PsiR/r
+    gradpsi = (/-x*bz, -y*bz, r*br/)
 
 !   Normalized Flux function x, y, z normalized to 1.0 at last closed flux surface
     psiN = Psi/PSIBOUND

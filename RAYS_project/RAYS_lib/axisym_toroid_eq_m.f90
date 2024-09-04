@@ -155,6 +155,7 @@ contains
     real(KIND=rkind) :: br, bz, bphi, bp0
     real(KIND=rkind) :: psi, gradpsi(3), psiN, grad_psiN(3)
     real(KIND=rkind) :: dens, dd_psi
+    real(KIND=rkind), parameter :: twoTiny = 2.0_rkind*tiny(1._rkind)
     integer :: is
 
     equib_err = ''
@@ -163,10 +164,16 @@ contains
     z = rvec(3)
     r = sqrt(x**2+y**2)
 
-
-! Check that we are in the box
-    if (r < box_rmin .or. r > box_rmax) equib_err = 'R_out_of_box'
-    if (z < box_zmin .or. z > box_zmax) equib_err = 'z_out_of_box'
+! Check that we are in the box.  But so we don't get crash when evaluating on the
+! box boundary, allow a leeway of 2*tiny(x)
+    if (r < box_rmin-twoTiny .or. r > box_rmax+twoTiny) then
+    	equib_err = 'R_out_of_box'
+ !   	write(*,*) 'R_out_of_box: R = ', R
+    end if
+    if (z < box_zmin-twoTiny .or. z > box_zmax+twoTiny) then
+    	equib_err = 'z_out_of_box'
+!    	write(*,*) 'Z_out_of_box: Z = ', Z, '   box_zmin = ', box_zmin, '   box_zmax = ', box_zmax
+    end if
 
     if (equib_err /= '') return
 

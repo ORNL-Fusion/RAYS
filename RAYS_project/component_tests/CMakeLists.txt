@@ -16,3 +16,20 @@ target_link_libraries (component_tests
 		    PUBLIC
 		    RAYS_lib
 )
+
+
+add_executable (write_eq_vec)
+
+target_sources (write_eq_vec
+		PRIVATE
+		$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/write_eq_rvec.f90>
+)
+
+target_include_directories (write_eq_vec
+			PUBLIC
+			$<TARGET_PROPERTY:RAYS_lib,BINARY_DIR>
+)
+target_link_libraries (write_eq_vec
+		    PUBLIC
+		    RAYS_lib
+)

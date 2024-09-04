@@ -22,7 +22,7 @@
 ! R,Z boundary points
     real(KIND=rkind), allocatable :: R_boundary(:), Z_boundary(:)
 
-! Number of points in R,Z grid for normalized psi netCDF file
+! Number of points in R,Z grid for normalized psi and eq_RZ_grid netCDF files
 	integer ::  N_pointsR_eq, N_pointsZ_eq
 
 ! Flags determining what to do besides plot rays.  Can be overridden (i.e. turned off)
@@ -31,11 +31,13 @@
 	logical :: write_dep_profiles = .true. ! Write depositon profile netCDF file
 	logical :: calculate_ray_diag = .true. ! Write detailed ray diagnostic netCDF file
 	logical :: write_contour_data = .true.  ! Write data needed to plot contours netCDF file
+	logical :: write_eq_RZ_grid_data = .true.  ! Write data for equilibrium on RZ grid netCDF file
 
     namelist /axisym_toroid_processor_list/ num_plot_k_vectors, scale_k_vec,&
              & k_vec_base_length, set_XY_lim, &
              & calculate_dep_profiles, write_dep_profiles, calculate_ray_diag, &
-             & write_contour_data, N_pointsR_eq, N_pointsZ_eq
+             & write_contour_data, N_pointsR_eq, N_pointsZ_eq, &
+             & write_eq_RZ_grid_data
 
  contains
 
@@ -78,11 +80,17 @@
     call write_graphics_description_file
 
     if (calculate_dep_profiles .eqv. .true.) call calculate_deposition_profiles
+! write(*,*) 'axisym_toroid_processor: got to 1'
     if (write_dep_profiles .eqv. .true.) call write_deposition_profiles_NC
-
+! write(*,*) 'axisym_toroid_processor: got to 2'
 	if (calculate_ray_diag .eqv. .true.) call ray_detailed_diagnostics
+!  write(*,*) 'axisym_toroid_processor: got to 3' ; stop
 
 	if (write_contour_data .eqv. .true.) call write_eq_contour_data_NC
+! write(*,*) 'axisym_toroid_processor: got to 4'
+
+	if (write_eq_RZ_grid_data .eqv. .true.) call write_eq_RZ_grid_data_NC
+ write(*,*) 'axisym_toroid_processor: got to 5'
 
     if (verbosity > 0) call text_message('Finished axisym_toroid_processor work')
 
@@ -172,7 +180,7 @@
  !  File name for  output
     character(len=80) :: out_filename
 
-   if (verbosity > 0) call text_message('write_graphics_description_file')
+   if (verbosity > 0) call text_message('Writing graphics_description_file')
 
     ! Open fortran ascii file for results output
     graphics_descrip_unit = get_unit_number()
@@ -221,7 +229,7 @@
 ! of rays.  The data can be plotted using plot_ray_diags.py which is located in RAYS/graphics_RAYS
 
     use constants_m, only : rkind
-    use diagnostics_m, only : integrate_eq_gradients, message, text_message
+    use diagnostics_m, only : integrate_eq_gradients, message, text_message, verbosity
     use species_m, only : nspec,ms
     use axisym_toroid_eq_m, only : axisym_toroid_psi
     use equilibrium_m, only : equilibrium, eq_point
@@ -289,6 +297,7 @@
  !  File name for  output
     character(len=128) :: out_filename
 
+    if (verbosity > 0) call text_message('Writing ray_detailed_diagnostics')
     out_filename = 'ray_detailed_diagnostics.'//trim(RAYS_run_label)//'.nc'
 
 !   Allocate local arrays
@@ -448,8 +457,8 @@ call check( nf90_enddef(ncid))
 
  subroutine write_eq_contour_data_NC
 ! Write a netcdf file ('eq_contours.<run_label>.nc') containing data needed to plot
-! contours of equilibrium quantites like psi and omegaCj/omega => beta(j)
-! flux evaluated on a uniformly spaced  R,Z grid [box_rmin, box_rmax, box_zmin, box_zmax]
+! values of equilibrium quantites like psi, Bx, By. Bz, ne, Te, evaluated on a uniformly
+! spaced  R,Z grid [box_rmin, box_rmax, box_zmin, box_zmax]
 
 	use constants_m, only : zero, one
     use diagnostics_m, only : message_unit, message, text_message, verbosity, run_label
@@ -496,6 +505,7 @@ call check( nf90_enddef(ncid))
     real(KIND=rkind) :: ts(0:nspec), gradts(3,0:nspec)
     character(len=60) :: equib_err
 
+   if (verbosity > 0) call text_message('Writing equilibrium contours of psi')
 
 !   Open NC file
     out_filename = 'eq_contours.'//trim(run_label)//'.nc'
@@ -540,7 +550,7 @@ call check( nf90_enddef(ncid))
 		psiN_out(i,j) = psiN
 
 		plasma_psi_limit_temp = plasma_psi_limit ! Stash plasma_psi_limit
-		plasma_psi_limit = 5.0 ! Set plasma_psi_limit high so resonance contours go out to box
+		plasma_psi_limit = 10.0 ! Set plasma_psi_limit high so resonance contours go out to box
 		call equilibrium(rvec, eq)
 		plasma_psi_limit = plasma_psi_limit_temp ! Restore plasma_psi_limit
 
@@ -565,6 +575,166 @@ call check( nf90_enddef(ncid))
  end subroutine write_eq_contour_data_NC
 
 !*************************************************************************
+
+ subroutine write_eq_RZ_grid_data_NC
+! Write a netcdf file ('eq_contours.<run_label>.nc') containing data needed to plot
+! contours of equilibrium quantites like psi and omegaCj/omega => beta(j)
+! flux evaluated on a uniformly spaced  R,Z grid [box_rmin, box_rmax, box_zmin, box_zmax]
+
+	use constants_m, only : zero, one
+    use diagnostics_m, only : message_unit, message, text_message, verbosity, run_label
+    use species_m, only : nspec, spec_name
+	use equilibrium_m, only : eq_point, equilibrium, write_eq_point
+    use axisym_toroid_eq_m, only : box_rmin, box_rmax, box_zmin, box_zmax, &
+         & plasma_psi_limit, axisym_toroid_psi, axisym_toroid_eq
+    use netcdf
+
+    implicit none
+
+!   Declare local arrays
+    real(KIND=rkind) :: R(N_pointsR_eq), Z(N_pointsZ_eq), dR, dZ
+    real(KIND=rkind) :: psiN_out(N_pointsR_eq, N_pointsZ_eq)
+	integer i,j
+    real(KIND=rkind) :: psi, gradpsi(3), psiNij, gradpsiNij(3)
+    real(KIND=rkind) :: rvec(3)
+
+!   Declare local variables
+    real(kind=rkind), allocatable :: psiN(:,:)
+    real(kind=rkind), allocatable :: Bx(:,:)
+    real(kind=rkind), allocatable :: By(:,:)
+    real(kind=rkind), allocatable :: Bz(:,:)
+    real(kind=rkind), allocatable :: ne(:,:)
+    real(kind=rkind), allocatable :: Te(:,:)
+
+
+! Stash plasma_psi_limit from axisym_toroid_eq_m.  Danger of circularity, equilibrium_m
+! uses axisym_toroid_eq_m.
+    real(KIND=rkind) ::plasma_psi_limit_temp
+
+!   Derived type containing equilibrium data for a spatial point in the plasma
+    type(eq_point) :: eq
+
+
+! netCDF Declarations
+    integer :: ncid
+! Declarations: dimensions
+    integer, parameter :: n_dims = 3
+    integer :: n_R, n_Z
+    integer :: n_R_id, n_Z_id
+! Declarations: variable IDs
+    integer, parameter :: n_vars =  12
+    integer :: R_id, Z_id, psiN_id, Bx_id, By_id, Bz_id, ne_id, Te_id, box_rmin_id,&
+             & box_rmax_id, box_zmin_id, box_zmax_id
+
+ !  File name for  output
+    character(len=80) :: out_filename
+
+    real(KIND=rkind) :: bvec(3), gradbtensor(3,3)
+    real(KIND=rkind) :: ns(0:nspec), gradns(3,0:nspec)
+    real(KIND=rkind) :: ts(0:nspec), gradts(3,0:nspec)
+    character(len=60) :: equib_err
+
+   if (verbosity > 0) call text_message('Writing plasma equilibrium contours on RZ grid')
+
+!   Open NC file
+    out_filename = 'eq_RZ_grid.'//trim(run_label)//'.nc'
+    call check( nf90_create(trim(out_filename), nf90_clobber, ncid) )
+
+!   Define NC dimensions
+    call check( nf90_def_dim(ncid, 'n_R', N_pointsR_eq, n_R_id))
+    call check( nf90_def_dim(ncid, 'n_Z', N_pointsZ_eq, n_Z_id))
+
+! Define NC variables
+    call check( nf90_def_var(ncid, 'box_rmin', NF90_DOUBLE, box_rmin_id))
+    call check( nf90_def_var(ncid, 'box_rmax', NF90_DOUBLE, box_rmax_id))
+    call check( nf90_def_var(ncid, 'box_zmin', NF90_DOUBLE, box_zmin_id))
+    call check( nf90_def_var(ncid, 'box_zmax', NF90_DOUBLE, box_zmax_id))
+    call check( nf90_def_var(ncid, 'R', NF90_DOUBLE, [n_R_id], R_id))
+    call check( nf90_def_var(ncid, 'Z', NF90_DOUBLE, [n_Z_id], Z_id))
+    call check( nf90_def_var(ncid, 'psiN', NF90_DOUBLE, [n_R_id,N_Z_id], psiN_id))
+    call check( nf90_def_var(ncid, 'Bx', NF90_DOUBLE, [n_R_id,N_Z_id], Bx_id))
+    call check( nf90_def_var(ncid, 'By', NF90_DOUBLE, [n_R_id,N_Z_id], By_id))
+    call check( nf90_def_var(ncid, 'Bz', NF90_DOUBLE, [n_R_id,N_Z_id], Bz_id))
+    call check( nf90_def_var(ncid, 'ne', NF90_DOUBLE, [n_R_id,N_Z_id], ne_id))
+    call check( nf90_def_var(ncid, 'Te', NF90_DOUBLE, [n_R_id,N_Z_id], Te_id))
+
+! Put global attributes
+    call check( nf90_put_att(ncid, NF90_GLOBAL, 'RAYS_run_label', run_label))
+
+! Finished NC definition
+	call check( nf90_enddef(ncid))
+
+! If arrays already allocated deallocate them
+    if (allocated(psiN)) deallocate(psiN)
+    if (allocated(Bx)) deallocate(Bx)
+    if (allocated(By)) deallocate(By)
+    if (allocated(Bz)) deallocate(Bz)
+    if (allocated(ne)) deallocate(ne)
+    if (allocated(Te)) deallocate(Te)
+
+!   Allocate local arrays
+    allocate(psiN(N_pointsR_eq,N_pointsZ_eq),source=0.0_rkind)
+    allocate(Bx(N_pointsR_eq,N_pointsZ_eq),source=0.0_rkind)
+    allocate(By(N_pointsR_eq,N_pointsZ_eq),source=0.0_rkind)
+    allocate(Bz(N_pointsR_eq,N_pointsZ_eq),source=0.0_rkind)
+    allocate(ne(N_pointsR_eq,N_pointsZ_eq),source=0.0_rkind)
+    allocate(Te(N_pointsR_eq,N_pointsZ_eq),source=0.0_rkind)
+
+	dr = one/(N_pointsR_eq - 1)*(box_rmax-box_rmin)
+	dz = one/(N_pointsZ_eq - 1)*(box_zmax-box_zmin)
+	plasma_psi_limit_temp = plasma_psi_limit ! Stash plasma_psi_limit
+	plasma_psi_limit = 10.0 ! Set plasma_psi_limit high so can get fields outside plasma
+
+ write(*,*) 'write_eq_RZ_grid_data_NC got to 1'
+	do i = 1, N_pointsR_eq ; do j = 1, N_pointsZ_eq
+		R(i) = box_rmin + (i-1)*dr
+		Z(j) = box_zmin + (j-1)*dz
+		rvec = (/R(i), zero, Z(j)/)
+
+		call axisym_toroid_psi(rvec, psi, gradpsi, psiNij, gradpsiNij)
+		psiN(i,j) = psiNij
+
+		call equilibrium(rvec, eq)
+
+		Bx(i,j) = eq%bvec(1)
+		By(i,j) = eq%bvec(2)
+		Bz(i,j) = eq%bvec(3)
+		ne(i,j) = eq%ns(0)
+		Te(i,j) = eq%Ts(0)
+
+	end do ; end do
+	plasma_psi_limit = plasma_psi_limit_temp ! Restore plasma_psi_limit
+
+ write(*,*) "box_rmin", box_rmin
+ write(*,*) "R = ", R
+ write(*,*) "Bx(20,51) = ", Bx(20,51)
+ write(*,*) "By(20,51) = ", By(20,51)
+ write(*,*) "Bz(20,51) = ", Bz(20,51)
+! write(*,*) "Bz(:,51) = ", Bz(:,51)
+ write(*,*) "ne(:,51) = ", ne(:,51)
+
+! Put NC variables
+    call check( nf90_put_var(ncid, box_rmin_id, box_rmin))
+    call check( nf90_put_var(ncid, box_rmax_id, box_rmax))
+    call check( nf90_put_var(ncid, box_zmin_id, box_zmin))
+    call check( nf90_put_var(ncid, box_zmax_id, box_zmax))
+    call check( nf90_put_var(ncid, R_id, R))
+    call check( nf90_put_var(ncid, Z_id, Z))
+    call check( nf90_put_var(ncid, psiN_id, psiN))
+    call check( nf90_put_var(ncid, Bx_id, Bx))
+    call check( nf90_put_var(ncid, By_id, By))
+    call check( nf90_put_var(ncid, Bz_id, Bz))
+    call check( nf90_put_var(ncid, ne_id, ne))
+    call check( nf90_put_var(ncid, Te_id, Te))
+
+!   Close the NC file
+    call check( nf90_close(ncid) )
+    return
+ end subroutine write_eq_RZ_grid_data_NC
+
+
+!*************************************************************************
+
 
   subroutine check(status)
     use netcdf

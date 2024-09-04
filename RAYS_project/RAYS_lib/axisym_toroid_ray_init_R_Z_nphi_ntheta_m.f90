@@ -200,14 +200,14 @@ contains
         ! Take psi component to point inward i.e. direction -grad_psi
         rindex_vec_temp( : , count) = rindex_vec - npsi*psi_unit
 
-!  write(*,*) 'wave_mode = ', wave_mode
-!  write(*,*) 'eq%bunit = ', eq%bunit
-!  write(*,*) 'psi_unit = ', psi_unit
-!  write(*,*) 'phi_unit = ', phi_unit
-!  write(*,*) 'theta_unit = ', theta_unit
-!  write(*,*) 'trans_unit = ', trans_unit
-!  write(*,*) 'npsi = ', npsi, '  n3 = ', n3, '  n2 = ', n2
-!  write(*,*) 'rindex_vec_temp( : ,', count,') = ', rindex_vec_temp( : , count)
+ write(*,*) 'wave_mode = ', wave_mode
+ write(*,*) 'eq%bunit = ', eq%bunit
+ write(*,*) 'psi_unit = ', psi_unit
+ write(*,*) 'phi_unit = ', phi_unit
+ write(*,*) 'theta_unit = ', theta_unit
+ write(*,*) 'trans_unit = ', trans_unit
+ write(*,*) 'npsi = ', npsi, '  n3 = ', n3, '  n2 = ', n2
+ write(*,*) 'rindex_vec_temp( : ,', count,') = ', rindex_vec_temp( : , count)
 
  nperp = sqrt(npsi**2+n2**2)
 ! write(*,*) 'residual = ', residual(eq, k0*nperp, k0*n3)
