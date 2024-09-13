@@ -1,35 +1,30 @@
 module  eqdsk_magnetics_spline_interp_m
 ! A simple  eqdsk equilibrium model. This code uses eqdsk routines in module eqdsk_utilities_m.f90
-! These were adapted from similar codes by Richard Fitzpatrick.  It uses Fitzpatrick's functions
-! for interpolating psi and its derivatives using simple 2 point or 3 point approximations.
-! In that regard they are not expected to be very accurate.  This version will soon be supplanted
-! by one that uses cubic splines for the interpolation.
+! These were adapted from similar codes by Richard Fitzpatrick.
 !
 ! N.B. Values of Psi are shifted on initialization so that Psi is zero on axis.
 
+! Working notes
+! DBB (8/2/2024) Changed error return 'if psi > 1' to 'if psi > plasma_psi_limit' to
+! allow rays outside last closed flux surface. plasma_psi_limit defaults to 1.0 but can be
+! reset in namelist
+
     use constants_m, only : rkind
+    use quick_cube_splines_m, only : cube_spline_function_1D, cube_spline_function_2D
 
     implicit none
 
     character (len = 100) :: eqdsk_file_name
 
-! Data for splines
-    ! bcspline arguments
-    real(KIND=rkind), allocatable :: fspl(:,:,:,:), wk(:)
-    real(KIND=rkind), allocatable :: bcxmin(:),bcxmax(:)      ! (inth) if used
-    real(KIND=rkind), allocatable :: bcthmin(:),bcthmax(:)    ! (inx) if used
+! Stuff for 2D spline profiles i.e. psi
 
-    ! bcspeval arguments, if not already declared above
-    real(KIND=rkind) :: fval(6)
-    integer :: iselect(6)
+    type(cube_spline_function_2D) :: Psi_profile
+ 	character (len = 80) :: Psi_name = 'Psi_profile'
 
-! Stuff for 1D splines
-! cspeval arguments
+! Stuff for 1D spline profiles
 
-    real(KIND=rkind), allocatable ::  fspl_1D(:,:)
-    real(KIND=rkind), allocatable ::  wk_1D(:)
-    real(KIND=rkind) ::  fval_1D(3)
-    integer :: iselect_1D(3)
+    type(cube_spline_function_1D) :: T_profile
+ 	character (len = 80) :: T_name = 'T_profile'
 
     ! Flux function psi at plasma boundary
     real(KIND=rkind) :: psiB
@@ -67,12 +62,11 @@ contains
     ! data for plasma boundary
     real(KIND=rkind), intent(out) :: inner_bound, outer_bound, upper_bound, lower_bound
 
-! bcspline arguments
-     integer ibcxmin,ibcxmax,ibcthmin,ibcthmax,ilinx, ilinth,ier
-
     integer :: i, j, nwk
 
-    write(*,*) 'initialize_eqdsk_magnetics_spline_interp'
+    if (verbosity >= 0) then
+		write(*,*) 'initialize_eqdsk_magnetics_spline_interp'
+    end if
 
     if (read_input .eqv. .true.) then
   		input_unit = get_unit_number()
@@ -103,27 +97,23 @@ contains
     lower_bound = minval(ZBOUND)
     upper_bound = maxval(ZBOUND)
 
-    call message('Inner boundary = ', inner_bound)
-    call message('Outer boundary = ', outer_bound)
-    call message('Upper boundary = ', upper_bound)
-    call message('Lower boundary = ', lower_bound)
+    if (verbosity >= 0) then
+		call message('Inner boundary = ', inner_bound)
+		call message('Outer boundary = ', outer_bound)
+		call message('Upper boundary = ', upper_bound)
+		call message('Lower boundary = ', lower_bound)
 
-    write(*,*) 'Inner boundary = ', inner_bound
-    write(*,*) 'Outer boundary = ', outer_bound
-    write(*,*) 'Lower boundary = ', lower_bound
-    write(*,*) 'Upper boundary = ', upper_bound
+		write(*,*) 'Inner boundary = ', inner_bound
+		write(*,*) 'Outer boundary = ', outer_bound
+		write(*,*) 'Lower boundary = ', lower_bound
+		write(*,*) 'Upper boundary = ', upper_bound
+    end if
 
 ! Allocate arrays
     ! radial and Z grids that Psi is defined on
     if (.not. allocated(R_grid)) then
 		allocate (R_grid(NRBOX))
 		allocate (Z_grid(NZBOX))
-		allocate (fspl(4,4,NRBOX,NZBOX))
-		allocate (fspl_1D(4,NRBOX))
-	    nwk = 4*NRBOX*NZBOX +5*max(NRBOX,NZBOX)
-		allocate (wk(nwk))
-		allocate (wk_1D(NRBOX))
-		allocate (bcxmin(1),bcxmax(1),bcthmin(1),bcthmax(1)) ! not used but must be allocated
     end if
 
     do i = 1, NRBOX
@@ -139,47 +129,21 @@ contains
     PSIBOUND = PSIBOUND - PSIAXIS
     psiB = PSIBOUND
 
- write (*,*) 'PSIAXIS = ', PSIAXIS, '   maxval(Psi) = ', maxval(Psi)
-! Set f(1,1,i,j) = eqdsk Psi
-    do i = 1, NRBOX
-    do j = 1, NZBOX
-    	fspl(1,1,i,j) = Psi(i,j)
-    end do
-    end do
+! Initialize spline coefficients for psi
 
-! Set f(1,1,i) = eqdsk T
-    do i = 1, NRBOX
-    	fspl_1D(1,i) = T(i)
-    end do
+	call psi_profile%cube_spline_2D_init(NRBOX, R_grid, NZBOX, Z_grid, Psi, Psi_name)
 
-! Set up spline coefficients for Psi
-    ibcxmin = 0
-    bcxmin = 0.
-    ibcxmax = 0
-    bcxmax = 0.
-    ibcthmin = 0
-    bcthmin = 0.
-    ibcthmax = 0
-    bcthmax = 0.
-    ilinx = 1
-    ilinth = 1
+! Initialize spline coefficients for RBphi
 
-    call bcspline(R_grid,NRBOX,Z_grid,NZBOX,fspl,NRBOX, &
-         ibcxmin,bcxmin,ibcxmax,bcxmax, &
-         ibcthmin,bcthmin,ibcthmax,bcthmax, &
-         wk,nwk,ilinx,ilinth,ier)
-         if (ier .ne. 0) write (*,*) 'bcspline: ier = ', ier
-
-! Set up spline coefficients for RBphi
-
-    call cspline(R_grid,NRBOX,fspl_1D,ibcxmin,bcxmin,ibcxmax,bcxmax,wk_1D,NRBOX,ilinx,ier)
-         if (ier .ne. 0) write (*,*) 'bcspline: ier = ', ier
+    call T_profile%cube_spline_1D_init(NRBOX, R_grid, T, T_name)
 
     return
   end subroutine initialize_eqdsk_magnetics_spline_interp
 
+!****************************************************************************************
 
-  subroutine  eqdsk_magnetics_spline_interp(rvec, bvec, gradbtensor, psi, gradpsi, psiN, gradpsiN, equib_err)
+  subroutine  eqdsk_magnetics_spline_interp(rvec, bvec, gradbtensor, psi, gradpsi, psiN, &
+            & gradpsiN, equib_err)
 
 !   Checks for some error conditions and sets equib_err for outside handling.  Does not
 !   stop.
@@ -195,13 +159,6 @@ contains
     real(KIND=rkind), intent(out) :: Psi, gradpsi(3), psiN, gradpsiN(3)
     character(len=60), intent(out) :: equib_err
 
-! Spline variables
-    integer :: iselect(6) = 1 ! Selector for pspline outputs. Output everthing.
-    integer :: iselect_1D(3) = 1 ! Selector for pspline outputs. Output everthing.
-    integer :: ilinx = 0
-    integer :: ilinth = 0
-    integer :: ier
-
     real(KIND=rkind) :: PsiR, PsiZ, PsiRR, PsiRZ, PsiZZ, RBphi, RBphiR
     real(KIND=rkind) :: x, y, z, r
     real(KIND=rkind) :: br, bz, bphi, bp0
@@ -213,22 +170,9 @@ contains
     z = rvec(3)
     r = sqrt(x**2+y**2)
 
-! evaluate spline fits
-	call bcspeval(r,z,iselect,fval,R_grid,NRBOX,Z_grid,NZBOX,ilinx,ilinth,fspl,NRBOX,ier)
-    if (ier .ne. 0) write (*,*) 'bcspeval: ier = ', ier
+	call Psi_profile%eval_2D_fpp(r, z, Psi, PsiR, PsiZ, PsiRR, PsiRZ, PsiZZ)
 
-    Psi = fval(1)
-    PsiR = fval(2)
-    PsiZ = fval(3)
-    PsiRR = fval(4)
-    PsiRZ = fval(5)
-    PsiZZ = fval(6)
-
-    call cspeval(r,iselect_1D,fval_1D,R_grid,NRBOX,ilinx,fspl_1D,ier)
-    if (ier .ne. 0) write (*,*) 'cspeval: ier = ', ier
-
-    RBphi = fval_1D(1)
-    RBphiR = fval_1D(2)
+    call T_profile%eval_1D_fp(r, RBphi, RBphiR)
 
 !   Magnetic field
     br = -PsiZ/r
@@ -236,11 +180,9 @@ contains
     bphi = RBphi/r
     gradpsi = (/x*bz, y*bz, -R*br/)
 
-!   Normalized Flux function x, y, z normalized to 1.0 at last surface
+!   Normalized Flux function x, y, z normalized to 1.0 at last closed flux surface
     psiN = psi/PSIBOUND
     gradpsiN = gradpsi/PSIBOUND
-    ! Check that we are in the plasma. Set equib_err but don't stop
-    if (psiN > 1.) equib_err = 'psi >1 out_of_plasma'
 
 !   Magnetic field derivatives.
 
@@ -298,36 +240,23 @@ contains
     real(KIND=rkind), intent(in) :: rvec(3)
     real(KIND=rkind), intent(out) :: Psi, gradpsi(3), psiN, gradpsiN(3)
 
-    integer, parameter, dimension(6) :: psi_select = (/ 1, 1, 1, 0, 0, 0 /)
-    real (KIND=rkind) :: fval(6)
     real(KIND=rkind) :: PsiR, PsiZ
     real(KIND=rkind) :: x, y, z, R
     real(KIND=rkind) :: br, bz, bphi, bp0
-    integer :: ier
-    integer :: ilinx = 0
-    integer :: ilinth = 0
 
     x = rvec(1)
     y = rvec(2)
     z = rvec(3)
     R = sqrt(x**2+y**2)
-    fval = 0.
 
-! evaluate spline fit
-	call bcspeval(R,z,psi_select,fval,R_grid,NRBOX,Z_grid,NZBOX,ilinx,ilinth,fspl,NRBOX,ier)
-    if (ier .ne. 0) write (*,*) 'bcspeval: ier = ', ier
-
-    Psi = fval(1) ! Poloidfal flux function
-    PsiR = fval(2)
-    PsiZ = fval(3)
-
+	call Psi_profile%eval_2D_fp(r, z, Psi, PsiR, PsiZ)
 
 !   Magnetic field
     br = -PsiZ/r
     bz = PsiR/r
     gradpsi = (/x*bz, y*bz, -R*br/)
 
-!   Normalized Flux function x, y, z normalized to 1.0 at last surface
+!   Normalized Flux function x, y, z normalized to 1.0 at last closed flux surface
     psiN = Psi/PSIBOUND
     gradpsiN = gradpsi/PSIBOUND
 
@@ -337,10 +266,7 @@ contains
 !********************************************************************
 
     subroutine deallocate_eqdsk_magnetics_spline_interp_m
-		if (allocated(fspl)) then
-			deallocate( fspl ,wk, bcxmin, bcxmax, bcthmin, bcthmax )
-			deallocate( fspl_1D, wk_1D)
-		end if
+		! Nothing to deallocate
 		return
     end subroutine deallocate_eqdsk_magnetics_spline_interp_m
 

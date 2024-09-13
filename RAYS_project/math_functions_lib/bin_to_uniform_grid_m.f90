@@ -56,8 +56,8 @@
 
 		nx = size(xQ)
 
-		x_low = minval(xQ)
-		x_high = maxval(xQ)
+! 		x_low = minval(xQ)
+! 		x_high = maxval(xQ)
 
 
 		n_bins = size(binned_Q)
@@ -79,7 +79,8 @@
 
 		! Find integer index (bin number) of ix_low, ix_high)
 		index_low = floor(ix_low) + 1
-		index_high = floor(ix_low) + 1
+!		index_high = floor(ix_low) + 1
+		index_high = floor(ix_high) + 1
 		if (x_high .ge. xmax) index_high = n_bins ! special case x_high = xmax
 
 		delta_i = index_high - index_low
@@ -170,8 +171,8 @@
 
 		nx = size(xQ)
 
-		x_low = minval(xQ)
-		x_high = maxval(xQ)
+! 		x_low = minval(xQ)
+! 		x_high = maxval(xQ)
 
 
 		n_bins = size(binned_Q)
@@ -193,7 +194,8 @@
 
 		! Find integer index (bin number) of ix_low, ix_high)
 		index_low = floor(ix_low) + 1
-		index_high = floor(ix_low) + 1
+!	    index_high = floor(ix_low) + 1
+		index_high = floor(ix_high) + 1
 		if (x_high .ge. xmax) index_high = n_bins ! special case x_high = xmax
 
 		delta_i = index_high - index_low

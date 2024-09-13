@@ -1,6 +1,7 @@
  subroutine deriv_cold(eq, nvec, dddx, dddk, dddw)
 !   calculates the derivatives of D with respect to k, r, omega.
-!   v(1:3) = (x,y,z); v(4:6) = (kx, ky, kz),
+!   v(1:3) = (x,y,z)
+!   nvec(1:3) == v(4:6)/k0 = (kx, ky, kz)/k0 refractive index vector
 !   dddx = dD/dx, dddk = dD/dk, dddw = dD/d(omega).
 
     use constants_m, only : rkind

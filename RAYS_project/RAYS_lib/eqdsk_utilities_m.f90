@@ -1,7 +1,7 @@
 module eqdsk_utilities_m
 
 ! Routines for reading, writing, and interpolating geqdsk files.  These were adapted from
-! routines written by Richard Fitzpatrick,found in his EPEC github repo, and made into a 
+! routines written by Richard Fitzpatrick,found in his EPEC github repo, and made into a
 ! module.  Fitzpatrick's variable names are different from those found in Lang Lau's
 ! description "G EQSDK FORMAT", 2/7/1997.  Most are obvious, but some are not completely:
 ! Fitzpatrick's -> Lau's
@@ -10,11 +10,11 @@ module eqdsk_utilities_m
 ! TTp -> ffprim
 ! Pp -> pprime
 !
-! Fitzpatrick also provides some interpolation routines GetPsi, and derivatives that rely 
+! Fitzpatrick also provides some interpolation routines GetPsi, and derivatives that rely
 ! on linear or 3 point interpolations on the R and Z grids.  I have adapted these routines
 ! although I don't expect them to be as accurate as a cubic spline interpolation.  Note,
 ! I expect the optimum values for dR, dZ to be 1/2 the grid spacing for first derivatives
-! and equal to the grid spacing for 2nd derivatives. so I have coded in spacing of 2*dR 
+! and equal to the grid spacing for 2nd derivatives. so I have coded in spacing of 2*dR
 ! for 2nd derivatives, and anticipate that the module initialization will set dR, dZ to
 ! the grid spacing.
 
@@ -25,17 +25,17 @@ module eqdsk_utilities_m
 
 ! eqdsk data
   character (len = 100) :: string
-  integer :: i, j, i3, NRBOX, NZBOX, NBOUND, NLIM  
-  real(KIND=rkind) :: RBOXLEN, ZBOXLEN, R0, RBOXLFT, ZOFF, zero, RAXIS, ZAXIS, B0, PSIAXIS, PSIBOUND, CURRENT 
-  real(KIND=rkind), dimension (:), allocatable :: T, P, TTp, Pp, Q, RBOUND, ZBOUND, RLIM, ZLIM  
+  integer :: i, j, i3, NRBOX, NZBOX, NBOUND, NLIM
+  real(KIND=rkind) :: RBOXLEN, ZBOXLEN, R0, RBOXLFT, ZOFF, zero, RAXIS, ZAXIS, B0, PSIAXIS, PSIBOUND, CURRENT
+  real(KIND=rkind), dimension (:), allocatable :: T, P, TTp, Pp, Q, RBOUND, ZBOUND, RLIM, ZLIM
   real(KIND=rkind), dimension (:, :), allocatable :: Psi
 
 ! data needed for interpolation of psi etc
-  real(KIND=rkind), dimension (:), allocatable :: R_grid, Z_grid 
-  real(KIND=rkind) :: dR, dZ    
+  real(KIND=rkind), dimension (:), allocatable :: R_grid, Z_grid
+  real(KIND=rkind) :: dR, dZ
 
-!******************************    
-    
+!******************************
+
 contains
 
 !******************************
@@ -50,9 +50,9 @@ subroutine ReadgFile (eqdsk_file_name)
   implicit none
 
   character (len = *), intent(in) :: eqdsk_file_name
-  
+
   open (unit = 100, file = trim(eqdsk_file_name), status = 'old')
-  
+
   read (100, '(a48, 3i4)') string,  i3,      NRBOX,   NZBOX
   read (100, '(5e16.9  )') RBOXLEN, ZBOXLEN, R0,      RBOXLFT,  ZOFF
   read (100, '(5e16.9  )') RAXIS,   ZAXIS,   PSIAXIS, PSIBOUND, B0
@@ -67,12 +67,12 @@ subroutine ReadgFile (eqdsk_file_name)
 	  allocate (Q   (NRBOX))
 	  allocate (Psi (NRBOX, NZBOX))
   end if
-  
+
   read (100, '(5e16.9)') (T   (i), i = 1, NRBOX)
   read (100, '(5e16.9)') (P   (i), i = 1, NRBOX)
   read (100, '(5e16.9)') (TTp (i), i = 1, NRBOX)
   read (100, '(5e16.9)') (Pp  (i), i = 1, NRBOX)
-  
+
   read (100, '(5e16.9)') ((Psi  (i, j), i = 1, NRBOX), j = 1, NZBOX)
 
   read (100, '(5e16.9)') (Q (i), i = 1, NRBOX)
@@ -86,8 +86,8 @@ subroutine ReadgFile (eqdsk_file_name)
 	  allocate (ZLIM   (NLIM))
   end if
 
-  write(*,*) 'NBOUND = ', NBOUND, '   NLIM = ', NLIM
-  write(*,*) 'shape(RBOUND) = ', shape(RBOUND)
+!   write(*,*) 'NBOUND = ', NBOUND, '   NLIM = ', NLIM
+!   write(*,*) 'shape(RBOUND) = ', shape(RBOUND)
 
   read (100, '(5e16.9)') (RBOUND (i), ZBOUND (i), i = 1, NBOUND)
 !   write(*,*) 'RBOUND = ', RBOUND
@@ -112,7 +112,7 @@ subroutine WritegFile (eqdsk_out)
   open (unit = 100, file = trim(eqdsk_out), status = 'unknown')
 
   zero = 0.
-  
+
   write (100, '(a48, 3i4)') string,  i3,      NRBOX,    NZBOX
   write (100, '(5e16.9  )') RBOXLEN, ZBOXLEN, R0,       RBOXLFT,  ZOFF
   write (100, '(5e16.9  )') RAXIS,   ZAXIS,   PSIAXIS,  PSIBOUND, B0
@@ -129,7 +129,7 @@ subroutine WritegFile (eqdsk_out)
   write (100, '(5e16.9)')  (RLIM   (i), ZLIM   (i), i = 1, NLIM)
 
   close (unit = 100)
-  
+
 end subroutine WritegFile
 
 ! %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -189,7 +189,7 @@ real(KIND=rkind) function GetPsiR(R, Z)
 !  use Function_Defs_1
   implicit none
 
-  real(KIND=rkind) :: R, Z, R1, R2 
+  real(KIND=rkind) :: R, Z, R1, R2
 
   R1 = R - dR
   R2 = R + dR
@@ -205,11 +205,11 @@ end function GetPsiR
 real(KIND=rkind) function GetPsiZ(R, Z)
 
   use constants_m, only : rkind
-  
+
   implicit none
 
-  real(KIND=rkind) :: R, Z, Z1, Z2 
-  
+  real(KIND=rkind) :: R, Z, Z1, Z2
+
   Z1 = Z - dZ
   Z2 = Z + dZ
 
@@ -226,7 +226,7 @@ real(KIND=rkind) function GetPsiRR(R, Z)
   use constants_m, only : rkind
 
 !  use Function_Defs_1
-  
+
   implicit none
 
   real(KIND=rkind) :: R, Z, R1, R2
@@ -246,7 +246,7 @@ end function GetPsiRR
 real(KIND=rkind) function GetPsiZZ(R, Z)
 
   use constants_m, only : rkind
-  
+
   implicit none
 
   real(KIND=rkind) :: R, Z, Z1, Z2
@@ -266,7 +266,7 @@ end function GetPsiZZ
 real(KIND=rkind) function GetPsiRZ(R, Z)
 
   use constants_m, only : rkind
-  
+
   implicit none
 
   real(KIND=rkind) :: R, Z, R1, R2, Z1, Z2
@@ -291,7 +291,7 @@ real(KIND=rkind) function GetRBphiR(R)
 
   implicit none
 
-  real(KIND=rkind) :: R, R1, R2 
+  real(KIND=rkind) :: R, R1, R2
 
   R1 = R - dR
   R2 = R + dR
@@ -307,7 +307,7 @@ end function GetRBphiR
 subroutine FindOXPoint(R, Z, p)
 
   use constants_m, only : rkind
-  
+
   implicit none
 
   integer :: i
@@ -315,7 +315,7 @@ subroutine FindOXPoint(R, Z, p)
   real(KIND=rkind) :: R, Z, p, pr, pz, prr, pzz, prz, det
 
   do i = 1, 50
-     
+
      pr  = GetPsiR  (R, Z)
      pz  = GetPsiZ  (R, Z)
      prr = GetPsiRR (R, Z)
@@ -328,7 +328,7 @@ subroutine FindOXPoint(R, Z, p)
      Z = Z + (prz*pr - prr*pz) /det
 
      p = GetPsi (R, Z)
-     
+
   enddo
 
 end subroutine FindOXPoint

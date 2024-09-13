@@ -45,6 +45,7 @@ add_library (RAYS_lib ${lib_sources})
 target_include_directories (RAYS_lib
                             PUBLIC
                             $<TARGET_PROPERTY:math_functions,BINARY_DIR>
+                            $<TARGET_PROPERTY:spline,BINARY_DIR>
 )
 
 target_link_libraries(RAYS_lib

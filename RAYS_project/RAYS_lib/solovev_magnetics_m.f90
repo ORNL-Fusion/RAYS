@@ -154,9 +154,6 @@ contains
 ! Get poloidal flux
     call solovev_magnetics_psi(rvec, psi, gradpsi, psiN, gradpsiN)
 
-! Check that we are in the plasma. Set equib_err but don't stop.
-    if (psiN > 1.) equib_err = 'psi >1 out_of_plasma'
-
 !   Magnetic field and its derivatives.
     br = -bp0*r*z/(rmaj*kappa)**2
     bz = bp0 * ( (z/(rmaj*kappa))**2 + .5*((r/rmaj)**2-1.) )
