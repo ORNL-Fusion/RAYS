@@ -406,8 +406,7 @@ if __name__ == '__main__':
     title = 'Some real good stuff'
     xlabel = 'x(cm)'
     ylabel = 'volts'
-<<<<<<< HEAD
-    plot1 = XY_Curves_Fig(curve_list, title, xlabel, ylabel)    
+    plot1 = XY_Curves_Fig(curve_list, title, xlabel, ylabel)
     plot_XY_Curves_Fig(plot1)
 
     curve_list = []
@@ -417,14 +416,12 @@ if __name__ == '__main__':
         new_curve = XY_curve(x[:i+3], y[:i+3], label = lbl)
         curve_list.append(new_curve)
 
-    title = 'Try different curve lengths' 
-=======
+    title = 'Try different curve lengths'
     plot1 = XY_Curves_Fig(curve_list, title, xlabel, ylabel)
 
     plot_XY_Curves_Fig(plot1)
 
     title = 'Even better stuff'
->>>>>>> 0ada16ffe939ca294e741d5c2574bb825c2c6537
     plot2 = XY_Curves_Fig(curve_list, title, xlabel, ylabel)
     plot_XY_Curves_Fig(plot2)
 
