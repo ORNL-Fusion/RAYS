@@ -108,7 +108,7 @@ def scale_curve_list(curve_list):
 def plot_summary(summary, **kwargs):
 
 # summary is a dictionary containing the file name and global_attributes
-# global_attributes is a list of length 2 lists -> [att name, att value]
+# global_attributes is a list of length 2 lists -> [[att name, att value],...]
 
     entries_per_line = 4
     max_lines_per_column = 20
