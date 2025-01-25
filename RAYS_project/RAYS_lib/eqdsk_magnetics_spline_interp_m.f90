@@ -23,8 +23,11 @@ module  eqdsk_magnetics_spline_interp_m
 
 ! Stuff for 1D spline profiles
 
-    type(cube_spline_function_1D) :: T_profile
- 	character (len = 80) :: T_name = 'T_profile'
+    type(cube_spline_function_1D) :: RBphi_profile
+ 	character (len = 80) :: T_name = 'RBphi_profile'
+
+    type(cube_spline_function_1D) :: Q_profile
+ 	character (len = 80) ::Q_name = 'Q_profile'
 
     ! Flux function psi at plasma boundary
     real(KIND=rkind) :: psiB
@@ -134,12 +137,13 @@ contains
     psiB = PSIBOUND
 
 ! Initialize spline coefficients for psi
-
 	call psi_profile%cube_spline_2D_init(NRBOX, R_grid, NZBOX, Z_grid, Psi, Psi_name)
 
 ! Initialize spline coefficients for RBphi
+    call RBphi_profile%cube_spline_1D_init(NRBOX, R_grid, T, T_name)
 
-    call T_profile%cube_spline_1D_init(NRBOX, R_grid, T, T_name)
+! Initialize spline coefficients for Q
+    call Q_profile%cube_spline_1D_init(NRBOX, R_grid, Q, Q_name)
 
     return
   end subroutine initialize_eqdsk_magnetics_spline_interp
@@ -176,7 +180,7 @@ contains
 
 	call Psi_profile%eval_2D_fpp(r, z, Psi, PsiR, PsiZ, PsiRR, PsiRZ, PsiZZ)
 
-    call T_profile%eval_1D_fp(r, RBphi, RBphiR)
+    call RBphi_profile%eval_1D_fp(r, RBphi, RBphiR)
 
 !   Magnetic field
     br = PsiZ/r
@@ -223,7 +227,6 @@ contains
 
     return
     end subroutine  eqdsk_magnetics_spline_interp
-
 !********************************************************************
 
   subroutine  eqdsk_magnetics_spline_interp_psi(rvec, Psi, gradpsi, psiN, gradpsiN)
@@ -264,9 +267,23 @@ contains
     psiN = Psi/PSIBOUND
     gradpsiN = gradpsi/PSIBOUND
 
-
     return
   end subroutine  eqdsk_magnetics_spline_interp_psi
+
+!********************************************************************
+
+  subroutine  eqdsk_magnetics_spline_interp_Q_psi(Psi, Q, dQdPsi)
+
+    implicit none
+
+    real(KIND=rkind), intent(in) :: Psi
+    real(KIND=rkind), intent(out) :: Q, dQdPsi
+
+	call Q_profile%eval_1D_fp(Psi,  Q, dQdPsi)
+
+    return
+  end subroutine  eqdsk_magnetics_spline_interp_Q_psi
+
 !********************************************************************
 
     subroutine deallocate_eqdsk_magnetics_spline_interp_m
