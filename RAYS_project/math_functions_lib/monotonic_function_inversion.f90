@@ -140,34 +140,36 @@
 
  !*********************************************************************************
 
-!   SUBROUTINE spline_invert_uniform_init(sp_fun, f, f_name, npoints, x_min, x_max, eps)
-!
-! 	IMPLICIT NONE
-!
-!     TYPE(cube_spline_function_1D), INTENT(out) :: sp_fun
-! 	REAL(kind = rkind),	EXTERNAL :: f
-!  	CHARACTER (len = 80), INTENT(IN) :: f_name
-! 	INTEGER, INTENT(IN) :: npoints
-! 	REAL(kind = rkind), INTENT(IN) :: x_min
-! 	REAL(kind = rkind), INTENT(IN) :: x_max
-! 	REAL(kind = rkind), INTENT(IN) :: eps
-!
-! 	REAL(kind = rkind) :: y_low, y_high
-! 	REAL(kind = rkind) :: y_grid(npoints), x(npoints)
-! 	integer :: i
-!
-! 	call list_invert_uniform(f, x, npoints,  x_min, x_max, eps)
-!
-! ! Generate uniform grid of y values and initialize spline coefficients for sp_fun
-! 	y_low = f(x_min)
-! 	y_high = f(x_max)
-! 	do i = 1, npoints
-! 		y_grid(i) = y_low + (i-1)*(y_high-y_low)/(npoints-1)
-! 	end do
-!
-!     call sp_fun%cube_spline_1D_init(npoints, y_grid, x, f_name)
-!
-!   RETURN
-!   END SUBROUTINE spline_invert_uniform_init
+  SUBROUTINE spline_invert_uniform_init(sp_fun, f, f_name, npoints, x_min, x_max, eps)
+
+    use quick_cube_splines_m, only : cube_spline_function_1D
+
+	IMPLICIT NONE
+
+    TYPE(cube_spline_function_1D), INTENT(out) :: sp_fun
+	REAL(kind = rkind),	EXTERNAL :: f
+ 	CHARACTER (len = 80), INTENT(IN) :: f_name
+	INTEGER, INTENT(IN) :: npoints
+	REAL(kind = rkind), INTENT(IN) :: x_min
+	REAL(kind = rkind), INTENT(IN) :: x_max
+	REAL(kind = rkind), INTENT(IN) :: eps
+
+	REAL(kind = rkind) :: y_low, y_high
+	REAL(kind = rkind) :: y_grid(npoints), x(npoints)
+	integer :: i
+
+	call list_invert_uniform(f, npoints,  x_min, x_max, eps, x)
+
+! Generate uniform grid of y values and initialize spline coefficients for sp_fun
+	y_low = f(x_min)
+	y_high = f(x_max)
+	do i = 1, npoints
+		y_grid(i) = y_low + (i-1)*(y_high-y_low)/(npoints-1)
+	end do
+
+    call sp_fun%cube_spline_1D_init(npoints, y_grid, x, f_name)
+
+  RETURN
+  END SUBROUTINE spline_invert_uniform_init
 
   END MODULE mono_funct_inversion_m

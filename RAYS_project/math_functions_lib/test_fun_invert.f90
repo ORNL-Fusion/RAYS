@@ -1,14 +1,15 @@
 PROGRAM fun_invert
-   USE mono_funct_inversion_m, only : list_invert
+    USE mono_funct_inversion_m, only : list_invert, spline_invert_uniform_init
+    use quick_cube_splines_m, only : cube_spline_function_1D
 
     IMPLICIT NONE
 
     integer, parameter :: rkind = selected_real_kind(15,307) ! kind parameter for reals
 !    integer, parameter :: skind = selected_real_kind(6,37) ! kind parameter single precision
 
-!    TYPE(cube_spline_function_1D) :: sp_fun
+    TYPE(cube_spline_function_1D) :: sp_fun
 
-    INTEGER, PARAMETER :: npoints = 5, n_test = 4
+    INTEGER, PARAMETER :: npoints = 10, n_test = 9
 
 !     REAL, allocatable :: x(:)
 !     REAL :: x_low, x_high, y, eps, delta
@@ -78,22 +79,22 @@ PROGRAM fun_invert
     WRITE (*, *) '     y  = ', yD
     WRITE (*, *) 'y_calc  = ', y_calc
 
-!     write(*,*) ' '
-!     write(*,*) 'Test spline_invert_uniform'
-! 	call spline_invert_uniform_init(sp_fun, fun_real, f_name, npoints, xD_low, xD_high, epsD)
-!
-! 	do i = 1, n_test
-! 		yD(i) = fun_real(xD(i))
-! 		y_test(i) = yD_low + (i-1)*(yD_high-yD_low)/(n_test-1)
-! 		call sp_fun%eval_1D_f(y_test(i), x_test(i))
-! 		x_calc(i) = sqrt(y_test(i))
-! 		y_calc(i) = fun_real(x_calc(i))
-! 	end do
-!
-!     WRITE (*, *) 'x_test = ', x_test
-!     WRITE (*, *) 'x_calc  = ', x_calc
-!     WRITE (*, *) 'y_test  = ', y_test
-!     WRITE (*, *) 'y_calc  = ', y_calc
+    write(*,*) ' '
+    write(*,*) 'Test spline_invert_uniform'
+	call spline_invert_uniform_init(sp_fun, fun_real, f_name, npoints, xD_low, xD_high, epsD)
+
+	do i = 1, n_test
+		yD(i) = fun_real(xD(i))
+		y_test(i) = yD_low + (i-1)*(yD_high-yD_low)/(n_test-1)
+		call sp_fun%eval_1D_f(y_test(i), x_test(i))
+		x_calc(i) = sqrt(y_test(i))
+		y_calc(i) = fun_real(x_calc(i))
+	end do
+
+    WRITE (*, *) 'x_test = ', x_test
+    WRITE (*, *) 'x_calc  = ', x_calc
+    WRITE (*, *) 'y_test  = ', y_test
+    WRITE (*, *) 'y_calc  = ', y_calc
 
 END PROGRAM fun_invert
 

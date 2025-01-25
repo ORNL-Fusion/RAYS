@@ -8,6 +8,16 @@ list (APPEND lib_sources
 )
 add_library (math_functions ${lib_sources})
 
+target_include_directories (math_functions
+                            PUBLIC
+                            $<TARGET_PROPERTY:spline,BINARY_DIR>
+)
+
+target_link_libraries(math_functions
+                      PUBLIC
+                      spline
+)
+
 #********************************************
 
 #SET(CMAKE_RUNTIME_OUTPUT_DIRECTORY "../../tests")
