@@ -31,8 +31,8 @@
     character(len=20), parameter :: slab_profile_names(*) = [character(len=20) :: 'Ptotal_x']
     character(len=20), parameter :: slab_grid_names(*) = [character(len=20) :: 'x']
     character(len=20), parameter :: axisym_toroid_profile_names(*) = &
-!                         & [character(len=20) :: 'Ptotal_psi','Ptotal_rho']
-                         & [character(len=20) :: 'Ptotal_psi']
+                        & [character(len=20) :: 'Ptotal_psi','Ptotal_rho']
+!                          & [character(len=20) :: 'Ptotal_psi']
     character(len=20), parameter :: axisym_toroid_grid_names(*) = [character(len=20) ::  &
                          & 'psi', 'rho']
 
@@ -194,8 +194,8 @@ subroutine initialize_deposition_profiles(read_input)
 				select case (trim(profile_name))
 					case('Ptotal_psi')
 						profiles_1D(i_profile)%evaluator => Ptotal_axisym_psi_evaluator
-! 					case('Ptotal_rho')
-! 						profiles_1D(i_profile)%evaluator => Ptotal_x_slab_evaluator
+					case('Ptotal_rho')
+						profiles_1D(i_profile)%evaluator => Ptotal_axisym_rho_evaluator
 					case default
 					  call text_message(&
 					   &'initialize_deposition_profiles: unimplemented axisym_toroid profile',&
@@ -464,6 +464,29 @@ subroutine initialize_deposition_profiles(read_input)
 
  	return
     end subroutine Ptotal_axisym_psi_evaluator
+!********************************************************************
+
+    subroutine Ptotal_axisym_rho_evaluator(iray, ix, xQ, Q)
+
+		use constants_m, only : rkind
+		use ray_results_m, only : ray_vec, initial_ray_power
+    	use axisym_toroid_eq_m, only: axisym_toroid_rho
+
+		implicit none
+
+		integer, intent(in) :: iray, ix
+		real(KIND=rkind), intent(out) :: xQ, Q
+
+    	real(KIND=rkind) :: rvec(3)
+		real(KIND=rkind) :: rho, gradrho(3)
+		rvec = ray_vec(1:3, ix, iray)
+		call axisym_toroid_rho(rvec, rho, gradrho)
+
+		xQ = rho
+		Q = ray_vec(8, ix, iray)*initial_ray_power(iray)
+
+ 	return
+    end subroutine Ptotal_axisym_rho_evaluator
 
 !********************************************************************
 ! Deallocate

@@ -25,6 +25,15 @@
 ! Number of points in R,Z grid for normalized psi and eq_RZ_grid netCDF files
 	integer ::  N_pointsR_eq, N_pointsZ_eq
 
+! Number of points in psiN grid for 1D profiles
+	integer ::  n_psiN
+
+! Number of points in rho grid for 1D profiles
+	integer ::  n_rho
+
+! Tolerance for finding R(psi) grid by bisection
+    real(KIND=rkind) :: bisection_eps
+
 ! Flags determining what to do besides plot rays.  Can be overridden (i.e. turned off)
 ! in namelist file
 	logical :: calculate_dep_profiles = .true. ! Calculate all depositon profiles
@@ -32,17 +41,20 @@
 	logical :: calculate_ray_diag = .true. ! Write detailed ray diagnostic netCDF file
 	logical :: write_contour_data = .true.  ! Write data needed to plot contours netCDF file
 	logical :: write_eq_RZ_grid_data = .true.  ! Write data for equilibrium on RZ grid netCDF file
+	logical :: write_eq_radial_profile_data = .true.  ! Write data for radial profiles netCDF file
 
     namelist /axisym_toroid_processor_list/ num_plot_k_vectors, scale_k_vec,&
              & k_vec_base_length, set_XY_lim, &
              & calculate_dep_profiles, write_dep_profiles, calculate_ray_diag, &
              & write_contour_data, N_pointsR_eq, N_pointsZ_eq, &
-             & write_eq_RZ_grid_data
+             & write_eq_RZ_grid_data, write_eq_radial_profile_data, n_psiN, &
+             & bisection_eps, n_rho
 
  contains
 
  subroutine initialize_axisym_toroid_processor(read_input)
 
+    use constants_m, only : one
     use diagnostics_m, only : message_unit, message, text_message, verbosity
 	use deposition_profiles_m, only : initialize_deposition_profiles
 
@@ -50,16 +62,24 @@
     logical, intent(in) :: read_input
 	integer :: input_unit, get_unit_number ! External, free unit finder
     if (read_input .eqv. .true.) then
+
+ 		n_psiN = 51 ! Default value, may be reset on input
+ 		n_rho = n_psiN ! Default value, may be reset on input
+ 		bisection_eps = one*10d-6 ! Default value, may be reset on input
+
     ! Read and write input namelist
   		input_unit = get_unit_number()
         open(unit=input_unit, file='post_process_rays.in',action='read', status='old', form='formatted')
         read(input_unit, axisym_toroid_processor_list)
         close(unit=input_unit)
         if (verbosity > 0 )write(message_unit, axisym_toroid_processor_list)
-        call text_message('Finished initialize_axisym_toroid_processor ', 1)
     end if
 
 	if (calculate_dep_profiles .eqv. .true.) call initialize_deposition_profiles(read_input)
+
+    if (read_input .eqv. .true.) then
+        call text_message('Finished initialize_axisym_toroid_processor ', 1)
+    end if
 
     return
  end subroutine initialize_axisym_toroid_processor
@@ -80,17 +100,12 @@
     call write_graphics_description_file
 
     if (calculate_dep_profiles .eqv. .true.) call calculate_deposition_profiles
-! write(*,*) 'axisym_toroid_processor: got to 1'
     if (write_dep_profiles .eqv. .true.) call write_deposition_profiles_NC
-! write(*,*) 'axisym_toroid_processor: got to 2'
 	if (calculate_ray_diag .eqv. .true.) call ray_detailed_diagnostics
-!  write(*,*) 'axisym_toroid_processor: got to 3' ; stop
-
 	if (write_contour_data .eqv. .true.) call write_eq_contour_data_NC
-! write(*,*) 'axisym_toroid_processor: got to 4'
-
 	if (write_eq_RZ_grid_data .eqv. .true.) call write_eq_RZ_grid_data_NC
- write(*,*) 'axisym_toroid_processor: got to 5'
+
+    if (write_eq_radial_profile_data .eqv. .true.) call write_eq_radial_profile_data_NC
 
     if (verbosity > 0) call text_message('Finished axisym_toroid_processor work')
 
@@ -541,9 +556,19 @@ call check( nf90_enddef(ncid))
 
 	dr = one/(N_pointsR_eq - 1)*(box_rmax-box_rmin)
 	dz = one/(N_pointsZ_eq - 1)*(box_zmax-box_zmin)
-	do i = 1, N_pointsR_eq ; do j = 1, N_pointsZ_eq
+	do i = 1, N_pointsR_eq
 		R(i) = box_rmin + (i-1)*dr
-		Z(j) = box_zmin + (j-1)*dz
+	end do
+	R(1) = box_rmin; R(N_pointsR_eq) = box_rmax
+    do j = 1, N_pointsZ_eq
+ 		Z(j) = box_zmin + (j-1)*dz
+	end do
+	Z(1) = box_zmin; Z(N_pointsZ_eq) = box_zmax
+
+	do i = 1, N_pointsR_eq
+	do j = 1, N_pointsZ_eq
+! 		R(i) = box_rmin + (i-1)*dr
+! 		Z(j) = box_zmin + (j-1)*dz
 		rvec = (/R(i), zero, Z(j)/)
 
 		call axisym_toroid_psi(rvec, psi, gradpsi, psiN, gradpsiN)
@@ -552,11 +577,13 @@ call check( nf90_enddef(ncid))
 		plasma_psi_limit_temp = plasma_psi_limit ! Stash plasma_psi_limit
 		plasma_psi_limit = 10.0 ! Set plasma_psi_limit high so resonance contours go out to box
 		call equilibrium(rvec, eq)
+
 		plasma_psi_limit = plasma_psi_limit_temp ! Restore plasma_psi_limit
 
 		gamma(:) = eq%gamma(0:nspec)
 		gamma_array(i, j, :) = gamma
-	end do ; end do
+	end do
+	end do
 
 ! Put NC variables
     call check( nf90_put_var(ncid, box_rmin_id, box_rmin))
@@ -577,9 +604,9 @@ call check( nf90_enddef(ncid))
 !*************************************************************************
 
  subroutine write_eq_RZ_grid_data_NC
-! Write a netcdf file ('eq_contours.<run_label>.nc') containing data needed to plot
-! contours of equilibrium quantites like psi and omegaCj/omega => beta(j)
-! flux evaluated on a uniformly spaced  R,Z grid [box_rmin, box_rmax, box_zmin, box_zmax]
+! Write a netcdf file ('eq_RZ_grid.<run_label>.nc') containing data needed to plot
+! contours of equilibrium quantites like psiN, ne, Te, etc
+! evaluated on a uniformly spaced  R,Z grid [box_rmin, box_rmax, box_zmin, box_zmax]
 
 	use constants_m, only : zero, one
     use diagnostics_m, only : message_unit, message, text_message, verbosity, run_label
@@ -685,7 +712,6 @@ call check( nf90_enddef(ncid))
 	plasma_psi_limit_temp = plasma_psi_limit ! Stash plasma_psi_limit
 	plasma_psi_limit = 10.0 ! Set plasma_psi_limit high so can get fields outside plasma
 
- write(*,*) 'write_eq_RZ_grid_data_NC got to 1'
 	do i = 1, N_pointsR_eq ; do j = 1, N_pointsZ_eq
 		R(i) = box_rmin + (i-1)*dr
 		Z(j) = box_zmin + (j-1)*dz
@@ -705,13 +731,13 @@ call check( nf90_enddef(ncid))
 	end do ; end do
 	plasma_psi_limit = plasma_psi_limit_temp ! Restore plasma_psi_limit
 
- write(*,*) "box_rmin", box_rmin
- write(*,*) "R = ", R
- write(*,*) "Bx(20,51) = ", Bx(20,51)
- write(*,*) "By(20,51) = ", By(20,51)
- write(*,*) "Bz(20,51) = ", Bz(20,51)
-! write(*,*) "Bz(:,51) = ", Bz(:,51)
- write(*,*) "ne(:,51) = ", ne(:,51)
+!  write(*,*) "box_rmin", box_rmin
+!  write(*,*) "R = ", R
+!  write(*,*) "Bx(20,51) = ", Bx(20,51)
+!  write(*,*) "By(20,51) = ", By(20,51)
+!  write(*,*) "Bz(20,51) = ", Bz(20,51)
+!  write(*,*) "Bz(:,51) = ", Bz(:,51)
+!  write(*,*) "ne(:,51) = ", ne(:,51)
 
 ! Put NC variables
     call check( nf90_put_var(ncid, box_rmin_id, box_rmin))
@@ -732,9 +758,220 @@ call check( nf90_enddef(ncid))
     return
  end subroutine write_eq_RZ_grid_data_NC
 
-
 !*************************************************************************
 
+ subroutine write_eq_radial_profile_data_NC
+! Write a netcdf file ('eq_radial.<run_label>.nc') containing data needed to plot
+! radial profiles for equilibrium quantites like psiN, ne, Te, etc as functions of
+! psi (and in the near future rho = sqrt(toroidal flux))
+!
+! For now limit profiles to inside boundary 0 <= psiN <= 1.  Maybe later extend to outside.
+
+    use constants_m, only : rkind, one, zero
+    use diagnostics_m, only : message_unit, message, text_message, verbosity, run_label
+    use species_m, only : nspec, spec_name
+	use equilibrium_m, only : eq_point, equilibrium, write_eq_point
+    use axisym_toroid_eq_m, only : r_axis, z_axis, box_rmin, box_rmax, box_zmin, box_zmax, &
+         & plasma_psi_limit, axisym_toroid_psi, axisym_toroid_eq, outer_bound
+    use bisect_m, only : solve_bisection
+    use eqdsk_magnetics_spline_interp_m, only : &
+                & eqdsk_magnetics_spline_interp_Q_psiN,&
+                & eqdsk_magnetics_spline_interp_rho_psiN,&
+                & eqdsk_magnetics_spline_interp_PsiN_rho, &
+                & eqdsk_magnetics_spline_interp_Q_rho
+    use ray_results_m, only : date_vector, RAYS_run_label
+    use netcdf
+	use XY_curves_netCDF_m, only : XY_curve_netCDF, write_XY_curves_netCDF
+
+    implicit none
+
+! Number of profiles to generate and list of profiles
+    integer, parameter :: n_profiles = 8
+	type(XY_curve_netCDF) :: profile_list(n_profiles)
+	integer :: n_grid(n_profiles)
+
+!   Declare local variables
+    real(KIND=rkind) :: psiN(n_psiN), R(n_psiN)
+    real(KIND=rkind) :: ne_psiN(n_psiN), Te_psiN(n_psiN)
+    real(KIND=rkind) :: RBphi_psiN(n_psiN),Q_psiN(n_psiN), rho_psiN(n_psiN)
+
+    real(KIND=rkind) :: rho(n_rho), PsiN_rho(n_rho)
+    real(KIND=rkind) :: ne_rho(n_rho), Te_rho(n_rho)
+    real(KIND=rkind) :: RBphi_rho(n_rho),Q_rho(n_rho)
+
+	integer :: i, ierr
+    real(KIND=rkind) :: psi, gradpsi(3), psiNij, gradpsiNij(3)
+    real(KIND=rkind) :: rvec(3)
+
+    ! Args to spline profiles, not used
+    real(KIND=rkind) :: dRBphi_dPsi, dQ_dPsi, drho_dPsi
+    real(KIND=rkind) :: dPsi_drho, dRBphi_drho, dQ_drho, drho_drho
+
+! Stash plasma_psi_limit from axisym_toroid_eq_m.  Danger of circularity, equilibrium_m
+! uses axisym_toroid_eq_m.
+    real(KIND=rkind) ::plasma_psi_limit_temp
+
+!   Derived type containing equilibrium data for a spatial point in the plasma
+    type(eq_point) :: eq
+
+ !  File name for  output
+    character(len=80) :: out_filename
+
+    real(KIND=rkind) :: ns(0:nspec)
+    real(KIND=rkind) :: ts(0:nspec)
+    character(len=60) :: equib_err
+
+   if (verbosity > 0) call text_message('Writing plasma equilibrium profiles on radial psi grid')
+
+	plasma_psi_limit_temp = plasma_psi_limit ! Stash plasma_psi_limit
+	plasma_psi_limit = 10.0 ! Set plasma_psi_limit high so can get fields outside plasma
+
+! Note: ne, Te etc are given by subroutine equilibrium(x,y,z)
+! Generate psi grid and R grid.
+! Invert PsiN(R, y=0, Zaxis) -> R(PsiN, Zaxis) using bisection.
+! Then evaluate ne and Te at (R, 0, Zaxis).
+	do i = 1, n_psiN
+	    psiN(i) = one*(i-1)/(n_psiN - 1)
+	    call solve_bisection(f_R_psiN, R(i), r_axis, outer_bound, psiN(i),&
+	                       & bisection_eps, ierr)
+
+	    rvec = (/R(i), zero, z_axis/)
+!	    write(*,*) 'i = ', i, '  R(i) = ',  R(i), '   psiN(i) = ',psiN(i)
+! 	    if (ierr == 0) stop
+
+		call equilibrium(rvec, eq)
+		ne_psiN(i) = eq%ns(0)
+		Te_psiN(i) = eq%Ts(0)
+		call eqdsk_magnetics_spline_interp_Q_psiN(psiN(i),Q_psiN(i), dQ_dPsi)
+		call eqdsk_magnetics_spline_interp_rho_psiN(PsiN(i), rho_psiN(i), drho_dPsi)
+	end do
+
+ write(*,*) " "
+ write(*,*) "psiN", psiN
+ write(*,*) " "
+ write(*,*) "R = ", R
+ write(*,*) " "
+ write(*,*) "ne_psiN =  ", ne_psiN
+ write(*,*) " "
+ write(*,*) "Q_psiN=  ", Q_psiN
+ write(*,*) " "
+ write(*,*) "rho_psiN =  ", rho_psiN
+
+!***************** Stuff for profiles versus rho *****************************
+
+! Note: More complication: ne, Te etc are given by subroutine equilibrium(x,y,z)
+! Generate rho grid - for now this is the same rho grid as PsiN, uniform on [0, 1]
+! Generate psiN_on_rho grid using eqdsk_magnetics_spline_interp_PsiN_rho.
+! Invert PsiN(R, y=0, Zaxis) -> R(PsiN, Zaxis) using bisection
+! Then evaluate ne and Te at (R, 0, Zaxis)
+	do i = 1, n_rho
+	    rho(i) = PsiN(i)
+		call eqdsk_magnetics_spline_interp_PsiN_rho(rho(i), PsiN_rho(i), dPsi_drho)
+	    call solve_bisection(f_R_psiN, R(i), r_axis, outer_bound, PsiN_rho(i),&
+	                       & bisection_eps, ierr)
+
+	    rvec = (/R(i), zero, z_axis/)
+!	    write(*,*) 'i = ', i, '  R(i) = ',  R(i), '   psiN(i) = ',psiN(i)
+! 	    if (ierr == 0) stop
+
+		call equilibrium(rvec, eq)
+		ne_rho(i) = eq%ns(0)
+		Te_rho(i) = eq%Ts(0)
+		call eqdsk_magnetics_spline_interp_Q_rho(psiN(i),Q_rho(i), dQ_drho)
+	end do
+
+ write(*,*) " "
+ write(*,*) "rho", rho
+ write(*,*) " "
+ write(*,*) "R = ", R
+ write(*,*) " "
+ write(*,*) "ne_rho =  ", ne_rho
+
+! Load ne data into profile_list
+	profile_list(1)%grid_name = 'psiN'
+	profile_list(1)%curve_name = 'ne(psiN)'
+	n_grid(1) = n_psiN
+	allocate(profile_list(1)%grid(n_grid(1)), source = 0.0_rkind)
+	profile_list(1)%grid(:) = PsiN(:)
+	allocate(profile_list(1)%curve(n_grid(1)), source = 0.0_rkind)
+	profile_list(1)%curve(:) = ne_psiN(:)
+
+! Load Te data into profile_list
+	profile_list(2)%grid_name = 'psiN'
+	profile_list(2)%curve_name = 'Te(psiN)'
+	n_grid(2) = n_psiN
+	allocate(profile_list(2)%grid(n_grid(2)), source = 0.0_rkind)
+	profile_list(2)%grid(:) = PsiN(:)
+	allocate(profile_list(2)%curve(n_grid(2)), source = 0.0_rkind)
+	profile_list(2)%curve(:) = Te_psiN(:)
+
+! Load Q data into profile_list
+	profile_list(3)%grid_name = 'psiN'
+	profile_list(3)%curve_name = 'Q(psiN)'
+	n_grid(3) = n_psiN
+	allocate(profile_list(3)%grid(n_grid(3)), source = 0.0_rkind)
+	profile_list(3)%grid(:) = PsiN(:)
+	allocate(profile_list(3)%curve(n_grid(3)), source = 0.0_rkind)
+	profile_list(3)%curve(:) = Q_psiN(:)
+
+! Load rho data into profile_list
+	profile_list(4)%grid_name = 'psiN'
+	profile_list(4)%curve_name = 'rho(psiN)'
+	n_grid(4) = n_psiN
+	allocate(profile_list(4)%grid(n_grid(4)), source = 0.0_rkind)
+	profile_list(4)%grid(:) = PsiN(:)
+	allocate(profile_list(4)%curve(n_grid(4)), source = 0.0_rkind)
+	profile_list(4)%curve(:) = rho_psiN(:)
+
+!***************** Stuff for profiles versus rho *****************************
+
+! Load psiN of rho data into profile_list
+	profile_list(5)%grid_name = 'rho'
+	profile_list(5)%curve_name = 'psiN(rho)'
+	n_grid(5) = n_rho
+	allocate(profile_list(5)%grid(n_grid(5)), source = 0.0_rkind)
+	profile_list(5)%grid(:) = rho(:)
+	allocate(profile_list(5)%curve(n_grid(5)), source = 0.0_rkind)
+	profile_list(5)%curve(:) = psiN_rho(:)
+
+! Load ne of rho data into profile_list
+	profile_list(6)%grid_name = 'rho'
+	profile_list(6)%curve_name = 'ne(rho)'
+	n_grid(6) = n_rho
+	allocate(profile_list(6)%grid(n_grid(6)), source = 0.0_rkind)
+	profile_list(6)%grid(:) = rho(:)
+	allocate(profile_list(6)%curve(n_grid(6)), source = 0.0_rkind)
+	profile_list(6)%curve(:) = ne_rho(:)
+
+! Load Te of rho data into profile_list
+	profile_list(7)%grid_name = 'rho'
+	profile_list(7)%curve_name = 'Te(rho)'
+	n_grid(7) = n_rho
+	allocate(profile_list(7)%grid(n_grid(7)), source = 0.0_rkind)
+	profile_list(7)%grid(:) = rho(:)
+	allocate(profile_list(7)%curve(n_grid(7)), source = 0.0_rkind)
+	profile_list(7)%curve(:) = Te_rho(:)
+
+! Load Q of rho data into profile_list
+	profile_list(8)%grid_name = 'rho'
+	profile_list(8)%curve_name = 'Q(rho)'
+	n_grid(8) = n_rho
+	allocate(profile_list(8)%grid(n_grid(8)), source = 0.0_rkind)
+	profile_list(8)%grid(:) = rho(:)
+	allocate(profile_list(8)%curve(n_grid(8)), source = 0.0_rkind)
+	profile_list(8)%curve(:) = Q_rho(:)
+
+! Restore plasma_psi_limit
+	plasma_psi_limit = plasma_psi_limit_temp
+
+! Generate netCDF file
+	out_filename = 'eq_radial_profiles.'//trim(run_label)
+	call write_XY_curves_netCDF(profile_list, out_filename)
+
+    return
+ end subroutine write_eq_radial_profile_data_NC
+
+!*************************************************************************
 
   subroutine check(status)
     use netcdf
@@ -746,6 +983,25 @@ call check( nf90_enddef(ncid))
     end if
   end subroutine check
 
+!*************************************************************************
+
+ function f_R_psiN(R)
+
+    use constants_m, only : rkind, zero
+	use axisym_toroid_eq_m, only : r_axis, z_axis, axisym_toroid_psi
+
+	IMPLICIT NONE
+    real(KIND=rkind) f_R_psiN, R
+    real(KIND=rkind) :: psi, gradpsi(3), psiN, gradpsiN(3)
+    real(KIND=rkind) :: rvec(3)
+
+	rvec = (/R, zero, z_axis/)
+	call axisym_toroid_psi(rvec, psi, gradpsi, psiN, gradpsiN)
+	f_R_psiN = psiN
+!	write(*,*) 'rvec', rvec,  '  f_R_psi = ', f_R_psi
+
+	return
+ end function f_R_psiN
 
  end module axisym_toroid_processor_m
 
