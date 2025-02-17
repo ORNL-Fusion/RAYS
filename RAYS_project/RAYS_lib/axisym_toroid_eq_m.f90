@@ -155,7 +155,7 @@ contains
     real(KIND=rkind) :: br, bz, bphi, bp0
     real(KIND=rkind) :: psi, gradpsi(3), psiN, grad_psiN(3)
     real(KIND=rkind) :: dens, dd_psi
-    real(KIND=rkind), parameter :: twoTiny = 2.0_rkind*tiny(1._rkind)
+    real(KIND=rkind), parameter :: Tiny = 10.0e-14_rkind
     integer :: is
 
     equib_err = ''
@@ -166,13 +166,13 @@ contains
 
 ! Check that we are in the box.  But so we don't get crash when evaluating on the
 ! box boundary, allow a leeway of 2*tiny(x)
-    if (r < box_rmin-twoTiny .or. r > box_rmax+twoTiny) then
+    if (r < box_rmin-Tiny .or. r > box_rmax+Tiny) then
     	equib_err = 'R_out_of_box'
- !   	write(*,*) 'R_out_of_box: R = ', R
+    	write(*,*) 'R_out_of_box: R = ', R, '   box_rmin = ', box_rmin, '   box_rmax = ', box_rmax
     end if
-    if (z < box_zmin-twoTiny .or. z > box_zmax+twoTiny) then
-    	equib_err = 'z_out_of_box'
-!    	write(*,*) 'Z_out_of_box: Z = ', Z, '   box_zmin = ', box_zmin, '   box_zmax = ', box_zmax
+    if (z < box_zmin-Tiny .or. z > box_zmax+Tiny) then
+    	equib_err = 'Z_out_of_box'
+    	write(*,*) 'Z_out_of_box: Z = ', Z, '   box_zmin = ', box_zmin, '   box_zmax = ', box_zmax
     end if
 
     if (equib_err /= '') return
@@ -267,6 +267,7 @@ contains
 !********************************************************************
 
  subroutine axisym_toroid_psi(rvec, psi, gradpsi, psiN, grad_psiN)
+ ! Returns poloidal flux -> psi(x,y,z) etc
 
     use constants_m, only : rkind
     use species_m, only : nspec, n0s, t0s
@@ -296,6 +297,47 @@ contains
     return
 
   end subroutine axisym_toroid_psi
+!********************************************************************
+
+ subroutine axisym_toroid_rho(rvec, rho, gradrho)
+ ! Returns normalized square root toroidal flux -> rho(x,y,z).
+ ! N.B. Unlike axisym_toroid_psi rho is already normalized so there rare no rhoN or
+ ! grad_rhoN arguments
+ ! N.B. so far this is only implemented in eqdsk_magnetics_spline_interp
+
+    use constants_m, only : rkind
+    use diagnostics_m, only : message_unit, message, text_message
+
+!     use solovev_magnetics_m, only : solovev_magnetics_rho
+!     use eqdsk_magnetics_lin_interp_m, only : eqdsk_magnetics_lin_interp_rho
+    use eqdsk_magnetics_spline_interp_m, only : eqdsk_magnetics_spline_interp_rho
+
+    implicit none
+
+    real(KIND=rkind), intent(in) :: rvec(3)
+    real(KIND=rkind), intent(out) :: rho, gradrho(3)
+
+
+    magnetics: select case (trim(magnetics_model))
+!        case ('solovev_magnetics')
+!           call solovev_magnetics_rho(rvec, rho, gradrho, rhoN, grad_rhoN)
+!
+!        case ('eqdsk_magnetics_lin_interp')
+!          call  eqdsk_magnetics_lin_interp_rho(rvec, rho, gradrho, rhoN, grad_rhoN)
+
+       case ('eqdsk_magnetics_spline_interp')
+         call  eqdsk_magnetics_spline_interp_rho(rvec, rho, gradrho)
+
+        case default
+          write(0,*) 'axisym_toroid_rho: unknown magnetics model =', magnetics_model
+          call text_message('axisym_toroid_rho: unknown magnetics model',&
+          & trim(magnetics_model),0)
+          stop 1
+
+    end select magnetics
+
+    return
+  end subroutine axisym_toroid_rho
 
 !***********************************************************************
  subroutine write_axisym_toroid_profiles

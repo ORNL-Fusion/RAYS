@@ -38,6 +38,7 @@ list (APPEND lib_sources
 	suscep_m.f90
 	ray_results_m.f90
 	openmp_m.f90
+	XY_curves_netCDF_m.f90
 )
 
 add_library (RAYS_lib ${lib_sources})
