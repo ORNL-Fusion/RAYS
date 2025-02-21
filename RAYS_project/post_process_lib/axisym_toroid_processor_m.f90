@@ -74,7 +74,6 @@
         close(unit=input_unit)
         if (verbosity > 0 )write(message_unit, axisym_toroid_processor_list)
     end if
-
 	if (calculate_dep_profiles .eqv. .true.) call initialize_deposition_profiles(read_input)
 
     if (read_input .eqv. .true.) then
@@ -243,7 +242,7 @@
 ! There is a lot of data, and this subroutine is probably only useful for small numbers
 ! of rays.  The data can be plotted using plot_ray_diags.py which is located in RAYS/graphics_RAYS
 
-    use constants_m, only : rkind
+    use constants_m, only : rkind, e
     use diagnostics_m, only : integrate_eq_gradients, message, text_message, verbosity
     use species_m, only : nspec,ms
     use axisym_toroid_eq_m, only : axisym_toroid_psi
@@ -285,7 +284,7 @@
 
 ! Declarations: variable IDs
     integer, parameter :: n_vars =  19
-    integer :: date_vector_id, npoints_id, s_id, ne_id, Te_id, modB_id, alpha_e_id, &
+    integer :: date_vector_id, npoints_id, s_id, ne_id, Te_kev_id, modB_id, alpha_e_id, &
              & gamma_e_id, Psi_id, R_id, Z_id, n_par_id, n_perp_id, P_absorbed_id, &
              & n_imag_id, xi_0_id, xi_1_id, xi_2_id, residual_id
 !   Declare local arrays
@@ -293,7 +292,7 @@
 !    integer :: npoints - from ray_results
     real(kind=rkind), allocatable :: s(:,:)
     real(kind=rkind), allocatable :: ne(:,:)
-    real(kind=rkind), allocatable :: Te(:,:)
+    real(kind=rkind), allocatable :: Te_kev(:,:)
     real(kind=rkind), allocatable :: modB(:,:)
     real(kind=rkind), allocatable :: alpha_e(:,:)
     real(kind=rkind), allocatable :: gamma_e(:,:)
@@ -319,7 +318,7 @@
 !    allocate(npoints(number_of_rays))
     allocate(s(max_number_of_points,number_of_rays),source=0.0_rkind)
     allocate(ne(max_number_of_points,number_of_rays),source=0.0_rkind)
-    allocate(Te(max_number_of_points,number_of_rays),source=0.0_rkind)
+    allocate(Te_kev(max_number_of_points,number_of_rays),source=0.0_rkind)
     allocate(modB(max_number_of_points,number_of_rays),source=0.0_rkind)
     allocate(alpha_e(max_number_of_points,number_of_rays),source=0.0_rkind)
     allocate(gamma_e(max_number_of_points,number_of_rays),source=0.0_rkind)
@@ -348,7 +347,7 @@
        		Z(istep, iray) = rvec(3)
 
         	call equilibrium(rvec, eq)
-        	Te(istep, iray) = eq%Ts(0)
+        	Te_kev(istep, iray) = eq%Ts(0)/e/1000.0_rkind
         	modB(istep, iray) = eq%bmag
         	alpha_e(istep, iray) = eq%alpha(0)
         	gamma_e(istep, iray) = abs(eq%gamma(0))
@@ -421,7 +420,7 @@
     call check( nf90_def_var(ncid, 'npoints', NF90_INT, [number_of_rays_id], npoints_id))
     call check( nf90_def_var(ncid, 's', NF90_DOUBLE, [max_number_of_points_id,number_of_rays_id], s_id))
     call check( nf90_def_var(ncid, 'ne', NF90_DOUBLE, [max_number_of_points_id,number_of_rays_id], ne_id))
-    call check( nf90_def_var(ncid, 'Te', NF90_DOUBLE, [max_number_of_points_id,number_of_rays_id], Te_id))
+    call check( nf90_def_var(ncid, 'Te_kev', NF90_DOUBLE, [max_number_of_points_id,number_of_rays_id], Te_kev_id))
     call check( nf90_def_var(ncid, 'modB', NF90_DOUBLE, [max_number_of_points_id,number_of_rays_id], modB_id))
     call check( nf90_def_var(ncid, 'alpha_e', NF90_DOUBLE, [max_number_of_points_id,number_of_rays_id], alpha_e_id))
     call check( nf90_def_var(ncid, 'gamma_e', NF90_DOUBLE, [max_number_of_points_id,number_of_rays_id], gamma_e_id))
@@ -447,7 +446,7 @@ call check( nf90_enddef(ncid))
     call check( nf90_put_var(ncid, npoints_id, npoints))
     call check( nf90_put_var(ncid, s_id, s))
     call check( nf90_put_var(ncid, ne_id, ne))
-    call check( nf90_put_var(ncid, Te_id, Te))
+    call check( nf90_put_var(ncid, Te_kev_id, Te_kev))
     call check( nf90_put_var(ncid, modB_id, modB))
     call check( nf90_put_var(ncid, alpha_e_id, alpha_e))
     call check( nf90_put_var(ncid, gamma_e_id, gamma_e))
@@ -467,6 +466,7 @@ call check( nf90_enddef(ncid))
     call check( nf90_close(ncid) )
 
   end subroutine ray_detailed_diagnostics
+
 
 !****************************************************************************
 
@@ -567,8 +567,6 @@ call check( nf90_enddef(ncid))
 
 	do i = 1, N_pointsR_eq
 	do j = 1, N_pointsZ_eq
-! 		R(i) = box_rmin + (i-1)*dr
-! 		Z(j) = box_zmin + (j-1)*dz
 		rvec = (/R(i), zero, Z(j)/)
 
 		call axisym_toroid_psi(rvec, psi, gradpsi, psiN, gradpsiN)
@@ -846,16 +844,16 @@ call check( nf90_enddef(ncid))
 		call eqdsk_magnetics_spline_interp_rho_psiN(PsiN(i), rho_psiN(i), drho_dPsi)
 	end do
 
- write(*,*) " "
- write(*,*) "psiN", psiN
- write(*,*) " "
- write(*,*) "R = ", R
- write(*,*) " "
- write(*,*) "ne_psiN =  ", ne_psiN
- write(*,*) " "
- write(*,*) "Q_psiN=  ", Q_psiN
- write(*,*) " "
- write(*,*) "rho_psiN =  ", rho_psiN
+!  write(*,*) " "
+!  write(*,*) "psiN", psiN
+!  write(*,*) " "
+!  write(*,*) "R = ", R
+!  write(*,*) " "
+!  write(*,*) "ne_psiN =  ", ne_psiN
+!  write(*,*) " "
+!  write(*,*) "Q_psiN=  ", Q_psiN
+!  write(*,*) " "
+!  write(*,*) "rho_psiN =  ", rho_psiN
 
 !***************** Stuff for profiles versus rho *****************************
 
@@ -864,28 +862,29 @@ call check( nf90_enddef(ncid))
 ! Generate psiN_on_rho grid using eqdsk_magnetics_spline_interp_PsiN_rho.
 ! Invert PsiN(R, y=0, Zaxis) -> R(PsiN, Zaxis) using bisection
 ! Then evaluate ne and Te at (R, 0, Zaxis)
+   if (verbosity > 0) call text_message('Writing plasma equilibrium profiles on radial rho grid')
+
 	do i = 1, n_rho
-	    rho(i) = PsiN(i)
+	    rho(i) = one*(i-1)/(n_rho - 1)
 		call eqdsk_magnetics_spline_interp_PsiN_rho(rho(i), PsiN_rho(i), dPsi_drho)
 	    call solve_bisection(f_R_psiN, R(i), r_axis, outer_bound, PsiN_rho(i),&
 	                       & bisection_eps, ierr)
 
 	    rvec = (/R(i), zero, z_axis/)
-!	    write(*,*) 'i = ', i, '  R(i) = ',  R(i), '   psiN(i) = ',psiN(i)
 ! 	    if (ierr == 0) stop
 
 		call equilibrium(rvec, eq)
 		ne_rho(i) = eq%ns(0)
 		Te_rho(i) = eq%Ts(0)
-		call eqdsk_magnetics_spline_interp_Q_rho(psiN(i),Q_rho(i), dQ_drho)
+		call eqdsk_magnetics_spline_interp_Q_rho(rho(i),Q_rho(i), dQ_drho)
 	end do
 
- write(*,*) " "
- write(*,*) "rho", rho
- write(*,*) " "
- write(*,*) "R = ", R
- write(*,*) " "
- write(*,*) "ne_rho =  ", ne_rho
+!  write(*,*) " "
+!  write(*,*) "rho", rho
+!  write(*,*) " "
+!  write(*,*) "R = ", R
+!  write(*,*) " "
+!  write(*,*) "ne_rho =  ", ne_rho
 
 ! Load ne data into profile_list
 	profile_list(1)%grid_name = 'psiN'

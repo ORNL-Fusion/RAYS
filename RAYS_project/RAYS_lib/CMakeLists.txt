@@ -8,6 +8,7 @@ list (APPEND lib_sources
 	damping_m.f90
 	damp_fund_ECH.f90
 	deallocate.f90
+    density_spline_interp_m.f90
 	deriv_cold.f90
 	deriv_num.f90
 	diagnostics_m.f90

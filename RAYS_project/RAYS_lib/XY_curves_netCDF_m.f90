@@ -61,8 +61,8 @@ contains
 
     character(len=NF90_MAX_NAME)   :: NC_file
 
-	write(*,*) " "
-	write(*,*) "write_XY_curves_netCDF, file = ", out_filename//'.nc'
+! 	write(*,*) " "
+! 	write(*,*) "write_XY_curves_netCDF, file = ", out_filename//'.nc'
 	n_curves = size(curve_list)
 ! 	do i = 1, n_curves
 ! 	 write(*,*) " "
