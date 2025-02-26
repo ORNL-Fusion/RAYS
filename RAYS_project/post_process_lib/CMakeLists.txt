@@ -1,8 +1,6 @@
 set (lib_sources "")
 list (APPEND lib_sources
-	finalize_post_process_RAYS.f90
 	slab_processor_m.f90
-	intialize_post_process_RAYS.f90
 	solovev_processor_m.f90
 	axisym_toroid_processor_m.f90
 	deposition_profiles_m.f90
