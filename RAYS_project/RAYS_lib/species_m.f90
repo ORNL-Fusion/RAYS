@@ -6,6 +6,9 @@
     implicit none
 
 !   Electron density at reference point (e.g. at magnetic axis or peak electron density)
+!   The profiles generated in the various equilibrium modules are normalized to one at
+!   the reference location (i.e. where ne = n0s(0) = n0).  The ion densities are specified
+!   as a fraction of electron density, eta(i).
     real(KIND=rkind) :: n0
 
 !   Maximum No. of ion species: nspec0;
@@ -26,6 +29,12 @@
 !	alfas: T_perp/T_paral
 !   v0s: parallel drift velocity
 !   nus: collision frequency i.e. nu/omega
+
+! Working notes:
+! (2-22-2025 DBB) As of now, none of the equilibrium models use the edge density and
+! temperature variables (nseps, tseps).  Instead there are variables in the equilibrium
+! modules to specify ne and Te at the edge (d_scrapeoff and T_scrapeoff) as fractions of
+! the peak electron values (n0s(0), t0s(0)).
 
 !   Static declarations and initializations
 
@@ -68,7 +77,7 @@
 
 
     namelist /species_list/ &
-      & n0, spec_name, spec_model, qs, ms, t0s_eV, tseps_eV, eta, neutrality
+      & n0, nseps, spec_name, spec_model, qs, ms, t0s_eV, tseps_eV, eta, neutrality
 
 
 !********************************************************************

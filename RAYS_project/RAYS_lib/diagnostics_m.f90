@@ -59,14 +59,19 @@
 !   messages_to_stdout = If true write messages to stdout as well as to messages file
     logical :: messages_to_stdout = .false.
 
-!   write_formatted_ray_files = If true write ray data to formatted ASCII file
+!   write_formatted_ray_files = If true, write ray data to formatted ASCII file.
+!	This was the original output method.  It has been superseded by either writing
+!	a list directed ASCII  output file, or to a neCDF file.  These have more metadata
+!	about the run.  We keep this around for diagnostic purposes.  It is written
+!	incrementally as the run proceeds, whereas the other files are written at the end of
+!	the run.
     logical :: write_formatted_ray_files = .false.
 
 !   unit numbers for persistent files (i.e. ones that stay open all through the run)
     integer :: output_unit   ! Unit for formatted ray data output.  Set in initialize()
     integer :: ray_list_unit ! Unit for formatted ray list output.  Set in initialize()
 
-!  Run label (N.B. should be legal in file name, e.g.no blanks allowed)
+!  Run label (N.B. should be legal in a file name, e.g.no blanks allowed)
     character(len=60) :: run_label = ''
 
 !  Run description

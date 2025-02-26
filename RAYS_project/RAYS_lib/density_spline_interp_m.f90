@@ -23,7 +23,7 @@ module  density_spline_interp_m
 
 ! namelist /density_spline_interp_list/ variables
     character (len = 60) :: spline_density_model ! Not used, YET
-	integer :: ngrid ! Actual number of points to be splined
+	integer :: ngrid ! Actual number of points to be splined. <= n_grid_max
 	real(KIND=rkind) ::  ne_in(n_grid_max) ! Values on grid (grid assumed uniform 0 to 1)
 
 
@@ -40,7 +40,6 @@ contains
 
 !********************************************************************
 
-!  subroutine initialize_density_spline_interp(read_input, ne_profile_N)
   subroutine initialize_density_spline_interp(read_input)
 
     use constants_m, only : one
@@ -53,7 +52,6 @@ contains
     implicit none
 
     logical, intent(in) :: read_input
-!    type(cube_spline_function_1D), intent(out) :: ne_profile_N
 
  	integer :: input_unit, get_unit_number ! External, free unit finder
 

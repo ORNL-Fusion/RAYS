@@ -35,6 +35,7 @@ list (APPEND lib_sources
 	eqdsk_utilities_m.f90
 	eqdsk_magnetics_lin_interp_m.f90
 	eqdsk_magnetics_spline_interp_m.f90
+	temperature_spline_interp_m.f90
 	species_m.f90
 	suscep_m.f90
 	ray_results_m.f90

@@ -40,8 +40,9 @@
 
     call message ('check_save: ne', eq%ns(0), 1)
     call message ('check_save: B(tesla)', eq%bmag, 1)
-    call message ('check_save: alpha s', eq%alpha(0:nspec), nspec+1, 1)
-    call message ('check_save: gamma s', eq%gamma(0:nspec), nspec+1, 1)
+    call message ('check_save: alpha(s)', eq%alpha(0:nspec), nspec+1, 1)
+    call message ('check_save: gamma(s)', eq%gamma(0:nspec), nspec+1, 1)
+    call message ('check_save: T(s)', eq%Ts(0:nspec), nspec+1, 1)
 
 
 !   Parallel and perpendicular components of nvec.

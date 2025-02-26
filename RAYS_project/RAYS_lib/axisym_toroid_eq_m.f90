@@ -8,6 +8,20 @@ module axisym_toroid_eq_m
 !
 ! Input to axisym_toroid_eq() is rvec = (x,y,z) position
 ! Outputs from axisym_toroid_eq() are all quantities needed to fill an eq_point type
+!
+! Presently supported magnetics models are: 'solovev_magnetics', 'eqdsk_magnetics_lin_interp'
+! and 'eqdsk_magnetics_spline_interp'
+!
+! Presently supported density models: 'constant', 'parabolic', 'density_spline_interp'
+! All species presently use the same density profile model.  Otherwise charge neutrality is
+! complicated.
+!
+! Presently supported temperature models: 'zero' 'constant', 'parabolic',
+! and 'temperature_spline_interp'
+! Different species can have different profile models. Although presently only two different
+! spline profiles are supported: electron and ion.  All splined ion profiles are the same.
+!
+! Working notes:
 
     use constants_m, only : rkind, one, zero
     use species_m, only : nspec
@@ -17,14 +31,6 @@ module axisym_toroid_eq_m
     implicit none
 
 ! Local data **************************************************
-! Type declaration for density_spline_interp_model
-    type(cube_spline_function_1D) :: ne_profile_N_sp  ! ne profile normalized to 1. on axis
-! ! Type declaration for temp_spline_interp_model
-!     type(cube_spline_function_1D) :: ts_profiles_N_sp(0:nspec) ! normalized to 1. on axis
-! ! Number of splined temperature model profiles
-! 	integer :: n_T_spline
-! ! Species number for each spline profile
-! 	integer :: i_spec_spline(nspec)
 
 ! Namelist data for /axisym_toroid_eq_list/  **************************************************
 ! data for magnetics
@@ -53,6 +59,10 @@ module axisym_toroid_eq_m
     ! Parabolic model parameters
     real(KIND=rkind), allocatable :: alphat1(:) ! Can be dfferent for different species
     real(KIND=rkind), allocatable :: alphat2(:) ! Can be dfferent for different species
+! Temperature outside psi = 1 as a fraction of Te0, defaults to 0. but can be set in namelist
+    real(KIND=rkind) :: T_scrape_off = zero
+
+	integer :: i, is
 
  namelist /axisym_toroid_eq_list/&
      & magnetics_model, &
@@ -74,14 +84,18 @@ contains
     use constants_m, only : rkind
     use diagnostics_m, only : message, message_unit, text_message, messages_to_stdout, verbosity
 
+	use species_m, only : nspec
     use solovev_magnetics_m, only : initialize_solovev_magnetics
     use eqdsk_magnetics_lin_interp_m, only : initialize_eqdsk_magnetics_lin_interp
     use eqdsk_magnetics_spline_interp_m, only : initialize_eqdsk_magnetics_spline_interp
     use density_spline_interp_m, only : initialize_density_spline_interp
+    use temperature_spline_interp_m, only : initialize_temperature_spline_interp
 
     implicit none
     logical, intent(in) :: read_input
 	integer :: input_unit, get_unit_number ! External, free unit finder
+	integer :: n_T_spline ! Number of species with splined temperature profiles
+	integer :: i_spec_spline(0:nspec) ! Species number of any splined Ti profiles
 
     real(KIND=rkind) :: bp0
 
@@ -133,39 +147,54 @@ contains
           stop 1
     end select magnetics
 
+! Density and Temperature.  Check for valid model name
 ! Density and temperature only need initialization for spline interpolation models
+
     density: select case (trim(density_prof_model))
         case ('density_spline_interp')
-!        	call initialize_density_spline_interp(read_input, ne_profile_N_sp)
         	call initialize_density_spline_interp(read_input)
+        case ('constant')
+        case ('parabolic')
+        case default
+			if (verbosity > 0) then
+				write(message_unit, *) 'axisym_toroid_eq: Unknown density_prof_model: ', &
+                     & trim(density_prof_model)
+				write(*, *) 'axisym_toroid_eq: Unknown density_prof_model: ', &
+                     & trim(density_prof_model)
+			end if
+            stop 1
     end select density
 
-! ! Temperature.  Check for valid modle name and count splined profiles
-! 	n_T_spline = 0
-!     do is = 0, nspec
-!        temperature: select case( trim(temperature_prof_model(is)) )
-!         case ('temperature_spline_interp')
-! 			n_T_spline = n_T_spline + 1
-! 			i_spec_spline(n_T_spline) = is
-!        case default
-! 			if (verbosity > 0) then
-! 				write(message_unit, *) 'axisym_toroid_eq: Unknown temperature_prof_model: ', &
-!                      & temperature_prof_model(0:nspec)
-! 				write(*,*) 'axisym_toroid_eq: Unknown temperature_prof_model: ', &
-!                      & temperature_prof_model(0:nspec)
-! 			end if
-!             stop 1
-!        end select temperature
-!     end do
-!
-! ! Initialize spline temperature profiles, if any
-! 	if (n_T_spline > 0 ) then
-! 		do i = 1, n_T_spline
-!         	call initialize_temperature_spline_interp(read_input, &
-!         	    ts_profiles_N_sp(i_spec_spline(i)), &
-!         	   & trim(temperature_prof_model))
-! 		end do
-! 	end if
+! Temperature.  Check for valid model name and count number of splined profiles
+	n_T_spline = 0
+    do is = 0, nspec
+       temperature: select case( trim(temperature_prof_model(is)) )
+        case ('temperature_spline_interp')
+			n_T_spline = n_T_spline + 1
+			i_spec_spline(n_T_spline) = is
+        case('zero')
+        case('constant')
+        case('parabolic')
+        case default
+			if (verbosity > 0) then
+				write(message_unit, *) 'axisym_toroid_eq: Unknown temperature_prof_model: ', &
+                     & temperature_prof_model(is)
+				write(*,*) 'axisym_toroid_eq: Unknown temperature_prof_model: ', &
+                     & temperature_prof_model(is)
+			end if
+            stop 1
+       end select temperature
+    end do
+
+! Initialize temperature splines if there are any
+	if (n_T_spline > 0) call initialize_temperature_spline_interp(read_input)
+
+! Initialize spline temperature profiles, if any
+	if (n_T_spline > 0 ) then
+		do i = 1, n_T_spline
+        	call initialize_temperature_spline_interp(read_input)
+		end do
+	end if
 
   end subroutine initialize_axisym_toroid_eq_m
 
@@ -188,6 +217,7 @@ contains
     use eqdsk_magnetics_lin_interp_m, only : eqdsk_magnetics_lin_interp
     use eqdsk_magnetics_spline_interp_m, only : eqdsk_magnetics_spline_interp
     use density_spline_interp_m, only : density_spline_interp
+    use temperature_spline_interp_m, only : temperature_spline_interp
 
     implicit none
 
@@ -202,6 +232,8 @@ contains
     real(KIND=rkind) :: br, bz, bphi, bp0
     real(KIND=rkind) :: psi, gradpsi(3), psiN, grad_psiN(3)
     real(KIND=rkind) :: dens, dd_psi
+    real(KIND=rkind) :: t_prof, dt_dpsi
+    real(KIND=rkind) :: Te, dTe_psi, Ti, dTi_psi
     real(KIND=rkind), parameter :: Tiny = 10.0e-14_rkind
     integer :: is
 
@@ -265,14 +297,12 @@ contains
 			gradns(2, 0:nspec) = n0s(0:nspec)*dd_psi*grad_psiN(2)
 			gradns(3, 0:nspec) = n0s(0:nspec)*dd_psi*grad_psiN(3)
 
-        case default
-            write(0,*) 'axisym_toriod_eq: Unknown density_prof_model =', density_prof_model
-            stop 1
-
     end select density
 
 !   Temperature profile.
-    do is = 0, nspec
+   ts = 0.
+   gradts = 0.
+   do is = 0, nspec
        temperature: select case( trim(temperature_prof_model(is)) )
 
         case ('zero')
@@ -287,26 +317,27 @@ contains
 !      Parabolic: N.B. psi goes something like r**2 so if alphan2 = 1 and alphan1 = 2
 !      the profile is pretty much parabolic
 
-          ts = 0.
-          gradts = 0.
-
-          if (psiN < 1.) then
-              ts(is) = t0s(is) * (1.-psiN**(alphat2(is)))**alphat1(is)
-              dd_psi = -alphat1(is)*alphat2(is)*psiN**(alphat2(is) - 1.)* &
-                      & (1.-psiN**(alphat2(is)))**alphat1(is)
-              gradts(1,is) = t0s(is)*dd_psi*grad_psiN(1)
-              gradts(2,is) = t0s(is)*dd_psi*grad_psiN(2)
-              gradts(3,is) = t0s(is)*dd_psi*grad_psiN(3)
+         if (psiN < 1.) then
+          	  call parabolic_prof(psiN, d_scrape_off, alphat1(is), alphat2(is), t_prof, dt_dpsi)
+              ts(is) = t0s(is) * t_prof
+              gradts(1,is) = t0s(is)*dt_dpsi*grad_psiN(1)
+              gradts(2,is) = t0s(is)*dt_dpsi*grad_psiN(2)
+              gradts(3,is) = t0s(is)*dt_dpsi*grad_psiN(3)
           end if
 
-       case default
-			if (verbosity > 0) then
-				write(message_unit, *) 'axisym_toroid_eq: Unknown temperature_prof_model: ', &
-                     & temperature_prof_model(0:nspec)
-				write(*,*) 'axisym_toroid_eq: Unknown temperature_prof_model: ', &
-                     & temperature_prof_model(0:nspec)
-			end if
-            stop 1
+       case ('temperature_spline_interp')
+            call temperature_spline_interp(psi, T_scrape_off, Te, dTe_psi, Ti, dTi_psi)
+            if (is == 0) then
+            	ts(is) = t0s(is) * Te
+                gradts(1,is) = t0s(is)*dTe_psi*grad_psiN(1)
+                gradts(2,is) = t0s(is)*dTe_psi*grad_psiN(2)
+                gradts(3,is) = t0s(is)*dTe_psi*grad_psiN(3)
+        	else
+            	ts(is) = t0s(is) * Ti
+                gradts(1,is) = t0s(is)*dTi_psi*grad_psiN(1)
+                gradts(2,is) = t0s(is)*dTi_psi*grad_psiN(2)
+                gradts(3,is) = t0s(is)*dTi_psi*grad_psiN(3)
+            end if
 
        end select temperature
     end do
