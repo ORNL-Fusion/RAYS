@@ -784,17 +784,17 @@ call check( nf90_enddef(ncid))
     implicit none
 
 ! Number of profiles to generate and list of profiles
-    integer, parameter :: n_profiles = 8
+    integer, parameter :: n_profiles = 10
 	type(XY_curve_netCDF) :: profile_list(n_profiles)
 	integer :: n_grid(n_profiles)
 
 !   Declare local variables
     real(KIND=rkind) :: psiN(n_psiN), R(n_psiN)
-    real(KIND=rkind) :: ne_psiN(n_psiN), Te_psiN(n_psiN)
+    real(KIND=rkind) :: ne_psiN(n_psiN), Te_psiN(n_psiN), Ti_psiN(n_psiN)
     real(KIND=rkind) :: RBphi_psiN(n_psiN),Q_psiN(n_psiN), rho_psiN(n_psiN)
 
     real(KIND=rkind) :: rho(n_rho), PsiN_rho(n_rho)
-    real(KIND=rkind) :: ne_rho(n_rho), Te_rho(n_rho)
+    real(KIND=rkind) :: ne_rho(n_rho), Te_rho(n_rho), Ti_rho(n_rho)
     real(KIND=rkind) :: RBphi_rho(n_rho),Q_rho(n_rho)
 
 	integer :: i, ierr
@@ -840,6 +840,7 @@ call check( nf90_enddef(ncid))
 		call equilibrium(rvec, eq)
 		ne_psiN(i) = eq%ns(0)
 		Te_psiN(i) = eq%Ts(0)
+		Ti_psiN(i) = eq%Ts(1) ! N.B. For now all ions are assumed to have the same Ti profile
 		call eqdsk_magnetics_spline_interp_Q_psiN(psiN(i),Q_psiN(i), dQ_dPsi)
 		call eqdsk_magnetics_spline_interp_rho_psiN(PsiN(i), rho_psiN(i), drho_dPsi)
 	end do
@@ -876,6 +877,7 @@ call check( nf90_enddef(ncid))
 		call equilibrium(rvec, eq)
 		ne_rho(i) = eq%ns(0)
 		Te_rho(i) = eq%Ts(0)
+		Ti_rho(i) = eq%Ts(1) ! N.B. For now all ions are assumed to have the same Ti profile
 		call eqdsk_magnetics_spline_interp_Q_rho(rho(i),Q_rho(i), dQ_drho)
 	end do
 
@@ -904,61 +906,79 @@ call check( nf90_enddef(ncid))
 	allocate(profile_list(2)%curve(n_grid(2)), source = 0.0_rkind)
 	profile_list(2)%curve(:) = Te_psiN(:)
 
+! Load Ti data into profile_list
+	profile_list((3))%grid_name = 'psiN'
+	profile_list((3))%curve_name = 'Ti(psiN)'
+	n_grid((3)) = n_psiN
+	allocate(profile_list((3))%grid(n_grid((3))), source = 0.0_rkind)
+	profile_list((3))%grid(:) = PsiN(:)
+	allocate(profile_list((3))%curve(n_grid((3))), source = 0.0_rkind)
+	profile_list((3))%curve(:) = Ti_psiN(:)
+
 ! Load Q data into profile_list
-	profile_list(3)%grid_name = 'psiN'
-	profile_list(3)%curve_name = 'Q(psiN)'
-	n_grid(3) = n_psiN
-	allocate(profile_list(3)%grid(n_grid(3)), source = 0.0_rkind)
-	profile_list(3)%grid(:) = PsiN(:)
-	allocate(profile_list(3)%curve(n_grid(3)), source = 0.0_rkind)
-	profile_list(3)%curve(:) = Q_psiN(:)
+	profile_list((4))%grid_name = 'psiN'
+	profile_list((4))%curve_name = 'Q(psiN)'
+	n_grid((4)) = n_psiN
+	allocate(profile_list((4))%grid(n_grid((4))), source = 0.0_rkind)
+	profile_list((4))%grid(:) = PsiN(:)
+	allocate(profile_list((4))%curve(n_grid((4))), source = 0.0_rkind)
+	profile_list((4))%curve(:) = Q_psiN(:)
 
 ! Load rho data into profile_list
-	profile_list(4)%grid_name = 'psiN'
-	profile_list(4)%curve_name = 'rho(psiN)'
-	n_grid(4) = n_psiN
-	allocate(profile_list(4)%grid(n_grid(4)), source = 0.0_rkind)
-	profile_list(4)%grid(:) = PsiN(:)
-	allocate(profile_list(4)%curve(n_grid(4)), source = 0.0_rkind)
-	profile_list(4)%curve(:) = rho_psiN(:)
+	profile_list((5))%grid_name = 'psiN'
+	profile_list((5))%curve_name = 'rho(psiN)'
+	n_grid((5)) = n_psiN
+	allocate(profile_list((5))%grid(n_grid((5))), source = 0.0_rkind)
+	profile_list((5))%grid(:) = PsiN(:)
+	allocate(profile_list((5))%curve(n_grid((5))), source = 0.0_rkind)
+	profile_list((5))%curve(:) = rho_psiN(:)
 
 !***************** Stuff for profiles versus rho *****************************
 
 ! Load psiN of rho data into profile_list
-	profile_list(5)%grid_name = 'rho'
-	profile_list(5)%curve_name = 'psiN(rho)'
-	n_grid(5) = n_rho
-	allocate(profile_list(5)%grid(n_grid(5)), source = 0.0_rkind)
-	profile_list(5)%grid(:) = rho(:)
-	allocate(profile_list(5)%curve(n_grid(5)), source = 0.0_rkind)
-	profile_list(5)%curve(:) = psiN_rho(:)
+	profile_list((6))%grid_name = 'rho'
+	profile_list((6))%curve_name = 'psiN(rho)'
+	n_grid((6)) = n_rho
+	allocate(profile_list((6))%grid(n_grid((6))), source = 0.0_rkind)
+	profile_list((6))%grid(:) = rho(:)
+	allocate(profile_list((6))%curve(n_grid((6))), source = 0.0_rkind)
+	profile_list((6))%curve(:) = psiN_rho(:)
 
 ! Load ne of rho data into profile_list
-	profile_list(6)%grid_name = 'rho'
-	profile_list(6)%curve_name = 'ne(rho)'
-	n_grid(6) = n_rho
-	allocate(profile_list(6)%grid(n_grid(6)), source = 0.0_rkind)
-	profile_list(6)%grid(:) = rho(:)
-	allocate(profile_list(6)%curve(n_grid(6)), source = 0.0_rkind)
-	profile_list(6)%curve(:) = ne_rho(:)
+	profile_list((7))%grid_name = 'rho'
+	profile_list((7))%curve_name = 'ne(rho)'
+	n_grid((7)) = n_rho
+	allocate(profile_list((7))%grid(n_grid((7))), source = 0.0_rkind)
+	profile_list((7))%grid(:) = rho(:)
+	allocate(profile_list((7))%curve(n_grid((7))), source = 0.0_rkind)
+	profile_list((7))%curve(:) = ne_rho(:)
 
 ! Load Te of rho data into profile_list
-	profile_list(7)%grid_name = 'rho'
-	profile_list(7)%curve_name = 'Te(rho)'
-	n_grid(7) = n_rho
-	allocate(profile_list(7)%grid(n_grid(7)), source = 0.0_rkind)
-	profile_list(7)%grid(:) = rho(:)
-	allocate(profile_list(7)%curve(n_grid(7)), source = 0.0_rkind)
-	profile_list(7)%curve(:) = Te_rho(:)
+	profile_list((8))%grid_name = 'rho'
+	profile_list((8))%curve_name = 'Te(rho)'
+	n_grid((8)) = n_rho
+	allocate(profile_list((8))%grid(n_grid((8))), source = 0.0_rkind)
+	profile_list((8))%grid(:) = rho(:)
+	allocate(profile_list((8))%curve(n_grid((8))), source = 0.0_rkind)
+	profile_list((8))%curve(:) = Te_rho(:)
+
+! Load Ti of rho data into profile_list
+	profile_list(((9)))%grid_name = 'rho'
+	profile_list(((9)))%curve_name = 'Ti(rho)'
+	n_grid(((9))) = n_rho
+	allocate(profile_list(((9)))%grid(n_grid(((9)))), source = 0.0_rkind)
+	profile_list(((9)))%grid(:) = rho(:)
+	allocate(profile_list(((9)))%curve(n_grid(((9)))), source = 0.0_rkind)
+	profile_list(((9)))%curve(:) = Ti_rho(:)
 
 ! Load Q of rho data into profile_list
-	profile_list(8)%grid_name = 'rho'
-	profile_list(8)%curve_name = 'Q(rho)'
-	n_grid(8) = n_rho
-	allocate(profile_list(8)%grid(n_grid(8)), source = 0.0_rkind)
-	profile_list(8)%grid(:) = rho(:)
-	allocate(profile_list(8)%curve(n_grid(8)), source = 0.0_rkind)
-	profile_list(8)%curve(:) = Q_rho(:)
+	profile_list((10))%grid_name = 'rho'
+	profile_list((10))%curve_name = 'Q(rho)'
+	n_grid((10)) = n_rho
+	allocate(profile_list((10))%grid(n_grid((10))), source = 0.0_rkind)
+	profile_list((10))%grid(:) = rho(:)
+	allocate(profile_list((10))%curve(n_grid((10))), source = 0.0_rkind)
+	profile_list((10))%curve(:) = Q_rho(:)
 
 ! Restore plasma_psi_limit
 	plasma_psi_limit = plasma_psi_limit_temp
