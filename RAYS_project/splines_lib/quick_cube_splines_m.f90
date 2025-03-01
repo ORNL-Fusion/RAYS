@@ -69,7 +69,6 @@ contains
 		real(KIND=rkind) :: wk(1) ! Not used except for periodic BC
 		real(KIND=rkind) :: fspl(4,nx_in)
 
-
 		this%nx = nx_in
 		this%x_grid = x_in
 		this%f_val = f_in

@@ -55,7 +55,7 @@ module axisym_toroid_eq_m
     real(KIND=rkind) :: d_scrape_off = zero
 
 ! Data for temperature
-    character(len=20), allocatable :: temperature_prof_model(:)
+    character(len=60), allocatable :: temperature_prof_model(:)
     ! Parabolic model parameters
     real(KIND=rkind), allocatable :: alphat1(:) ! Can be dfferent for different species
     real(KIND=rkind), allocatable :: alphat2(:) ! Can be dfferent for different species
@@ -68,10 +68,11 @@ module axisym_toroid_eq_m
      & magnetics_model, &
      & plasma_psi_limit, &
      & density_prof_model, &
-     & d_scrape_off, & !
+     & d_scrape_off, &
      & alphan1, alphan2, & ! parameters for parabolic density model
      & temperature_prof_model, &
-     & alphat1, alphat2 ! parameters for parabolic temperature model.  Same for all species now
+     & alphat1, alphat2, & ! parameters for parabolic temperature model.  Same for all species now
+     & T_scrape_off
 
 !********************************************************************
 
@@ -188,13 +189,6 @@ contains
 
 ! Initialize temperature splines if there are any
 	if (n_T_spline > 0) call initialize_temperature_spline_interp(read_input)
-
-! Initialize spline temperature profiles, if any
-	if (n_T_spline > 0 ) then
-		do i = 1, n_T_spline
-        	call initialize_temperature_spline_interp(read_input)
-		end do
-	end if
 
   end subroutine initialize_axisym_toroid_eq_m
 
@@ -316,17 +310,14 @@ contains
        case ('parabolic')
 !      Parabolic: N.B. psi goes something like r**2 so if alphan2 = 1 and alphan1 = 2
 !      the profile is pretty much parabolic
-
-         if (psiN < 1.) then
-          	  call parabolic_prof(psiN, d_scrape_off, alphat1(is), alphat2(is), t_prof, dt_dpsi)
-              ts(is) = t0s(is) * t_prof
-              gradts(1,is) = t0s(is)*dt_dpsi*grad_psiN(1)
-              gradts(2,is) = t0s(is)*dt_dpsi*grad_psiN(2)
-              gradts(3,is) = t0s(is)*dt_dpsi*grad_psiN(3)
-          end if
+		  call parabolic_prof(psiN, T_scrape_off, alphat1(is), alphat2(is), t_prof, dt_dpsi)
+		  ts(is) = t0s(is) * t_prof
+		  gradts(1,is) = t0s(is)*dt_dpsi*grad_psiN(1)
+		  gradts(2,is) = t0s(is)*dt_dpsi*grad_psiN(2)
+		  gradts(3,is) = t0s(is)*dt_dpsi*grad_psiN(3)
 
        case ('temperature_spline_interp')
-            call temperature_spline_interp(psi, T_scrape_off, Te, dTe_psi, Ti, dTi_psi)
+            call temperature_spline_interp(psiN, T_scrape_off, Te, dTe_psi, Ti, dTi_psi)
             if (is == 0) then
             	ts(is) = t0s(is) * Te
                 gradts(1,is) = t0s(is)*dTe_psi*grad_psiN(1)
@@ -495,7 +486,6 @@ contains
     real(KIND=rkind), intent(out) :: f, fp
 
 	f = zero
-	fp = zero
 	if (rho < one) then
 		f = (1.-rho**(alpha2))**alpha1
 		fp = -alpha1*alpha2*rho**(alpha2 - 1.)*(1.-rho**(alpha2))&

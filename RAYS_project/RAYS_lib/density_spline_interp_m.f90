@@ -108,9 +108,11 @@ contains
 	real(KIND=rkind), intent(in) :: psi, d_scrape_off
 	real(KIND=rkind), intent(out) :: dens, dd_psi
 
+	dens = zero
     if (psi <= one) then
-  	call ne_profile_N%eval_1D_fp(psi, dens, dd_psi)
-    else
+		call ne_profile_N%eval_1D_fp(psi, dens, dd_psi)
+	end if
+    if (dens < d_scrape_off) then
     	dens = d_scrape_off
     	dd_psi = zero
     end if

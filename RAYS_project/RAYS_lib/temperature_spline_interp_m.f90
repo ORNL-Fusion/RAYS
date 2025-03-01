@@ -99,7 +99,7 @@ contains
 
 !****************************************************************************************
 
-  subroutine  temperature_spline_interp(psi, T_scrape_off, Te, dTe_psi, Ti, dTi_psi)
+  subroutine  temperature_spline_interp(psiN, T_scrape_off, Te, dTe_psi, Ti, dTi_psi)
 
     use constants_m, only : one, zero
     use species_m, only : nspec, n0s, t0s
@@ -107,15 +107,20 @@ contains
 
     implicit none
 
-	real(KIND=rkind), intent(in) :: psi, T_scrape_off
+	real(KIND=rkind), intent(in) :: psiN, T_scrape_off
 	real(KIND=rkind), intent(out) :: Te, dTe_psi, Ti, dTi_psi
 
-    if (psi <= one) then
-  	call Te_profileN%eval_1D_fp(psi, Te, dTe_psi)
-  	call Ti_profileN%eval_1D_fp(psi, Ti, dTi_psi)
-    else
+   	Te = zero
+  	Ti = zero
+    if (psiN <= one) then
+		call Te_profileN%eval_1D_fp(psiN, Te, dTe_psi)
+		call Ti_profileN%eval_1D_fp(psiN, Ti, dTi_psi)
+  	end if
+  	if (Te < T_scrape_off) then
     	Te = T_scrape_off
     	dTe_psi = zero
+    end if
+    if (Ti < T_scrape_off) then
     	Ti = T_scrape_off
     	dTi_psi = zero
     end if

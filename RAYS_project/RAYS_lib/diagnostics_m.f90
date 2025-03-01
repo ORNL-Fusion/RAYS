@@ -129,7 +129,9 @@ contains
         stop 'incorrect command line arguments'
     else if (n_args == 1) then
         call get_command_argument(1,namelist_file)
-        call system('cp '//trim(namelist_file)//' rays.in')
+        if (trim(namelist_file) /= 'rays.in') then ! Don't copy if input filename already rays.in
+ 	       call system('cp '//trim(namelist_file)//' rays.in')
+        end if
     end if
 
 	! Get unit number and open file for output messages
