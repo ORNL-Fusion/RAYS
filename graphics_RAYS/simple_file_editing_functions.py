@@ -59,18 +59,18 @@ def lines_to_list(lines):
     return line_list
 
 def list_variables_in_fortran_star_file(lines):
-# Assumes lines come in pairs: First a line with variable name, second a line with variable 
+# Assumes lines come in pairs: First a line with variable name, second a line with variable
 # value.
 
     variable_list = []
     npairs = int(len(lines)/2)
-    
+
     # Check if an even number of lines
     if (2*npairs != len(lines)):
     	err_mess = 'list_variables_in_fortran_star_file: odd number of lines = ' + str(len(lines))
     	print(err_mess)
     	raise Exception(err_mess)
-    	
+
     for i in range(npairs):
         name = lines[2*i].strip()
         variable_list.append(name)
@@ -83,7 +83,7 @@ def variable_dict_to_lines(variable_dict):
     return lines
 
 
-def input_file_to_variable_dict(filename):   
+def input_file_to_variable_dict(filename):
     lines = get_lines(filename)
     variable_dict = lines_to_variable_dict(lines)
     return variable_dict
@@ -100,7 +100,7 @@ def add_variables_to_output_file(variable_dict, filename):
         lines.append(new_line)
     put_lines(filename, lines)
 
-            
+
 def modify_variables_in_file(change_dict, filename):
     lines = get_lines(filename)
 
@@ -108,7 +108,7 @@ def modify_variables_in_file(change_dict, filename):
     var_line_number = -1
     for i in range(len(lines)):
         line = lines[i]
- 
+
         # ignore blank lines
         if len(line.strip()) == 0 : continue
         # ignore comments, could be fooled by '=' in comment
@@ -119,7 +119,7 @@ def modify_variables_in_file(change_dict, filename):
             name = name.strip()
             if name in list(change_dict.keys()):
                 lines[i] = name + ' = ' + str(change_dict.pop(name)) + '\n'
-                
+
     if len(change_dict) != 0:
         for name in list(change_dict.keys()):
             print('variable to be modified ', name, ' not found in file ', filename)
@@ -140,7 +140,7 @@ def dict_variable_to_list_of_floats(variable_dict, variable):
 # Edit fortran namelist file
 #---------------------------------------------------------------------------------------
 
-# This function allows changing the variable values in a fortran namelist file. 
+# This function allows changing the variable values in a fortran namelist file.
 # Arguments:
 #
 # lines = List of character strings representing the of lines from the input namelist file.
@@ -150,7 +150,7 @@ def dict_variable_to_list_of_floats(variable_dict, variable):
 #
 # value = String or list of strings containing data to go into var.  The editing that can
 #     be done is pretty rudimentary.  If var is a vector then value must contain the whole
-#     new vector.  For example it doesn't support changing an array element or array 
+#     new vector.  For example it doesn't support changing an array element or array
 #     slice.
 #
 # separator = Optional argument specifying the separator between array elements.  The
@@ -173,10 +173,10 @@ def edit_nml_file(lines, var, values, separator = ','):
         message = 'Could not find variable ', var, ' in namelist lines'
         print(message)
         raise Exception(message)
-        
+
     #print 'var_line_number = ', var_line_number
     #print 'lines[var_line_number] = ', lines[var_line_number]
-    
+
     if lines[var_line_number][-1] == '\n':
         lines[var_line_number] = lines[var_line_number][:-1]
 
@@ -200,23 +200,22 @@ def edit_nml_file(lines, var, values, separator = ','):
             test = True
         else:
             var_lines += 1
-            
+
     # Insert line with new values at lines[i]
     lines[var_line_number] = lines[var_line_number].split('=')[0] + ' = '
     for val in values:
         lines[var_line_number] = lines[var_line_number] + str(val) + ', '
     lines[var_line_number] = lines[var_line_number] + '\n'
     print('New ', lines[var_line_number])
-        
+
     return lines[:var_line_number + 1] + lines[var_line_number + var_lines:]
 
 #---------------------------------------------------------------------------------------
-# Read a variable from a fortran namelist file
+# Read a variable from a fortran namelist file functions for floats, inta and strings
 #---------------------------------------------------------------------------------------
 
 def read_var_from_nml_lines(lines, var, separator = ','):
-
-# This routine is very limited, for now it only reads scalar real numbers
+# This routine is the default, reads scalar floats
 
     # Find the line in the namelist containing 'var = '
     var_line_number = -1
@@ -245,9 +244,70 @@ def read_var_from_nml_lines(lines, var, separator = ','):
     print('value = ', value)
     return value
 
+#---------------------------------------------------------------------------------------
+def read_int_var_from_nml_lines(lines, var, separator = ','):
+
+# This routine reads scalar integers
+    # Find the line in the namelist containing 'var = '
+    var_line_number = -1
+    for i in range(len(lines)):
+        line = lines[i]
+        if '=' in line:
+            split_line = line.split('=')
+            #print 'split_line = ', split_line
+            if (split_line[0].strip()).lower() == var.lower():
+                var_line_number = i
+
+    if var_line_number == -1:
+        message = 'read_var_from_nml_lines: Could not find variable ', var, ' in namelist lines'
+        print(message)
+        raise Exception(message)
+
+    RHS = lines[var_line_number].split('=')[1]
+
+#     Get rid of newline if there is one
+    if RHS[-1] == '\n':
+        lines[var_line_number] = lines[var_line_number][:-1]
+
+    RHS_list = RHS.split(',')
+#    print 'RHS = ', RHS_list[0].split()
+    value = int(RHS_list[0].split()[0])
+    print('value = ', value)
+    return value
 
 #---------------------------------------------------------------------------------------
-# Find and list the variables defined an nml file 
+def read_string_var_from_nml_lines(lines, var, separator = ','):
+# This routine reads scalar character strings
+
+    # Find the line in the namelist containing 'var = '
+    var_line_number = -1
+    for i in range(len(lines)):
+        line = lines[i]
+        if '=' in line:
+            split_line = line.split('=')
+            #print 'split_line = ', split_line
+            if (split_line[0].strip()).lower() == var.lower():
+                var_line_number = i
+
+    if var_line_number == -1:
+        message = 'read_var_from_nml_lines: Could not find variable ', var, ' in namelist lines'
+        print(message)
+        raise Exception(message)
+
+    RHS = lines[var_line_number].split('=')[1]
+
+#     Get rid of newline if there is one
+    if RHS[-1] == '\n':
+        lines[var_line_number] = lines[var_line_number][:-1]
+
+    RHS_list = RHS.split(',')
+#    print 'RHS = ', RHS_list[0].split()
+    value = RHS_list[0].split()[0]
+    print('value = ', value)
+    return value
+
+#---------------------------------------------------------------------------------------
+# Find and list the variables defined an nml file
 #---------------------------------------------------------------------------------------
 
 def list_variables_in_nml_file(lines):
@@ -261,11 +321,11 @@ def list_variables_in_nml_file(lines):
     return var_list
 
 #---------------------------------------------------------------------------------------
-# Read a variable from a file of simple format. 
+# Read a variable from a file of simple format.
 # For example a fortran file written with list directed format (unit,*)
 # The data must be either in the form: <variable name> = <data record/data values>,
-# or pairs of lines: one line with variable name: <variable name> or <variable name> = 
-# followed by one line with data values.  
+# or pairs of lines: one line with variable name: <variable name> or <variable name> =
+# followed by one line with data values.
 # If there is only one value it returns a scalar, otherwise it returns a list.
 #
 # Returns values of var_type which must be in ['string', 'int', 'float']. The user
@@ -279,13 +339,13 @@ def read_var_from_fortran_star_file(lines, var, var_type, separator = ''):
         message = 'unrecognized variable type ',type, ' for ', var.strip()
         print(message)
         raise Exception(message)
-    
+
     # Find the line containing 'var' also 'var = ' is allowed
     var_line_number = -1
     for i in range(len(lines)):
 #        line = lines[i].strip()
         line = lines[i].strip('\n').strip() # get rid of new_line
-        
+
         # If just var with no '=' this better be the first of a pair of lines
         if '=' not in line:
             if line.split()[0] == var.strip():
@@ -299,7 +359,7 @@ def read_var_from_fortran_star_file(lines, var, var_type, separator = ''):
         # If there is an '=' this could be the first of a pair or a var/value line
             split_line = line.split('=')
             LHS = split_line[0].strip()
-            RHS = split_line[1]            
+            RHS = split_line[1]
             if LHS == var.strip():
                 var_line_number = i
                 if len(RHS) == 0: # Nothing after the '=' means first of a line pair
@@ -307,7 +367,7 @@ def read_var_from_fortran_star_file(lines, var, var_type, separator = ''):
                         value = lines[i+1].split()
                     else:
                         value = lines[i+1].split(separator)
-                else:            
+                else:
                      if separator == '' :
                         value = RHS.split()
                      else:
@@ -318,7 +378,7 @@ def read_var_from_fortran_star_file(lines, var, var_type, separator = ''):
                    var, ' in file'
         print(message)
         raise Exception(message)
-    
+
 #    If var_type == 'string' do nothing. Otherwise cast as int or float.
 
     if var_type == 'int' :
@@ -327,9 +387,9 @@ def read_var_from_fortran_star_file(lines, var, var_type, separator = ''):
 
     if var_type == 'float' :
         for i in range(len(value)) :
-            value[i] = float(value[i])          
-      
-    
+            value[i] = float(value[i])
+
+
     if len(value) == 1: return value[0]
     else: return value
 
@@ -337,30 +397,44 @@ def read_var_from_fortran_star_file(lines, var, var_type, separator = ''):
 
 if __name__ == '__main__':
 
-    input_file = 'scan_summary.ITER'
+#     input_file = 'scan_summary.ITER'
+#     lines = get_lines(input_file)
+#
+#     var = 'scan_trace_time'
+#     val = read_var_from_fortran_star_file(lines, var, 'float', separator = '')
+#     print(var, ' = ', val)
+#
+#     var = 'scan_id'
+#     val = read_var_from_fortran_star_file(lines, var, 'string', separator = '')
+#     print(var, ' = ', val)
+#
+#     var = 'dim_v_vector'
+#     val = read_var_from_fortran_star_file(lines, var, 'int', separator = '')
+#     print(var, ' = ', val)
+#
+#     var = 'scan_date_v'
+#     val = read_var_from_fortran_star_file(lines, var, 'int', separator = '')
+#     print(var, ' = ', val)
+#
+#     var = 'ray_stop_flag_run'
+#     val = read_var_from_fortran_star_file(lines, var, 'string', separator = '')
+#     print(var, ' = ', val)
+#
+#     var = 'end_ray_vec_run'
+#     val = read_var_from_fortran_star_file(lines, var, 'float', separator = '')
+#     print(var, ' = ', val)
+
+    input_file = 'rays.in'
     lines = get_lines(input_file)
-        
-    var = 'scan_trace_time'
-    val = read_var_from_fortran_star_file(lines, var, 'float', separator = '')
-    print(var, ' = ', val)
-        
-    var = 'scan_id'
-    val = read_var_from_fortran_star_file(lines, var, 'string', separator = '')
-    print(var, ' = ', val)
-    
-    var = 'dim_v_vector'
-    val = read_var_from_fortran_star_file(lines, var, 'int', separator = '')
-    print(var, ' = ', val)
-    
-    var = 'scan_date_v'
-    val = read_var_from_fortran_star_file(lines, var, 'int', separator = '')
-    print(var, ' = ', val)
-    
-    var = 'ray_stop_flag_run'
-    val = read_var_from_fortran_star_file(lines, var, 'string', separator = '')
+
+    var = 'run_label'
+    val = read_string_var_from_nml_lines(lines, var, separator = ',')
     print(var, ' = ', val)
 
-    var = 'end_ray_vec_run'
-    val = read_var_from_fortran_star_file(lines, var, 'float', separator = '')
+    var = 'n0'
+    val = read_var_from_nml_lines(lines, var, separator = ',')
     print(var, ' = ', val)
 
+    var = 'verbosity'
+    val = read_string_var_from_nml_lines(lines, var, separator = ',')
+    print(var, ' = ', val)
