@@ -26,6 +26,12 @@
 !                 subroutine as part of antenna model.  But for now al wights are just 1/nray.
 !
 ! This module is called from main program.
+!
+! Working notes:
+!
+! 2/2/2025 (DBB) Eliminated case ('axisym_toroid_nphi_ntheta') it was obsolete and
+!                superseded by case ('axisym_toroid_ray_init_R_Z_nphi_ntheta')
+!
 
     use constants_m, only : rkind
 
@@ -62,6 +68,7 @@ contains
         use solovev_ray_init_nphi_ntheta_m, only : ray_init_solovev_nphi_ntheta
         use axisym_toroid_ray_init_nphi_ntheta_m, only : ray_init_axisym_toroid_nphi_ntheta
         use axisym_toroid_ray_init_R_Z_nphi_ntheta_m, only : ray_init_axisym_toroid_R_Z_nphi_ntheta
+        use one_ray_init_XYZ_k_direction_m, only : one_ray_init_XYZ_n_direction
 
         implicit none
         logical, intent(in) :: read_input
@@ -90,12 +97,12 @@ contains
              case ('solovev')
                 call ray_init_solovev_nphi_ntheta(nray_max, nray, rvec0, rindex_vec0, ray_pwr_wt)
 
-             case ('axisym_toroid_nphi_ntheta')
-                call ray_init_axisym_toroid_nphi_ntheta(nray_max, nray, rvec0, rindex_vec0,&
-                   & ray_pwr_wt)
-
              case ('axisym_toroid_ray_init_R_Z_nphi_ntheta')
                 call ray_init_axisym_toroid_R_Z_nphi_ntheta(nray_max, nray, rvec0,&
+                   & rindex_vec0, ray_pwr_wt)
+
+             case ('one_ray_init_XYZ_n_direction')
+                call one_ray_init_XYZ_n_direction(nray_max, nray, rvec0,&
                    & rindex_vec0, ray_pwr_wt)
 
             case default
@@ -112,14 +119,11 @@ contains
     subroutine deallocate_ray_init_m
         use simple_slab_ray_init_m, only : deallocate_simple_slab_ray_init_m
         use solovev_ray_init_nphi_ntheta_m, only : deallocate_solovev_ray_init_nphi_ntheta_m
-        use axisym_toroid_ray_init_nphi_ntheta_m, only :&
-          & deallocate_axisym_toroid_ray_init_nphi_ntheta_m
         use axisym_toroid_ray_init_R_Z_nphi_ntheta_m, only :&
           & deallocate_axisym_toroid_ray_init_R_Z_nphi_ntheta_m
 
         call deallocate_simple_slab_ray_init_m
         call deallocate_solovev_ray_init_nphi_ntheta_m
-        call deallocate_axisym_toroid_ray_init_nphi_ntheta_m
         call deallocate_axisym_toroid_ray_init_R_Z_nphi_ntheta_m
 
         return

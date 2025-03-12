@@ -2,13 +2,13 @@
 
     use diagnostics_m, only : message_unit, message, text_message, verbosity, &
                             & output_unit, ray_list_unit
-    
+
     use damping_slab_test_m, only : init_damping_slab_test, damping_slab_test
     use read_results_LD_test_m, only : init_read_results_LD_test, read_results_LD_test
-
-    implicit none 
+	use dispersion_solver_test_m, only : init_dispersion_solver_test, dispersion_solver_test
+    implicit none
     logical :: read_input = .true.
-	integer :: input_unit, get_unit_number ! External, free unit finder   
+	integer :: input_unit, get_unit_number ! External, free unit finder
 
     character(len=60) :: test_name
 
@@ -17,7 +17,7 @@
 !   Read input files and initialize variables needed from RAYS_lib
     call initialize_components_in_RAYS_lib(read_input)
 
-    if (read_input .eqv. .true.) then    
+    if (read_input .eqv. .true.) then
 	! Read and write input namelist
    		input_unit = get_unit_number()
         open(unit=input_unit, file='component_test_rays.in',action='read', status='old',&
@@ -36,6 +36,10 @@
        case ('read_results_LD')
           call init_read_results_LD_test(read_input)
           call read_results_LD_test
+
+       case ('dispersion_solvers')
+          call init_dispersion_solver_test(read_input)
+          call dispersion_solver_test
 
        case default
           write(*,*) 'Unimplemented component tester =', trim(test_name)

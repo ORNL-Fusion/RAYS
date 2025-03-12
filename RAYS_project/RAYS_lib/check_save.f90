@@ -159,6 +159,15 @@ contains
     real(KIND=rkind) function residual(eq, k1, k3)
 !      calculates the residual for given k1 and k3.
 !      get dielectric tensor from module suscep_m
+! N.B. This function is different from the residual functions in the dispersion solver
+!      routines.  That residual is what's left after plugging the refractive indices
+!      into the dispersion relations.  Whether that residual is large or small should be
+!      judged on the basis of how large the elements of the dielectric tensor are.  At ion
+!      cyclotron frequencies f_plasma*2/f_rf**2 is really big.  Here we put a norm on the
+!      dielectric tensor by taking the absolute value of each term of the dispersion
+!      relation and summing.  The residual is then taken as relative to that norm.  This
+!      gives an indication of how good the cancellation is in the dispersion relation
+!      compared to the size of the terms.
 
        use species_m, only : nspec
        use suscep_m, only :  dielectric_cold
@@ -175,8 +184,7 @@ contains
 
        integer :: i, j
 
-!   Need dielectric tensor.  If ray_dispersion_model = "warm" or "numeric" eps will
-!   have already been calculated.  If ray_model = "cold" must calculate eps.
+!   Need dielectric tensor.
 
     if (ray_dispersion_model == "cold") then
         call dielectric_cold(eq, eps)
@@ -218,7 +226,6 @@ contains
           & + eps_norm(3,2)*(eps_norm(2,1)*eps_norm(1,3)) &
           & + eps_norm(3,1)*(eps_norm(1,2)*eps_norm(2,3)) &
           & + eps_norm(3,1)*(eps_norm(2,2)*eps_norm(1,3)) )
-
 
        return
     end function residual

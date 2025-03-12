@@ -1,8 +1,7 @@
 set (lib_sources "")
 list (APPEND lib_sources
-	get_unit_number.f90
-	RK4_ode_m.f90
-	SG_ode_m.f90
+	axisym_toroid_eq_m.f90
+    axisym_toroid_ray_init_R_Z_nphi_ntheta_m.f90
 	check_save.f90
 	constants_m.f90
 	damping_m.f90
@@ -13,34 +12,38 @@ list (APPEND lib_sources
 	deriv_num.f90
 	diagnostics_m.f90
 	disp_solve_cold_n1sq_vs_n3.f90
+	disp_solve_cold_nsq_vs_theta.f90
+	disp_solve_n_vs_k_vec.f90
 	dispersion_solvers_m.f90
+	eqdsk_utilities_m.f90
+	eqdsk_magnetics_lin_interp_m.f90
+	eqdsk_magnetics_spline_interp_m.f90
 	eqn_ray.f90
 	equilibrium_m.f90
 	finalize_run.f90
+	get_unit_number.f90
 	initialize_ode_vector.f90
 	intialize.f90
 	ode_RAYS.f90
 	ode_m.f90
+	openmp_m.f90
 	ray_init_m.f90
 	ray_tracing.f90
 	rf_m.f90
+	RK4_ode_m.f90
+	SG_ode_m.f90
 	simple_slab_ray_init_m.f90
 	slab_eq_m.f90
-	axisym_toroid_eq_m.f90
     solovev_magnetics_m.f90
-    axisym_toroid_ray_init_nphi_ntheta_m.f90
-    axisym_toroid_ray_init_R_Z_nphi_ntheta_m.f90
-	solovev_eq_m.f90
+ 	solovev_eq_m.f90
 	solovev_ray_init_nphi_ntheta_m.f90
-	eqdsk_utilities_m.f90
-	eqdsk_magnetics_lin_interp_m.f90
-	eqdsk_magnetics_spline_interp_m.f90
 	temperature_spline_interp_m.f90
 	species_m.f90
 	suscep_m.f90
 	ray_results_m.f90
 	openmp_m.f90
 	XY_curves_netCDF_m.f90
+	XYZ_k_direction_ray_init_m.f90
 )
 
 add_library (RAYS_lib ${lib_sources})
