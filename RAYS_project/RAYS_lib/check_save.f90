@@ -88,8 +88,8 @@
        vg0 = sqrt(sum(vg**2))
 
        if ( trim(ray_param) == 'time' ) then
-!         Note that when ray_param = 'time', "ds" in the code is "dt". Time steps are a
-!         fraction of a nonosecond.
+!         Note that when ray_param = 'time', "ds" in the code is "dt". Time steps are
+!         typically a fraction of a nonosecond.
           if ( vg0*ds > 1. ) then
              call message('CHECK_SAVE: time step too big, Vg*dt (m) =', vg0 * ds, 1)
           end if
