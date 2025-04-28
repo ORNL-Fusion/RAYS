@@ -5,6 +5,7 @@ list (APPEND lib_sources
                 $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/bin_to_uniform_grid_m.f90>
                 $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/bisect_m.f90>
                 $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/monotonic_function_inversion.f90>
+                $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/complete_elliptic_int_m.f90>
 )
 add_library (math_functions ${lib_sources})
 
@@ -81,6 +82,18 @@ target_sources (test_fun_invert
 )
 
 target_link_libraries (test_fun_invert
+                       PUBLIC
+                       math_functions
+)
+
+add_executable (test_ellip_int)
+
+target_sources (test_ellip_int
+                PRIVATE
+                $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/test_ellip_int.f90>
+)
+
+target_link_libraries (test_ellip_int
                        PUBLIC
                        math_functions
 )
