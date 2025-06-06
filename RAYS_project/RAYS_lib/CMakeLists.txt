@@ -24,6 +24,8 @@ list (APPEND lib_sources
 	get_unit_number.f90
 	initialize_ode_vector.f90
 	intialize.f90
+	mirror_magnetics_spline_interp_m.f90
+	multiple_mirror_eq_m.f90
 	ode_RAYS.f90
 	ode_m.f90
 	openmp_m.f90
@@ -52,11 +54,12 @@ target_include_directories (RAYS_lib
                             PUBLIC
                             $<TARGET_PROPERTY:math_functions,BINARY_DIR>
                             $<TARGET_PROPERTY:spline,BINARY_DIR>
+                            $<TARGET_PROPERTY:mirror_magnetics_lib,BINARY_DIR>
 )
 
 target_link_libraries(RAYS_lib
                       PUBLIC
-                      spline math_functions
+                      spline math_functions mirror_magnetics_lib
                       $<$<BOOL:${OpenMP_Fortran_FOUND}>:OpenMP::OpenMP_Fortran>
                       $<$<BOOL:${NetCDF_FOUND}>:NetCDF::NetCDF>
 )

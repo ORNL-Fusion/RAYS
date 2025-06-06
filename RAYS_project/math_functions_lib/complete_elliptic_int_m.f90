@@ -10,7 +10,7 @@
 ! elliptic_Km which is more common usage i.e. agrees with Abramoitz and Stegun and
 ! with Mathematica.
 !
-! In order to put these functions in a module is was necessary to comment out the
+! In order to put these functions in a module it was necessary to comment out the
 ! declarations for functions "rd" and "rf" in subroutines elliptic_em(m) and
 ! elliptic_fm(m).  The declarations shadowed "rd" and "rf" as being module functions.
 

@@ -278,6 +278,8 @@ contains
           gradns = 0.
 
         case ('parabolic')
+!      Parabolic: N.B. psi goes something like r**2 so if alphan2 = 1 and alphan1 = 2
+!      the profile is pretty much parabolic
             call parabolic_prof(psiN, d_scrape_off, alphan1, alphan2, dens, dd_psi)
 			ns(0:nspec) = n0s(0:nspec) * dens
 			gradns(1, 0:nspec) = n0s(0:nspec)*dd_psi*grad_psiN(1)

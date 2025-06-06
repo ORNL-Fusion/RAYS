@@ -3,6 +3,7 @@ list (APPEND lib_sources
 	slab_processor_m.f90
 	solovev_processor_m.f90
 	axisym_toroid_processor_m.f90
+	mirror_processor_m.f90
 	deposition_profiles_m.f90
 	post_processing_m.f90
 )
@@ -16,6 +17,6 @@ target_include_directories (post_process_lib
 )
 target_link_libraries (post_process_lib
                       PUBLIC
-                      RAYS_lib math_functions
+                      RAYS_lib math_functions spline
                       $<$<BOOL:${NetCDF_FOUND}>:NetCDF::NetCDF>
 )

@@ -29,6 +29,7 @@ SET(CMAKE_RUNTIME_OUTPUT_DIRECTORY "../../tests")
 
 add_subdirectory (splines_lib)
 add_subdirectory (math_functions_lib)
+add_subdirectory (mirror_magnetics_lib)
 
 
 # Add the ability to auto generate API documentation with Doxygen

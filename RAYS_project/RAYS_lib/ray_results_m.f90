@@ -238,7 +238,7 @@ call check( nf90_enddef(ncid))
 !****************************************************************************
 
   subroutine read_results_instance_NC(this, in_filename)
-! writes a netCDF file containing all module data
+! Reads a netCDF file containing all module data into a run_results instsance 'this'
 
     use diagnostics_m, only : run_label
     use netcdf

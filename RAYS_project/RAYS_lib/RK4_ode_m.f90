@@ -75,7 +75,6 @@ contains
         real (  kind = rkind ) :: f4(nv)
 
         ds = sout-s
-
         call eqn_ray ( s, v(:), f1(:), ray_stop )
         if (ray_stop%stop_ode .eqv. .true.) return
         call eqn_ray ( s + ds/2.0, v(:)+ ds*f1(:)/2.0, f2, ray_stop )

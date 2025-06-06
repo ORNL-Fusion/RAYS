@@ -106,14 +106,14 @@
         case ('cold' )
 
     !      Derivatives of D for a cold plasma.
-         call deriv_cold(eq, nvec, dddx, dddk, dddw)
+           call deriv_cold(eq, nvec, dddx, dddk, dddw)
 
         case ('numerical' )
     !      Numerical differentiation.
     !      N.B. Must be called with v(), not just nvec.  Evaluates eq at other positions so v(1:3)
     !           is needed
 
-         call deriv_num(eq, v, dddx, dddk, dddw)
+           call deriv_num(eq, v, dddx, dddk, dddw)
 
         case default
            write(*,*) 'EQN_RAY: invalid value, ray_deriv_name = ', ray_deriv_name

@@ -72,6 +72,7 @@ contains
     use slab_eq_m, only : initialize_slab_eq_m
     use solovev_eq_m, only : initialize_solovev_eq_m
     use axisym_toroid_eq_m, only : initialize_axisym_toroid_eq_m
+    use multiple_mirror_eq_m, only : initialize_multiple_mirror_eq_m
 
     implicit none
     logical, intent(in) :: read_input
@@ -107,6 +108,11 @@ contains
 !         A generic axisymmetric toroidal plasma model
           call initialize_axisym_toroid_eq_m(read_input)
 
+       case ('multiple_mirror')
+
+!         A generic axisymmetric toroidal plasma model
+          call initialize_multiple_mirror_eq_m(read_input)
+
        case default
           write(0,*) 'initialize_equilibrium: improper equilib_model =', equilib_model
           call text_message('initialize_equilibrium: improper equilib_model',&
@@ -136,6 +142,7 @@ contains
     use slab_eq_m, only : slab_eq
     use solovev_eq_m, only : solovev_eq
     use axisym_toroid_eq_m, only : axisym_toroid_eq
+    use multiple_mirror_eq_m, only : multiple_mirror_eq
 
     implicit none
 
@@ -171,6 +178,9 @@ contains
 
        case ('axisym_toroid')
           call axisym_toroid_eq(rvec, bvec, gradbtensor, ns, gradns, ts, gradts, equib_err)
+
+       case ('multiple_mirror')
+          call multiple_mirror_eq(rvec, bvec, gradbtensor, ns, gradns, ts, gradts, equib_err)
 
        case default
           write(0,*) 'equilibrium_m: invalid equilibrium model = ', trim(equilib_model)

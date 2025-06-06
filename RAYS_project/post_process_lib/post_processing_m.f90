@@ -76,6 +76,7 @@
     use slab_processor_m, only : initialize_slab_processor
     use solovev_processor_m, only : initialize_solovev_processor
     use axisym_toroid_processor_m, only : initialize_axisym_toroid_processor
+	use mirror_processor_m, only : initialize_mirror_processor
     use ray_init_m, only : nray_ray_init => nray
 
     implicit none
@@ -86,7 +87,7 @@
 
 ! ****** Initialize the RAYS_lib modules, they read input data from module namelists   ****
     call initialize_diagnostics(read_input) ! This generates new date_v, overwrite with
-                                            ! date_v from RAYS run later
+                                            ! original date_v from RAYS run later
     call message(1)
 
     call initialize_constants_m
@@ -137,6 +138,9 @@
        case ('axisym_toroid')
           call initialize_axisym_toroid_processor(read_input)
 
+       case ('multiple_mirror')
+          call initialize_mirror_processor(read_input)
+
        case default
           error_message = 'post_process_rays: unimplemented ray_data_input_mode ='//&
                     & trim(ray_data_input_mode)
@@ -183,6 +187,7 @@
     use axisym_toroid_eq_m, only : r_axis, z_axis, &
                           & box_rmin, box_rmax, box_zmin, box_zmax, &
                           & inner_bound, outer_bound, upper_bound, lower_bound
+	use mirror_processor_m, only : mirror_processor
 
     implicit none
 
@@ -196,10 +201,13 @@
           call text_message('calling solovev_processor', 1)
           call solovev_processor
 
-
        case ('axisym_toroid')
           call text_message('calling axisym_toroid_processor', 1)
           call axisym_toroid_processor
+
+       case ('multiple_mirror')
+          call text_message('calling mirror_processor', 1)
+          call mirror_processor
 
        end select
 

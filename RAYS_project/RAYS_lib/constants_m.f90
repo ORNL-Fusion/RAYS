@@ -19,6 +19,7 @@
     real(KIND=rkind) :: nlike       ! an integer number unlikely set by input file
     real(KIND=rkind),parameter :: zero = 0.0_rkind
     real(KIND=rkind),parameter :: one = 1.0_rkind
+    real(KIND=rkind),parameter :: two = 2.0_rkind
  contains
     subroutine initialize_constants_m
 

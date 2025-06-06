@@ -170,7 +170,6 @@
 
                 exit trajectory
             end if
-
 ! Integrate from s to sout
             call ode_solver(eqn_ray, nv, v, s, sout, ray_stop)
 
