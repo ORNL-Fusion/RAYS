@@ -22,14 +22,13 @@ add_subdirectory (component_tests)
 # Check CMAKE_RUNTIME_OUTPUT_DIRECTORY inside the subdirectories
 
 add_subdirectory (solovev_2_eqdsk)
+add_subdirectory (mirror_magnetics_lib)
 
 SET(CMAKE_RUNTIME_OUTPUT_DIRECTORY "../../tests")
 
 # These only make executables that go into /tests
-
 add_subdirectory (splines_lib)
 add_subdirectory (math_functions_lib)
-add_subdirectory (mirror_magnetics_lib)
 
 
 # Add the ability to auto generate API documentation with Doxygen
