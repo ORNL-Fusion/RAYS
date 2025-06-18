@@ -420,7 +420,8 @@ if __name__ == '__main__':
     plot_XY_Curves_Fig(plot3)
 
     title = 'Try to set aspect_ratio'
-    plot4 = XY_Curves_Fig(curve_list, title, xlabel, ylabel, aspect_ratio = 'equal')
+#     plot4 = XY_Curves_Fig(curve_list, title, xlabel, ylabel, aspect_ratio = 'equal')
+    plot4 = XY_Curves_Fig(curve_list, title, xlabel, ylabel, aspect_ratio = 2.0)
     plot_XY_Curves_Fig(plot4)
 
     x = []
@@ -456,11 +457,11 @@ if __name__ == '__main__':
     plot_XY_Curves_Fig(plot_parametric)
 
 
-    title = 'Parametric Plot - different fig size'
+    title = 'Parametric Plot - different aspect ratio'
     xlabel = 'x(cm)'
     ylabel = 'y(cm)'
     curve_list = [XY_curve(x, y)]
-    plot_parametric2 = XY_Curves_Fig(curve_list, title, xlabel, ylabel, aspect_ratio = 'equal')
+    plot_parametric2 = XY_Curves_Fig(curve_list, title, xlabel, ylabel, aspect_ratio = 2.0)
 
     plot_XY_Curves_Fig(plot_parametric2)
 

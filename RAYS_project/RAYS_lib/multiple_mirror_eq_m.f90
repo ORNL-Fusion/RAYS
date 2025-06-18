@@ -1,13 +1,23 @@
 module multiple_mirror_eq_m
 !
+! A general axisymmetric mirror equilibrium module that supports a choice of magnetics,
+! density, and temperature models.  It is assumed that there exists a flux function, Aphi,
+! Aphi = Axial magnetic flux inside radius r.  Presently densities and temperatures are
+! assumed constant on Aphi surfaces.  In the future axial variation of could be introduced.
+! An external magnetics module is required for each specific magnetics model,
+! which provides B, grad B tensor, and the flux function, Aphi. The magnetics model also
+! provides certain geometry data on initialization such as the r,z box dimensions on which
+! the equilibrium is defined, and the r,z position and Aphi at the limiter strike point of
+! the last un-interrupted flux surface, LUFS.
+!
 ! Input to multiple_mirror_eq() is rvec = (x,y,z) position
-! Outputs from multiple_mirror_eq() are all quantities needed to fill an eq_point type
+! Outputs from multiple_mirror_eq() are all the quantities needed to fill an eq_point type.
 !
 ! Presently the only supported magnetics model is: mirror_magnetics_spline_interp
-! although someday may add an analytic form
+! although someday may add an analytic form.
 !
-! The radial coordinate for density and temperature profiles is rho = sqrt(Aphi), which
-! is nearly a linear radial coordinate.
+! The radial coordinate for density and temperature profiles is AphiN = Aphi/Aphi_LUFS
+! which goes like r**2 near the axis.
 !
 ! Presently supported density models: 'constant', 'parabolic', 'density_spline_interp'
 ! All species presently use the same density profile model.  Otherwise charge neutrality is
@@ -20,7 +30,7 @@ module multiple_mirror_eq_m
 !
 ! Working notes:
 
-    use constants_m, only : rkind, one, zero
+    use constants_m, only : rkind, one, zero, two
     use species_m, only : nspec
     use mirror_magnetics_spline_interp_m, only : mirror_field_NC_file, &
         & initialize_mirror_magnetics_spline_interp
@@ -36,7 +46,7 @@ module multiple_mirror_eq_m
 
 ! data for magnetics
 ! Geometry data
-    real(KIND=rkind) :: box_rmin, box_rmax, box_zmin, box_zmax
+    real(KIND=rkind) :: box_rmax, box_zmin, box_zmax
 
 	! Get r_LUFS, z_LUFS, Aphi_LUFS from specific mirror magnetics routine (e.g.
 	! initialize_mirror_magnetics_spline_interp)
@@ -49,16 +59,17 @@ module multiple_mirror_eq_m
 
 ! Data for density
     character(len=60) :: density_prof_model
-    real(KIND=rkind) :: alphan1 ! parameters for parabolic model
-    real(KIND=rkind) :: alphan2
-! Density outside rho = 1 as a fraction of ne0, defaults to 0. but can be set in namelist
+    real(KIND=rkind) :: alphan1, alphan2 ! parameters for parabolic model
+    real(KIND=rkind) :: AphiN0_d, delta_d ! parameters for hyperbolic model
+! Density outside plasma_AphiN_limit = 1 as a fraction of ne0. Defaults to 0. but can
+! be reset in namelist
     real(KIND=rkind) :: d_scrape_off = zero
 
 ! Data for temperature
     character(len=60), allocatable :: temperature_prof_model(:)
     ! Parabolic model parameters
-    real(KIND=rkind), allocatable :: alphat1(:) ! Can be dfferent for different species
-    real(KIND=rkind), allocatable :: alphat2(:) ! Can be dfferent for different species
+    real(KIND=rkind), allocatable :: alphat1(:), alphat2(:) ! Can be dfferent for different species
+    real(KIND=rkind), allocatable :: Aphin0_t(:),delta_t(:) ! Can be dfferent for different species
 ! Temperature outside rho = 1 as a fraction of Te0, defaults to 0. but can be set in namelist
     real(KIND=rkind) :: T_scrape_off = zero
 
@@ -70,8 +81,10 @@ module multiple_mirror_eq_m
      & density_prof_model, &
      & d_scrape_off, &
      & alphan1, alphan2, & ! parameters for parabolic density model
+     & Aphin0_d, delta_d, & ! parameters for hyperbolic density model
      & temperature_prof_model, &
-     & alphat1, alphat2, & ! parameters for parabolic temperature model.  Same for all species now
+     & alphat1, alphat2, & ! parameters for parabolic temperature model.
+     & Aphin0_t, delta_t, & ! parameters for hyperbolic temperature model.
      & T_scrape_off
 
 !********************************************************************
@@ -105,10 +118,13 @@ contains
 	if (.not. allocated(temperature_prof_model)) then
 		allocate( temperature_prof_model(0:nspec) )
 		allocate( alphat1(0:nspec), alphat2(0:nspec) )
+		allocate( Aphin0_t(0:nspec), delta_t(0:nspec) )
 		temperature_prof_model = ' '
 		alphat1 = 0.
 		alphat2 = 0.
     end if
+
+ write(*,*)'initialize_multiple_mirror_eq_m: got to 0'
 
 ! Read input namelist
     if (read_input .eqv. .true.) then
@@ -117,22 +133,24 @@ contains
         read(input_unit, multiple_mirror_eq_list)
         close(unit=input_unit)
     end if
+ write(*,*)'initialize_multiple_mirror_eq_m: got to 0.5'
+
 
 ! Write input namelist
     if (verbosity > 0) then
 		write(message_unit, multiple_mirror_eq_list)
 		if (messages_to_stdout) write(*, multiple_mirror_eq_list)
     end if
-
+ write(*,*)'initialize_multiple_mirror_eq_m: got to 1'
 ! magnetics (For, now only have spline interpolation.  Add analytic fields someday soon.)
     magnetics: select case (trim(magnetics_model))
        case ('mirror_magnetics_spline_interp')
           call initialize_mirror_magnetics_spline_interp(read_input, &
-               & box_rmin, box_rmax, box_zmin, box_zmax)
+               & box_rmax, box_zmin, box_zmax)
           r_LUFS = r_LUFS_spline
           z_LUFS = z_LUFS_spline
           Aphi_LUFS = Aphi_LUFS_spline
-
+ write(*,*)'initialize_multiple_mirror_eq_m: got to 1'
           case default
           write(0,*) 'initialize_multiple_mirror_eq: unknown magnetics model =', magnetics_model
           call text_message('initialize_multiple_mirror_eq: unknown magnetics model',&
@@ -155,6 +173,7 @@ contains
         	call initialize_density_spline_interp(read_input)
         case ('constant')
         case ('parabolic')
+        case ('hyperbolic')
         case default
 				write(message_unit, *) 'multiple_mirror_eq: Unknown density_prof_model: ', &
                      & trim(density_prof_model)
@@ -236,9 +255,9 @@ contains
 
 ! Check that we are in the box.  But so we don't get crash when evaluating on the
 ! box boundary, allow a leeway of 2*tiny(x)
-    if (r < box_rmin .or. r > box_rmax) then
+    if (r > box_rmax) then
     	equib_err = 'R_out_of_box'
-    	write(*,*) 'R_out_of_box: R = ', R, '   box_rmin = ', box_rmin, '   box_rmax = ', box_rmax
+    	write(*,*) 'R_out_of_box: R = ', R, '   box_rmax = ', box_rmax
     end if
     if (z < box_zmin .or. z > box_zmax) then
     	equib_err = 'Z_out_of_box'
@@ -252,7 +271,7 @@ contains
 			call mirror_magnetics_spline_interp(rvec, bvec, gradbtensor, Aphi, gradAphi,&
                            & AphiN, gradAphiN, equib_err)
     end select magnetics
- write(*,*) 'AphiN = ', AphiN, '   plasma_AphiN_limit = ', plasma_AphiN_limit
+
 ! Check that we are in the plasma. Set equib_err but don't stop
    if (AphiN > plasma_AphiN_limit) equib_err = 'out_of_plasma'
 
@@ -265,9 +284,16 @@ contains
           gradns = 0.
 
         case ('parabolic')
-!      Parabolic: N.B. Aphi goes something like r**2 so if alphan2 = 1 and alphan1 = 2
+!      Parabolic: N.B. AphiN goes something like r**2 so if alphan2 = 1 and alphan1 = 2
 !      the profile is pretty much parabolic
             call parabolic_prof(AphiN, d_scrape_off, alphan1, alphan2, dens, dd_rho)
+			ns(0:nspec) = n0s(0:nspec) * dens
+			gradns(1, 0:nspec) = n0s(0:nspec)*dd_rho*gradAphiN(1)
+			gradns(2, 0:nspec) = n0s(0:nspec)*dd_rho*gradAphiN(2)
+			gradns(3, 0:nspec) = n0s(0:nspec)*dd_rho*gradAphiN(3)
+
+        case ('hyperbolic')
+            call hyperbolic_prof(AphiN, d_scrape_off, AphiN0_d, delta_d, dens, dd_rho)
 			ns(0:nspec) = n0s(0:nspec) * dens
 			gradns(1, 0:nspec) = n0s(0:nspec)*dd_rho*gradAphiN(1)
 			gradns(2, 0:nspec) = n0s(0:nspec)*dd_rho*gradAphiN(2)
@@ -297,9 +323,16 @@ contains
           gradts = 0.
 
        case ('parabolic')
-!      Parabolic: N.B. rho goes something like r**2 so if alphan2 = 1 and alphan1 = 2
+!      Parabolic: N.B. AphiN goes something like r**2 so if alphan2 = 1 and alphan1 = 2
 !      the profile is pretty much parabolic
 		  call parabolic_prof(AphiN, T_scrape_off, alphat1(is), alphat2(is), t_prof, dt_drho)
+		  ts(is) = t0s(is) * t_prof
+		  gradts(1,is) = t0s(is)*dt_drho*gradAphiN(1)
+		  gradts(2,is) = t0s(is)*dt_drho*gradAphiN(2)
+		  gradts(3,is) = t0s(is)*dt_drho*gradAphiN(3)
+
+       case ('hyperbolic')
+		  call hyperbolic_prof(AphiN, T_scrape_off, Aphin0_t(is),delta_t(is), t_prof, dt_drho)
 		  ts(is) = t0s(is) * t_prof
 		  gradts(1,is) = t0s(is)*dt_drho*gradAphiN(1)
 		  gradts(2,is) = t0s(is)*dt_drho*gradAphiN(2)
@@ -435,6 +468,36 @@ contains
 	end if
 
   end subroutine parabolic_prof
+
+!********************************************************************
+
+  pure subroutine hyperbolic_prof(rho, f_min, rho0, delta, f, fp)
+! Provides a hyperbolic-like function f(rho) and its derivative fp(rho)
+!
+! hyperbolic-like means:
+! f = 1.0 at rho = 0
+! f = hyperbolic provided f > f_min
+! f = f_min if the parabola above would give f < f_min or if rho > 1.0
+! i.e. f_min is the floor, rho0 is the profile inflection point and delta is a gradient
+!      scale length
+
+    implicit none
+
+    real(KIND=rkind), intent(in) :: rho, f_min, rho0, delta
+    real(KIND=rkind), intent(out) :: f, fp
+
+	f = zero
+	if (rho < one) then
+		f = (tanh((rho+rho0)/delta)-tanh((rho-rho0)/delta))/two
+		fp = (one/cosh((rho+rho0)/delta)**2 - one/cosh((rho-rho0)/delta)**2)/(two*delta)
+	end if
+
+	if (f < f_min) then
+		f = f_min
+		fp = zero
+	end if
+
+  end subroutine hyperbolic_prof
 
 
 !********************************************************************

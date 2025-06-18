@@ -13,15 +13,17 @@
 ! contours of quantities like gamma = cyclotron freq/wave freq.  The contours can then be
 ! put on plots of ray trajectories
 
-! "write_eq_RZ_grid_data_NC" Writes a netcdf file with data needed to plot
+! "write_eq_XZ_grid_data_NC" Writes a netcdf file with data needed to plot
 ! contours of equilibrium quantites like AphiN, ne, Te, etc
-! evaluated on a uniformly spaced  R,Z grid [box_rmin, box_rmax, box_zmin, box_zmax]
+! evaluated on a uniformly spaced  R,Z grid [box_rmin==0, box_rmax, box_zmin, box_zmax]
 
 ! "write_eq_radial_profile_data_NC"  Writes a netcdf file containing data needed to plot
 ! radial profiles for equilibrium quantites like ne, Te, etc as functions of
 ! AphiN and also R.  These profiles are evaluated at Z = z_reference, which is an input
 ! parameter in namelist group /mirror_processor_list/.  Profiles extend radially from zero
 ! to plasma_AphiN_limit, which is set as a namelist input to multiple_mirror_eq_m.
+
+! N.B. This code is adapted, with very few changes from axisym_toroid_processor.f90
 
 
     use constants_m, only : rkind
@@ -45,8 +47,8 @@
 ! R,Z boundary points
     real(KIND=rkind), allocatable :: R_boundary(:), Z_boundary(:)
 
-! Number of points in R,Z grid for normalized Aphi and eq_RZ_grid netCDF files
-	integer ::  N_pointsR_eq, N_pointsZ_eq
+! Number of points in X,Z grid for normalized Aphi and eq_XZ_grid netCDF files
+	integer ::  N_pointsX_eq, N_pointsZ_eq
 
 ! Number of points in AphiN grid for 1D profiles
 	integer ::  n_AphiN
@@ -66,14 +68,14 @@
 	logical :: write_dep_profiles = .true. ! Write depositon profile netCDF file
 	logical :: calculate_ray_diag = .true. ! Write detailed ray diagnostic netCDF file
 	logical :: write_contour_data = .true.  ! Write data needed to plot contours netCDF file
-	logical :: write_eq_RZ_grid_data = .true.  ! Write data for equilibrium on RZ grid netCDF file
+	logical :: write_eq_XZ_grid_data = .true.  ! Write data for equilibrium on RZ grid netCDF file
 	logical :: write_eq_radial_profile_data = .true.  ! Write data for radial profiles netCDF file
 
     namelist /mirror_processor_list/ num_plot_k_vectors, scale_k_vec,&
              & k_vec_base_length, set_XY_lim, &
              & calculate_dep_profiles, write_dep_profiles, calculate_ray_diag, &
-             & write_contour_data, N_pointsR_eq, N_pointsZ_eq, &
-             & write_eq_RZ_grid_data, write_eq_radial_profile_data, n_AphiN, &
+             & write_contour_data, N_pointsX_eq, N_pointsZ_eq, &
+             & write_eq_XZ_grid_data, write_eq_radial_profile_data, n_AphiN, &
              & bisection_eps, n_rho, z_reference
 
  contains
@@ -128,7 +130,7 @@
     if (write_dep_profiles .eqv. .true.) call write_deposition_profiles_NC
 	if (calculate_ray_diag .eqv. .true.) call ray_detailed_diagnostics
 	if (write_contour_data .eqv. .true.) call write_eq_contour_data_NC
-	if (write_eq_RZ_grid_data .eqv. .true.) call write_eq_RZ_grid_data_NC
+!	if (write_eq_XZ_grid_data .eqv. .true.) call write_eq_XZ_grid_data_NC
 
     if (write_eq_radial_profile_data .eqv. .true.) call write_eq_radial_profile_data_NC
 
@@ -158,7 +160,7 @@
   subroutine write_graphics_description_file
 
    use diagnostics_m, only : text_message, run_description, run_label, verbosity
-   use multiple_mirror_eq_m, only : box_rmin, box_rmax, box_zmin, box_zmax
+   use multiple_mirror_eq_m, only : box_rmax, box_zmin, box_zmax
 
     implicit none
 
@@ -178,7 +180,6 @@
    write(graphics_descrip_unit, *) 'run_description = ', run_description
    write(graphics_descrip_unit, *) 'run_label = ', run_label
 
-   write(graphics_descrip_unit, *) 'box_rmin = ', box_rmin
    write(graphics_descrip_unit, *) 'box_rmax = ', box_rmax
    write(graphics_descrip_unit, *) 'box_zmin = ', box_zmin
    write(graphics_descrip_unit, *) 'box_zmax = ', box_zmax
@@ -433,10 +434,9 @@ call check( nf90_enddef(ncid))
 
   end subroutine ray_detailed_diagnostics
 
-
 !****************************************************************************
 
- subroutine write_eq_contour_data_NC
+subroutine write_eq_contour_data_NC
 ! Write a netcdf file ('eq_contours.<run_label>.nc') containing data needed to plot
 ! contours of quantities like gamma = cyclotron freq/wave freq.  The contours can then be
 ! plots of ray trajectories
@@ -445,14 +445,15 @@ call check( nf90_enddef(ncid))
     use diagnostics_m, only : message_unit, message, text_message, verbosity, run_label
     use species_m, only : nspec, spec_name
 	use equilibrium_m, only : eq_point, equilibrium, write_eq_point
-    use multiple_mirror_eq_m, only : box_rmin, box_rmax, box_zmin, box_zmax, &
+    use multiple_mirror_eq_m, only : box_rmax, box_zmin, box_zmax, &
          & plasma_AphiN_limit, multiple_mirror_Aphi, multiple_mirror_eq
     use netcdf
 
     implicit none
 
-    real(KIND=rkind) :: R(N_pointsR_eq), Z(N_pointsZ_eq), dR, dZ
-    real(KIND=rkind) :: AphiN_out(N_pointsR_eq, N_pointsZ_eq)
+    real(KIND=rkind) :: box_xmin, box_xmax
+    real(KIND=rkind) :: X(N_pointsX_eq), Z(N_pointsZ_eq), dX, dZ
+    real(KIND=rkind) :: AphiN_out(N_pointsZ_eq, N_pointsX_eq)
 	integer i,j
     real(KIND=rkind) :: Aphi, gradAphi(3), AphiN, gradAphiN(3)
     real(KIND=rkind) :: rvec(3)
@@ -468,15 +469,19 @@ call check( nf90_enddef(ncid))
     real(KIND=rkind), allocatable :: gamma(:)
     real(KIND=rkind), allocatable :: gamma_array(:,:,:)
 
+!	plasma_cyclotron/omega
+    real(KIND=rkind), allocatable :: omega_pN(:)
+    real(KIND=rkind), allocatable :: omega_pN_array(:,:,:)
+
 ! netCDF Declarations
     integer :: ncid
 ! Declarations: dimensions
     integer, parameter :: n_dims = 2
-    integer :: n_R, n_Z, nspec_p1, d12_id
-    integer :: n_R_id, n_Z_id, nspec_p1_id, spec_name_id
+    integer :: n_X, n_Z, nspec_p1, d12_id
+    integer :: n_X_id, n_Z_id, nspec_p1_id, spec_name_id
 ! Declarations: variable IDs
-    integer :: R_id, Z_id, AphiN_id, gamma_array_id
-    integer :: box_rmin_id, box_rmax_id, box_zmin_id, box_zmax_id
+    integer :: X_id, Z_id, AphiN_id, omega_pN_array_id, gamma_array_id
+    integer :: box_xmin_id, box_xmax_id, box_zmin_id, box_zmax_id
 
  !  File name for  output
     character(len=80) :: out_filename
@@ -491,23 +496,26 @@ call check( nf90_enddef(ncid))
 !   Open NC file
     out_filename = 'eq_contours.'//trim(run_label)//'.nc'
     call check( nf90_create(trim(out_filename), nf90_clobber, ncid) )
+    write(*,*) 'N_pointsX_eq = ', N_pointsX_eq, '  N_pointsZ_eq = ', N_pointsZ_eq
 
 !   Define NC dimensions
-    call check( nf90_def_dim(ncid, 'n_R', N_pointsR_eq, n_R_id))
+    call check( nf90_def_dim(ncid, 'n_X', N_pointsX_eq, n_X_id))
     call check( nf90_def_dim(ncid, 'n_Z', N_pointsZ_eq, n_Z_id))
     nspec_p1 = nspec + 1
     call check( nf90_def_dim(ncid, 'nspec_p1', nspec_p1, nspec_p1_id))
     call check( nf90_def_dim(ncid, 'd12', 12, d12_id))
 
 ! Define NC variables
-    call check( nf90_def_var(ncid, 'box_rmin', NF90_DOUBLE, box_rmin_id))
-    call check( nf90_def_var(ncid, 'box_rmax', NF90_DOUBLE, box_rmax_id))
+    call check( nf90_def_var(ncid, 'box_xmin', NF90_DOUBLE, box_xmin_id))
+    call check( nf90_def_var(ncid, 'box_xmax', NF90_DOUBLE, box_xmax_id))
     call check( nf90_def_var(ncid, 'box_zmin', NF90_DOUBLE, box_zmin_id))
     call check( nf90_def_var(ncid, 'box_zmax', NF90_DOUBLE, box_zmax_id))
-    call check( nf90_def_var(ncid, 'R', NF90_DOUBLE, [n_R_id], R_id))
+    call check( nf90_def_var(ncid, 'X', NF90_DOUBLE, [n_X_id], X_id))
     call check( nf90_def_var(ncid, 'Z', NF90_DOUBLE, [n_Z_id], Z_id))
-    call check( nf90_def_var(ncid, 'AphiN', NF90_DOUBLE, [n_R_id, N_Z_id], AphiN_id))
-    call check( nf90_def_var(ncid, 'gamma_array', NF90_DOUBLE, [n_R_id,N_Z_id,nspec_p1_id],&
+    call check( nf90_def_var(ncid, 'AphiN', NF90_DOUBLE, [n_Z_id, n_X_id], AphiN_id))
+    call check( nf90_def_var(ncid, 'omega_pN_array', NF90_DOUBLE, [n_Z_id, n_X_id,nspec_p1_id],&
+                                  & omega_pN_array_id))
+    call check( nf90_def_var(ncid, 'gamma_array', NF90_DOUBLE, [n_Z_id ,n_X_id,nspec_p1_id],&
                                   & gamma_array_id))
     call check( nf90_def_var(ncid, 'spec_name', NF90_CHAR, [d12_id,nspec_p1_id], spec_name_id))
 
@@ -517,26 +525,35 @@ call check( nf90_enddef(ncid))
 ! Finished NC definition
 	call check( nf90_enddef(ncid))
 
+	allocate(omega_pN(nspec_p1))
 	allocate(gamma(nspec_p1))
-	allocate(gamma_array(N_pointsR_eq, N_pointsZ_eq, nspec_p1))
+	allocate(omega_pN_array(N_pointsZ_eq, N_pointsX_eq, nspec_p1))
+	allocate(gamma_array(N_pointsZ_eq, N_pointsX_eq, nspec_p1))
 
-	dr = one/(N_pointsR_eq - 1)*(box_rmax-box_rmin)
+	! N.B. X ranges from -rmax to rmax
+	box_xmin = -box_rmax
+	box_xmax = box_rmax
+
+	dx = one/(N_pointsX_eq - 1)*(box_xmax-box_xmin)
 	dz = one/(N_pointsZ_eq - 1)*(box_zmax-box_zmin)
-	do i = 1, N_pointsR_eq
-		R(i) = box_rmin + (i-1)*dr
-	end do
-	R(1) = box_rmin; R(N_pointsR_eq) = box_rmax
-    do j = 1, N_pointsZ_eq
- 		Z(j) = box_zmin + (j-1)*dz
+    do i = 1, N_pointsZ_eq
+ 		Z(i) = box_zmin + (i-1)*dz
 	end do
 	Z(1) = box_zmin; Z(N_pointsZ_eq) = box_zmax
-
-	do i = 1, N_pointsR_eq
-	do j = 1, N_pointsZ_eq
-		rvec = (/R(i), zero, Z(j)/)
+	do j = 1, N_pointsX_eq
+		X(j) = box_xmin + (j-1)*dx
+	end do
+	X(1) = box_xmin; X(N_pointsX_eq) = box_xmax
+! write(*,*) 'X = ', X
+! write(*,*) 'Z = ', Z
+	do i = 1, N_pointsZ_eq
+	do j = 1, N_pointsX_eq
+		rvec = (/X(j), zero, Z(i)/)
 
 		call multiple_mirror_Aphi(rvec, Aphi, gradAphi, AphiN, gradAphiN)
 		AphiN_out(i,j) = AphiN
+!		write(*,*) 'rvec = ', rvec, '   AphiN_out(i,j) = ', AphiN_out(i,j)
+!		write(*,*) 'i = ', i,'  j = ', j, '   AphiN_out(i,j) = ', AphiN_out(i,j)
 
 		plasma_AphiN_limit_temp = plasma_AphiN_limit ! Stash plasma_AphiN_limit
 		plasma_AphiN_limit = 10.0 ! Set plasma_AphiN_limit high so resonance contours
@@ -545,19 +562,23 @@ call check( nf90_enddef(ncid))
 
 		plasma_AphiN_limit = plasma_AphiN_limit_temp ! Restore plasma_AphiN_limit
 
+		omega_pN(:) = sqrt(eq%alpha(0:nspec))
+!		write(*,*) 'rvec = ', rvec, '  eq%alpha(0:nspec) = ', eq%alpha(0:nspec)
+		omega_pN_array(i, j, :) = omega_pN
 		gamma(:) = eq%gamma(0:nspec)
 		gamma_array(i, j, :) = gamma
 	end do
 	end do
 
 ! Put NC variables
-    call check( nf90_put_var(ncid, box_rmin_id, box_rmin))
-    call check( nf90_put_var(ncid, box_rmax_id, box_rmax))
+    call check( nf90_put_var(ncid, box_xmin_id, box_xmin))
+    call check( nf90_put_var(ncid, box_xmax_id, box_xmax))
     call check( nf90_put_var(ncid, box_zmin_id, box_zmin))
     call check( nf90_put_var(ncid, box_zmax_id, box_zmax))
-    call check( nf90_put_var(ncid, R_id, R))
+    call check( nf90_put_var(ncid, X_id, X))
     call check( nf90_put_var(ncid, Z_id, Z))
     call check( nf90_put_var(ncid, AphiN_id, AphiN_out(:,:)))
+    call check( nf90_put_var(ncid, omega_pN_array_id, omega_pN_array))
     call check( nf90_put_var(ncid, gamma_array_id, gamma_array))
     call check( nf90_put_var(ncid, spec_name_id, spec_name(0:nspec)))
 
@@ -566,250 +587,94 @@ call check( nf90_enddef(ncid))
     return
  end subroutine write_eq_contour_data_NC
 
+
 !*************************************************************************
 
- subroutine write_eq_RZ_grid_data_NC
-! Write a netcdf file ('eq_RZ_grid.<run_label>.nc') containing data needed to plot
-! equilibrium quantites like Bx, By, BVz, AphiN, ne, Te, etc
-! evaluated on a uniformly spaced  R,Z grid [box_rmin, box_rmax, box_zmin, box_zmax]
+ subroutine write_eq_radial_profile_data_NC
+! Write a netcdf file ('eq_radial.<run_label>.nc') containing data needed to plot
+! radial profiles for equilibrium quantites like ne, Te, etc as functions of
+! AphiN and also R.  These profiles are evaluated at Z = z_reference, which is an input
+! parameter in namelist group /mirror_processor_list/.  Profiles extend radially from zero
+! to plasma_AphiN_limit, which is set as a namelist input to multiple_mirror_eq_m.
 
-	use constants_m, only : zero, one
+    use constants_m, only : rkind, one, zero, e
     use diagnostics_m, only : message_unit, message, text_message, verbosity, run_label
     use species_m, only : nspec, spec_name
 	use equilibrium_m, only : eq_point, equilibrium, write_eq_point
-    use multiple_mirror_eq_m, only : box_rmin, box_rmax, box_zmin, box_zmax, &
-         & plasma_AphiN_limit, multiple_mirror_Aphi, multiple_mirror_eq
+    use multiple_mirror_eq_m, only : box_rmax, box_zmin, box_zmax, r_LUFS, &
+         & Aphi_LUFS, plasma_AphiN_limit, multiple_mirror_Aphi, multiple_mirror_eq
+    use bisect_m, only : solve_bisection
+    use ray_results_m, only : date_vector, RAYS_run_label
     use netcdf
+	use XY_curves_netCDF_m, only : XY_curve_netCDF, write_XY_curves_netCDF
 
     implicit none
 
-!   Declare local arrays
-    real(KIND=rkind) :: R(N_pointsR_eq), Z(N_pointsZ_eq), dR, dZ
-    real(KIND=rkind) :: AphiN_out(N_pointsR_eq, N_pointsZ_eq)
-	integer i,j
-    real(KIND=rkind) :: Aphi, gradAphi(3), AphiNij, gradAphiNij(3)
-    real(KIND=rkind) :: rvec(3)
+! Number of profiles to generate and list of profiles
+    integer, parameter :: n_profiles = 8
+	type(XY_curve_netCDF) :: profile_list(n_profiles)
+	integer :: n_grid(n_profiles)
 
 !   Declare local variables
-    real(kind=rkind), allocatable :: AphiN(:,:)
-    real(kind=rkind), allocatable :: Bx(:,:)
-    real(kind=rkind), allocatable :: By(:,:)
-    real(kind=rkind), allocatable :: Bz(:,:)
-    real(kind=rkind), allocatable :: ne(:,:)
-    real(kind=rkind), allocatable :: Te(:,:)
+    real(KIND=rkind) :: AphiN(n_AphiN), R(n_AphiN)
+    real(KIND=rkind) :: ne_AphiN(n_AphiN), Te_AphiN_ev(n_AphiN), Ti_AphiN_ev(n_AphiN)
+    real(KIND=rkind) :: RBphi_AphiN(n_AphiN), rho_AphiN(n_AphiN)
 
+    real(KIND=rkind) :: rho(n_rho), AphiN_rho(n_rho)
+    real(KIND=rkind) :: ne_rho(n_rho), Te_rho_ev(n_rho), Ti_rho_ev(n_rho)
+
+	integer :: i, ierr
+    real(KIND=rkind) :: Aphi, gradAphi(3), gradAphiN(3), AphiNij, gradAphiNij(3),&
+                      & gradAphiN_rho(3)
+    real(KIND=rkind) :: rvec(3)
+
+    ! Args to spline profiles, not used
+    real(KIND=rkind) :: dRBphi_dAphi, drho_dAphi
+    real(KIND=rkind) :: dAphi_drho, dRBphi_drho, drho_drho
 
 ! Stash plasma_AphiN_limit from mirror_eq_m.  Danger of circularity, equilibrium_m
 ! uses mirror_eq_m.
     real(KIND=rkind) ::plasma_AphiN_limit_temp
 
+!    real(KIND=rkind) :: r_LUFS ! Radius of LUFS at z = z_reference, to set up r(Aphi) grid.
+
 !   Derived type containing equilibrium data for a spatial point in the plasma
     type(eq_point) :: eq
-
-
-! netCDF Declarations
-    integer :: ncid
-! Declarations: dimensions
-    integer, parameter :: n_dims = 3
-    integer :: n_R, n_Z
-    integer :: n_R_id, n_Z_id
-! Declarations: variable IDs
-    integer, parameter :: n_vars =  12
-    integer :: R_id, Z_id, AphiN_id, Bx_id, By_id, Bz_id, ne_id, Te_id, box_rmin_id,&
-             & box_rmax_id, box_zmin_id, box_zmax_id
 
  !  File name for  output
     character(len=80) :: out_filename
 
-    real(KIND=rkind) :: bvec(3), gradbtensor(3,3)
-    real(KIND=rkind) :: ns(0:nspec), gradns(3,0:nspec)
-    real(KIND=rkind) :: ts(0:nspec), gradts(3,0:nspec)
+    real(KIND=rkind) :: ns(0:nspec)
+    real(KIND=rkind) :: ts(0:nspec)
     character(len=60) :: equib_err
 
-   if (verbosity > 0) call text_message('Writing plasma equilibrium contours on RZ grid')
+   if (verbosity > 0) call text_message('Writing plasma equilibrium profiles')
+   if (verbosity > 0) call message('Writing plasma z_reference', z_reference, 1)
 
-!   Open NC file
-    out_filename = 'eq_RZ_grid.'//trim(run_label)//'.nc'
-    call check( nf90_create(trim(out_filename), nf90_clobber, ncid) )
-
-!   Define NC dimensions
-    call check( nf90_def_dim(ncid, 'n_R', N_pointsR_eq, n_R_id))
-    call check( nf90_def_dim(ncid, 'n_Z', N_pointsZ_eq, n_Z_id))
-
-! Define NC variables
-    call check( nf90_def_var(ncid, 'box_rmin', NF90_DOUBLE, box_rmin_id))
-    call check( nf90_def_var(ncid, 'box_rmax', NF90_DOUBLE, box_rmax_id))
-    call check( nf90_def_var(ncid, 'box_zmin', NF90_DOUBLE, box_zmin_id))
-    call check( nf90_def_var(ncid, 'box_zmax', NF90_DOUBLE, box_zmax_id))
-    call check( nf90_def_var(ncid, 'R', NF90_DOUBLE, [n_R_id], R_id))
-    call check( nf90_def_var(ncid, 'Z', NF90_DOUBLE, [n_Z_id], Z_id))
-    call check( nf90_def_var(ncid, 'AphiN', NF90_DOUBLE, [n_R_id,N_Z_id], AphiN_id))
-    call check( nf90_def_var(ncid, 'Bx', NF90_DOUBLE, [n_R_id,N_Z_id], Bx_id))
-    call check( nf90_def_var(ncid, 'By', NF90_DOUBLE, [n_R_id,N_Z_id], By_id))
-    call check( nf90_def_var(ncid, 'Bz', NF90_DOUBLE, [n_R_id,N_Z_id], Bz_id))
-    call check( nf90_def_var(ncid, 'ne', NF90_DOUBLE, [n_R_id,N_Z_id], ne_id))
-    call check( nf90_def_var(ncid, 'Te', NF90_DOUBLE, [n_R_id,N_Z_id], Te_id))
-
-! Put global attributes
-    call check( nf90_put_att(ncid, NF90_GLOBAL, 'RAYS_run_label', run_label))
-
-! Finished NC definition
-	call check( nf90_enddef(ncid))
-
-! If arrays already allocated deallocate them
-    if (allocated(AphiN)) deallocate(AphiN)
-    if (allocated(Bx)) deallocate(Bx)
-    if (allocated(By)) deallocate(By)
-    if (allocated(Bz)) deallocate(Bz)
-    if (allocated(ne)) deallocate(ne)
-    if (allocated(Te)) deallocate(Te)
-
-!   Allocate local arrays
-    allocate(AphiN(N_pointsR_eq,N_pointsZ_eq),source=0.0_rkind)
-    allocate(Bx(N_pointsR_eq,N_pointsZ_eq),source=0.0_rkind)
-    allocate(By(N_pointsR_eq,N_pointsZ_eq),source=0.0_rkind)
-    allocate(Bz(N_pointsR_eq,N_pointsZ_eq),source=0.0_rkind)
-    allocate(ne(N_pointsR_eq,N_pointsZ_eq),source=0.0_rkind)
-    allocate(Te(N_pointsR_eq,N_pointsZ_eq),source=0.0_rkind)
-
-	dr = one/(N_pointsR_eq - 1)*(box_rmax-box_rmin)
-	dz = one/(N_pointsZ_eq - 1)*(box_zmax-box_zmin)
 	plasma_AphiN_limit_temp = plasma_AphiN_limit ! Stash plasma_AphiN_limit
-	plasma_AphiN_limit = 10.0 ! Set plasma_AphiN_limit high so can get fields outside plasma
+!	plasma_AphiN_limit = 10.0 ! Set plasma_AphiN_limit high so can get fields outside plasma
 
-	do i = 1, N_pointsR_eq ; do j = 1, N_pointsZ_eq
-		R(i) = box_rmin + (i-1)*dr
-		Z(j) = box_zmin + (j-1)*dz
-		R(N_pointsR_eq) = box_rmax ; Z(N_pointsZ_eq) = box_zmax
-		rvec = (/R(i), zero, Z(j)/)
+! Note: Want to plot ne, Te etc on a uniform  are given by subroutine equilibrium(x,y,z)
+! Generate Aphi grid and R grid.
+! Invert AphiN(R, y=0, z_reference) -> R(AphiN, z_reference) using bisection.
+! Then evaluate ne and Te at (R, 0, z_reference).
+!
+ write(*,*) 'r_LUFS = ', r_LUFS
+	do i = 1, n_AphiN
+	    AphiN(i) = plasma_AphiN_limit*(i-1)/(n_AphiN - 1)
+	    call solve_bisection(f_R_AphiN, R(i), zero, r_LUFS, AphiN(i),&
+	                       & bisection_eps, ierr)
 
-		call multiple_mirror_Aphi(rvec, Aphi, gradAphi, AphiNij, gradAphiNij)
-		AphiN(i,j) = AphiNij
+	    rvec = (/R(i), zero, z_reference/)
+	    write(*,*) 'write_eq_radial_profile_data_NC, i = ', i, '  R(i) = ',  R(i), '   AphiN(i) = ',AphiN(i)
+ 	    if (ierr == 0) stop
 
 		call equilibrium(rvec, eq)
+		ne_AphiN(i) = eq%ns(0)
+		Te_AphiN_ev(i) = eq%Ts(0)/e ! Convert from Joules to ev
+		Ti_AphiN_ev(i) = eq%Ts(1)/e ! N.B. For now all ions are assumed to have the same Ti profile
+	end do
 
-		Bx(i,j) = eq%bvec(1)
-		By(i,j) = eq%bvec(2)
-		Bz(i,j) = eq%bvec(3)
-		ne(i,j) = eq%ns(0)
-		Te(i,j) = eq%Ts(0)
-
-	end do ; end do
-	plasma_AphiN_limit = plasma_AphiN_limit_temp ! Restore plasma_AphiN_limit
-
-!  write(*,*) "box_rmin", box_rmin
-!  write(*,*) "R = ", R
-!  write(*,*) "Bx(20,51) = ", Bx(20,51)
-!  write(*,*) "By(20,51) = ", By(20,51)
-!  write(*,*) "Bz(20,51) = ", Bz(20,51)
-!  write(*,*) "Bz(:,51) = ", Bz(:,51)
-!  write(*,*) "ne(:,51) = ", ne(:,51)
-
-! Put NC variables
-    call check( nf90_put_var(ncid, box_rmin_id, box_rmin))
-    call check( nf90_put_var(ncid, box_rmax_id, box_rmax))
-    call check( nf90_put_var(ncid, box_zmin_id, box_zmin))
-    call check( nf90_put_var(ncid, box_zmax_id, box_zmax))
-    call check( nf90_put_var(ncid, R_id, R))
-    call check( nf90_put_var(ncid, Z_id, Z))
-    call check( nf90_put_var(ncid, AphiN_id, AphiN))
-    call check( nf90_put_var(ncid, Bx_id, Bx))
-    call check( nf90_put_var(ncid, By_id, By))
-    call check( nf90_put_var(ncid, Bz_id, Bz))
-    call check( nf90_put_var(ncid, ne_id, ne))
-    call check( nf90_put_var(ncid, Te_id, Te))
-
-!   Close the NC file
-    call check( nf90_close(ncid) )
-    return
- end subroutine write_eq_RZ_grid_data_NC
-
-!*************************************************************************
-
- subroutine write_eq_radial_profile_data_NC
-! ! Write a netcdf file ('eq_radial.<run_label>.nc') containing data needed to plot
-! ! radial profiles for equilibrium quantites like ne, Te, etc as functions of
-! ! AphiN and also R.  These profiles are evaluated at Z = z_reference, which is an input
-! ! parameter in namelist group /mirror_processor_list/.  Profiles extend radially from zero
-! ! to plasma_AphiN_limit, which is set as a namelist input to multiple_mirror_eq_m.
-!
-!     use constants_m, only : rkind, one, zero, e
-!     use diagnostics_m, only : message_unit, message, text_message, verbosity, run_label
-!     use species_m, only : nspec, spec_name
-! 	use equilibrium_m, only : eq_point, equilibrium, write_eq_point
-!     use multiple_mirror_eq_m, only : box_rmin, box_rmax, box_zmin, box_zmax, r_LUFS, &
-!          & Aphi_LUFS, plasma_AphiN_limit, multiple_mirror_Aphi, multiple_mirror_eq
-!     use bisect_m, only : solve_bisection
-!     use ray_results_m, only : date_vector, RAYS_run_label
-!     use netcdf
-! 	use XY_curves_netCDF_m, only : XY_curve_netCDF, write_XY_curves_netCDF
-!
-!     implicit none
-!
-! ! Number of profiles to generate and list of profiles
-!     integer, parameter :: n_profiles = 10
-! 	type(XY_curve_netCDF) :: profile_list(n_profiles)
-! 	integer :: n_grid(n_profiles)
-!
-! !   Declare local variables
-!     real(KIND=rkind) :: AphiN(n_AphiN), R(n_AphiN)
-!     real(KIND=rkind) :: ne_AphiN(n_AphiN), Te_AphiN_ev(n_AphiN), Ti_AphiN_ev(n_AphiN)
-!     real(KIND=rkind) :: RBphi_AphiN(n_AphiN), rho_AphiN(n_AphiN)
-!
-!     real(KIND=rkind) :: rho(n_rho), AphiN_rho(n_rho)
-!     real(KIND=rkind) :: ne_rho(n_rho), Te_rho_ev(n_rho), Ti_rho_ev(n_rho)
-!
-! 	integer :: i, ierr
-!     real(KIND=rkind) :: Aphi, gradAphi(3), gradAphiN(3), AphiNij, gradAphiNij(3),&
-!                       & gradAphiN_rho(3)
-!     real(KIND=rkind) :: rvec(3)
-!
-!     ! Args to spline profiles, not used
-!     real(KIND=rkind) :: dRBphi_dAphi, drho_dAphi
-!     real(KIND=rkind) :: dAphi_drho, dRBphi_drho, drho_drho
-!
-! ! Stash plasma_AphiN_limit from mirror_eq_m.  Danger of circularity, equilibrium_m
-! ! uses mirror_eq_m.
-!     real(KIND=rkind) ::plasma_AphiN_limit_temp
-!
-! !    real(KIND=rkind) :: r_LUFS ! Radius of LUFS at z = z_reference, to set up r(Aphi) grid.
-!
-! !   Derived type containing equilibrium data for a spatial point in the plasma
-!     type(eq_point) :: eq
-!
-!  !  File name for  output
-!     character(len=80) :: out_filename
-!
-!     real(KIND=rkind) :: ns(0:nspec)
-!     real(KIND=rkind) :: ts(0:nspec)
-!     character(len=60) :: equib_err
-!
-!    if (verbosity > 0) call text_message('Writing plasma equilibrium profiles on radial Aphi grid')
-!
-! 	plasma_AphiN_limit_temp = plasma_AphiN_limit ! Stash plasma_AphiN_limit
-! !	plasma_AphiN_limit = 10.0 ! Set plasma_AphiN_limit high so can get fields outside plasma
-!
-! ! Note: Want to plot ne, Te etc on a uniform  are given by subroutine equilibrium(x,y,z)
-! ! Generate Aphi grid and R grid.
-! ! Invert AphiN(R, y=0, z_reference) -> R(AphiN, z_reference) using bisection.
-! ! Then evaluate ne and Te at (R, 0, z_reference).
-! !
-!  write(*,*) 'r_LUFS = ', r_LUFS
-! 	do i = 1, n_AphiN
-! 	    AphiN(i) = plasma_AphiN_limit*(i-1)/(n_AphiN - 1)
-! 	    call solve_bisection(f_R_AphiN, R(i), zero, r_LUFS, AphiN(i),&
-! 	                       & bisection_eps, ierr)
-!
-! 	    rvec = (/R(i), zero, z_reference/)
-! 	    write(*,*) 'write_eq_radial_profile_data_NC, i = ', i, '  R(i) = ',  R(i), '   AphiN(i) = ',AphiN(i)
-!  	    if (ierr == 0) stop
-!
-! 		call equilibrium(rvec, eq)
-! 		ne_AphiN(i) = eq%ns(0)
-! 		Te_AphiN_ev(i) = eq%Ts(0)/e ! Convert from Joules to ev
-! 		Ti_AphiN_ev(i) = eq%Ts(1)/e ! N.B. For now all ions are assumed to have the same Ti profile
-! 	end do
-!
 ! !  write(*,*) " "
 ! !  write(*,*) "AphiN", AphiN
 ! !  write(*,*) " "
@@ -820,120 +685,115 @@ call check( nf90_enddef(ncid))
 ! !  write(*,*) "rho_AphiN =  ", rho_AphiN
 !
 ! !***************** Stuff for profiles versus rho *****************************
-!
-! ! Note: For historical reasons, and to avoid name collisions, in this section R is called
-! !       rho.  Want to plot on a uniform radial grid, whereas the R(i) grid constructed
-! !       above is uniform in AphiN. So generate a new rho grid extending from zero to
-! !       r(plasma_AphiN_limit) which R(n_AphiN) as calculated above.
-!    if (verbosity > 0) call text_message('Writing plasma equilibrium profiles on radial rho grid')
-!
-!  write(*,*) 'Got to 1'
-! 	do i = 1, n_rho
-! 	    rho(i) =  R(n_AphiN)*(i-1)/(n_rho - 1)
-! 	    rvec = (/rho(i), zero, z_reference/)
-! ! 	    if (ierr == 0) stop
-!  write(*,*) 'Got to 2'
-!
-! 		call equilibrium(rvec, eq)
-!  write(*,*) 'Got to 3'
-! 		ne_rho(i) = eq%ns(0)
-! 		Te_rho_ev(i) = eq%Ts(0)/e ! Convert from Joules to ev
-! 		Ti_rho_ev(i) = eq%Ts(1)/e ! N.B. For now all ions are assumed to have the same Ti profile
-!  write(*,*) 'Got to 4'
-! 		call multiple_mirror_Aphi(rvec, Aphi, gradAphi, AphiN_rho(i), gradAphiN_rho)
-! 		! N.B. Aphi, gradAphi, and gradAphiN_rho are effectively dummy args. Only AphiN_rho
-! 		!      is used below.
-! 	end do
-!  write(*,*) 'Got to 5'
-!
-! !  write(*,*) " "
-! !  write(*,*) "rho", rho
-! !  write(*,*) " "
-! !  write(*,*) "R = ", R
-! !  write(*,*) " "
-! !  write(*,*) "Te_rho =  ", Te_rho
-!
-! ! Load ne data into profile_list
-! 	profile_list(1)%grid_name = 'AphiN'
-! 	profile_list(1)%curve_name = 'ne(AphiN)'
-! 	n_grid(1) = n_AphiN
-! 	allocate(profile_list(1)%grid(n_grid(1)), source = 0.0_rkind)
-! 	profile_list(1)%grid(:) = AphiN(:)
-! 	allocate(profile_list(1)%curve(n_grid(1)), source = 0.0_rkind)
-! 	profile_list(1)%curve(:) = ne_AphiN(:)
-!
-! ! Load Te data into profile_list
-! 	profile_list(2)%grid_name = 'AphiN'
-! 	profile_list(2)%curve_name = 'Te(AphiN)'
-! 	n_grid(2) = n_AphiN
-! 	allocate(profile_list(2)%grid(n_grid(2)), source = 0.0_rkind)
-! 	profile_list(2)%grid(:) = AphiN(:)
-! 	allocate(profile_list(2)%curve(n_grid(2)), source = 0.0_rkind)
-! 	profile_list(2)%curve(:) = Te_AphiN_ev(:)
-!
-! ! Load Ti data into profile_list
-! 	profile_list((3))%grid_name = 'AphiN'
-! 	profile_list((3))%curve_name = 'Ti(AphiN)'
-! 	n_grid((3)) = n_AphiN
-! 	allocate(profile_list((3))%grid(n_grid((3))), source = 0.0_rkind)
-! 	profile_list((3))%grid(:) = AphiN(:)
-! 	allocate(profile_list((3))%curve(n_grid((3))), source = 0.0_rkind)
-! 	profile_list((3))%curve(:) = Ti_AphiN_ev(:)
-!
-! ! Load R data into profile_list
-! 	profile_list((5))%grid_name = 'AphiN'
-! 	profile_list((5))%curve_name = 'R(AphiN)'
-! 	n_grid((5)) = n_AphiN
-! 	allocate(profile_list((5))%grid(n_grid((5))), source = 0.0_rkind)
-! 	profile_list((5))%grid(:) = AphiN(:)
-! 	allocate(profile_list((5))%curve(n_grid((5))), source = 0.0_rkind)
-! 	profile_list((5))%curve(:) = R(:)
-!
+
+! Note: For historical reasons, and to avoid name collisions, in this section R is called
+!       rho.  Want to plot on a uniform radial grid, whereas the R(i) grid constructed
+!       above is uniform in AphiN. So generate a new rho grid extending from zero to
+!       R(plasma_AphiN_limit) which R(n_AphiN) as calculated above at z = z_reference.
+   if (verbosity > 0) call text_message('Writing plasma equilibrium profiles on R <-> rho grid')
+
+	do i = 1, n_rho
+	    rho(i) =  R(n_AphiN)*(i-1)/(n_rho - 1)
+	    rvec = (/rho(i), zero, z_reference/)
+
+		call equilibrium(rvec, eq)
+		ne_rho(i) = eq%ns(0)
+		Te_rho_ev(i) = eq%Ts(0)/e ! Convert from Joules to ev
+		Ti_rho_ev(i) = eq%Ts(1)/e ! N.B. For now all ions are assumed to have the same Ti profile
+		call multiple_mirror_Aphi(rvec, Aphi, gradAphi, AphiN_rho(i), gradAphiN_rho)
+		! N.B. Aphi, gradAphi, and gradAphiN_rho are effectively dummy args. Only AphiN_rho
+		!      is used below.
+	end do
+
+!  write(*,*) " "
+!  write(*,*) "rho", rho
+!  write(*,*) " "
+!  write(*,*) "R = ", R
+!  write(*,*) " "
+!  write(*,*) "ne_rho =  ", ne_rho
+
+! Load ne data into profile_list
+	profile_list(1)%grid_name = 'AphiN'
+	profile_list(1)%curve_name = 'ne(AphiN)'
+	n_grid(1) = n_AphiN
+	allocate(profile_list(1)%grid(n_grid(1)), source = 0.0_rkind)
+	profile_list(1)%grid(:) = AphiN(:)
+	allocate(profile_list(1)%curve(n_grid(1)), source = 0.0_rkind)
+	profile_list(1)%curve(:) = ne_AphiN(:)
+
+! Load Te data into profile_list
+	profile_list(2)%grid_name = 'AphiN'
+	profile_list(2)%curve_name = 'Te(AphiN)'
+	n_grid(2) = n_AphiN
+	allocate(profile_list(2)%grid(n_grid(2)), source = 0.0_rkind)
+	profile_list(2)%grid(:) = AphiN(:)
+	allocate(profile_list(2)%curve(n_grid(2)), source = 0.0_rkind)
+	profile_list(2)%curve(:) = Te_AphiN_ev(:)
+
+! Load Ti data into profile_list
+	profile_list((3))%grid_name = 'AphiN'
+	profile_list((3))%curve_name = 'Ti(AphiN)'
+	n_grid((3)) = n_AphiN
+	allocate(profile_list((3))%grid(n_grid((3))), source = 0.0_rkind)
+	profile_list((3))%grid(:) = AphiN(:)
+	allocate(profile_list((3))%curve(n_grid((3))), source = 0.0_rkind)
+	profile_list((3))%curve(:) = Ti_AphiN_ev(:)
+
+! Load R data into profile_list
+	profile_list((4))%grid_name = 'AphiN'
+	profile_list((4))%curve_name = 'R(AphiN)'
+	n_grid((4)) = n_AphiN
+	allocate(profile_list((4))%grid(n_grid((4))), source = 0.0_rkind)
+	profile_list((4))%grid(:) = AphiN(:)
+	allocate(profile_list((4))%curve(n_grid((4))), source = 0.0_rkind)
+	profile_list((4))%curve(:) = R(:)
+
 ! !***************** Stuff for profiles versus rho *****************************
-!
-! ! Load AphiN of rho data into profile_list
-! 	profile_list((6))%grid_name = 'R'
-! 	profile_list((6))%curve_name = 'AphiN(R)'
-! 	n_grid((6)) = n_rho
-! 	allocate(profile_list((6))%grid(n_grid((6))), source = 0.0_rkind)
-! 	profile_list((6))%grid(:) = rho(:)
-! 	allocate(profile_list((6))%curve(n_grid((6))), source = 0.0_rkind)
-! 	profile_list((6))%curve(:) = AphiN_rho(:)
-!
-! ! Load ne of rho data into profile_list
-! 	profile_list((7))%grid_name = 'R'
-! 	profile_list((7))%curve_name = 'ne(R)'
-! 	n_grid((7)) = n_rho
-! 	allocate(profile_list((7))%grid(n_grid((7))), source = 0.0_rkind)
-! 	profile_list((7))%grid(:) = rho(:)
-! 	allocate(profile_list((7))%curve(n_grid((7))), source = 0.0_rkind)
-! 	profile_list((7))%curve(:) = ne_rho(:)
-!
-! ! Load Te of rho data into profile_list
-! 	profile_list((8))%grid_name = 'R'
-! 	profile_list((8))%curve_name = 'Te(R)'
-! 	n_grid((8)) = n_rho
-! 	allocate(profile_list((8))%grid(n_grid((8))), source = 0.0_rkind)
-! 	profile_list((8))%grid(:) = rho(:)
-! 	allocate(profile_list((8))%curve(n_grid((8))), source = 0.0_rkind)
-! 	profile_list((8))%curve(:) = Te_rho_ev(:)
-!
-! ! Load Ti of rho data into profile_list
-! 	profile_list(((9)))%grid_name = 'R'
-! 	profile_list(((9)))%curve_name = 'Ti(R)'
-! 	n_grid(((9))) = n_rho
-! 	allocate(profile_list(((9)))%grid(n_grid(((9)))), source = 0.0_rkind)
-! 	profile_list(((9)))%grid(:) = rho(:)
-! 	allocate(profile_list(((9)))%curve(n_grid(((9)))), source = 0.0_rkind)
-! 	profile_list(((9)))%curve(:) = Ti_rho_ev(:)
-!
-! ! Restore plasma_AphiN_limit
-! 	plasma_AphiN_limit = plasma_AphiN_limit_temp
-!
-! ! Generate netCDF file
-! 	out_filename = 'eq_radial_profiles.'//trim(run_label)
-! 	call write_XY_curves_netCDF(profile_list, out_filename)
-!
+! Load AphiN of rho data into profile_list
+	profile_list((5))%grid_name = 'R'
+	profile_list((5))%curve_name = 'AphiN(R)'
+	n_grid((5)) = n_rho
+	allocate(profile_list((5))%grid(n_grid((5))), source = 0.0_rkind)
+	profile_list((5))%grid(:) = rho(:)
+	allocate(profile_list((5))%curve(n_grid((5))), source = 0.0_rkind)
+	profile_list((5))%curve(:) = AphiN_rho(:)
+
+! Load ne of rho data into profile_list
+	profile_list((6))%grid_name = 'R'
+	profile_list((6))%curve_name = 'ne(R)'
+	n_grid((6)) = n_rho
+	allocate(profile_list((6))%grid(n_grid((6))), source = 0.0_rkind)
+	profile_list((6))%grid(:) = rho(:)
+	allocate(profile_list((6))%curve(n_grid((6))), source = 0.0_rkind)
+	profile_list((6))%curve(:) = ne_rho(:)
+
+! Load Te of rho data into profile_list
+	profile_list((7))%grid_name = 'R'
+	profile_list((7))%curve_name = 'Te(R)'
+	n_grid((7)) = n_rho
+	allocate(profile_list((7))%grid(n_grid((7))), source = 0.0_rkind)
+	profile_list((7))%grid(:) = rho(:)
+	allocate(profile_list((7))%curve(n_grid((7))), source = 0.0_rkind)
+	profile_list((7))%curve(:) = Te_rho_ev(:)
+
+! Load Ti of rho data into profile_list
+	profile_list(((8)))%grid_name = 'R'
+	profile_list(((8)))%curve_name = 'Ti(R)'
+	n_grid(((8))) = n_rho
+	allocate(profile_list(((8)))%grid(n_grid(((8)))), source = 0.0_rkind)
+	profile_list(((8)))%grid(:) = rho(:)
+	allocate(profile_list(((8)))%curve(n_grid(((8)))), source = 0.0_rkind)
+	profile_list(((8)))%curve(:) = Ti_rho_ev(:)
+
+! Restore plasma_AphiN_limit
+	plasma_AphiN_limit = plasma_AphiN_limit_temp
+
+! Generate netCDF file
+!  write(*,*) 'profile_list(1)%curve_name = ', profile_list(1)%curve_name
+!  write(*,*) 'profile_list(9)%curve_name = ', profile_list(9)%curve_name
+	out_filename = 'eq_radial_profiles.'//trim(run_label)
+	call write_XY_curves_netCDF(profile_list, out_filename)
+
     return
  end subroutine write_eq_radial_profile_data_NC
 

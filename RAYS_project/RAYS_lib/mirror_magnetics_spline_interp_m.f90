@@ -1,4 +1,5 @@
 module  mirror_magnetics_spline_interp_m
+
 ! Calculates standard magnetic quantities for multiple magnetic mirrors aligned on the
 ! z axis.  It reads a netCDF file containing Br,Bz, Aphi on an r,z grid and exports 2D
 ! spline function derived types (Br_spline, Br_spline, Aphi_spline ).  The netCDF file is
@@ -7,6 +8,7 @@ module  mirror_magnetics_spline_interp_m
 ! A flux-function-like quantity, Aphi, is provided to serve as a radial coordinate that is
 ! constant along field lines.  This is normalized to be unity on the last un-interrupted
 ! flux surface (or field line), LUFS.
+!
 
     use constants_m, only : rkind, zero, one, two
     use quick_cube_splines_m, only : cube_spline_function_1D, cube_spline_function_2D
@@ -36,23 +38,29 @@ contains
 !********************************************************************
 
   subroutine initialize_mirror_magnetics_spline_interp(read_input, &
-               & box_rmin, box_rmax, box_zmin, box_zmax)
+               & box_rmax, box_zmin, box_zmax)
+
 
     use constants_m, only : one
     use species_m, only : nspec
-    use diagnostics_m, only : message, message_unit,messages_to_stdout, verbosity
+    use diagnostics_m, only : message, text_message, message_unit,messages_to_stdout,&
+                            & verbosity
     use mirror_magnetics_m, only : n_r, n_z, r_min, r_max, z_min, z_max, &
                                   & r_grid, z_grid, Br, Bz, Aphi, &
                                   & r_LUFS, z_LUFS, &
                                    & read_mirror_fields_Brz_NC
-    implicit none
+! N.B. For generality module mirror_magnetics_m allows for a non-zero r_min, although for
+!      normal application to magnetic mirror devices with coils centered on the z axis
+!      r_min should always be 0.  Here we check for that and crash if it is non-zero.
+
+   implicit none
 
     logical, intent(in) :: read_input
  	integer :: input_unit, get_unit_number ! External, free unit finder
 
 ! Geometry data
     ! data for bounding box of computational domain
-    real(KIND=rkind), intent(out) :: box_rmin, box_rmax, box_zmin, box_zmax
+    real(KIND=rkind), intent(out) :: box_rmax, box_zmin, box_zmax
 
 	 namelist / mirror_magnetics_spline_interp_list/ mirror_field_NC_file
 
@@ -76,7 +84,12 @@ contains
 ! Allocate the grids and field array and load the arrays
     call read_mirror_fields_Brz_NC(trim(mirror_field_NC_file))
 
-    box_rmin = r_min
+    if (r_min /= zero) then
+    	call text_message('initialize_mirror_magnetics_spline_interp: non-zero r_min')
+    	write (*,*) 'initialize_mirror_magnetics_spline_interp: non-zero r_min'
+    	stop
+    end if
+
     box_rmax = r_max
     box_zmin = z_min
     box_zmax = z_max

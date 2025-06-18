@@ -61,17 +61,17 @@ contains
 
     character(len=NF90_MAX_NAME)   :: NC_file
 
-! 	write(*,*) " "
-! 	write(*,*) "write_XY_curves_netCDF, file = ", out_filename//'.nc'
+	write(*,*) " "
+	write(*,*) "write_XY_curves_netCDF, file = ", out_filename//'.nc'
 	n_curves = size(curve_list)
-! 	do i = 1, n_curves
-! 	 write(*,*) " "
-! 	 write(*,*) "i = ", i
-! 	 write(*,*) "curve_list(i)%grid_name = ", curve_list(i)%grid_name
-! 	 write(*,*) "curve_list(i)%grid = ", curve_list(i)%grid
-! 	 write(*,*) "curve_list(i)%curve_name = ", curve_list(i)%curve_name
-! 	 write(*,*) "curve_list(i)%curve = ", curve_list(i)%curve
-! 	end do
+	do i = 1, n_curves
+	 write(*,*) " "
+	 write(*,*) "i = ", i
+	 write(*,*) "curve_list(i)%grid_name = ", curve_list(i)%grid_name
+	 write(*,*) "curve_list(i)%grid = ", curve_list(i)%grid
+	 write(*,*) "curve_list(i)%curve_name = ", curve_list(i)%curve_name
+	 write(*,*) "curve_list(i)%curve = ", curve_list(i)%curve
+	end do
 
     allocate(n_grid(n_curves),source=0)
 

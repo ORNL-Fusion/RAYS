@@ -19,6 +19,10 @@ module mirror_magnetics_m
 ! "coil_data_list" contains data on the fixed coil configuration e.g. coil locations
 ! "current_data_list" lists the current in each coil
 
+! N.B. For generality subroutine write_mirror_fields_Brz_NC() allows for a non-zero r_min
+!      in /mirror_magnetics_list/.  Although for normal application to magnetic mirrors
+!      r_min would always be 0.  So the default is 0, but can me reset in the namelist.
+
 !    use constants_m, only : rkind, zero
 
     implicit none
@@ -68,7 +72,8 @@ module mirror_magnetics_m
 
 ! 2D field data
 	integer :: n_r, n_z
-    real(KIND=rkind)  :: r_min, r_max, z_min, z_max
+    real(KIND=rkind)  :: r_min = zero ! Can be reset in namelist
+    real(KIND=rkind)  :: r_max, z_min, z_max
     real(KIND=rkind), allocatable  :: r_grid(:), z_grid(:)
     real(KIND=rkind), allocatable  :: Br(:,:), Bz(:,:), Aphi(:,:)
 

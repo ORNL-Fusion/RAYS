@@ -540,8 +540,8 @@ call check( nf90_enddef(ncid))
     call check( nf90_def_var(ncid, 'box_zmax', NF90_DOUBLE, box_zmax_id))
     call check( nf90_def_var(ncid, 'R', NF90_DOUBLE, [n_R_id], R_id))
     call check( nf90_def_var(ncid, 'Z', NF90_DOUBLE, [n_Z_id], Z_id))
-    call check( nf90_def_var(ncid, 'psiN', NF90_DOUBLE, [n_R_id, N_Z_id], psiN_id))
-    call check( nf90_def_var(ncid, 'gamma_array', NF90_DOUBLE, [n_R_id,N_Z_id,nspec_p1_id],&
+    call check( nf90_def_var(ncid, 'psiN', NF90_DOUBLE, [n_R_id, n_Z_id], psiN_id))
+    call check( nf90_def_var(ncid, 'gamma_array', NF90_DOUBLE, [n_R_id,n_Z_id,nspec_p1_id],&
                                   & gamma_array_id))
     call check( nf90_def_var(ncid, 'spec_name', NF90_CHAR, [d12_id,nspec_p1_id], spec_name_id))
 
