@@ -69,6 +69,7 @@ contains
         use axisym_toroid_ray_init_nphi_ntheta_m, only : ray_init_axisym_toroid_nphi_ntheta
         use axisym_toroid_ray_init_R_Z_nphi_ntheta_m, only : ray_init_axisym_toroid_R_Z_nphi_ntheta
         use one_ray_init_XYZ_k_direction_m, only : one_ray_init_XYZ_n_direction
+        use file_input_ray_init_m, only : file_input_ray_init
 
         implicit none
         logical, intent(in) :: read_input
@@ -105,6 +106,9 @@ contains
                 call one_ray_init_XYZ_n_direction(nray_max, nray, rvec0,&
                    & rindex_vec0, ray_pwr_wt)
 
+             case ('file_input_ray_init')
+				call file_input_ray_init(read_input, nray_max, nray, rvec0, &
+				  & rindex_vec0, ray_pwr_wt)
             case default
                 write(0,*) 'initialize_ray_init: invalid ray_init_model = ', trim(ray_init_model)
                 call text_message('initialize_ray_init: invalid ray_init_model = ', trim(ray_init_model),0)

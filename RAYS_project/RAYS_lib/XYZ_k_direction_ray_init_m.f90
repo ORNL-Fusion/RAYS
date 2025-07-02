@@ -1,13 +1,13 @@
  module one_ray_init_XYZ_k_direction_m
 
 ! This module initializes based on initial launch position (X,Y,Z) and initial
-! direction of wave vector n0.
+! direction of wave vector (nX, nY, nZ))
 
 ! The main purpose of the module is as a wrapper for the contained subroutine
 ! ray_init_XYZ_k_direction(), which returns a refractive index vector, n_vec, that is
 ! a solution of the dispersion relation in the direction of k evaluated at position (X,Y,Z).
 ! The subroutine is used to initialize multiple rays inside some higher launcher model, such
-! as for a cone or beam.  The module also contains subroutine, one_ray_init_XYZ_k_direction(),
+! as for a cone or beam.  The module also contains subroutine one_ray_init_XYZ_k_direction(),
 ! which initializes a single ray from data in the namelist. This simple model could be
 ! used for testing.
 
@@ -50,7 +50,7 @@ contains
     real(KIND=rkind), allocatable, intent(out) :: rvec0(:, :), rindex_vec0(:, :)
     real(KIND=rkind), allocatable, intent(out) :: ray_pwr_wt(:)
 !   Error return
-	character(len=60) :: init_err = ''
+	character(len=80) :: init_err = ''
 
     type(eq_point) :: eq
  	integer :: input_unit, get_unit_number ! External, free unit finder
@@ -132,7 +132,7 @@ contains
     real(KIND=rkind), intent(in) :: rvec(3)
     real(KIND=rkind), intent(inout) :: nvec(3)
 !   Error return
-	character(len=60) :: init_err
+	character(len=80) :: init_err
     real(KIND=rkind) :: nvec0(3) ! Copy of input nvec.  Used for diagnostic
     type(eq_point) :: eq
 
@@ -167,7 +167,7 @@ contains
 		return
 	end if
 
-	nvec = n_cmplx%re*nvec
+	nvec = n_cmplx%re*nvec  ! i.e. magnitude times unit vector
 
     end subroutine ray_init_XYZ_k_direction
 !****************************************************************************

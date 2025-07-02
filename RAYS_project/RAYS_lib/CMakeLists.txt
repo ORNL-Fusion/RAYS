@@ -20,6 +20,7 @@ list (APPEND lib_sources
 	eqdsk_magnetics_spline_interp_m.f90
 	eqn_ray.f90
 	equilibrium_m.f90
+	file_input_ray_init_m.f90
 	finalize_run.f90
 	get_unit_number.f90
 	initialize_ode_vector.f90
