@@ -8,7 +8,7 @@
 
     use constants_m, only : initialize_constants_m
     use diagnostics_m, only : initialize_diagnostics, date_v, message_unit, &
-        & ray_list_unit, output_unit, verbosity, &
+        & ray_list_unit, output_unit, verbosity, write_formatted_ray_files,  &
         & messages_to_stdout, message, text_message, run_description, run_label
     use equilibrium_m, only : equilib_model, initialize_equilibrium_m
     use ode_m, only : initialize_ode_solver_m
@@ -72,17 +72,19 @@
 
 !*************** Open output files ******************************
 
-!   Open a formatted file to receive number of rays and number of steps per ray
-!   File written in ray_tracing()
-	ray_list_unit = get_unit_number()
-    open(unit=ray_list_unit, file='ray_list.'//trim(run_label),action='write', &
-                & status='replace', form='formatted')
+	if (write_formatted_ray_files) then
+	!   Open a formatted file to receive number of rays and number of steps per ray
+	!   File written in ray_tracing()
+		ray_list_unit = get_unit_number()
+		open(unit=ray_list_unit, file='ray_list.'//trim(run_label),action='write', &
+					& status='replace', form='formatted')
 
 
-!   Open a file for formatted ray output. File written in check_save()
-	output_unit = get_unit_number()
-    open(unit=output_unit, file='ray_out.'//trim(run_label),action='write', &
-                & status='replace', form='formatted')
+	!   Open a file for formatted ray output. File written in check_save()
+		output_unit = get_unit_number()
+		open(unit=output_unit, file='ray_out.'//trim(run_label),action='write', &
+					& status='replace', form='formatted')
+	end if
 
     return
  end subroutine initialize

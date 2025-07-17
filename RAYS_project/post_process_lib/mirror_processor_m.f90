@@ -61,6 +61,13 @@
 
 ! Reference z location at which to evaluate radial equilibrium profiles
     real(KIND=rkind) :: z_reference
+	character(len=25) :: char_z_ref
+
+! Radius of O-mode cutoff at z = z_reference
+    real(KIND=rkind) :: r_Omode_cut_at_z_ref
+
+! Radius of LUFS at z = z_reference
+    real(KIND=rkind) :: r_LUFS_at_z_ref
 
 ! Flags determining what to do besides plot rays.  Can be overridden (i.e. turned off)
 ! in namelist file
@@ -159,12 +166,15 @@
 
   subroutine write_graphics_description_file
 
-   use diagnostics_m, only : text_message, run_description, run_label, verbosity
-   use multiple_mirror_eq_m, only : box_rmax, box_zmin, box_zmax
+    use constants_m, only : rkind, zero, one
+    use diagnostics_m, only : text_message, run_description, run_label, verbosity
+    use multiple_mirror_eq_m, only : box_rmax, box_zmin, box_zmax, r_LUFS
+    use bisect_m, only : solve_bisection
 
     implicit none
 
     integer :: graphics_descrip_unit, get_unit_number
+    integer :: ierr
 
  !  File name for  output
     character(len=80) :: out_filename
@@ -189,12 +199,15 @@
    write(graphics_descrip_unit, *) 'k_vec_base_length = ', k_vec_base_length
    write(graphics_descrip_unit, *) 'set_XY_lim = ', trim(set_XY_lim)
 
-!   call find_plasma_boundary
+! Find radius of O-mode cutoff
+  call solve_bisection(f_R_alpha_e, r_Omode_cut_at_z_ref, zero, r_LUFS, one,&
+       & bisection_eps, ierr)
+  if (ierr == 0) r_Omode_cut_at_z_ref = zero
 
    write(graphics_descrip_unit, *) ' '
-   write(graphics_descrip_unit, *) 'R_boundary = ', R_boundary
+   write(graphics_descrip_unit, *) 'z_reference = ', z_reference
    write(graphics_descrip_unit, *) ' '
-   write(graphics_descrip_unit, *) 'Z_boundary = ', Z_boundary
+   write(graphics_descrip_unit, *) 'r_Omode_cut_at_z_ref = ', r_Omode_cut_at_z_ref
 
    close(unit = graphics_descrip_unit)
 
@@ -651,6 +664,10 @@ subroutine write_eq_contour_data_NC
    if (verbosity > 0) call text_message('Writing plasma equilibrium profiles')
    if (verbosity > 0) call message('Writing plasma z_reference', z_reference, 1)
 
+! Get character form of z_reference
+	write(char_z_ref, fmt = '(f10.3)') z_reference
+	char_z_ref = adjustl(char_z_ref)
+
 	plasma_AphiN_limit_temp = plasma_AphiN_limit ! Stash plasma_AphiN_limit
 !	plasma_AphiN_limit = 10.0 ! Set plasma_AphiN_limit high so can get fields outside plasma
 
@@ -751,7 +768,7 @@ subroutine write_eq_contour_data_NC
 ! !***************** Stuff for profiles versus rho *****************************
 ! Load AphiN of rho data into profile_list
 	profile_list((5))%grid_name = 'R'
-	profile_list((5))%curve_name = 'AphiN(R)'
+	profile_list((5))%curve_name = 'AphiN(R, z = '//trim(char_z_ref)//')'
 	n_grid((5)) = n_rho
 	allocate(profile_list((5))%grid(n_grid((5))), source = 0.0_rkind)
 	profile_list((5))%grid(:) = rho(:)
@@ -760,7 +777,7 @@ subroutine write_eq_contour_data_NC
 
 ! Load ne of rho data into profile_list
 	profile_list((6))%grid_name = 'R'
-	profile_list((6))%curve_name = 'ne(R)'
+	profile_list((6))%curve_name = 'ne(R, z = '//trim(char_z_ref)//')'
 	n_grid((6)) = n_rho
 	allocate(profile_list((6))%grid(n_grid((6))), source = 0.0_rkind)
 	profile_list((6))%grid(:) = rho(:)
@@ -769,7 +786,7 @@ subroutine write_eq_contour_data_NC
 
 ! Load Te of rho data into profile_list
 	profile_list((7))%grid_name = 'R'
-	profile_list((7))%curve_name = 'Te(R)'
+	profile_list((7))%curve_name = 'Te(R, z = '//trim(char_z_ref)//')'
 	n_grid((7)) = n_rho
 	allocate(profile_list((7))%grid(n_grid((7))), source = 0.0_rkind)
 	profile_list((7))%grid(:) = rho(:)
@@ -778,7 +795,7 @@ subroutine write_eq_contour_data_NC
 
 ! Load Ti of rho data into profile_list
 	profile_list(((8)))%grid_name = 'R'
-	profile_list(((8)))%curve_name = 'Ti(R)'
+	profile_list(((8)))%curve_name = 'Ti(R, z = '//trim(char_z_ref)//')'
 	n_grid(((8))) = n_rho
 	allocate(profile_list(((8)))%grid(n_grid(((8)))), source = 0.0_rkind)
 	profile_list(((8)))%grid(:) = rho(:)
@@ -811,6 +828,30 @@ subroutine write_eq_contour_data_NC
 
 !*************************************************************************
 
+ function f_R_alpha_e(R)
+! Returns alpha_e(R,z_reference)
+
+    use constants_m, only : rkind, zero
+	use equilibrium_m, only : eq_point, equilibrium
+
+	IMPLICIT NONE
+    real(KIND=rkind) f_R_alpha_e
+    real(KIND=rkind), intent(in) :: R
+    real(KIND=rkind) :: rvec(3)
+    type(eq_point) :: eq
+
+	rvec = (/R, zero, z_reference/)
+	    rvec = (/R, zero, z_reference/)
+
+	call equilibrium(rvec, eq)
+	f_R_alpha_e = eq%alpha(0)
+!	write(*,*) 'rvec', rvec,  '  f_R_alpha_e = ', f_R_alpha_e
+
+	return
+ end function f_R_alpha_e
+
+!*************************************************************************
+
  function f_R_AphiN(R)
 ! Returns AphiN(R,z_reference)
 
@@ -818,7 +859,8 @@ subroutine write_eq_contour_data_NC
 	use multiple_mirror_eq_m, only : multiple_mirror_Aphi
 
 	IMPLICIT NONE
-    real(KIND=rkind) f_R_AphiN, R
+    real(KIND=rkind) f_R_AphiN
+    real(KIND=rkind), intent(in) :: R
     real(KIND=rkind) :: Aphi, gradAphi(3), AphiN, gradAphiN(3)
     real(KIND=rkind) :: rvec(3)
 

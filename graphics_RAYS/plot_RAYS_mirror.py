@@ -95,6 +95,11 @@ print('scale_k_vec = ', scale_k_vec)
 print('k_vec_base_length = ', k_vec_base_length)
 print('set_XY_lim = ', set_XY_lim)
 
+z_reference = float(graphics_variable_dict['z_reference'])
+r_Omode_cut_at_z_ref = float(graphics_variable_dict['r_Omode_cut_at_z_ref'])
+print('z_reference = ', z_reference)
+print('r_Omode_cut_at_z_ref = ', r_Omode_cut_at_z_ref)
+
 max_size = 13.
 print('max_size = ', max_size)
 
@@ -461,11 +466,12 @@ if num_plot_k_vectors > 0:
         for j in range(num_plot_k_vectors):
             plt.arrow(x_draw[j], y_draw[j], kx_draw[j], ky_draw[j], shape='full', head_width = 0.01)
 
-# fig = plt.gcf()
-# ax = fig.gca()
-# ax.set_aspect('equal')
-# circle1 = plt.Circle((0, 0), inner_bound, color='black', fill=False)
-# ax.add_patch(circle1)
+if (r_Omode_cut_at_z_ref > 0.):
+	fig = plt.gcf()
+	ax = fig.gca()
+	ax.set_aspect('equal')
+	circle1 = plt.Circle((0, 0), r_Omode_cut_at_z_ref, color='blue', fill=False)
+	ax.add_patch(circle1)
 # circle2 = plt.Circle((0, 0), outer_bound, color='black', fill=False)
 # ax.add_patch(circle2)
 

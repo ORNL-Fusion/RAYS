@@ -78,7 +78,8 @@
 		endif
 	END DO
 
-	if (i >= max_iter)ierr = 0 ! No convergence in mac_iter iterations
+	ierr = i
+	if (i >= max_iter)ierr = 0 ! No convergence in max_iter iterations
 
   RETURN
   END SUBROUTINE bisect_single
@@ -134,7 +135,8 @@
 		endif
 	END DO
 
-	if (i >= max_iter)ierr = 0 ! No convergence in mac_iter iterations
+	ierr = i
+	if (i >= max_iter)ierr = 0 ! No convergence in max_iter iterations
 
   RETURN
   END SUBROUTINE bisect_real
