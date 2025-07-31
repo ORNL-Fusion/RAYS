@@ -77,13 +77,15 @@
 	logical :: write_contour_data = .true.  ! Write data needed to plot contours netCDF file
 	logical :: write_eq_XZ_grid_data = .true.  ! Write data for equilibrium on RZ grid netCDF file
 	logical :: write_eq_radial_profile_data = .true.  ! Write data for radial profiles netCDF file
+	logical :: do_OX_conv_analysis = .false.  ! Special case OX conversion so, default = false
 
     namelist /mirror_processor_list/ num_plot_k_vectors, scale_k_vec,&
              & k_vec_base_length, set_XY_lim, &
              & calculate_dep_profiles, write_dep_profiles, calculate_ray_diag, &
              & write_contour_data, N_pointsX_eq, N_pointsZ_eq, &
              & write_eq_XZ_grid_data, write_eq_radial_profile_data, n_AphiN, &
-             & bisection_eps, n_rho, z_reference
+             & bisection_eps, n_rho, z_reference, &
+             & do_OX_conv_analysis
 
  contains
 
@@ -126,6 +128,7 @@
     use diagnostics_m, only : message_unit, message, text_message, verbosity
     use deposition_profiles_m, only : calculate_deposition_profiles, &
                          & write_deposition_profiles_LD, write_deposition_profiles_NC
+	use OX_conv_analysis_m, only : analyze_OX_conv
 
     implicit none
 
@@ -137,9 +140,8 @@
     if (write_dep_profiles .eqv. .true.) call write_deposition_profiles_NC
 	if (calculate_ray_diag .eqv. .true.) call ray_detailed_diagnostics
 	if (write_contour_data .eqv. .true.) call write_eq_contour_data_NC
-!	if (write_eq_XZ_grid_data .eqv. .true.) call write_eq_XZ_grid_data_NC
-
     if (write_eq_radial_profile_data .eqv. .true.) call write_eq_radial_profile_data_NC
+    if (do_OX_conv_analysis .eqv. .true.) call analyze_OX_conv
 
     if (verbosity > 0) call text_message('Finished mirror_processor work')
 
@@ -683,7 +685,7 @@ subroutine write_eq_contour_data_NC
 	                       & bisection_eps, ierr)
 
 	    rvec = (/R(i), zero, z_reference/)
-	    write(*,*) 'write_eq_radial_profile_data_NC, i = ', i, '  R(i) = ',  R(i), '   AphiN(i) = ',AphiN(i)
+!	    write(*,*) 'write_eq_radial_profile_data_NC, i = ', i, '  R(i) = ',  R(i), '   AphiN(i) = ',AphiN(i)
  	    if (ierr == 0) stop
 
 		call equilibrium(rvec, eq)

@@ -5,6 +5,7 @@ list (APPEND lib_sources
 	axisym_toroid_processor_m.f90
 	mirror_processor_m.f90
 	deposition_profiles_m.f90
+	OX_conv_analysis_m.f90
 	post_processing_m.f90
 )
 
