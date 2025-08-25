@@ -45,9 +45,6 @@
        unlike = - sqrt(1.5) * 1.e25
        nlike = -123454321
 
-! 	   rzero = 0.0_rkind
-! 	   one = 1.0_rkind
-
     end subroutine initialize_constants_m
 
 !********************************************************************

@@ -9,6 +9,8 @@ module  mirror_magnetics_spline_interp_m
 ! constant along field lines.  This is normalized to be unity on the last un-interrupted
 ! flux surface (or field line), LUFS.
 !
+! N.B. This module uses the mirror_magnetics_m module in mirror_magnetics_lib to read the
+!      netCDF file and gets the data for initialization from that module.
 
     use constants_m, only : rkind, zero, one, two
     use quick_cube_splines_m, only : cube_spline_function_1D, cube_spline_function_2D

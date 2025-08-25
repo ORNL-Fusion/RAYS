@@ -673,7 +673,8 @@ subroutine write_eq_contour_data_NC
 	plasma_AphiN_limit_temp = plasma_AphiN_limit ! Stash plasma_AphiN_limit
 !	plasma_AphiN_limit = 10.0 ! Set plasma_AphiN_limit high so can get fields outside plasma
 
-! Note: Want to plot ne, Te etc on a uniform  are given by subroutine equilibrium(x,y,z)
+! Note: Want to plot ne, Te etc on a uniform Aphi grid, but they  are given by subroutine
+! equilibrium(x,y,z).  So ...
 ! Generate Aphi grid and R grid.
 ! Invert AphiN(R, y=0, z_reference) -> R(AphiN, z_reference) using bisection.
 ! Then evaluate ne and Te at (R, 0, z_reference).
@@ -681,11 +682,11 @@ subroutine write_eq_contour_data_NC
  write(*,*) 'r_LUFS = ', r_LUFS
 	do i = 1, n_AphiN
 	    AphiN(i) = plasma_AphiN_limit*(i-1)/(n_AphiN - 1)
-	    call solve_bisection(f_R_AphiN, R(i), zero, r_LUFS, AphiN(i),&
+	    call solve_bisection(f_R_AphiN, R(i), zero, 1.1_rkind*r_LUFS, AphiN(i),&
 	                       & bisection_eps, ierr)
 
 	    rvec = (/R(i), zero, z_reference/)
-!	    write(*,*) 'write_eq_radial_profile_data_NC, i = ', i, '  R(i) = ',  R(i), '   AphiN(i) = ',AphiN(i)
+!    write(*,*) 'write_eq_radial_profile_data_NC, i = ', i, '  R(i) = ',  R(i), '   AphiN(i) = ',AphiN(i)
  	    if (ierr == 0) stop
 
 		call equilibrium(rvec, eq)
@@ -694,14 +695,15 @@ subroutine write_eq_contour_data_NC
 		Ti_AphiN_ev(i) = eq%Ts(1)/e ! N.B. For now all ions are assumed to have the same Ti profile
 	end do
 
-! !  write(*,*) " "
-! !  write(*,*) "AphiN", AphiN
-! !  write(*,*) " "
-! !  write(*,*) "R = ", R
-! !  write(*,*) " "
-! !  write(*,*) "ne_AphiN =  ", ne_AphiN
-! !  write(*,*) " "
-! !  write(*,*) "rho_AphiN =  ", rho_AphiN
+!  write(*,*) " "
+!  write(*,*) "AphiN", AphiN
+!  write(*,*) " "
+!  write(*,*) "R = ", R
+!  write(*,*) " "
+!  write(*,*) "ne_AphiN =  ", ne_AphiN
+!  write(*,*) " "
+!  write(*,*) "rho_AphiN =  ", rho_AphiN
+!  write(*,*) 'bisection ierr = ', ierr
 !
 ! !***************** Stuff for profiles versus rho *****************************
 
@@ -869,7 +871,7 @@ subroutine write_eq_contour_data_NC
 	rvec = (/R, zero, z_reference/)
 	call multiple_mirror_Aphi(rvec, Aphi, gradAphi, AphiN, gradAphiN)
 	f_R_AphiN = AphiN
-!	write(*,*) 'rvec', rvec,  '  f_R_Aphi = ', f_R_Aphi
+write(*,*) 'rvec = ', rvec,  '  f_R_Aphi = ', f_R_AphiN
 
 	return
  end function f_R_AphiN

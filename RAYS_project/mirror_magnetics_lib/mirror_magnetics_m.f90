@@ -1,9 +1,15 @@
 module mirror_magnetics_m
-! Routines and derived types to generate magnetic fields for multiple miorrors aligned
+! Routines and derived types to generate magnetic fields for multiple mirrors aligned
 ! along the z-axis.  The present intent is to be able to generate the fields, then to use
 ! these to do spline fits in various r,z domains.  The spline fits and the spline
 ! derivatives would then be used in RAYS rather than using these fields directly.  We'll
 ! see how it turns out.
+
+! This module is used by stand-alone code mirror_magnetics.f90.  The output of that code is
+! a netcdf file containing magnetic fields on an r,z grid and other data needed to generate
+! spline fits for use in the RAYS code.  The spline fits, and the magnetic field routines
+! are in mirror_magnetics_spline_interp_m.f90 which lives in RAYS_lib.  However that module
+! in RAYS_lib uses this module to read in the netCDF file and to get that data.
 
 ! We define a derived type "coil" which has the data defining the location of conductors
 ! in the coil.  Inner and outer coil radius and coil z center are self explanatory. There
@@ -19,11 +25,23 @@ module mirror_magnetics_m
 ! "coil_data_list" contains data on the fixed coil configuration e.g. coil locations
 ! "current_data_list" lists the current in each coil
 
+
+! Boundaries
+! The domain over which fields are to be calculated for the netCDF field file are specified
+! in the namelist_file: mirror_magnetics.nml as  r_min, r_max, z_min, z_max
+!
+! In addition the strike-point of the last un-interupted flux surface, LUFS, must be
+! specified as r_LUFS, z_LUFS.  These depend on the coil configuration, the geometry
+! of the first wall, as well as the coil current list, which varies from case to case. So,
+! for now they must be calculated externally on a case-by-case basis and put into the
+! namelist by hand.  Variables r_LUFS, z_LUFS are not used in this routine. But they are
+! used in the mirror equilibrium routines to specify the plasma boundary, and since they are
+! determined by the coil configuration and currents, this is the logical place to specify
+! them.
+
 ! N.B. For generality subroutine write_mirror_fields_Brz_NC() allows for a non-zero r_min
 !      in /mirror_magnetics_list/.  Although for normal application to magnetic mirrors
 !      r_min would always be 0.  So the default is 0, but can me reset in the namelist.
-
-!    use constants_m, only : rkind, zero
 
     implicit none
 
@@ -70,10 +88,10 @@ module mirror_magnetics_m
 
 	type(coil_type), allocatable :: coil(:)
 
-! 2D field data
-	integer :: n_r, n_z
+! 2D field data to be written to netCDF file
+	integer :: n_r, n_z ! Size of R,Z grid
     real(KIND=rkind)  :: r_min = zero ! Can be reset in namelist
-    real(KIND=rkind)  :: r_max, z_min, z_max
+    real(KIND=rkind)  :: r_max, z_min, z_max  ! Boundary of R,Z grid
     real(KIND=rkind), allocatable  :: r_grid(:), z_grid(:)
     real(KIND=rkind), allocatable  :: Br(:,:), Bz(:,:), Aphi(:,:)
 
@@ -229,15 +247,6 @@ contains
 
     equib_err = ''
 
-! Check that we are in the box
-!     if (r < box_rmin .or. r > box_rmax) equib_err = 'R out_of_bounds'
-!     if (z < box_zmin .or. z > box_zmax) equib_err = 'z out_of_bounds'
-!
-!     if (equib_err /= '') then
-!         call text_message('mirror_magnetics:  equib_err ', equib_err, 1)
-!         return
-!     end if
-
 	Br = zero
 	Bz = zero
 	Aphi = zero
@@ -246,7 +255,6 @@ contains
 		a = this%r_filament(i)
 		do j = 1, this%n_z_slices
 			z_relative = z - this%z_filament(j)
-!			write(*,*) 'a = ', a, 'this%z_filament(j) = ', this%z_filament(j), '   z_relative = ',z_relative
 			call Brz_loop_scaled(r/a, z_relative/a, Br_f, Bz_f, Aphi_f)
 			Br = Br + Br_f/a
 			Bz = Bz + Bz_f/a
@@ -282,15 +290,6 @@ contains
     integer :: i,j
 
     equib_err = ''
-
-! Check that we are in the box
-!     if (r < box_rmin .or. r > box_rmax) equib_err = 'R out_of_bounds'
-!     if (z < box_zmin .or. z > box_zmax) equib_err = 'z out_of_bounds'
-!
-!     if (equib_err /= '') then
-!         call text_message('mirror_magnetics:  equib_err ', equib_err, 1)
-!         return
-!     end if
 
 	Br = zero
 	Bz = zero
@@ -334,7 +333,6 @@ contains
 		end do
 	end if
 	write(*,*) ' r_min = ', r_min, ' r_max = ', r_max
-! 	write(*,*) ' r_grid = ', r_grid
 
 	if (n_z == 1) then
 		z_grid(1) = z_min
@@ -344,14 +342,12 @@ contains
 		end do
 	end if
 	write(*,*) '   z_min = ', z_min, '   z_max = ', z_max
-!	write(*,*) ' z_grid = ', z_grid
 
 	do i = 1, n_r
 		do j = 1, n_z
 			call mirror_Brz_field(r_grid(i), z_grid(j), Br(i,j), Bz(i,j), Aphi(i,j), equib_err)
 		end do
 	end do
-!	write(*,*) 'Aphi(2,:) = ', Aphi(2,:)
 
   end subroutine calculate_B_on_rz_grid
 !****************************************************************************
@@ -426,11 +422,6 @@ contains
 
 !   Close the NC file
     call check( nf90_close(ncid) )
-
-! 		do j = 1, n_z
-! 			write(*,*) '  z = ', z_grid(j), '  Br = ', Br(2,j), '  Bz = ', Bz(2,j),&
-! 			         & '  Aphi = ', Aphi(2,j)
-! 		end do
 
   end subroutine write_mirror_fields_Brz_NC
 
@@ -514,11 +505,6 @@ contains
 
 !   Close the NC file
     call check( nf90_close(ncid) )
-
-! 		do j = 1, n_z
-! 			write(*,*) '  z = ', z_grid(j), '  Br = ', Br(2,j), '  Bz = ', Bz(2,j),&
-! 			         & '  Aphi = ', Aphi(2,j)
-! 		end do
 
   end subroutine read_mirror_fields_Brz_NC
 

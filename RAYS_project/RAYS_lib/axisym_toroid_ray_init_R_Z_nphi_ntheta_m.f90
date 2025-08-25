@@ -72,7 +72,7 @@ contains
 ! N.B. Since we don't know nray until the end, allocate temporary arrays rvec_temp,
 !      rindex_vec_temp, ray_pwr_wt_temp then allocate the output arrays rvec0, rindex_vec0
 !      at the end with proper length, nray!
-! External procedures: Only from module use.
+! External procedures: Only from modules used.
 
     use diagnostics_m, only: message_unit, messages_to_stdout,  message, text_message, verbosity
     use species_m, only : nspec
@@ -208,9 +208,6 @@ contains
 !  write(*,*) 'trans_unit = ', trans_unit
 !  write(*,*) 'npsi = ', npsi, '  n3 = ', n3, '  n2 = ', n2
 !  write(*,*) 'rindex_vec_temp( : ,', count,') = ', rindex_vec_temp( : , count)
-
- nperp = sqrt(npsi**2+n2**2)
-! write(*,*) 'residual = ', residual(eq, k0*nperp, k0*n3)
 
     end do rindex_phi_loop
     end do rindex_theta_loop

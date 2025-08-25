@@ -178,6 +178,7 @@ for file in results_file_list:
 #         print('type(z) = ', type(z))
 #         print('type(R) = ', type(R))
 #         print('R = ', R[0:10])
+#         print('plot: y = ', y)
 
         lbl = 'ray ' + str(n_all_rays)
         new_curve = XY_curve(z,x, label = lbl)

@@ -2,7 +2,7 @@
 
 ! generic procedure: solve_bisection() to sole an equation by the bisection method.
 ! This is slightly different in that it solves f(x)=y rather than f(x)=0
-! Usual caveats for non-linar solvers apply.  May fail if inverse function is
+! Usual caveats for non-linear solvers apply.  May fail if inverse function is
 ! multi-valued in search domain.  There is no attempt to find multiple solutions.
 !
 ! f = objective function y = f(x)

@@ -28,6 +28,15 @@ module multiple_mirror_eq_m
 ! Different species can have different profile models. Although presently only two different
 ! spline profiles are supported: electron and ion.  All splined ion profiles are the same.
 !
+! Note on boundaries:
+!   Outermost boundary is defined by box_rmax, box_zmin, box_zmax.  These are in the
+!   initialization for the specific magnetic model implementation (which for now is only
+!   splines).  The init for mirror_magnetics_spline_interp_m sets these to zero, r_max,
+!   z_min, z_max respectively, which are contained in the magnetic field netCDF file.
+!
+!   Plasma boundary is defined in terms of normalized Aphi on the last un-interrupted
+!   flux surface, == Aphi_LUFS.
+!
 ! Working notes:
 
     use constants_m, only : rkind, one, zero, two
@@ -474,11 +483,34 @@ contains
   pure subroutine hyperbolic_prof(rho, f_min, rho0, delta, f, fp)
 ! Provides a hyperbolic-like function f(rho) and its derivative fp(rho)
 !
+! f_min is the floor, rho0 is the profile inflection point and delta is a gradient
+! scale length
+
+    implicit none
+
+    real(KIND=rkind), intent(in) :: rho, f_min, rho0, delta
+    real(KIND=rkind), intent(out) :: f, fp
+
+	f = zero
+	f = (tanh((rho+rho0)/delta)-tanh((rho-rho0)/delta))/two/tanh((rho0)/delta)
+	fp = (one/cosh((rho+rho0)/delta)**2 - one/cosh((rho-rho0)/delta)**2)/(two*delta)/&
+		& tanh((rho0)/delta)
+
+	f = (one - f_min)*f + f_min
+	fp = (one - f_min)*fp
+
+  end subroutine hyperbolic_prof
+
+!********************************************************************
+
+  pure subroutine hyperbolic_prof_inside_LUFS(rho, f_min, rho0, delta, f, fp)
+! Provides a hyperbolic-like function f(rho) and its derivative fp(rho)
+!
 ! hyperbolic-like means:
 ! f = 1.0 at rho = 0
 ! f = hyperbolic provided f > f_min
-! f = f_min if the parabola above would give f < f_min or if rho > 1.0
-! i.e. f_min is the floor, rho0 is the profile inflection point and delta is a gradient
+! f = f_min if the hyperbolic above would give f < f_min or if rho > 1.0 (i.e. outside LUFS)
+! i.e. f_min is the floor, rho0 is the profile inflection point, and delta is a gradient
 !      scale length
 
     implicit none
@@ -488,8 +520,9 @@ contains
 
 	f = zero
 	if (rho < one) then
-		f = (tanh((rho+rho0)/delta)-tanh((rho-rho0)/delta))/two
-		fp = (one/cosh((rho+rho0)/delta)**2 - one/cosh((rho-rho0)/delta)**2)/(two*delta)
+		f = (tanh((rho+rho0)/delta)-tanh((rho-rho0)/delta))/two/tanh((rho0)/delta)
+		fp = (one/cosh((rho+rho0)/delta)**2 - one/cosh((rho-rho0)/delta)**2)/(two*delta)/&
+		    & tanh((rho0)/delta)
 	end if
 
 	if (f < f_min) then
@@ -497,7 +530,7 @@ contains
 		fp = zero
 	end if
 
-  end subroutine hyperbolic_prof
+  end subroutine hyperbolic_prof_inside_LUFS
 
 
 !********************************************************************

@@ -53,8 +53,8 @@
     character(len=80) :: message_file = 'messages'
 
 !  verbosity = a switch to set the level of output from message() and text_message()
-!  verbosity = 0 gives minimum output
-    integer :: verbosity
+!  verbosity = 0 gives minimum output, negative gives no text output
+    integer :: verbosity = 0
 
 !   messages_to_stdout = If true write messages to stdout as well as to messages file
     logical :: messages_to_stdout = .false.
@@ -87,7 +87,7 @@
     integer :: max_diag_count = 5
 
 !   Timing variables
-    real(KIND=rkind) :: t_start_RAYS, t_finish_RAYS
+    real(KIND=rkind) :: t_start_RAYS, t_finish_RAYS  ! These are Julian dates in seconds
     real(KIND=rkind), parameter :: day_to_seconds = 86400.
 
     namelist /diagnostics_list/ verbosity, messages_to_stdout, write_formatted_ray_files, &

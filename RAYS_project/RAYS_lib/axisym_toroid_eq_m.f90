@@ -21,6 +21,18 @@ module axisym_toroid_eq_m
 ! Different species can have different profile models. Although presently only two different
 ! spline profiles are supported: electron and ion.  All splined ion profiles are the same.
 !
+! Convenience routines are also provided:
+!    axisym_toroid_psi(rvec, psi, gradpsi, psiN, grad_psiN) returns psi and PsiN == nomalized
+!        poloidal flux and gradients
+!
+!   axisym_toroid_rho(rvec, rho, gradrho) returns rho == sqrt(toroidal flux) and gradient
+!        So far this is only implemented for the eqdsk_magnetics_spline_interp model
+!
+!   write_axisym_toroid_profiles writes the radial profile of the equilibirum quantities to
+!        either the message unit or to stdout
+!
+! External procedures: Only from modules used.
+
 ! Working notes:
 
     use constants_m, only : rkind, one, zero
@@ -32,7 +44,7 @@ module axisym_toroid_eq_m
 
 ! Local data **************************************************
 
-! Namelist data for /axisym_toroid_eq_list/  **************************************************
+! Namelist data for /axisym_toroid_eq_list/  *****************************
 ! data for magnetics
     character(len=60) :: magnetics_model
 
@@ -380,7 +392,7 @@ contains
 
  subroutine axisym_toroid_rho(rvec, rho, gradrho)
  ! Returns normalized square root toroidal flux -> rho(x,y,z).
- ! N.B. Unlike axisym_toroid_psi rho is already normalized so there rare no rhoN or
+ ! N.B. Unlike axisym_toroid_psi rho is already normalized so there are no rhoN or
  ! grad_rhoN arguments
  ! N.B. so far this is only implemented in eqdsk_magnetics_spline_interp
 
@@ -481,6 +493,8 @@ contains
 ! f = 1.0 at rho = 0
 ! f = (1 - rho**alpha2)**alpha1 provided f > f_min
 ! f = f_min if the parabola above would give f < f_min or if rho > 1.0
+!
+! N.B. The expectation is that rho = sqrt(toroidal flux)
 
     implicit none
 
