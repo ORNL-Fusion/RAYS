@@ -19,16 +19,16 @@
 ! External procedures:
 ! solve_disp_nx_vs_ny_nz in solve_disp_nx_vs_ny_nz.f90
 
-    use constants_m, only : rkind
+    use constants_m, only : rkind, one, zero
 
     implicit none
 
     integer:: n_x_launch = 1
-    real(KIND=rkind) ::  x_launch0 = 0., dx_launch = 0.
+    real(KIND=rkind) ::  x_launch0 = zero, dx_launch = zero
     integer:: n_y_launch = 1
-    real(KIND=rkind) ::  y_launch0 = 0., dy_launch = 0.
+    real(KIND=rkind) ::  y_launch0 = zero, dy_launch = zero
     integer:: n_z_launch = 1
-    real(KIND=rkind) ::  z_launch0 = 0., dz_launch = 0.
+    real(KIND=rkind) ::  z_launch0 = zero, dz_launch = zero
 
     integer:: n_ky_launch, n_kz_launch
     real(KIND=rkind) ::  rindex_y0, delta_rindex_y0, rindex_z0, delta_rindex_z0
@@ -99,7 +99,7 @@ contains
 
         if ((nray > 0) .and. (nray <= nray_max)) then
 			allocate ( rvec_temp(3, nray), rindex_vec_temp(3, nray), source = 0.0_rkind )
-			allocate ( ray_pwr_wt_temp(nray), source = 1.0_rkind )
+			allocate ( ray_pwr_wt_temp(nray), source = one )
         else
 			call message ('simple slab ray init: improper number of rays  nray=', nray)
 			write (*,*) 'simple slab ray init: improper number of rays  nray=', nray
@@ -132,8 +132,10 @@ contains
 
                 call equilibrium(rvec, eq)
                    if (trim(eq%equib_err) /= '') cycle kzloop
+
                 call solve_nx_vs_ny_nz_by_bz(eq, ray_dispersion_model, wave_mode, k0_sign,&
                      &  rindex_y, rindex_z, rindex_x)
+
                 if (aimag(rindex_x) /= 0.) then
                     write(message_unit, *) 'slab_init: evanescent ray x = ', x, &
                     & ' ny = ', rindex_y, ' nz = ', rindex_z
@@ -141,23 +143,33 @@ contains
                 end if
 
                 count = count +1
-                rvec0( : , count) = rvec
-                rindex_vec0( : , count) = (/ real(rindex_x, KIND=rkind), rindex_y, rindex_z /)
-                ray_pwr_wt(count) = 1.
+                rvec_temp( : , count) = rvec
+                rindex_vec_temp( : , count) = (/ real(rindex_x, KIND=rkind), rindex_y, rindex_z /)
+                ray_pwr_wt_temp(count) = 1.
 
             end do kzloop
         end do kyloop
     end do xloop
     end do yloop
     end do zloop
-
     nray = count
     call message('simple_slab_ray_init: nray', nray)
 
     if (nray == 0) then
         stop 'No successful ray initializations'
+
     else
-        ray_pwr_wt = ray_pwr_wt/nray
+
+! Now that we know correct nray, allocate the output arrays
+		allocate ( rvec0(3, nray), rindex_vec0(3, nray) )
+		allocate ( ray_pwr_wt(nray) )
+
+		rvec0 = rvec_temp(1:3,1:nray)
+		rindex_vec0 = rindex_vec_temp(1:3,1:nray)
+		ray_pwr_wt = ray_pwr_wt_temp(1:nray)/nray ! Note: Q&D power model 1/nray
+
+		deallocate ( rvec_temp, rindex_vec_temp, ray_pwr_wt_temp )
+			ray_pwr_wt = ray_pwr_wt/nray
     end if
 
     end  subroutine simple_slab_ray_init

@@ -18,7 +18,7 @@
 ! N.B. A consequence is that the specific geometries must be provided by modules, not
 ! submodules, so that their entities are accessible outside the equilibrium_m module.
 !
-! 1/10/2022 (DBB) converted magnetic and species data at a spatial pint to derived
+! 1/10/2022 (DBB) converted magnetic and species data at a spatial point to derived
 ! type -> eq_point so we can have multiple instances of equilibrium data in memory at
 ! the same time.
 

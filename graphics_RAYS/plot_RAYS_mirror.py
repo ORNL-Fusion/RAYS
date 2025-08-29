@@ -203,10 +203,21 @@ for file in results_file_list:
                 kz_draw = [max_size*k_vec_base_length*kz[j]/k_max for j in indices]
             else:
                 print('Not Scaling k')
-                kx_draw  = [max_size*k_vec_base_length*kx[j]/knorm[j] for j in indices]
-                ky_draw  = [max_size*k_vec_base_length*ky[j]/knorm[j] for j in indices]
-                kr_draw  = [max_size*k_vec_base_length*kr[j]/knorm[j] for j in indices]
-                kz_draw  = [max_size*k_vec_base_length*kz[j]/knorm[j] for j in indices]
+                kx_draw  = [max_size*k_vec_base_length*kx[j]/ \
+                math.sqrt(pow(kx[j],2) + pow(ky[j],2) + pow(kz[j],2))\
+                for j in indices]
+
+                ky_draw  = [max_size*k_vec_base_length*ky[j]/ \
+                math.sqrt(pow(kx[j],2) + pow(ky[j],2) + pow(kz[j],2))\
+                for j in indices]
+
+                kz_draw  = [max_size*k_vec_base_length*kz[j]/ \
+                math.sqrt(pow(kx[j],2) + pow(ky[j],2) + pow(kz[j],2))\
+                for j in indices]
+
+                kr_draw  = [max_size*k_vec_base_length*kr[j]/ \
+                math.sqrt(pow(kx[j],2) + pow(ky[j],2) + pow(kz[j],2))\
+                for j in indices]
 
             x_draw_list.append(x_draw)
             y_draw_list.append(y_draw)
@@ -487,8 +498,4 @@ plot_XY_Curves_Fig(plotXY)
 #
 
 close_file_XY_Curves_Fig()
-
-#
-# if debug:
-#     print('index = ', index)
 

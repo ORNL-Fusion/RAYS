@@ -202,7 +202,6 @@ for file in results_file_list:
 # Get data to draw k vectors if doing that
         if num_plot_k_vectors > 0:
             print('type(num_plot_k_vectors) = ', type(num_plot_k_vectors))
-            print('type(npoints[i]) = ', type(npoints[i]))
             indices = n_evenly_spaced_integers(num_plot_k_vectors, npoints[i])
             x_draw = [x[j] for j in indices]
             y_draw = [y[j] for j in indices]
@@ -216,10 +215,21 @@ for file in results_file_list:
                 kz_draw = [max_size*k_vec_base_length*kz[j]/k_max for j in indices]
             else:
                 print('Not Scaling k')
-                kx_draw  = [max_size*k_vec_base_length*kx[j]/knorm[j] for j in indices]
-                ky_draw  = [max_size*k_vec_base_length*ky[j]/knorm[j] for j in indices]
-                kr_draw  = [max_size*k_vec_base_length*kr[j]/knorm[j] for j in indices]
-                kz_draw  = [max_size*k_vec_base_length*kz[j]/knorm[j] for j in indices]
+                kx_draw  = [max_size*k_vec_base_length*kx[j]/ \
+                math.sqrt(pow(kx[j],2) + pow(ky[j],2) + pow(kz[j],2))\
+                for j in indices]
+
+                ky_draw  = [max_size*k_vec_base_length*ky[j]/ \
+                math.sqrt(pow(kx[j],2) + pow(ky[j],2) + pow(kz[j],2))\
+                for j in indices]
+
+                kz_draw  = [max_size*k_vec_base_length*kz[j]/ \
+                math.sqrt(pow(kx[j],2) + pow(ky[j],2) + pow(kz[j],2))\
+                for j in indices]
+
+                kr_draw  = [max_size*k_vec_base_length*kr[j]/ \
+                math.sqrt(pow(kx[j],2) + pow(ky[j],2) + pow(kz[j],2))\
+                for j in indices]
 
             x_draw_list.append(x_draw)
             y_draw_list.append(y_draw)
@@ -234,6 +244,9 @@ for file in results_file_list:
 #           if debug > 1: print('kr = ', kr, ' kz = ', kz)
 #           plt.arrow(rays_r_list[i_ray][i], rays_z_list[i_ray][i],\
 #             kr, kz, shape='full', head_width = 0.01)
+
+print('kx_draw_list) = ', kx_draw_list)
+print('kz_draw_list) = ', kz_draw_list)
 
 #----------------------------------------------------------------------------------------------
 # Open graphics output file.  N.B. run_label comes from graphics description file.

@@ -1,7 +1,7 @@
 #! /usr/bin/env python
 
 """
-eRAYS -> Does everything to run a RAYS case for axisymmetric totoidal geometry
+eRAYS -> Does everything to run a RAYS case for slab geometry
 Runs RAYS
 Runs post_process_RAYS
 Plots ray trajectories using bash function plot_rays
@@ -14,7 +14,7 @@ launches RAYS with that file as command line arg.  RAYS immediately copies that 
 default input file name "rays.in"
 
 change log:
-2/27/2025
+8/29/2025
  version 1.0
 
 """
@@ -100,6 +100,32 @@ if (equilib_model.strip("'") == 'axisym_toroid'):
         print('logMsg =  ', logMsg)
         raise Exception(logMsg)
 
+if (equilib_model.strip("'") == 'multiple_mirror'):
+    path = os.path.join(rays_root, 'graphics_RAYS/plot_RAYS_mirror.py')
+    infile_name = 'run_results.' + run_label.strip("'") + '.nc'
+    cmd = ['python', path, infile_name]
+    print('Executing = ', cmd)
+    retcode = subprocess.call(cmd)
+    if (retcode != 0):
+        logMsg = 'Error executing '.join(map(str, cmd))
+        print('cmd = ', cmd)
+        print('retcode = ', retcode)
+        print('logMsg =  ', logMsg)
+        raise Exception(logMsg)
+
+if (equilib_model.strip("'") == 'slab'):
+    path = os.path.join(rays_root, 'graphics_RAYS/plot_RAYS_slab.py')
+    infile_name = 'run_results.' + run_label.strip("'") + '.nc'
+    cmd = ['python', path, infile_name]
+    print('Executing = ', cmd)
+    retcode = subprocess.call(cmd)
+    if (retcode != 0):
+        logMsg = 'Error executing '.join(map(str, cmd))
+        print('cmd = ', cmd)
+        print('retcode = ', retcode)
+        print('logMsg =  ', logMsg)
+        raise Exception(logMsg)
+
 # Plot ray diagnostics
 path = os.path.join(rays_root, 'graphics_RAYS/plot_ray_diags.py')
 infile_name = 'ray_detailed_diagnostics.' + run_label.strip("'") + '.nc'
@@ -132,20 +158,41 @@ if os.access(infile_name, os.R_OK):
 else:
     print('File ', infile_name, ' is not readable')
 
-# Plot equilibrium radial profiles for axisym_toroid
-path = os.path.join(rays_root, 'graphics_RAYS/plot_XY_curves_netCDF.py')
-infile_name = 'eq_radial_profiles.' + run_label.strip("'") + '.nc'
-if os.access(infile_name, os.R_OK) and (equilib_model.strip("'") == 'axisym_toroid'):
-    cmd = ['python', path, infile_name]
-    print('Executing = ', cmd)
-    retcode = subprocess.call(cmd)
-    if (retcode != 0):
-        logMsg = 'Error executing '.join(map(str, cmd))
-        print('cmd = ', cmd)
-        print('retcode = ', retcode)
-        print('logMsg =  ', logMsg)
-        raise Exception(logMsg)
-else:
-    print('File ', infile_name, ' is not readable')
+
+# Plot equilibrium radial profiles for axisym_toroid or multiple mirror
+if (equilib_model.strip("'") == 'axisymmetric_toroid' or\
+    equilib_model.strip("'") == 'multiple_mirror'):
+	path = os.path.join(rays_root, 'graphics_RAYS/plot_XY_curves_netCDF.py')
+	infile_name = 'eq_radial_profiles.' + run_label.strip("'") + '.nc'
+	if os.access(infile_name, os.R_OK):
+		cmd = ['python', path, infile_name]
+		print('Executing = ', cmd)
+		retcode = subprocess.call(cmd)
+		if (retcode != 0):
+			logMsg = 'Error executing '.join(map(str, cmd))
+			print('cmd = ', cmd)
+			print('retcode = ', retcode)
+			print('logMsg =  ', logMsg)
+			raise Exception(logMsg)
+	else:
+		print('File ', infile_name, ' is not readable')
+
+if (equilib_model.strip("'") == 'slab'):
+
+	# Plot equilibrium X profiles for slab
+	path = os.path.join(rays_root, 'graphics_RAYS/plot_XY_curves_netCDF.py')
+	infile_name = 'eq_X_profiles.' + run_label.strip("'") + '.nc'
+	if os.access(infile_name, os.R_OK):
+		cmd = ['python', path, infile_name]
+		print('Executing = ', cmd)
+		retcode = subprocess.call(cmd)
+		if (retcode != 0):
+			logMsg = 'Error executing '.join(map(str, cmd))
+			print('cmd = ', cmd)
+			print('retcode = ', retcode)
+			print('logMsg =  ', logMsg)
+			raise Exception(logMsg)
+	else:
+		print('File ', infile_name, ' is not readable')
 
 print('Finsihed everything')

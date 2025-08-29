@@ -133,8 +133,6 @@ contains
 		alphat2 = 0.
     end if
 
- write(*,*)'initialize_multiple_mirror_eq_m: got to 0'
-
 ! Read input namelist
     if (read_input .eqv. .true.) then
     	input_unit = get_unit_number()
@@ -142,15 +140,13 @@ contains
         read(input_unit, multiple_mirror_eq_list)
         close(unit=input_unit)
     end if
- write(*,*)'initialize_multiple_mirror_eq_m: got to 0.5'
-
 
 ! Write input namelist
     if (verbosity > 0) then
 		write(message_unit, multiple_mirror_eq_list)
 		if (messages_to_stdout) write(*, multiple_mirror_eq_list)
     end if
- write(*,*)'initialize_multiple_mirror_eq_m: got to 1'
+
 ! magnetics (For, now only have spline interpolation.  Add analytic fields someday soon.)
     magnetics: select case (trim(magnetics_model))
        case ('mirror_magnetics_spline_interp')
@@ -159,7 +155,7 @@ contains
           r_LUFS = r_LUFS_spline
           z_LUFS = z_LUFS_spline
           Aphi_LUFS = Aphi_LUFS_spline
- write(*,*)'initialize_multiple_mirror_eq_m: got to 1'
+
           case default
           write(0,*) 'initialize_multiple_mirror_eq: unknown magnetics model =', magnetics_model
           call text_message('initialize_multiple_mirror_eq: unknown magnetics model',&

@@ -10,32 +10,69 @@ module slab_eq_m
 ! motivation for linear_2 is added flexibility in specifying the independent coordinate,
 ! for example using the density or B field as a plotting axis coordinate.
 
-    use constants_m, only : rkind
+! N.B. There is danger of negative density or temperature in linear and Linear_2 models.
+!      linear density or temp -> 1 + x/Ln_scale, asking for x < -Ln_scale will give < 0
+!      Linear_2 density or temp -> n0 + dndx*(x - x0) so same issue
+
+    use constants_m, only : rkind, zero, one
 
     implicit none
 
-! data for slab magnetics
-    character(len=12) :: bx_prof_model, by_prof_model, bz_prof_model
-    real(KIND=rkind) :: bx0, by0, bz0
-    real(KIND=rkind) :: Ln_scale, LT_scale, LBy_shear_scale, LBz_scale
-    real(KIND=rkind) :: dBzdx, dndx, dtdx
+! Geometry data
+	! data for bounding box (meters)
+    real(KIND=rkind) :: xmin, xmax, ymin, ymax, zmin, zmax
+	! location of x = 0 for tokamak-like models
+    real(KIND=rkind) :: rmaj
+    ! minor radius-like scale length for parabolic profiles or Gaussian
+    real(KIND=rkind) :: rmin
+    ! center position of Linear_2 profiles
+    real(KIND=rkind) :: x0
 
-! data for slab density and temperature
+
+! data for slab magnetics
+    ! Model names for Bx, By, Bz
+    character(len=12) :: bx_prof_model, by_prof_model, bz_prof_model
+    ! Magnetic field in Tesla at x,y,z = 0
+    real(KIND=rkind) :: bx0, by0, bz0
+    ! Parameters for linear models of Bz and By shear
+    real(KIND=rkind) :: LBy_shear_scale, LBz_scale
+    ! Slope for Linear_2 model
+    real(KIND=rkind) :: dBzdx
+
+! data for slab density
+    ! Model name for density profiles
     character(len=60) :: dens_prof_model
-    real(KIND=rkind) :: rmaj, rmin
+    ! Parameters for linear model of ne
+    real(KIND=rkind) :: Ln_scale
+    ! Slope for Linear_2 model
+    real(KIND=rkind) :: dndx
+    ! Parameters for parabolic model
     real(KIND=rkind) :: alphan1
     real(KIND=rkind) :: alphan2
-    character(len=20), allocatable :: t_prof_model(:)
-    real(KIND=rkind), allocatable :: alphat1(:)
-    real(KIND=rkind), allocatable :: alphat2(:)
+	! Density outside x = rmin as a fraction of ne0, defaults to 0. but can be set in namelist
+    real(KIND=rkind) :: n_min = zero
 
-! data for boundary
-    real(KIND=rkind) :: xmin, xmax, ymin, ymax, zmin, zmax
+! data for slab temperature
+    ! Model name for temperature profiles
+    character(len=20), allocatable :: t_prof_model(:)
+    ! Parameters for linear models of Te
+    real(KIND=rkind) :: LT_scale
+    ! Parameters for Linear_2 models
+    real(KIND=rkind) :: dtdx
+    ! Parameters for parabolic model
+    real(KIND=rkind), allocatable :: alphat1(:)
+   real(KIND=rkind), allocatable :: alphat2(:)
+	! Temperature outside x = rmin as a fraction of T0s, defaults to 0. but can be set in namelist
+   real(KIND=rkind), allocatable :: T_min(:)
+
+! Local Variables
+	real(KIND=rkind) :: f, fp ! dummy variables for parabolic_prof
 
  namelist /slab_eq_list/ &
      & bx_prof_model, by_prof_model, bz_prof_model, bx0, by0, bz0,                    &
-     & rmaj, rmin, dens_prof_model, alphan1, alphan2, t_prof_model, alphat1, alphat2, &
-     & Ln_scale, LT_scale, LBy_shear_scale, LBz_scale, dBzdx, dndx, dtdx, &
+     & rmaj, rmin, dens_prof_model, alphan1, alphan2, n_min,                          &
+     & t_prof_model, alphat1, alphat2, T_min, &
+     & Ln_scale, LT_scale, LBy_shear_scale, LBz_scale, dBzdx, dndx, dtdx, x0, &
      & xmin, xmax, ymin, ymax, zmin, zmax
 
 !********************************************************************
@@ -54,9 +91,7 @@ contains
  	integer :: input_unit, get_unit_number ! External, free unit finder
 
     allocate( t_prof_model(0:nspec) )
-    allocate( alphat1(0:nspec), alphat2(0:nspec) )
-    alphat1 = 0.
-    alphat2 = 0.
+    allocate( alphat1(0:nspec), alphat2(0:nspec), T_min(0:nspec), source = zero )
 
     if (read_input .eqv. .true.) then
   		input_unit = get_unit_number()
@@ -110,7 +145,11 @@ contains
     x = rvec(1)
     y = rvec(2)
     z = rvec(3)
-    gradbtensor = 0.
+    gradbtensor = zero
+    ns = zero
+    gradns = zero
+    ts = zero
+    gradts = zero
 
 ! Check that we are in the box
     if (x < xmin .or. x > xmax) equib_err = 'x out_of_bounds'
@@ -170,13 +209,13 @@ contains
           gradbtensor(1,3) = -bvec(3) / (rmaj+x)
 
        case ('linear')
-!         Linear with scale length rmin
+!         Linear with scale length LBz_scale
           bvec(3) = bz0 * (1.+x/LBz_scale)
           gradbtensor(1,3) = bz0/LBz_scale
 
        case ('linear_2')
-!         Linear: Specify bz0 => Bz(rmin) & slope => dBzdx
-          bvec(3) = bz0 + dBzdx*(x - rmin)
+!         Linear centered at x0: Specify bz0 => Bz(x0) & slope => dBzdx
+          bvec(3) = bz0 + dBzdx*(x - x0)
           gradbtensor(1,3) = dBzdx
 
        case default
@@ -191,33 +230,27 @@ contains
 
         case ('constant')
           ns(:nspec) = n0s(:nspec)
-          gradns = 0.
 
         case ('linear')
-!       Linear with scale length rmin (i.e. ns = n0s at x = 0, ns = 0 at x = -rmin)
-            ns = n0s(:nspec)*(1.0 + x/Ln_scale)
-            gradns = 0.
+!       Linear with scale length Ln_scale (ns = n0s at x = 0, ns = 0 at x = -Ln_scale)
+            ns = n0s(0:nspec)*(1.0 + x/Ln_scale)
             gradns(1,0:nspec) = n0s(0:nspec) * (1.0/Ln_scale)
 
         case ('linear_2')
-!         Linear: Specify n0s => ns(rmin) & slope => dndx
-            ns = n0s(:nspec) + dndx*eta*(x - rmin)
-            gradns = 0.
+!         Linear centered at x0: Specify n0s => ns(x0) & slope => dndx
+            ns = n0s(0:nspec) + dndx*eta*(x - x0)
             gradns(1,0:nspec) = n0s(0:nspec) * dndx
 
         case ('parabolic')
-!       Parabolic around x = rmin
-            ns(:nspec) = n0s(:nspec) * (1.-(x/rmin-1)**alphan2)**alphan1
-            gradns = 0.
-            gradns(1,:) = -n0s(:nspec)/rmin*alphan1*alphan2*(x/rmin-1)**(alphan2-1)* &
-                         & (1-(1-(x/rmin-1)**alphan2)**(alphan1-1))
-            gradns(2:3,:) = 0.
+!       Parabolic around x = 0
+			call parabolic_prof(x, n_min, alphan1, alphan2, f, fp)
+            ns(0:nspec) = n0s(0:nspec) * f
+            gradns(1,0:nspec) = n0s(0:nspec) * fp
 
         case ('Gaussian')
 !         Gaussian (default: alphan1=1.).
-            ns(:nspec) = n0s(:nspec) * exp(-3.*alphan1*(x/rmin)**2)
-            gradns = 0.
-            gradns(1,:nspec) = ns * (-6.*alphan1*x/rmin**2)
+            ns(0:nspec) = n0s(0:nspec) * exp(-3.*alphan1*(x/rmin)**2)
+            gradns(1, 0:nspec) = ns(0:nspec) * (-6.*alphan1*x/rmin**2)
 
         case default
             write(0,*) 'SLAB: invalid dens_prof_model =', dens_prof_model
@@ -232,30 +265,25 @@ contains
 
        case ('zero')
           ts(is) = 0.
-          gradts(:,is) = 0.
 
        case ('constant')
           ts(is) = t0s(is)
-          gradts(:,is) = 0.
 
         case ('linear')
 !       Linear with scale length rmin
             ts(is)=t0s(is)*(1.+x/LT_scale)
             gradts(1,is) = t0s(is) * (1./LT_scale)
-            gradts(2:3,is) = 0.
 
         case ('linear_2')
-!         Linear: Specify t0s => ns(rmin) & slope => dtdx
-            ts(is)=t0s(is) + dtdx*(x - rmin)
+!       Linear: Specify t0s => ns(rmin) & slope => dtdx
+            ts(is)=t0s(is) + dtdx*(x - x0)
             gradts(1,is) = t0s(is) * dtdx
-            gradts(2:3,is) = 0.
 
        case ('parabolic')
-!         Parabolic around x = rmin
-          ts(is) = t0s(is) * (1.-(x/rmin-1)**alphat2(is))**alphat1(is)
-          gradts(1,is) = -t0s(is)/rmin*(alphat1(is)*alphat2(is)*(x/rmin-1)**(alphat2(is)-1)* &
-                         & (1-(x/rmin-1)**alphat2(is))**(alphat1(is)-1))
-          gradts(2:3,is) = 0.
+!      Parabolic around x = x0
+		  call parabolic_prof(x-x0, t_min(is), alphat1(is), alphat2(is), f, fp)
+          ts(is) = t0s(is) * f
+          gradts(1,is) = t0s(is) * fp
 
        case default
           write(0,*) 'SLAB: invalid t_prof_model = ', t_prof_model(:nspec)
@@ -305,13 +333,44 @@ contains
 
     do ip = 1, nx_points
         x = xstart + (ip-1)*dx
-        rvec( : ) = (/ x, real(0.,KIND=rkind), real(0.,KIND=rkind) /)
+        rvec( : ) = (/ x, zero, zero /)
         call slab_eq(rvec, bvec, gradbtensor, ns, gradns, ts, gradts, equib_err)
         write (message_unit,'(f11.5, a, e12.5, 3f11.5, 7f11.5)') &
                & x,'  ', ns(0), bvec, (ts(i), i=0, nspec)
     end do
 
  end subroutine write_slab_profiles
+
+!********************************************************************
+
+  pure subroutine parabolic_prof(rho, f_min, alpha1, alpha2, f, fp)
+! Provides a parabolic-like function f(rho) and its derivative fp(rho)
+!
+! Parabolic-like means:
+! f = 1.0 at rho = 0
+! f = (1 - rho**alpha2)**alpha1 provided f > f_min
+! f = f_min if the parabola above would give f < f_min or if rho > 1.0
+!
+! N.B. The expectation is that rho = sqrt(toroidal flux)
+
+    implicit none
+
+    real(KIND=rkind), intent(in) :: rho, f_min, alpha1, alpha2
+    real(KIND=rkind), intent(out) :: f, fp
+
+	f = zero
+	if (rho < one) then
+		f = (1.-rho**(alpha2))**alpha1
+		fp = -alpha1*alpha2*rho**(alpha2 - 1.)*(1.-rho**(alpha2))&
+				& **(alpha1 - 1.)
+	end if
+
+	if (f < f_min) then
+		f = f_min
+		fp = zero
+	end if
+
+  end subroutine parabolic_prof
 
 !********************************************************************
 
