@@ -1,36 +1,22 @@
  module ode_m
-!   contains parameters for initial value ODE solver.
+! Contains parameters for initial value ODE solver.
+
+! Working notes:
+!_________________________________________________________________________________________
 
     use constants_m, only : rkind
 
     implicit none
 
-!   Switch to select ODE solvers for ray tracing.  Presently supported solvers are:
-!   ode_solver= SG_ode: subroutine ODE developed by L. F. Shampine and M. K. Gordon.
-!   ode_solver = RK4_ode: Simple Runge-Kutta 4th order integrator.
-    character (len = 15) :: ode_solver_name
 
-!   Name of routine used to calculate RHS derivatives for ray equations. Presently
-!   supported routines are:
-!   ray_deriv_name = cold
-!   ray_deriv_name = numerical
-    character(len=60) :: ray_deriv_name
+! Local data **************************************************
 
-!   nv: No. of ODEs to be solved.
+!   Number of ODEs to be solved. Calculated below depending on whether or not damping and
+!   diagnostic quantities are to be integrated.
     integer :: nv
-
-! Maximum length of ray
-     real(KIND=rkind) :: s_max
-
-!   ODE step size.
-    real(KIND=rkind) :: ds
-
-!   Maximum no. of steps allowed.
-    integer :: nstep_max
 
 ! Derived type containing information on terminating ode integration, and error tolerances
 !  which may evolve along the ray e.g. as set by the SG ODE solver.
-
     type ode_stop
 !        logical :: stop_ode = .false.
         logical :: stop_ode
@@ -88,14 +74,36 @@
       end subroutine RK4_ode
     end interface RK4_ode
 
+
+! Namelist data for /ode_list/  *****************************
+
+!   Switch to select ODE solvers for ray tracing.  Presently supported solvers are:
+!   ode_solver= SG_ode: subroutine ODE developed by L. F. Shampine and M. K. Gordon.
+!   ode_solver = RK4_ode: Simple Runge-Kutta 4th order integrator.
+    character (len = 15) :: ode_solver_name
+
+!   Name of routine used to calculate RHS derivatives for ray equations. Presently
+!   supported routines are:
+!   ray_deriv_name = cold
+!   ray_deriv_name = numerical
+    character(len=60) :: ray_deriv_name
+
+! Maximum length of ray
+     real(KIND=rkind) :: s_max
+
+!   ODE step size.
+    real(KIND=rkind) :: ds
+
+!   Maximum no. of steps allowed.
+    integer :: nstep_max
+
 ! Namelist
     namelist /ode_list/ ode_solver_name, ray_deriv_name, nstep_max, s_max, ds
 
-!********************************************************************
+!_________________________________________________________________________________________
 
  contains
-
-!********************************************************************
+!_________________________________________________________________________________________
 
   subroutine initialize_ode_solver_m(read_input)
 

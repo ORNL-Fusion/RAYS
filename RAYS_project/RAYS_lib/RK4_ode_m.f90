@@ -1,6 +1,9 @@
  submodule (ode_m) RK4_ode_m
 !   contains parameters specific to RK4_ode ODE solver.
 
+! Working notes:
+!_________________________________________________________________________________________
+
     use constants_m, only : rkind
 
 !   Access type definition ode_stop should be available by host association from ode_m.
@@ -11,13 +14,16 @@
     implicit none
 
 
+! Local data **************************************************
+
+! None
+
 ! namelist /RK4_ode_list/  N.B. RK4 has no parameters so there is no namelist to read
 
-!********************************************************************
+!_________________________________________________________________________________________
 
 contains
-
-!********************************************************************
+!_________________________________________________________________________________________
 
   module subroutine initialize_RK4_ode
 

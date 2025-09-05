@@ -1,6 +1,9 @@
 module  temperature_spline_interp_m
-! Implements temperature profiles based on pointwise data contained in makelist
+! Implements temperature profiles based on pointwise numeerical data contained in namelist
 ! temperature_spline_interp_list.
+
+! Working notes:
+
 ! At present (2-22-2025) this only produces only two profiles (electron, ion).  All ions
 ! species have the same temperature. Profiles are normalized to one.
 ! This is similar to the "parabolic" profiles implemented in axisym_toroid_eq_m.
@@ -14,11 +17,16 @@ module  temperature_spline_interp_m
 ! For now only one spline_temperature_model and one function is exported, spline_temperature_ne.
 ! So, for now, namelist variable 'spline_temperature_model' is not used.
 !
+!_________________________________________________________________________________________
 
     use constants_m, only : rkind
     use quick_cube_splines_m, only : cube_spline_function_1D
 
     implicit none
+
+! Local data **************************************************
+
+! Namelist data for /axisym_toroid_eq_list/  *****************************
 
 	integer, parameter :: n_grid_max = 200 ! Max dimension of input arrays, truncated later
 
@@ -36,13 +44,22 @@ module  temperature_spline_interp_m
  	character (len = 80) :: Te_name = 'Te_profile'
  	character (len = 80) :: Ti_name = 'Ti_profile'
 
+! Namelist data for /temperature_spline_interp_list/  *****************************
+
+!    character (len = 60) :: spline_Te_model, spline_Ti_model ! Not used, YET
+
+! Actual number of points to be splined. <= n_grid_max
+	integer :: ngrid
+! Values on grid (grid assumed uniform 0 to 1)
+	real(KIND=rkind) ::  Te_in(n_grid_max)
+	real(KIND=rkind) ::  Ti_in(n_grid_max)
+
   namelist /temperature_spline_interp_list/ ngrid, Te_in, Ti_in
 
-!********************************************************************
+!_________________________________________________________________________________________
 
 contains
-
-!********************************************************************
+!_________________________________________________________________________________________
 
   subroutine initialize_temperature_spline_interp(read_input)
 

@@ -1,15 +1,27 @@
  module rf_m
 
+! Working notes:
+!_________________________________________________________________________________________
+
     use constants_m, only : rkind
 
     implicit none
 
+! Local data **************************************************
+
+!   RF wave frequency: omgrf = 2*pi*frf
+    real(KIND=rkind) :: omgrf
+!   wave number in vacuum: k0 = clight / omgrf
+    real(KIND=rkind) :: k0
+
+
+! Namelist data for /rf_list/  *****************************
+
 !   Name of dispersion model used in ray tracing
     character(len=60) :: ray_dispersion_model
 
-!   RF wave frequency: omgrf = 2*pi*frf, frf in Hz, and wave number
-!   in vacuum: k0 = clight / omgrf
-    real(KIND=rkind) :: omgrf, frf, k0
+!   RF in Hz,
+    real(KIND=rkind) :: frf
 
 !   A switch to select which root from the dispersion to be used for
 !   k initialization: i.e., fast wave, slow wave, IBW, or KAW, etc.
@@ -32,11 +44,10 @@
     namelist /rf_list/ ray_dispersion_model, frf, wave_mode, k0_sign, ray_param, &
                      & dispersion_resid_limit
 
-!********************************************************************
+!_________________________________________________________________________________________
 
 contains
-
-!********************************************************************
+!_________________________________________________________________________________________
 
   subroutine initialize_rf_m(read_input)
 

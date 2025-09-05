@@ -1,14 +1,21 @@
  submodule (ode_m) SG_ode_m
 !   contains parameters specific to SG_ode ODE solver.
 
+! Working notes:
+!_________________________________________________________________________________________
+
     use constants_m, only : rkind
 
 !   Access type definition ode_stop should be available by host association from ode_m.
-!   But it confuses make not to use ode_m since it thinks SG_ode_m doesn't depend on it.
+!   But it confuses MAKE not to use ode_m since it thinks SG_ode_m doesn't depend on it.
 !   Therefore:
     use ode_m, only : ode_stop
 
     implicit none
+
+! Local data **************************************************
+
+! Namelist data for /axisym_toroid_eq_list/  *****************************
 
 !   Target relative and absolute error tolerances for the ODE solver.
     real(KIND=rkind) :: rel_err0, abs_err0
@@ -18,11 +25,10 @@
 
  namelist /SG_ode_list/ rel_err0, abs_err0, SG_error_limit
 
-!********************************************************************
+!_________________________________________________________________________________________
 
 contains
-
-!********************************************************************
+!_________________________________________________________________________________________
 
   module subroutine initialize_SG_ode(read_input)
 

@@ -18,12 +18,14 @@
 ! module, max_number_of_points will equal 'actual_max_npoints' = the largest value of
 ! npoints(:).
 
+! Working notes:
+!_________________________________________________________________________________________
+
     use constants_m, only : rkind
 
     implicit none
 
-    logical :: write_results_list_directed = .false.
-    logical :: write_results_netCDF = .false.
+! Local data **************************************************
 
 ! Time and date vector, get from diagnostics_m
     integer :: date_vector(8)
@@ -83,13 +85,18 @@
 
     end type run_results
 
+
+! Namelist data for /ray_results_list/  *****************************
+
+    logical :: write_results_list_directed = .false.
+    logical :: write_results_netCDF = .false.
+
     namelist /ray_results_list/ write_results_list_directed, write_results_netCDF
 
-!****************************************************************************
+!_________________________________________________________________________________________
 
 contains
-
-!****************************************************************************
+!_________________________________________________________________________________________
 
     subroutine initialize_ray_results_m(read_input)
 

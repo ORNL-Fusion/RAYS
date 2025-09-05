@@ -13,11 +13,29 @@
 
 !   External procedures: cpu_time (intrinsic)
 
-   use constants_m, only : rkind
+! Working notes:
+!_________________________________________________________________________________________
 
-! Specifications
+    use constants_m, only : rkind
 
     implicit none
+! Local data
+
+!   Counter for general use, mostly for use in debugging
+    integer :: diag_count = 0
+    integer :: max_diag_count = 5
+
+!   Timing variables
+    real(KIND=rkind) :: t_start_RAYS, t_finish_RAYS  ! These are Julian dates in seconds
+    real(KIND=rkind), parameter :: day_to_seconds = 86400.
+
+! Time and date vector - loaded in subroutine initialize()
+    integer :: date_v(8)
+
+!   unit numbers for persistent files (i.e. ones that stay open all through the run)
+    integer :: output_unit   ! Unit for formatted ray data output.  Set in initialize()
+    integer :: ray_list_unit ! Unit for formatted ray list output.  Set in initialize()
+
 
 ! generic procedure: message(mess/character, value/generic, threshold/integer)
 ! Prints "caller: mess= value" when threshold > verbosity
@@ -37,9 +55,6 @@
     module procedure text_message, two_texts_message
     end interface
 
-! Time and date vector - loaded in subroutine initialize()
-    integer :: date_v(8)
-
 ! Unit where output from message() goes
     integer :: message_unit
 
@@ -51,6 +66,8 @@
 
 !  Default file name for message output.  At end copied to "log.RAYS.<run label>"
     character(len=80) :: message_file = 'messages'
+
+! Namelist data for /diagnostics_list/  *****************************
 
 !  verbosity = a switch to set the level of output from message() and text_message()
 !  verbosity = 0 gives minimum output, negative gives no text output
@@ -67,28 +84,16 @@
 !	the run.
     logical :: write_formatted_ray_files = .false.
 
-!   unit numbers for persistent files (i.e. ones that stay open all through the run)
-    integer :: output_unit   ! Unit for formatted ray data output.  Set in initialize()
-    integer :: ray_list_unit ! Unit for formatted ray list output.  Set in initialize()
+!  Run description
+    character(len=80) :: run_description = ''
 
 !  Run label (N.B. should be legal in a file name, e.g.no blanks allowed)
     character(len=60) :: run_label = ''
-
-!  Run description
-    character(len=80) :: run_description = ''
 
 !   Switch for diagnostics.
 !   integrate_eq_gradients = false: default
 !   integrate_eq_gradients = true: integrate gradients of B, Te, and ne along the ray.
     logical :: integrate_eq_gradients = .false.
-
-!   Counter for general use, mostly for use in debugging
-    integer :: diag_count = 0
-    integer :: max_diag_count = 5
-
-!   Timing variables
-    real(KIND=rkind) :: t_start_RAYS, t_finish_RAYS  ! These are Julian dates in seconds
-    real(KIND=rkind), parameter :: day_to_seconds = 86400.
 
     namelist /diagnostics_list/ verbosity, messages_to_stdout, write_formatted_ray_files, &
            & run_description, run_label, integrate_eq_gradients
@@ -117,9 +122,6 @@ contains
 		write(*,*) 'julian start, ierr = ', ierr
 		stop
 	end if
-
-
-!    call cpu_time(t_start_rays)
 
 ! Default filename is 'rays.in'.  Optionally get input file name from command line. then
 ! copy that file to 'ray.in'

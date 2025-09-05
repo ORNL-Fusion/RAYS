@@ -11,9 +11,16 @@
 ! which initializes a single ray from data in the namelist. This simple model could be
 ! used for testing.
 
+! Working notes:
+!_________________________________________________________________________________________
+
     use constants_m, only : rkind, zero, one
 
     implicit none
+
+! Local data **************************************************
+
+! Namelist data for /one_ray_init_XYZ_k_direction_list/  *****************************
 
 ! Data for initial launch position
     real(KIND=rkind) ::  X = zero, Y = zero, Z = zero
@@ -24,13 +31,10 @@
 
  namelist /one_ray_init_XYZ_k_direction_list/ X, Y, Z, nX, nY, nZ, use_this_n_vec
 
-!****************************************************************************
-
+!_________________________________________________________________________________________
 
 contains
-
-
-!****************************************************************************
+!_________________________________________________________________________________________
 
 	subroutine one_ray_init_XYZ_n_direction(nray_max, nray, rvec0, rindex_vec0, ray_pwr_wt)
 

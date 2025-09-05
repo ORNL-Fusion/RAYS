@@ -28,6 +28,10 @@
 
 ! External procedures:
 ! disp_solve_cold_nxsq_vs_nz in disp_solve_cold_nxsq_vs_nz.f90
+! solve_cold_nsq_vs_theta in solve_cold_nsq_vs_theta.f90
+
+! Working notes:
+!_________________________________________________________________________________________
 
     use constants_m, only : rkind
 

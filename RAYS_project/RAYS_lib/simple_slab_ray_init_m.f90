@@ -19,9 +19,16 @@
 ! External procedures:
 ! solve_disp_nx_vs_ny_nz in solve_disp_nx_vs_ny_nz.f90
 
+! Working notes:
+!_________________________________________________________________________________________
+
     use constants_m, only : rkind, one, zero
 
     implicit none
+
+! Local data **************************************************
+
+! Namelist data for /simple_slab_ray_init_list/  *****************************
 
     integer:: n_x_launch = 1
     real(KIND=rkind) ::  x_launch0 = zero, dx_launch = zero
@@ -38,11 +45,10 @@
      & n_z_launch, z_launch0, dz_launch, n_ky_launch, rindex_y0,           &
      & delta_rindex_y0, n_kz_launch, rindex_z0, delta_rindex_z0
 
-!****************************************************************************
+!_________________________________________________________________________________________
 
 contains
-
-!****************************************************************************
+!_________________________________________________________________________________________
 
 
     subroutine simple_slab_ray_init(nray_max, nray, rvec0, rindex_vec0, ray_pwr_wt)

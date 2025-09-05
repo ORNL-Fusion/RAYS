@@ -18,10 +18,15 @@ module eqdsk_utilities_m
 ! for 2nd derivatives, and anticipate that the module initialization will set dR, dZ to
 ! the grid spacing.
 
+! Working notes:
+!_________________________________________________________________________________________
+
   use constants_m, only : rkind
 
   implicit none
 
+
+! Local data **************************************************
 
 ! eqdsk data
   character (len = 100) :: string
@@ -34,7 +39,7 @@ module eqdsk_utilities_m
   real(KIND=rkind), dimension (:), allocatable :: R_grid, Z_grid
   real(KIND=rkind) :: dR, dZ
 
-!******************************
+!_________________________________________________________________________________________
 
 contains
 

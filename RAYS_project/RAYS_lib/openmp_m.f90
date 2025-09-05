@@ -4,18 +4,32 @@
 ! to the minimum of (num_procs,nray) or to use the module variable num_threads which has been
 ! set directly in a host program.  This make it possible to do scans of thread number scaling
 
+! Working notes:
+!_________________________________________________________________________________________
+
     use ray_init_m, only : nray
     use omp_lib
     use diagnostics_m, only : message, text_message
 
     implicit none
 
-    integer :: num_threads, num_procs
+! Local data **************************************************
+
+    integer :: num_procs
     logical :: have_OMP
+
+! Namelist data for /openmp_list/  *****************************
+
+! Number of OMP threads to use
+    integer :: num_threads
 
  namelist /openmp_list/ num_threads
 
+!_________________________________________________________________________________________
+
  contains
+!_________________________________________________________________________________________
+
     subroutine initialize_openmp_m(read_input)
 
        implicit none
@@ -40,7 +54,6 @@
 1       	continue ! error return, no namelist
             if (num_threads == 0) then ! Calculate num_threads
  			   num_threads = min(num_procs,nray)
-!			   num_threads = min(8,nray)
             end if
 	        call omp_set_num_threads(num_threads)
        end if

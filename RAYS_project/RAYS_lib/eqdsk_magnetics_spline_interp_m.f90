@@ -12,13 +12,14 @@ module  eqdsk_magnetics_spline_interp_m
 ! DBB (8/2/2024) Changed error return 'if psi > 1' to 'if psi > plasma_psi_limit' to
 ! allow rays outside last closed flux surface. plasma_psi_limit defaults to 1.0 but can be
 ! reset in namelist
+!_________________________________________________________________________________________
 
     use constants_m, only : rkind
     use quick_cube_splines_m, only : cube_spline_function_1D, cube_spline_function_2D
 
     implicit none
 
-    character (len = 100) :: eqdsk_file_name
+! Local data **************************************************
 
 ! Stuff for 2D spline profiles i.e. psi
 
@@ -46,6 +47,11 @@ module  eqdsk_magnetics_spline_interp_m
 
     ! Flux function psi at plasma boundary
     real(KIND=rkind) :: psiB
+
+! Namelist data for /eqdsk_magnetics_spline_interp_list/  *****************************
+
+! Name of input eqdsk file
+    character (len = 100) :: eqdsk_file_name
 
   namelist / eqdsk_magnetics_spline_interp_list/ eqdsk_file_name
 

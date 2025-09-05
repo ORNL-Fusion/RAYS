@@ -1,6 +1,9 @@
  module constants_m
 !   contains useful contants. Note that units are MKS.
 
+! Working notes:
+!_________________________________________________________________________________________
+
     implicit none
 
     integer, parameter :: rkind = selected_real_kind(15,307) ! kind parameter for reals

@@ -34,6 +34,7 @@ module axisym_toroid_eq_m
 ! External procedures: Only from modules used.
 
 ! Working notes:
+!_________________________________________________________________________________________
 
     use constants_m, only : rkind, one, zero
     use species_m, only : nspec
@@ -45,6 +46,7 @@ module axisym_toroid_eq_m
 ! Local data **************************************************
 
 ! Namelist data for /axisym_toroid_eq_list/  *****************************
+
 ! data for magnetics
     character(len=60) :: magnetics_model
 
@@ -68,7 +70,7 @@ module axisym_toroid_eq_m
 
 ! Data for temperature
     character(len=60), allocatable :: temperature_prof_model(:)
-    ! Parabolic model parameters
+! Parabolic model parameters
     real(KIND=rkind), allocatable :: alphat1(:) ! Can be dfferent for different species
     real(KIND=rkind), allocatable :: alphat2(:) ! Can be dfferent for different species
 ! Temperature outside psi = 1 as a fraction of Te0, defaults to 0. but can be set in namelist
@@ -86,11 +88,10 @@ module axisym_toroid_eq_m
      & alphat1, alphat2, & ! parameters for parabolic temperature model.  Same for all species now
      & T_scrape_off
 
-!********************************************************************
+!_________________________________________________________________________________________
 
 contains
-
-!********************************************************************
+!_________________________________________________________________________________________
 
   subroutine initialize_axisym_toroid_eq_m(read_input)
 

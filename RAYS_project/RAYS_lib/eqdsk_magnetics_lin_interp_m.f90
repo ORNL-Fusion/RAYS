@@ -2,23 +2,29 @@ module  eqdsk_magnetics_lin_interp_m
 ! A simple  eqdsk equilibrium model. This code uses eqdsk routines in module eqdsk_utilities_m.f90
 ! These were adapted from similar codes by Richard Fitzpatrick.  It uses Fitzpatrick's functions
 ! for interpolating psi and its derivatives using simple 2 point or 3 point approximations.
-! In that regard they are not expected to be very accurate.  This version will soon be supplanted
-! by one that uses cubic splines for the interpolation.
+! In that regard they are not expected to be very accurate.  Is used just for comparison with
+! one that uses cubic splines for the interpolation -> eqdsk_magnetics_spline_interp
 !
 ! N.B. Values of Psi are shifted on initialization so that Psi is zero on axis.
+
+! Working notes:
+!_________________________________________________________________________________________
 
     use constants_m, only : rkind
 
     implicit none
 
-    character (len = 100) :: eqdsk_file_name
-
-    ! data for psplines
+! Local data **************************************************
 
     ! Flux function psi at plasma boundary
     real(KIND=rkind) :: psiB
 
-  namelist / eqdsk_magnetics_lin_interp_list/ eqdsk_file_name
+! Namelist data for /eqdsk_magnetics_lin_interp_list/  *****************************
+
+! Name of input eqdsk file
+    character (len = 100) :: eqdsk_file_name
+
+    namelist / eqdsk_magnetics_lin_interp_list/ eqdsk_file_name
 
 !********************************************************************
 

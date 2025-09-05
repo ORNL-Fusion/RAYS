@@ -1,14 +1,25 @@
  module damping_m
-!   contains parameters and routines to calculate damping
+! Contains parameters and routines to calculate damping
+
+! Working notes:
+!_________________________________________________________________________________________
 
     use constants_m, only : rkind
 
     implicit none
 
+! Local data **************************************************
+
+! The warm plasma quantities are needed in routine poynting - generated in routine deriv()
+! N.B. This may not be thread safe.  Need to revisit when implementing poynting
+    complex(KIND=rkind) :: depsdw_h3x3(3,3)
+
+! Namelist data for /axisym_toroid_eq_list/  *****************************
+
 !   Switch to select which model to use for damping calculation
 !   damping_model = 'no_damp" do not calculate damping
-!   damping_model = 'poynting' use multicomponent Poyntings theorem
-!   damping_model = 'fund_ECH' use simple weak damping approx. for fundamental ECH
+!   damping_model = 'poynting' use multicomponent Poyntings theorem. (Not yet)
+!   damping_model = 'fund_ECH' use simple weak damping approximation for fundamental ECH
     character(len=60) :: damping_model
 
 !   Multi species damping.  Only meaningful if damping_model /= 'no_damp"
@@ -16,12 +27,8 @@
 !   If .false. integrate damping only total damping
     logical :: multi_spec_damping = .false.
 
-!   Ray is considered totally damped if damping > total_damping_limit
+!   Ray is considered totally damped if damping > total_damping_limit. Can reset in input
     real(KIND=rkind) :: total_damping_limit = 0.99
-
-! The warm plasma quantities are needed in routine poynting - generated in routine deriv()
-
-    complex(KIND=rkind) :: depsdw_h3x3(3,3)
 
     namelist /damping_list/ damping_model, multi_spec_damping, total_damping_limit
 

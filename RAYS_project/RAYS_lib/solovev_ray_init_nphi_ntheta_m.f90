@@ -1,11 +1,11 @@
  module solovev_ray_init_nphi_ntheta_m
- 
+
 ! Parameters to generate the initial conditions for the rays
-! i.e. intitial position for each ray: rvec0(1:3, iray) and 
+! i.e. intitial position for each ray: rvec0(1:3, iray) and
 ! information necessary to initialize k for each ray: kvec0(1:3, iray)
 ! Note: initialization of k requires solution of the dispersion relation
 !   and depends on magnetic field and density information.  The actual
-!   initialization of k occurs in subroutine 'initialize' which is called from 
+!   initialization of k occurs in subroutine 'initialize' which is called from
 !   subroutine 'ray_tracing'.   Here the information necessary to do this
 !   calculation (e.g. toroidal, poloidal mode number, toroidal, poloidal wave
 !   number) is generated from data on the number of launch angles etc. and put
@@ -15,15 +15,22 @@
 !   There are several reasonable ways to initialize k values,
 !   particularly in toroidal geometry.  At low frequencies toroidal and poloidal mode
 !   numbers are meaningful.  At higher frequencies the launch angle is more useful.
-!   For ECH one launches a beam with a distribution of rays around a central beam axis. 
+!   For ECH one launches a beam with a distribution of rays around a central beam axis.
 !   The variable ray_init_model determines which of several k intialization schemes are used
 
+! Working notes:
+!_________________________________________________________________________________________
+
     use constants_m, only : rkind
-    
-    implicit none   
+
+    implicit none
+
+! Local data **************************************************
+
+! Namelist data for /solovev_ray_init_nphi_ktheta_list/  *****************************
 
 ! Data for initial launch position
-! N.B. r_launch <--> minor radius, theta is relative to equatorial plane   
+! N.B. r_launch <--> minor radius, theta is relative to equatorial plane
     integer:: n_r_launch = 1
     real(KIND=rkind) ::  r_launch0 = 0., dr_launch = 0.
     integer:: n_theta_launch = 1
@@ -34,34 +41,28 @@
     real(KIND=rkind) ::  rindex_theta0 = 0., delta_rindex_theta = 0.
     integer:: n_rindex_phi = 1
     real(KIND=rkind) ::  rindex_phi0 = 0., delta_rindex_phi = 0.
-     
+
  namelist /solovev_ray_init_nphi_ktheta_list/ &
      & n_r_launch,  r_launch0, dr_launch, &
      & n_theta_launch, theta_launch0, dtheta_launch, &
      & n_rindex_theta, rindex_theta0, delta_rindex_theta, &
      & n_rindex_phi, rindex_phi0, delta_rindex_phi
 
-! Set up the initial conditions (before root finding of the dispersion relation)
-! for each ray 
-
-!****************************************************************************
-
+!_________________________________________________________________________________________
 
 contains
+!_________________________________________________________________________________________
 
 
-!****************************************************************************
-
-                                             
     subroutine ray_init_solovev_nphi_ntheta(nray_max, nray, rvec0, rindex_vec0, ray_pwr_wt)
-    
+
 ! Specify a range of initial launch positions (r,theta) and at each launch position
 ! an initial poloidal wave number, rindex_theta0, and toroidal wave number, rindex_phi0.
 !
 ! ray_pwr_wt(i) = fraction of total power carried by ray i.  Should provide a ray weight
 !                 subroutine as part of antenna model.  But for now al wights are just 1/nray.
 !
-! N.B. Some of the ray initializations may fail (e.g. initial point is outside plasma or 
+! N.B. Some of the ray initializations may fail (e.g. initial point is outside plasma or
 !      wave mode is evanescent).  This does not cause the program to stop.  It counts
 !      the successful initializations and sets number of rays, nray, to that.
 !
@@ -75,14 +76,14 @@ contains
     use solovev_eq_m, only: rmaj, solovev_psi
 
     implicit none
-    
+
     integer, intent(in) :: nray_max
     integer, intent(out) :: nray
     type(eq_point(nspec=nspec)) :: eq
     real(KIND=rkind), allocatable, intent(out) :: rvec0(:, :), rindex_vec0(:, :)
     real(KIND=rkind), allocatable, intent(out) :: ray_pwr_wt(:)
 
- 	integer :: input_unit, get_unit_number ! External, free unit finder   
+ 	integer :: input_unit, get_unit_number ! External, free unit finder
 
     integer :: iray, itheta, i_ntheta, i_nphi, count
     real(KIND=rkind) :: x, z, rmin_launch, theta, rindex_theta, rindex_phi, n2, n3
@@ -103,7 +104,7 @@ contains
 ! Allocate maximum space for the initial condition vectors rvec0, rindex_vec0
 ! N.B. Not all of these may successfully initialize because of errors.  So count successful
 !      initializations.  That's the final value of nray.
-    
+
         nray = n_r_launch * n_theta_launch * n_rindex_theta * n_rindex_phi
 
         if ((nray > 0) .and. (nray <= nray_max)) then
@@ -112,7 +113,7 @@ contains
         else
         write (*,*) 'solovev ray init: improper number of rays  nray=', nray
         stop 1
-        end if  
+        end if
 
     count = 0
 
@@ -121,13 +122,13 @@ contains
     theta_loop: do itheta = 1, n_theta_launch
         theta = theta_launch0 + (itheta-1) * dtheta_launch
 
-        rmin_launch = r_launch0+(iray-1)*dr_launch 
+        rmin_launch = r_launch0+(iray-1)*dr_launch
         x = rmaj + rmin_launch*cos(theta)
         z = rmin_launch*sin(theta)
         rvec(:) = (/ x, 0._rkind, z /)  ! Without loss of generality take y = 0
 
-    rindex_theta_loop: do i_ntheta = 1, n_rindex_theta 
-        rindex_theta = rindex_theta0 + (i_ntheta-1) * delta_rindex_theta 
+    rindex_theta_loop: do i_ntheta = 1, n_rindex_theta
+        rindex_theta = rindex_theta0 + (i_ntheta-1) * delta_rindex_theta
 
     rindex_phi_loop: do i_nphi = 1, n_rindex_phi
         rindex_phi = rindex_phi0 + (i_nphi-1) * delta_rindex_phi
@@ -135,28 +136,28 @@ contains
         call equilibrium(rvec, eq)
            if (trim(eq%equib_err) /= '') cycle rindex_phi_loop
 
-        call solovev_psi(rvec, psi, gradpsi, psiN, gradpsiN)  
-                     
+        call solovev_psi(rvec, psi, gradpsi, psiN, gradpsiN)
+
 ! Calculate a bunch of unit vectors, parallel and transverse components of k
         psi_unit = gradpsi/sqrt(dot_product(gradpsi,gradpsi))
 
         phi_unit = (/ 0._rkind, 1._rkind, 0._rkind/)
-        
+
         theta_unit = (/-gradpsi(3), 0._rkind, gradpsi(1) /) ! psi_unit X phi_unit
-        theta_unit = theta_unit/sqrt(dot_product(theta_unit,theta_unit))        
+        theta_unit = theta_unit/sqrt(dot_product(theta_unit,theta_unit))
 
         ! bunit X psi_unit
         trans_unit = (/eq%bunit(2)*psi_unit(3)-eq%bunit(3)*psi_unit(2), &
                     & eq%bunit(3)*psi_unit(1)-eq%bunit(1)*psi_unit(3), &
                     & eq%bunit(1)*psi_unit(2)-eq%bunit(2)*psi_unit(1)  /)
-        
+
         ! Refreactive index vector projected onto flux surface (i.e. no psi component)
         rindex_vec = rindex_phi*phi_unit + rindex_theta*theta_unit
 
         n3 = dot_product(eq%bunit, rindex_vec) ! Parallel component
         n2 = dot_product(trans_unit, rindex_vec) ! Transverse component
 
-! Solve dispersion for complex refractive index in psi direction then cast as real        
+! Solve dispersion for complex refractive index in psi direction then cast as real
         call solve_n1_vs_n2_n3(eq, ray_dispersion_model, wave_mode, k0_sign, &
              &  n2, n3, npsi_cmplx)
 
@@ -169,7 +170,7 @@ contains
 
         count = count +1
         rvec0( : , count) = rvec
-        
+
         ! Take psi component to point inward i.e. direction -grad_psi
         rindex_vec0( : , count) = rindex_vec - npsi*psi_unit
 
@@ -183,11 +184,11 @@ contains
 
  nperp = sqrt(npsi**2+n2**2)
 ! write(*,*) 'residual = ', residual(eq, k0*nperp, k0*n3)
-            
+
     end do rindex_phi_loop
     end do rindex_theta_loop
     end do theta_loop
-    
+
     ray_pwr_wt(count) = 1.
 
     end do ray_loop
@@ -200,7 +201,7 @@ contains
     else
         ray_pwr_wt = ray_pwr_wt/nray
     end if
-        
+
     end subroutine ray_init_solovev_nphi_ntheta
 
 !****************************************************************************
@@ -214,10 +215,10 @@ contains
        use equilibrium_m, only : eq_point
        use rf_m, only : ray_dispersion_model, k0
 
-       implicit none 
-       
+       implicit none
+
        type(eq_point(nspec=nspec)), intent(in) :: eq
- 
+
        real(KIND=rkind) :: k1, k3
 
        complex(KIND=rkind) :: eps(3,3), eps_h(3,3), epsn(3,3), ctmp
@@ -235,7 +236,7 @@ contains
         call dielectric_cold(eq, eps)
  write(*,*) ' return from call dielectric_cold'
     end if
-    
+
 !    write(*,*) 'eps = ', eps
 
 !      Hermitian part.
@@ -271,8 +272,8 @@ contains
           & + eps_norm(3,2)*(eps_norm(1,1)*eps_norm(2,3)) &
           & + eps_norm(3,2)*(eps_norm(2,1)*eps_norm(1,3)) &
           & + eps_norm(3,1)*(eps_norm(1,2)*eps_norm(2,3)) &
-          & + eps_norm(3,1)*(eps_norm(2,2)*eps_norm(1,3)) ) 
-      
+          & + eps_norm(3,1)*(eps_norm(2,2)*eps_norm(1,3)) )
+
 
        return
     end function residual_2
@@ -282,7 +283,7 @@ contains
 ! 			deallocate ( rvec0, rindex_vec0)
 ! 			deallocate ( ray_pwr_wt)
 ! 		end if
-		return ! Maybe nothing to deallocate.  rvec0 etc deallocated when 
+		return ! Maybe nothing to deallocate.  rvec0 etc deallocated when
 		       ! ray_init_axisym_toroid_R_Z_nphi_ntheta returns?
     end subroutine deallocate_solovev_ray_init_nphi_ntheta_m
 

@@ -1,3 +1,4 @@
+ module equilibrium_m
 ! Generic wrapper for various equilibrium routines.  Selects specific equilibrium model from
 ! namelist /equilibrium_list/ equilib_model.
 !
@@ -21,10 +22,7 @@
 ! 1/10/2022 (DBB) converted magnetic and species data at a spatial point to derived
 ! type -> eq_point so we can have multiple instances of equilibrium data in memory at
 ! the same time.
-
- module equilibrium_m
-
-!   contains equilibrium quantities.
+!_________________________________________________________________________________________
 
     use constants_m, only : rkind
     use species_m, only : nspec0
@@ -58,12 +56,10 @@
     end type eq_point
 
     namelist /equilibrium_list/ equilib_model
-
-!********************************************************************
+!_________________________________________________________________________________________
 
 contains
-
-!********************************************************************
+!_________________________________________________________________________________________
 
   subroutine initialize_equilibrium_m(read_input)
 

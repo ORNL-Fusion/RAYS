@@ -14,9 +14,16 @@ module slab_eq_m
 !      linear density or temp -> 1 + x/Ln_scale, asking for x < -Ln_scale will give < 0
 !      Linear_2 density or temp -> n0 + dndx*(x - x0) so same issue
 
+! Working notes:
+!_________________________________________________________________________________________
+
     use constants_m, only : rkind, zero, one
 
     implicit none
+
+! Local data **************************************************
+
+! Namelist data for /slab_eq_list/  *****************************
 
 ! Geometry data
 	! data for bounding box (meters)
@@ -65,9 +72,6 @@ module slab_eq_m
 	! Temperature outside x = rmin as a fraction of T0s, defaults to 0. but can be set in namelist
    real(KIND=rkind), allocatable :: T_min(:)
 
-! Local Variables
-	real(KIND=rkind) :: f, fp ! dummy variables for parabolic_prof
-
  namelist /slab_eq_list/ &
      & bx_prof_model, by_prof_model, bz_prof_model, bx0, by0, bz0,                    &
      & rmaj, rmin, dens_prof_model, alphan1, alphan2, n_min,                          &
@@ -75,11 +79,10 @@ module slab_eq_m
      & Ln_scale, LT_scale, LBy_shear_scale, LBz_scale, dBzdx, dndx, dtdx, x0, &
      & xmin, xmax, ymin, ymax, zmin, zmax
 
-!********************************************************************
+!_________________________________________________________________________________________
 
 contains
-
-!********************************************************************
+!_________________________________________________________________________________________
 
   subroutine initialize_slab_eq_m(read_input)
 
@@ -140,6 +143,7 @@ contains
 
     real(KIND=rkind) :: x, y, z
     integer :: is
+	real(KIND=rkind) :: f, fp ! dummy variables for parabolic_prof
 
     equib_err = ''
     x = rvec(1)

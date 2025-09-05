@@ -16,9 +16,9 @@
 ! index rather than k, so these routines initialize refractive index.  These are converted
 ! to k later.
 !
-! So far the ray initialization modules implemented are:
-!
-! simple_slab_init_m
+! So far the ray initialization models implemented are:
+! simple_slab_init, solovev, axisym_toroid_ray_init_R_Z_nphi_ntheta,
+! one_ray_init_XYZ_n_direction, file_input_ray_init
 !
 !The action of the ray_init modules is to fill nray, rvec0(:,:) and rindex_vec0(:,:)
 !
@@ -26,40 +26,42 @@
 !                 subroutine as part of antenna model.  But for now al wights are just 1/nray.
 !
 ! This module is called from main program.
-!
+
 ! Working notes:
 !
 ! 2/2/2025 (DBB) Eliminated case ('axisym_toroid_nphi_ntheta') it was obsolete and
 !                superseded by case ('axisym_toroid_ray_init_R_Z_nphi_ntheta')
 !
+!_________________________________________________________________________________________
 
     use constants_m, only : rkind
 
     implicit none
 
-    character(len=60) :: ray_init_model
-
-!   Initial position and wavenumber of the ray.  The number of rays to be traced, nray,
-!   is calculated in ray_init_m from input values of initial loacations and initial k.
-!   space for rvec0 and rindex_vec0 is allocated in ray_init_m
-
-!   Maximum number of rays allowed.
-    integer :: nray_max
-
-!   Number of rays.
-    integer :: nray
+! Local data **************************************************
 
     real(KIND=rkind), allocatable :: rvec0(:,:)
     real(KIND=rkind), allocatable :: rindex_vec0(:,:)
     real(KIND=rkind), allocatable :: ray_pwr_wt(:)
 
+!   Number of rays that were successfully initialized. Calculated in the specific ray
+!   initialization routine
+    integer :: nray
+
+! Namelist data for /ray_init_list/  *****************************
+
+! Name of the specific model used for ray initialization
+    character(len=60) :: ray_init_model
+
+! Maximum number of rays allowed.
+    integer :: nray_max
+
     namelist /ray_init_list/ ray_init_model, nray_max
 
-!****************************************************************************
+!_________________________________________________________________________________________
 
 contains
-
-!****************************************************************************
+!_________________________________________________________________________________________
 
     subroutine initialize_ray_init_m(read_input)
 

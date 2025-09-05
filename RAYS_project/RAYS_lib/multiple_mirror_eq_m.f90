@@ -37,7 +37,9 @@ module multiple_mirror_eq_m
 !   Plasma boundary is defined in terms of normalized Aphi on the last un-interrupted
 !   flux surface, == Aphi_LUFS.
 !
+
 ! Working notes:
+!_________________________________________________________________________________________
 
     use constants_m, only : rkind, one, zero, two
     use species_m, only : nspec
@@ -50,17 +52,19 @@ module multiple_mirror_eq_m
 
 ! Local data **************************************************
 
-! Namelist data for /multiple_mirror_eq_list/  **************************************************
-    character(len=60) :: magnetics_model
+	integer :: i, is
 
-! data for magnetics
 ! Geometry data
     real(KIND=rkind) :: box_rmax, box_zmin, box_zmax
 
 	! Get r_LUFS, z_LUFS, Aphi_LUFS from specific mirror magnetics routine (e.g.
-	! initialize_mirror_magnetics_spline_interp)
+	! initialize_mirror_magnetics_spline_interp) set in init
     real(KIND=rkind) :: r_LUFS, z_LUFS ! Location of scrape-off point of last flux surface
     real(KIND=rkind) :: Aphi_LUFS ! Bounding value of Aphi evaluated at r_LUFS, z_LUFS
+
+! Namelist data for /multiple_mirror_eq_list/  *****************************
+
+    character(len=60) :: magnetics_model
 
 ! Maximum value of normalized Aphi considered to be inside of plasma.  Defaults to 1.0
 ! but can be reset in namelist.
@@ -82,8 +86,6 @@ module multiple_mirror_eq_m
 ! Temperature outside rho = 1 as a fraction of Te0, defaults to 0. but can be set in namelist
     real(KIND=rkind) :: T_scrape_off = zero
 
-	integer :: i, is
-
  namelist /multiple_mirror_eq_list/&
 	 & magnetics_model, &
      & plasma_AphiN_limit, &
@@ -96,11 +98,10 @@ module multiple_mirror_eq_m
      & Aphin0_t, delta_t, & ! parameters for hyperbolic temperature model.
      & T_scrape_off
 
-!********************************************************************
+!_________________________________________________________________________________________
 
 contains
-
-!********************************************************************
+!_________________________________________________________________________________________
 
   subroutine initialize_multiple_mirror_eq_m(read_input)
 

@@ -1,14 +1,21 @@
 module solovev_eq_m
 ! A simple Solovev equilibrium model based on notes from Cai-Ye Wang of 1995 and DBB 2/12/2022.
-!
+
+! Working notes:
+!_________________________________________________________________________________________
 
     use constants_m, only : rkind
 
     implicit none
 
+! Local data **************************************************
+    real(KIND=rkind) :: inner_bound, vert_bound, r_Zmax
+
+! Namelist data for /solovev_eq_list/  *****************************
+
 ! data for magnetics
     real(KIND=rkind) :: rmaj, kappa, bphi0, iota0
-    real(KIND=rkind) :: inner_bound, outer_bound, vert_bound, r_Zmax
+    real(KIND=rkind) :: outer_bound
 
     ! Flux function psi at plasma boundary
     real(KIND=rkind) :: psiB
@@ -29,11 +36,10 @@ module solovev_eq_m
      & dens_prof_model, alphan1, alphan2, t_prof_model, alphat1, alphat2, &
      & box_rmin, box_rmax, box_zmin, box_zmax
 
-!********************************************************************
+!_________________________________________________________________________________________
 
 contains
-
-!********************************************************************
+!_________________________________________________________________________________________
 
   subroutine initialize_solovev_eq_m(read_input)
 

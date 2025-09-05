@@ -1,40 +1,23 @@
  module species_m
-!   contains species data.
-
-    use constants_m, only : rkind
-
-    implicit none
-
-!   Electron density at reference point (e.g. at magnetic axis or peak electron density)
-!   The profiles generated in the various equilibrium modules are normalized to one at
-!   the reference location (i.e. where ne = n0s(0) = n0).  The ion densities are specified
-!   as a fraction of electron density, eta(i).
-    real(KIND=rkind) :: n0
-
-!   Maximum No. of ion species: nspec0;
-!   Actual No. of ion species: nspec
-
-    integer, parameter :: nspec0 = 5
-    integer :: nspec  ! Calculated from species contained in namelist species_list
-
-!   is = species number
-!   is=0 is reserved for electrons and the rest for ions.
-!   qs: charge          ms: mass
-!   eta: concentration as fraction of electron density
-!   n0s: number density = n0*eta
-!   t0s_eV: temperature in eV.  Entered in eV in namelist file for convenience
-!   t0s: temperature in MKS (Joules) converted below from t0s_eV
-!   tseps_eV: temperature in eV.  Entered in eV in namelist file for convenience
-!   tseps: temperature in MKS (Joules) converted below from tseps_eV
-!	alfas: T_perp/T_paral
-!   v0s: parallel drift velocity
-!   nus: collision frequency i.e. nu/omega
+! contains plasma species data.
 
 ! Working notes:
 ! (2-22-2025 DBB) As of now, none of the equilibrium models use the edge density and
 ! temperature variables (nseps, tseps).  Instead there are variables in the equilibrium
 ! modules to specify ne and Te at the edge (d_scrapeoff and T_scrapeoff) as fractions of
-! the peak electron values (n0s(0), t0s(0)).
+! the peak electron values (n0s(0), t0s(0)).  But at least for now I'll leave nseps, tseps
+!_________________________________________________________________________________________
+
+    use constants_m, only : rkind
+
+    implicit none
+
+! Local data **************************************************
+
+!   Maximum No. of ion species: nspec0;
+    integer, parameter :: nspec0 = 5
+!   Actual No. of ion species: nspec
+    integer :: nspec  ! Calculated from species contained in namelist species_list
 
 !   Static declarations and initializations
 
@@ -43,48 +26,64 @@
     real(KIND=rkind), dimension(0:5) :: qs0 = (/-1., 1., 1., 1., 2., 2. /) ! units of electron charge
     real(KIND=rkind), dimension(0:5) :: ms0 = (/1., 1836., 3670., 5497., 5496., 7294. /) ! in units of me
 
-!   Criterion for checking charge neutrality.
-    real(KIND=rkind) :: neutrality = 1.e-10
+!   nmins, nmaxs: minimum and maximum harmonics kept in susceptibility tensor for
+!   for species is.  +/- n_limit is size of nimns,nmax arrays
+    integer, parameter :: n_limit = 5
+    integer, dimension(-n_limit:n_limit) :: nmins, nmaxs
 
-!   Actual species parameters to be obtained from datain()
+!   n0s: actual species number density calculated in init = n0*eta(is)
+    real(KIND=rkind), dimension(0:nspec0) :: n0s = 0.
+!   t0s: temperature in MKS (Joules) calculated in init from t0s_eV(is)
+    real(KIND=rkind), dimension(0:nspec0) :: t0s = 0.
+!   tseps: temperature in MKS (Joules) calculated in init from tseps_eV(is)
+    real(KIND=rkind), dimension(0:nspec0) :: tseps = 0.
+
+! Namelist data for /species_list/  *****************************
+
+!   Electron density at reference point (e.g. at magnetic axis or peak electron density)
+!   The profiles generated in the various equilibrium modules are normalized to one at
+!   the reference location (i.e. where ne = n0s(0) = n0).  The ion densities are specified
+!   as a fraction of electron density, eta(i).
+    real(KIND=rkind) :: n0
+
+
+!   is = species number
+!   is=0 is reserved for electrons and the rest for ions.
+!   qs: charge of species is
+!   ms: mass of species is
+!   eta: concentration as fraction of electron density
+!   t0s_eV: temperature in eV.  Entered in eV in namelist file for convenience
+!   tseps_eV: temperature in eV.  Entered in eV in namelist file for convenience
+!	alfas: T_perp/T_paral
+!   v0s: parallel drift velocity
+!   nus: collision frequency i.e. nu/omega
 
     character(len=12), dimension(0:nspec0) :: spec_name = ''
     real(KIND=rkind), dimension(0:nspec0) :: qs = 0.
     real(KIND=rkind), dimension(0:nspec0) :: ms = 0.
     real(KIND=rkind), dimension(0:nspec0) :: eta = 0.
-    real(KIND=rkind), dimension(0:nspec0) :: n0s = 0.
     real(KIND=rkind), dimension(0:nspec0) :: nseps = 0.
     real(KIND=rkind), dimension(0:nspec0) :: t0s_eV = 0.
-    real(KIND=rkind), dimension(0:nspec0) :: t0s = 0.
     real(KIND=rkind), dimension(0:nspec0) :: tseps_eV = 0.
-    real(KIND=rkind), dimension(0:nspec0) :: tseps = 0.
     real(KIND=rkind), dimension(0:nspec0) :: alfas = 0.
     real(KIND=rkind), dimension(0:nspec0) :: v0s = 0.
     real(KIND=rkind), dimension(0:nspec0) :: nus = 0.
 
-!   An array indicating which plasma model is to be used for each species
+!   An array indicating which plasma dispersion model is to be used for each species
 !   spec_model(is) = 'cold' susceptibility model is cold plasma
-!   spec_model(is) = 'bessel' susceptibility model is full besssel function
-
+!   spec_model(is) = 'bessel' susceptibility model is full besssel function. Not yet.
     character(len=12) :: spec_model(0:nspec0) = ''
 
-
-!   nmins, nmaxs: minimum and maximum harmonics kept in susceptibility tensor for
-!   for species is.  +/- n_limit is size of nimns,nmax arrays
-
-    integer, parameter :: n_limit = 5
-    integer, dimension(-n_limit:n_limit) :: nmins, nmaxs
-
+!   Criterion for checking charge neutrality.  Default here can be reset on input.
+    real(KIND=rkind) :: neutrality = 1.e-10
 
     namelist /species_list/ &
       & n0, nseps, spec_name, spec_model, qs, ms, t0s_eV, tseps_eV, eta, neutrality
 
-
-!********************************************************************
+!_________________________________________________________________________________________
 
 contains
-
-!********************************************************************
+!_________________________________________________________________________________________
 
     subroutine initialize_species_m(read_input)
 !   Loads charge and mass values for common plasma species from species names in namelist file
