@@ -245,9 +245,6 @@ for file in results_file_list:
 #           plt.arrow(rays_r_list[i_ray][i], rays_z_list[i_ray][i],\
 #             kr, kz, shape='full', head_width = 0.01)
 
-print('kx_draw_list) = ', kx_draw_list)
-print('kz_draw_list) = ', kz_draw_list)
-
 #----------------------------------------------------------------------------------------------
 # Open graphics output file.  N.B. run_label comes from graphics description file.
 # Edit graphics description that if you want to customize the run label for multiple ray files.
