@@ -1,15 +1,19 @@
  module ode_m
 ! Contains parameters for initial value ODE solver.
 
+!_________________________________________________________________________________________
 ! Working notes:
+!_________________________________________________________________________________________
+
+!_________________________________________________________________________________________
+! Module data
 !_________________________________________________________________________________________
 
     use constants_m, only : rkind
 
     implicit none
 
-
-! Local data **************************************************
+! Local data
 
 !   Number of ODEs to be solved. Calculated below depending on whether or not damping and
 !   diagnostic quantities are to be integrated.
@@ -75,7 +79,9 @@
     end interface RK4_ode
 
 
-! Namelist data for /ode_list/  *****************************
+!_________________________________________________________________________________________
+! Namelist data for /ode_list/
+!_________________________________________________________________________________________
 
 !   Switch to select ODE solvers for ray tracing.  Presently supported solvers are:
 !   ode_solver= SG_ode: subroutine ODE developed by L. F. Shampine and M. K. Gordon.
@@ -101,7 +107,6 @@
     namelist /ode_list/ ode_solver_name, ray_deriv_name, nstep_max, s_max, ds
 
 !_________________________________________________________________________________________
-
  contains
 !_________________________________________________________________________________________
 

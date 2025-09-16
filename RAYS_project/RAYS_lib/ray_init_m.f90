@@ -27,18 +27,22 @@
 !
 ! This module is called from main program.
 
+!_________________________________________________________________________________________
 ! Working notes:
-!
+!_________________________________________________________________________________________
+
 ! 2/2/2025 (DBB) Eliminated case ('axisym_toroid_nphi_ntheta') it was obsolete and
 !                superseded by case ('axisym_toroid_ray_init_R_Z_nphi_ntheta')
-!
+
+!_________________________________________________________________________________________
+! Module data
 !_________________________________________________________________________________________
 
     use constants_m, only : rkind
 
     implicit none
 
-! Local data **************************************************
+! Local data
 
     real(KIND=rkind), allocatable :: rvec0(:,:)
     real(KIND=rkind), allocatable :: rindex_vec0(:,:)
@@ -48,7 +52,9 @@
 !   initialization routine
     integer :: nray
 
-! Namelist data for /ray_init_list/  *****************************
+!_________________________________________________________________________________________
+! Namelist data for /ray_init_list/
+!_________________________________________________________________________________________
 
 ! Name of the specific model used for ray initialization
     character(len=60) :: ray_init_model

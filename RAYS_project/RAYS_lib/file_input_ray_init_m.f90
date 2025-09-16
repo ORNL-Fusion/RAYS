@@ -22,15 +22,30 @@
 ! now the quick-and-dirty solution is to renormalize by n_rays_in/nray.  We also allow a
 ! simple solution of uniform weight = 1/nray if all the weights are input as zero.
 
+
+!_________________________________________________________________________________________
+! Working notes:
+!_________________________________________________________________________________________
+
+!_________________________________________________________________________________________
+! Module data
+!_________________________________________________________________________________________
+
     use constants_m, only : rkind
 
     implicit none
 
-! Number of initial condition sets to be read in from namelist
-    integer:: n_rays_in
+! Local data **************************************************
 
  !  File name for input
     character(len=80) :: in_filename
+
+!_________________________________________________________________________________________
+! Namelist data for /file_input_ray_init_list/
+!_________________________________________________________________________________________
+
+! Number of initial condition sets to be read in from namelist
+    integer:: n_rays_in
 
 ! Initial positions and directions to be read in from namelist file.
 ! N.B. The ordering of indices in rvec_in(nray_max,3), rindex_vec_in(nray_max,3) is
@@ -44,7 +59,7 @@
  namelist /file_input_ray_init_list/ &
      & n_rays_in, rvec_in, rindex_vec_in, ray_pwr_wt_in
 
-!****************************************************************************
+!_________________________________________________________________________________________
 
 
 contains

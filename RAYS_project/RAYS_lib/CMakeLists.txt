@@ -29,8 +29,10 @@ list (APPEND lib_sources
 	multiple_mirror_eq_m.f90
 	ode_RAYS.f90
 	ode_m.f90
+	one_ray_init_XYZ_k_direction_m.f90
 	openmp_m.f90
 	ray_init_m.f90
+	ray_results_m.f90
 	ray_tracing.f90
 	rf_m.f90
 	RK4_ode_m.f90
@@ -40,13 +42,10 @@ list (APPEND lib_sources
     solovev_magnetics_m.f90
  	solovev_eq_m.f90
 	solovev_ray_init_nphi_ntheta_m.f90
-	temperature_spline_interp_m.f90
 	species_m.f90
 	suscep_m.f90
-	ray_results_m.f90
-	openmp_m.f90
+	temperature_spline_interp_m.f90
 	XY_curves_netCDF_m.f90
-	XYZ_k_direction_ray_init_m.f90
 )
 
 add_library (RAYS_lib ${lib_sources})

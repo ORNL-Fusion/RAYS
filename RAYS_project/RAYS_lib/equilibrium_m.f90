@@ -1,9 +1,11 @@
  module equilibrium_m
 ! Generic wrapper for various equilibrium routines.  Selects specific equilibrium model from
 ! namelist /equilibrium_list/ equilib_model.
-!
+
+!_________________________________________________________________________________________
 ! Working notes:
-!
+!_________________________________________________________________________________________
+
 ! 10/3/2023 (DBB) Changed plasma species data to be dimensioned 0:nspec0 rather than
 ! allocated.  The implicit allocations in loading data into the eq_point type may be
 ! slowing down parallel execution.
@@ -24,13 +26,14 @@
 ! the same time.
 !_________________________________________________________________________________________
 
+!_________________________________________________________________________________________
+! Module data
+!_________________________________________________________________________________________
+
     use constants_m, only : rkind
     use species_m, only : nspec0
 
     implicit none
-
-!   Switch to select specific equilibrium model.
-    character(len = 15) :: equilib_model
 
 ! Derived type containing equilibrium data for a spatial point in the plasma
     type eq_point
@@ -55,9 +58,16 @@
 
     end type eq_point
 
-    namelist /equilibrium_list/ equilib_model
+!_________________________________________________________________________________________
+! Namelist data for /equilib_model/
 !_________________________________________________________________________________________
 
+!   Switch to select specific equilibrium model.
+    character(len = 15) :: equilib_model
+
+    namelist /equilibrium_list/ equilib_model
+
+!_________________________________________________________________________________________
 contains
 !_________________________________________________________________________________________
 

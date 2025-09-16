@@ -14,7 +14,12 @@ module  density_spline_interp_m
 ! So, for now, namelist variable 'spline_density_model' is not used.
 !
 
+!_________________________________________________________________________________________
 ! Working notes:
+!_________________________________________________________________________________________
+
+!_________________________________________________________________________________________
+! Module data
 !_________________________________________________________________________________________
 
     use constants_m, only : rkind
@@ -24,7 +29,9 @@ module  density_spline_interp_m
 
 	integer, parameter :: n_grid_max = 200 ! Max dimension of input arrays, truncated later
 
-! Namelist data for /density_spline_interp_list/  *****************************
+!_________________________________________________________________________________________
+! Namelist data for /density_spline_interp_list/
+!_________________________________________________________________________________________
 
     character (len = 60) :: spline_density_model ! Not used, YET
 	integer :: ngrid ! Actual number of points to be splined. <= n_grid_max
@@ -38,11 +45,9 @@ module  density_spline_interp_m
 
   namelist /density_spline_interp_list/ ngrid, ne_in
 
-!********************************************************************
-
+!_________________________________________________________________________________________
 contains
-
-!********************************************************************
+!_________________________________________________________________________________________
 
   subroutine initialize_density_spline_interp(read_input)
 

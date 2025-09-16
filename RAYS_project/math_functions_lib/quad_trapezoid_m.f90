@@ -10,6 +10,14 @@
 ! Input x is either a fixed increment, h, or a vector of x(:) values (not necessarily
 ! evenly spaced). x,y vector value can be real or complex, single precision or kind = rkind.
 
+!_________________________________________________________________________________________
+! Working notes:
+!_________________________________________________________________________________________
+
+!_________________________________________________________________________________________
+! Module data
+!_________________________________________________________________________________________
+
     IMPLICIT NONE
 
     integer, parameter :: rkind = selected_real_kind(15,307) ! kind parameter for reals
@@ -25,8 +33,9 @@
                        & xvec_yvec_cum_real, xvec_yvec_cum_D
     end interface
 
-    CONTAINS
- !*********************************************************************************
+!_________________________________________________________________________________________
+contains
+!_________________________________________________________________________________________
 
     SUBROUTINE h_yvec_real(h, y, integral)
 

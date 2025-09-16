@@ -1,7 +1,12 @@
  module damping_m
 ! Contains parameters and routines to calculate damping
 
+!_________________________________________________________________________________________
 ! Working notes:
+!_________________________________________________________________________________________
+
+!_________________________________________________________________________________________
+! Module data
 !_________________________________________________________________________________________
 
     use constants_m, only : rkind
@@ -14,7 +19,9 @@
 ! N.B. This may not be thread safe.  Need to revisit when implementing poynting
     complex(KIND=rkind) :: depsdw_h3x3(3,3)
 
-! Namelist data for /axisym_toroid_eq_list/  *****************************
+!_________________________________________________________________________________________
+! Namelist data for /damping_list/
+!_________________________________________________________________________________________
 
 !   Switch to select which model to use for damping calculation
 !   damping_model = 'no_damp" do not calculate damping
@@ -32,12 +39,9 @@
 
     namelist /damping_list/ damping_model, multi_spec_damping, total_damping_limit
 
-
-!********************************************************************
-
- contains
-
-!********************************************************************
+!_________________________________________________________________________________________
+contains
+!_________________________________________________________________________________________
 
   subroutine initialize_damping_m(read_input)
 

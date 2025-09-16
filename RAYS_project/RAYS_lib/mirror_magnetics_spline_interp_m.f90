@@ -13,15 +13,18 @@ module  mirror_magnetics_spline_interp_m
 !      netCDF file and gets the data for initialization from that module.
 
 
+!_________________________________________________________________________________________
 ! Working notes:
+!_________________________________________________________________________________________
+
+!_________________________________________________________________________________________
+! Module data
 !_________________________________________________________________________________________
 
     use constants_m, only : rkind, zero, one, two
     use quick_cube_splines_m, only : cube_spline_function_1D, cube_spline_function_2D
 
     implicit none
-
-! Local data **************************************************
 
 ! Introduce r_LUFS_spline, z_LUFS_spline, Aphi_LUFS_spline as local module variables so
 ! don't have to use multiple_mirror_eq_m in subroutines below  -> avoid circularity
@@ -37,14 +40,16 @@ module  mirror_magnetics_spline_interp_m
     type(cube_spline_function_2D) :: Aphi_spline
  	character (len = 80) :: Aphi_spline_name = 'Aphi_spline'
 
-! Namelist data for /mirror_magnetics_spline_interp_list/  *****************************
+!_________________________________________________________________________________________
+! Namelist data for /mirror_magnetics_spline_interp_list/
+!_________________________________________________________________________________________
 
-    character (len = 100) :: mirror_field_NC_file ! Input in multiple_mirror_eq_m namelist
+    ! Output netCDF file used by multiple_mirror_eq_m
+    character (len = 100) :: mirror_field_NC_file
 
 	namelist / mirror_magnetics_spline_interp_list/ mirror_field_NC_file
 
 !_________________________________________________________________________________________
-
 contains
 !_________________________________________________________________________________________
 

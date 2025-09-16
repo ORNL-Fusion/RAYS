@@ -7,7 +7,12 @@ module  eqdsk_magnetics_lin_interp_m
 !
 ! N.B. Values of Psi are shifted on initialization so that Psi is zero on axis.
 
+!_________________________________________________________________________________________
 ! Working notes:
+!_________________________________________________________________________________________
+
+!_________________________________________________________________________________________
+! Module data
 !_________________________________________________________________________________________
 
     use constants_m, only : rkind
@@ -19,18 +24,18 @@ module  eqdsk_magnetics_lin_interp_m
     ! Flux function psi at plasma boundary
     real(KIND=rkind) :: psiB
 
-! Namelist data for /eqdsk_magnetics_lin_interp_list/  *****************************
+!_________________________________________________________________________________________
+! Namelist data for /eqdsk_magnetics_lin_interp_list/
+!_________________________________________________________________________________________
 
 ! Name of input eqdsk file
     character (len = 100) :: eqdsk_file_name
 
-    namelist / eqdsk_magnetics_lin_interp_list/ eqdsk_file_name
+    namelist /eqdsk_magnetics_lin_interp_list/ eqdsk_file_name
 
-!********************************************************************
-
+!_________________________________________________________________________________________
 contains
-
-!********************************************************************
+!_________________________________________________________________________________________
 
   subroutine initialize_eqdsk_magnetics_lin_interp(read_input, r_axis, z_axis, &
                & box_rmin, box_rmax, box_zmin, box_zmax, &

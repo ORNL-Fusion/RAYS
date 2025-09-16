@@ -1,0 +1,52 @@
+
+Description of module: constants_m
+
+contains useful contants. Note that units are MKS.
+
+Description of module: oneD_spline_function_m
+
+Wrapper code for cspline.f90 and cspeval.f90 (themselves extracted from PPPL pspline).
+Provides a derived type, spline_function_1D, which contains the spline coefficients and
+setup data needed for cubic spline interpolation, plus type bound procedures for
+initialization and evaluation.  There is much more flexibility in the pspline routines
+than is kept here, particularly with respect to the grid, which is expected to be uniformly
+spaced, and boundary conditions, here taken to be not-a-knot.
+
+Exports one derived type -> spline_function_1D, and 4 subroutines:
+spline_1D_init -> Initializes spline coefficients for 'this' instance
+eval_f(this, x, f) -> evaluates splined function f
+eval_fp(this, x, f, fp) -> evaluates splined function f plus 1st derivative
+eval_fpp(this, x, f, fp, fpp) -> evaluates splined function f plus 1st ands 2nd derivatives
+Could bundle this into a generic eval procedure but I think it is clearer to expose the
+arguments.
+
+Description of module: oneD_spline_profile_m
+
+Wrapper code for cspline.f90 and cspeval.f90 (themselves extracted from PPPL pspline).
+Provides a derived type, spline_function_1D, which contains the spline coefficients and
+setup data needed for cubic spline interpolation plus type bound module procedures for
+initialization and evaluation.  The is much more flexibility in the pspline routines than
+is kept here, particularly with respect to the grid, which is expected to be uniformly
+spaced, and boundary conditions, here taken to be not-a-knot.
+
+Description of module: quick_cube_splines_m
+
+Wrapper code for cspline.f90 and cspeval.f90 (themselves extracted from PPPL pspline).
+Provides two derived types, spline_function_1D, which contains the spline coefficients and
+setup data needed for cubic spline interpolation, plus type bound procedures for
+initialization and evaluation.  There is much more flexibility in the pspline routines
+than is kept here, particularly with respect to the grid, which is expected to be uniformly
+spaced, and boundary conditions, here taken to be not-a-knot.
+
+Exports derived type -> spline_function_1D, and 4 subroutines:
+cube_spline_1D_init -> Initializes spline coefficients for 'this' instance
+eval_1D_f(this, x, f) -> evaluates splined function f
+eval_1D_fp(this, x, f, fp) -> evaluates splined function f plus 1st derivative
+eval_1D_fpp(this, x, f, fp, fpp) -> evaluates splined function f plus 1st and 2nd derivatives
+
+Exports derived type -> spline_function_2D, and 4 subroutines:
+cube_spline_2D_init -> Initializes spline coefficients for 'this' instance
+eval_2D_f(this, x, f) -> evaluates splined function f
+eval_2D_fp(this, x, f, fx, fy) -> evaluates splined function f plus 1st derivative
+eval_2D_fpp(this, x, y, f, fx, fy, fxx, fxy, fyy) -> evaluates splined function f plus
+1st and 2nd derivatives

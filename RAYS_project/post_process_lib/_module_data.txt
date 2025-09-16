@@ -1,0 +1,174 @@
+
+Module data for: axisym_toroid_processor_m
+
+use constants_m, only : rkind
+
+implicit none
+
+
+Module data for: deposition_profiles_m
+
+use constants_m, only : rkind
+
+implicit none
+
+Lists of known profiles
+character(len=20), parameter :: slab_profile_names(*) = [character(len=20) :: 'Ptotal_x']
+
+character(len=20), parameter :: slab_grid_names(*) = [character(len=20) :: 'x']
+
+character(len=20), parameter :: axisym_toroid_profile_names(*) = &
+
+& [character(len=20) :: 'Ptotal_psi','Ptotal_rho']
+
+& [character(len=20) :: 'Ptotal_psi']
+character(len=20), parameter :: axisym_toroid_grid_names(*) = [character(len=20) ::  &
+
+& 'psi', 'rho']
+
+integer :: default_n_bins = 100
+
+integer :: n_profiles
+
+abstract interface
+
+subroutine Q_evaluator(iray, ix, xQ, Q)
+
+use constants_m, only : rkind
+
+use ray_results_m, only : ray_vec
+
+implicit none
+
+integer, intent(in) :: iray, ix !ray number, step number along the ray
+
+real(KIND=rkind), intent(out) :: xQ, Q ! grid value at point X, profile quantity
+
+end subroutine Q_evaluator
+
+end interface
+
+type dep_profile
+
+character(len=20) :: profile_name, grid_name
+
+integer :: n_bins
+
+real(KIND=rkind) :: grid_min, grid_max
+
+real(KIND=rkind), allocatable :: grid(:), profile(:)
+
+real(KIND=rkind), allocatable :: work(:,:)
+
+real(KIND=rkind) :: Q_sum
+
+procedure(Q_evaluator), pointer, nopass :: evaluator => Null()
+
+end type dep_profile
+
+Array of 1D profiles to calculate
+type(dep_profile), allocatable :: profiles_1D(:)
+
+
+Module data for: mirror_processor_m
+
+use constants_m, only : rkind
+
+implicit none
+
+Radius of O-mode cutoff at z = z_reference
+real(KIND=rkind) :: r_Omode_cut_at_z_ref
+
+
+Module data for: OX_conv_analysis_m
+
+use constants_m, only : rkind, zero, one, two, pi
+
+use diagnostics_m, only : message_unit, text_message, verbosity, run_label, date_v, &
+
+& messages_to_stdout
+
+implicit none
+
+integer :: number_of_rays_converted
+
+real(KIND=rkind), parameter :: conversion_threshold = 0.0001
+
+derived type containing data for OX_conv
+type OX_conv
+
+real(KIND=rkind) :: x_max(3) ! point on ray with maximum density, alpha < 1
+
+real(KIND=rkind) :: k_max(3) ! k vector at x_max
+
+real(KIND=rkind) :: alpha_max ! omega_pe**2/Omga**2 at x_max
+
+real(KIND=rkind) :: x_cut(3) ! point on cutoff surface closest to x_max
+
+real(KIND=rkind) :: conv_coeff ! value of conversion coefficient
+
+real(KIND=rkind) :: nvecx_c(3) ! n vector at x_max in direction grad(ne)
+
+real(KIND=rkind) :: nvecy_c(3) ! n vector at x_max transverse to grad(ne), B
+
+real(KIND=rkind) :: nvecz_c(3) ! n vector at x_max perp to grad(ne) in
+
+grad(ne),B plane
+integer :: ray_number ! RAYS ray number for this ray
+
+integer :: step_number ! ray step number at x_max
+
+end type OX_conv
+
+type(OX_conv), allocatable :: OX_conv_data(:)
+
+
+Module data for: post_processing_m
+
+use constants_m, only : rkind
+
+implicit none
+
+character(len=256) :: error_message
+
+Calculated below from data in input files
+integer :: npoints_max
+
+integer, allocatable :: npoints(:)
+
+real(KIND=rkind), allocatable :: s_vec(:,:), v_vec(:,:,:)
+
+
+Module data for: slab_processor_m
+
+use constants_m, only : rkind
+
+implicit none
+
+Number and x locations of cyclotron resonances, 2nd harmonic resonances and hybrid
+resonances found between x_min and x_max.  Allow for multiple resonances <= n_locs
+integer, parameter :: n_locs = 5
+
+integer :: n_ce_res, n_2ce_res, n_hybrid_res
+
+real(KIND=rkind), dimension(n_locs) :: x_ce_res, x_2ce_res, x_hybrid_res
+
+Number and x locations of cutoffs
+integer :: n_P_cut, n_H_cut, n_det
+
+real(KIND=rkind), dimension(n_locs) :: x_P_cut, x_H_cut, x_det
+
+Alpha at hybrid cutoffs
+real(KIND=rkind), dimension(n_locs) :: alpha_e_H_cut
+
+real(KIND=rkind), dimension(n_locs) :: alpha_e_det
+
+
+Module data for: solovev_processor_m
+
+use constants_m, only : rkind
+
+use diagnostics_m, only : message_unit, message, text_message, messages_to_stdout, verbosity
+
+implicit none
+

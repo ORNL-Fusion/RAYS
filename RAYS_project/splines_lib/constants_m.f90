@@ -1,17 +1,22 @@
  module constants_m
 !   contains useful contants. Note that units are MKS.
 
+!_________________________________________________________________________________________
+! Working notes:
+!_________________________________________________________________________________________
+
+!_________________________________________________________________________________________
+! Module data
+!_________________________________________________________________________________________
+
     implicit none
 
     integer, parameter :: rkind = selected_real_kind(15,307) ! kind parameter for reals
     integer, parameter :: skind = selected_real_kind(6,37) ! kind parameter single precision
-    integer, parameter :: input_unit = 70 ! Unit number for namelist input file
-    integer, parameter :: output_unit = 75 ! Unit number for formatted ray data output
-    integer, parameter :: ray_list_unit = 74 ! Unit number for formatted ray list output
- 
+
     complex :: i                ! positive square root of -1
 
-    real(KIND=rkind) :: pi                  ! usual pi= 3.14159.....
+    real(KIND=rkind) :: pi, sqrt_pi         ! usual pi= 3.14159.....
     real(KIND=rkind) :: clight, mu0, eps0   ! consistent electro-magnetic constants
     real(KIND=rkind) :: me, mp, e           ! electron mass, proton mass and unit charge
     real(KIND=rkind) :: epsmach             ! measure of machine precision
@@ -20,12 +25,19 @@
     real(KIND=rkind) :: unitmat3(3,3)   ! 3X3 unit matrix
     real(KIND=rkind) :: unlike      ! a real number unlikely set by input file
     real(KIND=rkind) :: nlike       ! an integer number unlikely set by input file
+    real(KIND=rkind),parameter :: zero = 0.0_rkind
+    real(KIND=rkind),parameter :: one = 1.0_rkind
+    real(KIND=rkind),parameter :: two = 2.0_rkind
 
- contains
+!_________________________________________________________________________________________
+contains
+!_________________________________________________________________________________________
+
     subroutine initialize_constants_m
 
        i = (0.,1.)
        pi = 3.1415926535897932385
+       sqrt_pi = sqrt(pi)
 
        clight = 2.997930e8
        mu0 = pi * 4.e-7
@@ -43,8 +55,14 @@
           & (/ 3, 3 /) )
 
        unlike = - sqrt(1.5) * 1.e25
-       nlike = -123454321 
+       nlike = -123454321
 
     end subroutine initialize_constants_m
+
+!********************************************************************
+
+    subroutine deallocate_constants_m
+        return ! nothing to deallocate
+    end subroutine deallocate_constants_m
 
  end module constants_m

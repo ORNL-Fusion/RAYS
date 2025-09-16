@@ -1,7 +1,13 @@
 module zfunctions_m
+! A collection of routines to calculate plasma dispersion function by various methods
 
-!   calculates plasma function defined by Eq.(8-82), Stix.
-! N.B. This assumes that kz is real and non-zero
+!_________________________________________________________________________________________
+! Working notes:
+!_________________________________________________________________________________________
+
+!_________________________________________________________________________________________
+! Module data
+!_________________________________________________________________________________________
 
     implicit none
 
@@ -43,11 +49,9 @@ module zfunctions_m
         module procedure zfun0_real_arg_D
     end interface
 
-!    private
-!    public zfun, zfun0
-     contains
-
-!***********************************************************************
+!_________________________________________________________________________________________
+contains
+!_________________________________________________________________________________________
 
  complex function zfun0_S(z, kz)
 ! Calculates plasma function defined by Eq.(8-82), Stix.

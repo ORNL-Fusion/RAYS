@@ -1,12 +1,14 @@
+
+    SUBROUTINE DAMP_FUND_ECH(eq, v_kx, vg, ksi, ki)
 ! A simple weak damping routine for fundamental electron
 ! cyclotron absorption based on notes from 4-24-81
 ! This routine neglects ion dynamics altogether
-!
-! Working notes
+
+!_________________________________________________________________________________________
+! Working notes:
+!_________________________________________________________________________________________
 ! (DBB 11-1-2022) Adapted to new RAYS_lib environment
 !
-
-    SUBROUTINE DAMP_FUND_ECH(eq, v_kx, vg, ksi, ki)
 
     use constants_m, only : clight, rkind
     use rf_m, only : omgrf, k0
@@ -32,6 +34,7 @@
 	REAL(KIND=rkind)  :: DDNX2, DDNZ, DNparallel(3), DNperp2(3), DDN(3)
 
 	COMPLEX D_WARM, DELTA
+!_________________________________________________________________________________________
 
 	ksi(0:nspec) = 0.
 	ki = ksi(0)

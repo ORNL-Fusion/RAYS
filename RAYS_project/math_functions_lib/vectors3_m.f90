@@ -4,6 +4,14 @@
 ! generic procedure: triple_product, calculates usual A dot B x C
 ! generic procedure: triple_vector_product, calculates usual A x B x C
 
+!_________________________________________________________________________________________
+! Working notes:
+!_________________________________________________________________________________________
+
+!_________________________________________________________________________________________
+! Module data
+!_________________________________________________________________________________________
+
     IMPLICIT NONE
 
     integer, parameter :: rkind = selected_real_kind(15,307) ! kind parameter for reals
@@ -21,8 +29,9 @@
         module procedure triple_vector_product_D, triple_vector_product_S
     end interface
 
-    CONTAINS
- !*********************************************************************************
+!_________________________________________________________________________________________
+contains
+!_________________________________________________________________________________________
 
     function cross_product_S(A, B)
         IMPLICIT NONE

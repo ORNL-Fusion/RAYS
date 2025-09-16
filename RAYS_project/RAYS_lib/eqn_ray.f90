@@ -21,6 +21,8 @@
 
 !   External procedures: deriv_cold (deriv_cold)
 
+! Working notes:
+
     use constants_m, only : rkind
     use diagnostics_m, only : integrate_eq_gradients, messages_to_stdout, verbosity,&
                             & message_unit, message

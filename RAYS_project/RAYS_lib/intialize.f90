@@ -5,6 +5,10 @@
 ! input data files.  Normally on startup this will be true, but when used as an internal
 ! component of a host code, the host code may modify initial values by directly using
 ! the modules and not want data reread from files.
+!
+! N.B. This routine also initializes openMP
+
+! Working notes:
 
     use constants_m, only : initialize_constants_m
     use diagnostics_m, only : initialize_diagnostics, date_v, message_unit, &

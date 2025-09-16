@@ -13,7 +13,12 @@
 
 !   External procedures: cpu_time (intrinsic)
 
+!_________________________________________________________________________________________
 ! Working notes:
+!_________________________________________________________________________________________
+
+!_________________________________________________________________________________________
+! Module data
 !_________________________________________________________________________________________
 
     use constants_m, only : rkind
@@ -67,7 +72,7 @@
 !  Default file name for message output.  At end copied to "log.RAYS.<run label>"
     character(len=80) :: message_file = 'messages'
 
-! Namelist data for /diagnostics_list/  *****************************
+! Namelist data for /diagnostics_list/
 
 !  verbosity = a switch to set the level of output from message() and text_message()
 !  verbosity = 0 gives minimum output, negative gives no text output
@@ -98,11 +103,10 @@
     namelist /diagnostics_list/ verbosity, messages_to_stdout, write_formatted_ray_files, &
            & run_description, run_label, integrate_eq_gradients
 
-!******************************
-
+!_________________________________________________________________________________________
 contains
+!_________________________________________________________________________________________
 
-!******************************
   subroutine initialize_diagnostics(read_input)
 
     implicit none

@@ -1,0 +1,138 @@
+
+Module data for: constants_m
+
+implicit none
+
+integer, parameter :: rkind = selected_real_kind(15,307) ! kind parameter for reals
+
+integer, parameter :: skind = selected_real_kind(6,37) ! kind parameter single precision
+
+complex :: i                ! positive square root of -1
+
+real(KIND=rkind) :: pi, sqrt_pi         ! usual pi= 3.14159.....
+
+real(KIND=rkind) :: clight, mu0, eps0   ! consistent electro-magnetic constants
+
+real(KIND=rkind) :: me, mp, e           ! electron mass, proton mass and unit charge
+
+real(KIND=rkind) :: epsmach             ! measure of machine precision
+
+real(KIND=rkind) :: tinyr               ! measure of smallest number represented
+
+real(KIND=rkind) :: unitmat2(2,2)   ! 2X2 unit matrix
+
+real(KIND=rkind) :: unitmat3(3,3)   ! 3X3 unit matrix
+
+real(KIND=rkind) :: unlike      ! a real number unlikely set by input file
+
+real(KIND=rkind) :: nlike       ! an integer number unlikely set by input file
+
+real(KIND=rkind),parameter :: zero = 0.0_rkind
+
+real(KIND=rkind),parameter :: one = 1.0_rkind
+
+real(KIND=rkind),parameter :: two = 2.0_rkind
+
+
+Module data for: oneD_spline_function_m
+
+implicit none
+
+integer, parameter :: rkind = selected_real_kind(15,307) ! kind parameter for reals
+
+real(KIND=rkind), parameter :: zero = 0.0_rkind, one = 1.0_rkind
+
+type spline_function_1D
+
+integer :: nx ! Number of points to be splined
+
+real(KIND=rkind), allocatable ::  x_grid(:) ! Grid
+
+real(KIND=rkind), allocatable ::  y(:) ! Values on grid
+
+real(KIND=rkind), allocatable ::  fspl(:,:)
+
+character (len = 80) :: name ! Function name, useful for arrays of this type
+
+contains
+
+procedure :: spline_1D_init
+
+procedure :: eval_f, eval_fp, eval_fpp
+
+end type spline_function_1D
+
+
+Module data for: oneD_spline_profile_m
+
+implicit none
+
+type spline_function_1D
+
+integer, parameter :: rkind = selected_real_kind(15,307) ! kind parameter for reals
+
+real(KIND=rkind), parameter :: zero = 0.0_rkind, one = 1.0_rkind
+
+integer :: nx ! Number of points to be splined
+
+real(KIND=rkind), allocatable ::  x(:) ! Grid
+
+real(KIND=rkind), allocatable ::  fspl(:,:)
+
+character (len = 80) :: name
+
+contains
+
+procedure :: init, eval
+
+end type spline_function_1D
+
+
+Module data for: quick_cube_splines_m
+
+implicit none
+
+integer, parameter :: rkind = selected_real_kind(15,307) ! kind parameter for reals
+
+real(KIND=rkind), parameter :: zero = 0.0_rkind, one = 1.0_rkind
+
+type cube_spline_function_1D
+
+integer :: nx ! Number of points to be splined
+
+real(KIND=rkind), allocatable ::  x_grid(:) ! Grid
+
+real(KIND=rkind), allocatable ::  f_val(:) ! Values on grid
+
+real(KIND=rkind), allocatable ::  fspl(:,:) ! Spline coeffieients
+
+character (len = 80) :: name ! Function name, useful for arrays of this type
+
+contains
+
+procedure :: cube_spline_1D_init
+
+procedure :: eval_1D_f, eval_1D_fp, eval_1D_fpp
+
+end type cube_spline_function_1D
+
+type cube_spline_function_2D
+
+integer :: nx, ny ! Number of points to be splined
+
+real(KIND=rkind), allocatable ::  x_grid(:), y_grid(:) ! Grid
+
+real(KIND=rkind), allocatable ::  f_val(:,:) ! Values on grid
+
+real(KIND=rkind), allocatable ::  fspl(:,:, :, :)
+
+character (len = 80) :: name ! Function name, useful for arrays of this type
+
+contains
+
+procedure :: cube_spline_2D_init
+
+procedure :: eval_2D_f, eval_2D_fp, eval_2D_fpp
+
+end type cube_spline_function_2D
+

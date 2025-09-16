@@ -4,6 +4,10 @@
 !   nvec(1:3) == v(4:6)/k0 = (kx, ky, kz)/k0 refractive index vector
 !   dddx = dD/dx, dddk = dD/dk, dddw = dD/d(omega).
 
+!_________________________________________________________________________________________
+! Working notes:
+!_________________________________________________________________________________________
+
     use constants_m, only : rkind
     use equilibrium_m, only : eq_point, write_eq_point
     use rf_m, only : omgrf, k0

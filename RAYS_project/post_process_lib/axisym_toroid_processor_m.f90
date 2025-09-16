@@ -1,9 +1,21 @@
  module axisym_toroid_processor_m
 ! Post processing for axisym_toroid equilibrium
 
+!_________________________________________________________________________________________
+! Working notes:
+!_________________________________________________________________________________________
+
+!_________________________________________________________________________________________
+! Module data
+!_________________________________________________________________________________________
+
     use constants_m, only : rkind
 
     implicit none
+
+!_________________________________________________________________________________________
+! Namelist data for /axisym_toroid_processor_list/
+!_________________________________________________________________________________________
 
 ! Number of k vectors to plot for each ray in graphics
     integer :: num_plot_k_vectors
@@ -19,6 +31,7 @@
 
 ! Number of plasma boundary points to calculate
 	integer :: n_boundary_points
+
 ! R,Z boundary points
     real(KIND=rkind), allocatable :: R_boundary(:), Z_boundary(:)
 
@@ -49,8 +62,9 @@
              & write_contour_data, N_pointsR_eq, N_pointsZ_eq, &
              & write_eq_RZ_grid_data, write_eq_radial_profile_data, n_psiN, &
              & bisection_eps, n_rho
-
- contains
+!_________________________________________________________________________________________
+contains
+!_________________________________________________________________________________________
 
  subroutine initialize_axisym_toroid_processor(read_input)
 

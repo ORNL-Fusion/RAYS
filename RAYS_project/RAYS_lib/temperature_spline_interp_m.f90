@@ -2,7 +2,9 @@ module  temperature_spline_interp_m
 ! Implements temperature profiles based on pointwise numeerical data contained in namelist
 ! temperature_spline_interp_list.
 
+!_________________________________________________________________________________________
 ! Working notes:
+!_________________________________________________________________________________________
 
 ! At present (2-22-2025) this only produces only two profiles (electron, ion).  All ions
 ! species have the same temperature. Profiles are normalized to one.
@@ -19,23 +21,17 @@ module  temperature_spline_interp_m
 !
 !_________________________________________________________________________________________
 
+!_________________________________________________________________________________________
+! Module data
+!_________________________________________________________________________________________
+
     use constants_m, only : rkind
     use quick_cube_splines_m, only : cube_spline_function_1D
 
     implicit none
 
-! Local data **************************************************
-
-! Namelist data for /axisym_toroid_eq_list/  *****************************
-
+! Local data
 	integer, parameter :: n_grid_max = 200 ! Max dimension of input arrays, truncated later
-
-! namelist /temperature_spline_interp_list/ variables
-    character (len = 60) :: spline_Te_model, spline_Ti_model ! Not used, YET
-	integer :: ngrid ! Actual number of points to be splined. <= n_grid_max
-	real(KIND=rkind) ::  Te_in(n_grid_max) ! Values on grid (grid assumed uniform 0 to 1)
-	real(KIND=rkind) ::  Ti_in(n_grid_max) ! Values on grid (grid assumed uniform 0 to 1)
-
 
 ! Stuff for 1D spline profiles
 
@@ -44,20 +40,18 @@ module  temperature_spline_interp_m
  	character (len = 80) :: Te_name = 'Te_profile'
  	character (len = 80) :: Ti_name = 'Ti_profile'
 
-! Namelist data for /temperature_spline_interp_list/  *****************************
+!_________________________________________________________________________________________
+! Namelist data for /temperature_spline_interp_list/
+!_________________________________________________________________________________________
 
-!    character (len = 60) :: spline_Te_model, spline_Ti_model ! Not used, YET
-
-! Actual number of points to be splined. <= n_grid_max
-	integer :: ngrid
-! Values on grid (grid assumed uniform 0 to 1)
-	real(KIND=rkind) ::  Te_in(n_grid_max)
-	real(KIND=rkind) ::  Ti_in(n_grid_max)
+    character (len = 60) :: spline_Te_model, spline_Ti_model ! Not used, YET
+	integer :: ngrid ! Actual number of points to be splined. <= n_grid_max
+	real(KIND=rkind) ::  Te_in(n_grid_max) ! Values on grid (grid assumed uniform 0 to 1)
+	real(KIND=rkind) ::  Ti_in(n_grid_max) ! Values on grid (grid assumed uniform 0 to 1)
 
   namelist /temperature_spline_interp_list/ ngrid, Te_in, Ti_in
 
 !_________________________________________________________________________________________
-
 contains
 !_________________________________________________________________________________________
 

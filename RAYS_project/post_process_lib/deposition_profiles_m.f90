@@ -23,6 +23,14 @@
 ! 2) An evaluator subroutine to calculate the grid and profile quantity at each ray step
 ! 3) A case selector block in initialize_deposition_profiles() pointing to the evaluator routine
 
+!_________________________________________________________________________________________
+! Working notes:
+!_________________________________________________________________________________________
+
+!_________________________________________________________________________________________
+! Module data
+!_________________________________________________________________________________________
+
     use constants_m, only : rkind
 
     implicit none
@@ -36,11 +44,8 @@
     character(len=20), parameter :: axisym_toroid_grid_names(*) = [character(len=20) ::  &
                          & 'psi', 'rho']
 
-    logical :: write_results_list_directed = .true.
-    integer :: n_bins = 0, default_n_bins = 100
+    integer :: default_n_bins = 100
     integer :: n_profiles
-
-!***********************************
 
     abstract interface
 		subroutine Q_evaluator(iray, ix, xQ, Q)
@@ -51,9 +56,6 @@
 			real(KIND=rkind), intent(out) :: xQ, Q ! grid value at point X, profile quantity
 		end subroutine Q_evaluator
     end interface
-
-!****************************************************************************
-
 
 	type dep_profile
 		character(len=20) :: profile_name, grid_name
@@ -68,13 +70,21 @@
 ! Array of 1D profiles to calculate
 	type(dep_profile), allocatable :: profiles_1D(:)
 
+!_________________________________________________________________________________________
+! Namelist data for /template_list/
+!_________________________________________________________________________________________
+
+! Number of bins to distribute the profile
+    integer :: n_bins = 0
+
+! Switch whether to write list-directed ASCII file
+    logical :: write_results_list_directed = .true.
+
     namelist /deposition_profiles_list/ n_bins, write_results_list_directed
 
-!****************************************************************************
-
+!_________________________________________________________________________________________
 contains
-
-!****************************************************************************
+!_________________________________________________________________________________________
 
 subroutine initialize_deposition_profiles(read_input)
 

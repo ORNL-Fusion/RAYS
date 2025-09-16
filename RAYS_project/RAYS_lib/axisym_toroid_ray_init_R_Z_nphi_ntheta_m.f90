@@ -23,16 +23,25 @@
 !   For ECH one launches a beam with a distribution of rays around a central beam axis.
 !   The variable ray_init_model determines which of several k intialization schemes are used
 
+!_________________________________________________________________________________________
 ! Working notes:
+!_________________________________________________________________________________________
+
+!_________________________________________________________________________________________
+! Module data
 !_________________________________________________________________________________________
 
     use constants_m, only : rkind
 
     implicit none
 
-! Local data **************************************************
+!_________________________________________________________________________________________
+! Module data
+!_________________________________________________________________________________________
 
-! Namelist data for /axisym_toroid_ray_init_R_Z_nphi_ntheta_list/  ***********************
+!_________________________________________________________________________________________
+! Namelist data for /axisym_toroid_ray_init_R_Z_nphi_ntheta_list/
+!_________________________________________________________________________________________
 
 ! Data for initial launch position
 ! N.B. R_launch <--> major radius, Z is relative to equatorial plane
@@ -51,14 +60,9 @@
      & n_rindex_theta, rindex_theta0, delta_rindex_theta, &
      & n_rindex_phi, rindex_phi0, delta_rindex_phi
 
-!****************************************************************************
-
-
+!_________________________________________________________________________________________
 contains
-
-
-!****************************************************************************
-
+!_________________________________________________________________________________________
 
     subroutine ray_init_axisym_toroid_R_Z_nphi_ntheta(nray_max, nray, rvec0,&
              & rindex_vec0, ray_pwr_wt)

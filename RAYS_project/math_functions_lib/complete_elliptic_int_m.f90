@@ -14,6 +14,14 @@
 ! declarations for functions "rd" and "rf" in subroutines elliptic_em(m) and
 ! elliptic_fm(m).  The declarations shadowed "rd" and "rf" as being module functions.
 
+!_________________________________________________________________________________________
+! Working notes:
+!_________________________________________________________________________________________
+
+!_________________________________________________________________________________________
+! Module data
+!_________________________________________________________________________________________
+
     IMPLICIT NONE
 
     integer, parameter :: rkind = selected_real_kind(15,307) ! kind parameter for reals
@@ -23,13 +31,12 @@
     real(KIND=rkind),parameter :: lolim = 3.D-78
     real(KIND=rkind),parameter :: uplim = 1.D+75
 
-    CONTAINS
- !*********************************************************************************
+!_________________________________________________________________________________________
+contains
+!_________________________________________________________________________________________
 
 function elliptic_Em(m)
-!*****************************************************************************80
-!
-!! ELLIPTIC_EM evaluates the complete elliptic integral E(M).
+! ELLIPTIC_EM evaluates the complete elliptic integral E(M).
 !
 !  Discussion:
 !

@@ -25,10 +25,25 @@
 
 ! N.B. This code is adapted, with very few changes from axisym_toroid_processor.f90
 
+!_________________________________________________________________________________________
+! Working notes:
+!_________________________________________________________________________________________
+
+!_________________________________________________________________________________________
+! Module data
+!_________________________________________________________________________________________
+
 
     use constants_m, only : rkind
 
     implicit none
+
+! Radius of O-mode cutoff at z = z_reference
+    real(KIND=rkind) :: r_Omode_cut_at_z_ref
+
+!_________________________________________________________________________________________
+! Namelist data for /mirror_processor_list/
+!_________________________________________________________________________________________
 
 ! Number of k vectors to plot for each ray in graphics
     integer :: num_plot_k_vectors
@@ -44,6 +59,7 @@
 
 ! Number of plasma boundary points to calculate
 	integer :: n_boundary_points
+
 ! R,Z boundary points
     real(KIND=rkind), allocatable :: R_boundary(:), Z_boundary(:)
 
@@ -62,9 +78,6 @@
 ! Reference z location at which to evaluate radial equilibrium profiles
     real(KIND=rkind) :: z_reference
 	character(len=25) :: char_z_ref
-
-! Radius of O-mode cutoff at z = z_reference
-    real(KIND=rkind) :: r_Omode_cut_at_z_ref
 
 ! Radius of LUFS at z = z_reference
     real(KIND=rkind) :: r_LUFS_at_z_ref
@@ -87,7 +100,9 @@
              & bisection_eps, n_rho, z_reference, &
              & do_OX_conv_analysis
 
- contains
+!_________________________________________________________________________________________
+contains
+!_________________________________________________________________________________________
 
  subroutine initialize_mirror_processor(read_input)
 

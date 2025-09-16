@@ -1,0 +1,107 @@
+
+Description of module: axisym_toroid_processor_m
+
+Post processing for axisym_toroid equilibrium
+
+Description of module: deposition_profiles_m
+
+Contains data for various deposition profiles (such as power versus psi summed
+over species -> Ptotal(:)) and associated routines to calculate the profiles from ray
+data in module ray_results_m.  Profile data is put into an instance of derived type
+"dep_profile".  Generating each profile requires a derived type "work_space".
+
+The profile data and the grid on which the profile is defined must be calculable from
+the ray data in ray_results_m.  For example to calculate the total power deposition
+profile on a psi grid one has at each step of each ray the spatial position, X, in the
+ray vector, v(1:3), from, which psi(X) can be calculated.  Total power deposited is
+obtained from ray vector component v(8). The calculation is done in a generic subroutine
+pointer, Q_evaluator(iray, ix, xQ, Q), where iray = ray number, ix = step number along
+the ray, and returned are xQ = grid value a point X and Q = profile quantity.
+
+Which profiles make sense depends on the equilibrium geometry.  Presently supported are:
+"slab" and "axisym_toroid" geometries.  For now assume that all profiles will be calculated
+that we know how to calculate (although there are ideas on how to let the user can select
+which profiles to calculate.  This is sitting in a previous version, in spare_parts)
+
+Every profile needs:
+1) An entry in the list of known profile names and the name of the grid that goes with it
+2) An evaluator subroutine to calculate the grid and profile quantity at each ray step
+3) A case selector block in initialize_deposition_profiles() pointing to the evaluator routine
+
+Description of module: mirror_processor_m
+
+Post processing for mirror equilibrium
+
+Subroutine "mirror_processor" calls a number of other routines that write write data for
+further analysis or plotting:
+"write_graphics_description_file" Writes data to be read by python plotting programs
+"ray_detailed_diagnostics" Writes a netCDF file containing diagnostic data collected all
+along the rays
+"write_eq_contour_data_NC" Writes a netcdf file with data needed to plot
+contours of quantities like gamma = cyclotron freq/wave freq.  The contours can then be
+put on plots of ray trajectories
+"write_eq_XZ_grid_data_NC" Writes a netcdf file with data needed to plot
+contours of equilibrium quantites like AphiN, ne, Te, etc
+evaluated on a uniformly spaced  R,Z grid [box_rmin==0, box_rmax, box_zmin, box_zmax]
+"write_eq_radial_profile_data_NC"  Writes a netcdf file containing data needed to plot
+radial profiles for equilibrium quantites like ne, Te, etc as functions of
+AphiN and also R.  These profiles are evaluated at Z = z_reference, which is an input
+parameter in namelist group /mirror_processor_list/.  Profiles extend radially from zero
+to plasma_AphiN_limit, which is set as a namelist input to multiple_mirror_eq_m.
+N.B. This code is adapted, with very few changes from axisym_toroid_processor.f90
+
+Description of module: OX_conv_analysis_m
+
+Analyzes ray data obtained from an instance of type run_results as defined in module
+module ray_results_m.  The presumption is that the RAYS raun consists of O-mode rays
+that approach the cutoff from low density.  The steps are
+1) Find the point, x_max, on the ray having maximum density, which should be closest to
+the cutoff.
+2) Determine the point, x_cut, on the cutoff surface closest to the x_max point.
+3) Evaluate the conversion coefficient to X mode
+4) If don't find density maximum or don't find cutoff surface or conversion coefficient
+is less than conversion_threshold, ignore this ray and consider that it didn't convert
+5) Allocate and load array of type OX_conv for the rays that did convert.
+
+This is written for axisymmetric mirror equilibria, but I think it will work little
+change for tokamaks
+
+Description of module: post_processing_m
+
+Generic wrapper for post processing by individual processors, mostly differentiated by
+The specific geometry. It does the initializations for the specific processor.
+
+This also reads the data from a given RAYS run.  For now this is done either of 2 ways.
+1) Read an ASCII file containing data from the ray_results_m module as written by routine
+read_results_instance_LD().  The module data is thread safe and the file is only
+written at the end of the RAYS RUN. The data read here goes back into the
+ray_results_m module
+2) Read an netCDF file containing data from the ray_results_m module as written by
+type bound procedure %read_results_instance_NC().  This is called on an instance of
+type run_results.  The data from this instance is then loaded into the ray_results_m
+module using type bound procedure %to_module()
+Which of the input methods to use is selected in the post_process_rays.in file from
+variable ray_data_input_mode = (LD, or NC), input filenames are constructed from
+namelist variable run_label which should match ray_results_m variable RAYS_run_label
+
+There is a third, legacy, method, which is present for the present but may be eliminated.
+3) Read an ASCII (or binary) pair of files as specified by unit numbers: ray_list_unit and
+output_unit,  These files are written incrementally as the rays are traced and
+therefore are still available if the code crashes.  The data read is put into this
+module variables: npoints, s_vec, and v_vec.  For now the older processors use this
+data. ray_data_input_mode = ASCII
+
+It requires an input file 'post_process_rays.in' telling it which specific processor to
+use and which ray data input method to use. It also contains a namelist group with data
+for whichever processor is being used.
+
+It also reads the "rays.in" file (done in subroutine initialize_diagnostics) to get
+some metadata from the RAYS run.
+
+Description of module: slab_processor_m
+
+Post processing for slab equilibrium, all variation in x direction
+
+Description of module: solovev_processor_m
+
+Post processing for solovev equilibrium

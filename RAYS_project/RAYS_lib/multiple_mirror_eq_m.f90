@@ -38,7 +38,12 @@ module multiple_mirror_eq_m
 !   flux surface, == Aphi_LUFS.
 !
 
+!_________________________________________________________________________________________
 ! Working notes:
+!_________________________________________________________________________________________
+
+!_________________________________________________________________________________________
+! Module data
 !_________________________________________________________________________________________
 
     use constants_m, only : rkind, one, zero, two
@@ -50,7 +55,7 @@ module multiple_mirror_eq_m
 
     implicit none
 
-! Local data **************************************************
+! Local data
 
 	integer :: i, is
 
@@ -62,7 +67,9 @@ module multiple_mirror_eq_m
     real(KIND=rkind) :: r_LUFS, z_LUFS ! Location of scrape-off point of last flux surface
     real(KIND=rkind) :: Aphi_LUFS ! Bounding value of Aphi evaluated at r_LUFS, z_LUFS
 
-! Namelist data for /multiple_mirror_eq_list/  *****************************
+!_________________________________________________________________________________________
+! Namelist data for /multiple_mirror_eq_list/
+!_________________________________________________________________________________________
 
     character(len=60) :: magnetics_model
 
@@ -99,7 +106,6 @@ module multiple_mirror_eq_m
      & T_scrape_off
 
 !_________________________________________________________________________________________
-
 contains
 !_________________________________________________________________________________________
 

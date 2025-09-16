@@ -1,3 +1,4 @@
+ module post_processing_m
 ! Generic wrapper for post processing by individual processors, mostly differentiated by
 ! The specific geometry. It does the initializations for the specific processor.
 !
@@ -28,7 +29,13 @@
 ! It also reads the "rays.in" file (done in subroutine initialize_diagnostics) to get
 ! some metadata from the RAYS run.
 
- module post_processing_m
+!_________________________________________________________________________________________
+! Working notes:
+!_________________________________________________________________________________________
+
+!_________________________________________________________________________________________
+! Module data
+!_________________________________________________________________________________________
 
     use constants_m, only : rkind
 
@@ -37,19 +44,26 @@
 	character(len=256) :: error_message
 
 ! Calculated below from data in input files
+
     integer :: npoints_max
     integer, allocatable :: npoints(:)
     real(KIND=rkind), allocatable :: s_vec(:,:), v_vec(:,:,:)
 
+!_________________________________________________________________________________________
+! Namelist data for /post_process_list/
+!_________________________________________________________________________________________
+
 ! Switch to select specific post processor
     character(len=80) :: processor = ''
 
-! Selector for ray data input mode
+! Selector for ray data input mode -> LD, NC, or ASCII (obsolete but still here)
     character(len=80) :: ray_data_input_mode = ''
 
     namelist /post_process_list/ processor, ray_data_input_mode
 
- contains
+!_________________________________________________________________________________________
+contains
+!_________________________________________________________________________________________
 
  subroutine initialize_post_processing_m(read_input)
 

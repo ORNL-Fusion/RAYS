@@ -1,18 +1,25 @@
  module species_m
 ! contains plasma species data.
 
+!_________________________________________________________________________________________
 ! Working notes:
+!_________________________________________________________________________________________
+
 ! (2-22-2025 DBB) As of now, none of the equilibrium models use the edge density and
 ! temperature variables (nseps, tseps).  Instead there are variables in the equilibrium
 ! modules to specify ne and Te at the edge (d_scrapeoff and T_scrapeoff) as fractions of
 ! the peak electron values (n0s(0), t0s(0)).  But at least for now I'll leave nseps, tseps
 !_________________________________________________________________________________________
 
+!_________________________________________________________________________________________
+! Module data
+!_________________________________________________________________________________________
+
     use constants_m, only : rkind
 
     implicit none
 
-! Local data **************************************************
+! Local data
 
 !   Maximum No. of ion species: nspec0;
     integer, parameter :: nspec0 = 5
@@ -38,7 +45,10 @@
 !   tseps: temperature in MKS (Joules) calculated in init from tseps_eV(is)
     real(KIND=rkind), dimension(0:nspec0) :: tseps = 0.
 
-! Namelist data for /species_list/  *****************************
+!_________________________________________________________________________________________
+! Namelist data for /species_list/
+!_________________________________________________________________________________________
+
 
 !   Electron density at reference point (e.g. at magnetic axis or peak electron density)
 !   The profiles generated in the various equilibrium modules are normalized to one at
@@ -81,7 +91,6 @@
       & n0, nseps, spec_name, spec_model, qs, ms, t0s_eV, tseps_eV, eta, neutrality
 
 !_________________________________________________________________________________________
-
 contains
 !_________________________________________________________________________________________
 

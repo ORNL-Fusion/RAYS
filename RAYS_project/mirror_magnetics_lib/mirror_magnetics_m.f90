@@ -43,32 +43,24 @@ module mirror_magnetics_m
 !      in /mirror_magnetics_list/.  Although for normal application to magnetic mirrors
 !      r_min would always be 0.  So the default is 0, but can me reset in the namelist.
 
+!_________________________________________________________________________________________
+! Working notes:
+!_________________________________________________________________________________________
+
+!_________________________________________________________________________________________
+! Module data
+!_________________________________________________________________________________________
+
     implicit none
 
     integer, parameter :: rkind = selected_real_kind(15,307) ! kind parameter for reals
     real(KIND=rkind),parameter :: zero = 0.0_rkind
 
-    character(len=80) :: coil_data_file = ''
-    character(len=80) :: current_data_file = ''
-    character(len=80) :: case_name = ''
-    character(len=80) :: base_file_name = ''
-    character(len=100) :: NC_file_name = ''
-	integer :: n_coils
+! Local data
 
 ! Data for coils
-    character(len=80) :: coil_set_name = ''
-    real(KIND=rkind), allocatable :: inner_radius(:) ! Inner radius of coil conductors
-    real(KIND=rkind), allocatable :: outer_radius(:) ! Outer radius of coil conductors
-    real(KIND=rkind), allocatable :: z_width(:) ! z width of coils
-    real(KIND=rkind), allocatable :: z_center(:) ! z of coil center
-    integer(KIND=rkind), allocatable :: n_turns(:) ! number of turns in coil
-	integer, allocatable :: n_r_layers(:) ! number of turn layers in radius
-	integer, allocatable :: n_z_slices(:) ! number of turn slices in z
-	integer, allocatable :: n_filaments(:) ! number of sub-groups of turns = n_r_layers*n_z_slices
-
-! Data for currents
-    character(len=80) :: current_set_name = ''
-    real(KIND=rkind), allocatable :: I_coil(:) ! current in coil
+! number of sub-groups of turns = n_r_layers*n_z_slices
+	integer, allocatable :: n_filaments(:)
 
 ! Derived type with data for a mirror coil consisting of one or more current loops
 	type coil_type
@@ -89,14 +81,45 @@ module mirror_magnetics_m
 	type(coil_type), allocatable :: coil(:)
 
 ! 2D field data to be written to netCDF file
-	integer :: n_r, n_z ! Size of R,Z grid
-    real(KIND=rkind)  :: r_min = zero ! Can be reset in namelist
-    real(KIND=rkind)  :: r_max, z_min, z_max  ! Boundary of R,Z grid
     real(KIND=rkind), allocatable  :: r_grid(:), z_grid(:)
     real(KIND=rkind), allocatable  :: Br(:,:), Bz(:,:), Aphi(:,:)
 
+!_________________________________________________________________________________________
+! Namelist data for /mirror_magnetics_list/
+!_________________________________________________________________________________________
+
+    character(len=80) :: coil_data_file = ''
+    character(len=80) :: current_data_file = ''
+    character(len=80) :: case_name = ''
+    character(len=80) :: base_file_name = ''
+    character(len=100) :: NC_file_name = ''
+	integer :: n_r, n_z ! Size of R,Z grid
+    real(KIND=rkind)  :: r_min = zero ! Can be reset in namelist
+    real(KIND=rkind)  :: r_max, z_min, z_max  ! Boundary of R,Z grid
+	integer :: n_coils
 ! Location of scrape-off point of last flux surface
     real(KIND=rkind) :: r_LUFS, z_LUFS
+
+!_________________________________________________________________________________________
+! Namelist data for /coil_data_list/
+!_________________________________________________________________________________________
+
+    character(len=80) :: coil_set_name = ''
+    real(KIND=rkind), allocatable :: inner_radius(:) ! Inner radius of coil conductors
+    real(KIND=rkind), allocatable :: outer_radius(:) ! Outer radius of coil conductors
+    real(KIND=rkind), allocatable :: z_width(:) ! z width of coils
+    real(KIND=rkind), allocatable :: z_center(:) ! z of coil center
+    integer(KIND=rkind), allocatable :: n_turns(:) ! number of turns in coil
+	integer, allocatable :: n_r_layers(:) ! number of turn layers in radius
+	integer, allocatable :: n_z_slices(:) ! number of turn slices in z
+
+!_________________________________________________________________________________________
+! Namelist data for /current_data_list/
+!_________________________________________________________________________________________
+
+    character(len=80) :: current_set_name = ''
+    real(KIND=rkind), allocatable :: I_coil(:) ! current in coil
+
 
  namelist /mirror_magnetics_list/ case_name, coil_data_file, current_data_file, n_coils,&
          & n_r, n_z, r_min, r_max, z_min, z_max, r_LUFS, z_LUFS
@@ -105,11 +128,10 @@ module mirror_magnetics_m
           & z_width, z_center, n_turns, n_r_layers, n_z_slices
 
  namelist /current_data_list/ current_set_name, I_coil
-!********************************************************************
 
+!_________________________________________________________________________________________
 contains
-
-!********************************************************************
+!_________________________________________________________________________________________
 
   subroutine initialize_mirror_magnetics(read_input)
 

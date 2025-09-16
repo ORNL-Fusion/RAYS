@@ -1,0 +1,749 @@
+
+Module data for: axisym_toroid_eq_m
+
+use constants_m, only : rkind, one, zero
+
+use species_m, only : nspec
+
+use quick_cube_splines_m, only : cube_spline_function_1D
+
+use density_spline_interp_m, only : initialize_density_spline_interp
+
+implicit none
+
+
+Module data for: axisym_toroid_ray_init_R_Z_nphi_ntheta_m
+
+use constants_m, only : rkind
+
+implicit none
+
+
+Module data for: constants_m
+
+implicit none
+
+integer, parameter :: rkind = selected_real_kind(15,307) ! kind parameter for reals
+
+integer, parameter :: skind = selected_real_kind(6,37) ! kind parameter single precision
+
+complex :: i                ! positive square root of -1
+
+real(KIND=rkind) :: pi, sqrt_pi         ! usual pi= 3.14159.....
+
+real(KIND=rkind) :: clight, mu0, eps0   ! consistent electro-magnetic constants
+
+real(KIND=rkind) :: me, mp, e           ! electron mass, proton mass and unit charge
+
+real(KIND=rkind) :: epsmach             ! measure of machine precision
+
+real(KIND=rkind) :: tinyr               ! measure of smallest number represented
+
+real(KIND=rkind) :: unitmat2(2,2)   ! 2X2 unit matrix
+
+real(KIND=rkind) :: unitmat3(3,3)   ! 3X3 unit matrix
+
+real(KIND=rkind) :: unlike      ! a real number unlikely set by input file
+
+real(KIND=rkind) :: nlike       ! an integer number unlikely set by input file
+
+real(KIND=rkind),parameter :: zero = 0.0_rkind
+
+real(KIND=rkind),parameter :: one = 1.0_rkind
+
+real(KIND=rkind),parameter :: two = 2.0_rkind
+
+
+Module data for: damping_m
+
+use constants_m, only : rkind
+
+implicit none
+
+Local data **************************************************
+The warm plasma quantities are needed in routine poynting - generated in routine deriv()
+N.B. This may not be thread safe.  Need to revisit when implementing poynting
+complex(KIND=rkind) :: depsdw_h3x3(3,3)
+
+
+Module data for: density_spline_interp_m
+
+use constants_m, only : rkind
+
+use quick_cube_splines_m, only : cube_spline_function_1D
+
+implicit none
+
+integer, parameter :: n_grid_max = 200 ! Max dimension of input arrays, truncated later
+
+
+Module data for: diagnostics_m
+
+use constants_m, only : rkind
+
+implicit none
+
+Local data
+Counter for general use, mostly for use in debugging
+integer :: diag_count = 0
+
+integer :: max_diag_count = 5
+
+Timing variables
+real(KIND=rkind) :: t_start_RAYS, t_finish_RAYS  ! These are Julian dates in seconds
+
+real(KIND=rkind), parameter :: day_to_seconds = 86400.
+
+Time and date vector - loaded in subroutine initialize()
+integer :: date_v(8)
+
+unit numbers for persistent files (i.e. ones that stay open all through the run)
+integer :: output_unit   ! Unit for formatted ray data output.  Set in initialize()
+
+integer :: ray_list_unit ! Unit for formatted ray list output.  Set in initialize()
+
+generic procedure: message(mess/character, value/generic, threshold/integer)
+Prints "caller: mess= value" when threshold > verbosity
+value can be integer,real, complex, or matrix
+interface message
+
+module procedure blank_message, &
+
+&   i_message, logical_message, r_message, rdbl_message, c_message, &
+
+&   ivn_message,  rvn_message, rvndbl_message, cvn_message, &
+
+&   cvndbl_message, rmatrix_message, rmatrixdbl_message, cmatrix_message, &
+
+&   cmatrixdbl_message
+
+end interface
+
+generic procedure: text_message(mess/character, threshold/integer)
+or text_message(mess1/character,mess2/character, threshold/integer)
+interface text_message
+
+module procedure text_message, two_texts_message
+
+end interface
+
+Unit where output from message() goes
+integer :: message_unit
+
+Place to temporarily stash message_unit to send messages to alternate file
+integer :: save_message_unit
+
+Unit for alternate message file
+integer :: message_unit_alternate ! Superseded, stdout -> write(*...
+
+Default file name for message output.  At end copied to "log.RAYS.<run label>"
+character(len=80) :: message_file = 'messages'
+
+Namelist data for /diagnostics_list/
+verbosity = a switch to set the level of output from message() and text_message()
+verbosity = 0 gives minimum output, negative gives no text output
+integer :: verbosity = 0
+
+messages_to_stdout = If true write messages to stdout as well as to messages file
+logical :: messages_to_stdout = .false.
+
+write_formatted_ray_files = If true, write ray data to formatted ASCII file.
+This was the original output method.  It has been superseded by either writing
+a list directed ASCII  output file, or to a neCDF file.  These have more metadata
+about the run.  We keep this around for diagnostic purposes.  It is written
+incrementally as the run proceeds, whereas the other files are written at the end of
+the run.
+logical :: write_formatted_ray_files = .false.
+
+Run description
+character(len=80) :: run_description = ''
+
+Run label (N.B. should be legal in a file name, e.g.no blanks allowed)
+character(len=60) :: run_label = ''
+
+Switch for diagnostics.
+integrate_eq_gradients = false: default
+integrate_eq_gradients = true: integrate gradients of B, Te, and ne along the ray.
+logical :: integrate_eq_gradients = .false.
+
+namelist /diagnostics_list/ verbosity, messages_to_stdout, write_formatted_ray_files, &
+
+& run_description, run_label, integrate_eq_gradients
+
+
+Module data for: dispersion_solvers_m
+
+use constants_m, only : rkind
+
+implicit none
+
+
+Module data for: eqdsk_magnetics_lin_interp_m
+
+use constants_m, only : rkind
+
+implicit none
+
+Local data **************************************************
+Flux function psi at plasma boundary
+real(KIND=rkind) :: psiB
+
+
+Module data for: eqdsk_magnetics_spline_interp_m
+
+Stuff for 2D spline profiles i.e. psi
+type(cube_spline_function_2D) :: Psi_profile
+
+character (len = 80) :: Psi_name = 'Psi_profile'
+
+Stuff for 1D spline profiles versus PsiN
+type(cube_spline_function_1D) :: T_profile
+
+character (len = 80) :: T_name = 'T_profile'
+
+type(cube_spline_function_1D) :: Q_profile
+
+character (len = 80) ::Q_name = 'Q_profile'
+
+type(cube_spline_function_1D) :: rho_profile
+
+character (len = 80) ::rho_name = 'rho_profile'
+
+type(cube_spline_function_1D) :: Tflux_profile
+
+character (len = 80) ::Tflux_name = 'Tflux_profile'
+
+Stuff for 1D spline profiles versus rho
+type(cube_spline_function_1D) :: psiN_profile_rho
+
+character (len = 80) :: psiN_name = 'psiN_profile_rho'
+
+Flux function psi at plasma boundary
+real(KIND=rkind) :: psiB
+
+
+Module data for: eqdsk_utilities_m
+
+use constants_m, only : rkind
+
+implicit none
+
+eqdsk data
+character (len = 100) :: string
+
+integer :: i, j, i3, NRBOX, NZBOX, NBOUND, NLIM
+
+real(KIND=rkind) :: RBOXLEN, ZBOXLEN, R0, RBOXLFT, ZOFF, zero, RAXIS, ZAXIS, B0, PSIAXIS, PSIBOUND, CURRENT
+
+real(KIND=rkind), dimension (:), allocatable :: T, P, TTp, Pp, Q, RBOUND, ZBOUND, RLIM, ZLIM
+
+real(KIND=rkind), dimension (:, :), allocatable :: Psi
+
+data needed for interpolation of psi etc
+real(KIND=rkind), dimension (:), allocatable :: R_grid, Z_grid
+
+real(KIND=rkind) :: dR, dZ
+
+
+Module data for: equilibrium_m
+
+use constants_m, only : rkind
+
+use species_m, only : nspec0
+
+implicit none
+
+Derived type containing equilibrium data for a spatial point in the plasma
+type eq_point
+
+B field. Note that bvec = B, bmag = |B|, gradbmag(i) = d(bmag)/d[x(i)],
+bunit = B/|B|, and gradbunit(i,j) = d[B(j)/bmag]/d[x(i)],
+gradbtensor(i,j) = d[B(j)]/d[x(i)].
+real(KIND=rkind) :: bvec(3), bmag, gradbmag(3), bunit(3), gradbunit(3,3), gradbtensor(3,3)
+
+Density.
+real(KIND=rkind) :: ns(0:nspec0), gradns(3, 0:nspec0)
+
+Temperature.
+real(KIND=rkind)  :: ts(0:nspec0), gradts(3, 0:nspec0)
+
+Some often used plasma parameters.
+real(KIND=rkind)  :: omgc(0:nspec0), omgp2(0:nspec0)
+
+real(KIND=rkind)  :: alpha(0:nspec0), gamma(0:nspec0)
+
+Error returns
+character(len=60) :: equib_err = ''
+
+end type eq_point
+
+
+Module data for: file_input_ray_init_m
+
+use constants_m, only : rkind
+
+implicit none
+
+Local data **************************************************
+File name for input
+character(len=80) :: in_filename
+
+
+Module data for: mirror_magnetics_spline_interp_m
+
+use constants_m, only : rkind, zero, one, two
+
+use quick_cube_splines_m, only : cube_spline_function_1D, cube_spline_function_2D
+
+implicit none
+
+Introduce r_LUFS_spline, z_LUFS_spline, Aphi_LUFS_spline as local module variables so
+don't have to use multiple_mirror_eq_m in subroutines below  -> avoid circularity
+real(KIND=rkind) ::  r_LUFS_spline, z_LUFS_spline, Aphi_LUFS_spline
+
+Stuff for 2D spline profiles
+type(cube_spline_function_2D) :: Br_spline
+
+character (len = 80) :: Br_spline_name = 'Br_spline'
+
+type(cube_spline_function_2D) :: Bz_spline
+
+character (len = 80) :: Bz_spline_name = 'Bz_spline'
+
+type(cube_spline_function_2D) :: Aphi_spline
+
+character (len = 80) :: Aphi_spline_name = 'Aphi_spline'
+
+
+Module data for: multiple_mirror_eq_m
+
+use constants_m, only : rkind, one, zero, two
+
+use species_m, only : nspec
+
+use mirror_magnetics_spline_interp_m, only : mirror_field_NC_file, &
+
+& initialize_mirror_magnetics_spline_interp
+
+use quick_cube_splines_m, only : cube_spline_function_1D
+
+use density_spline_interp_m, only : initialize_density_spline_interp
+
+implicit none
+
+Local data
+integer :: i, is
+
+Geometry data
+real(KIND=rkind) :: box_rmax, box_zmin, box_zmax
+
+Get r_LUFS, z_LUFS, Aphi_LUFS from specific mirror magnetics routine (e.g.
+initialize_mirror_magnetics_spline_interp) set in init
+real(KIND=rkind) :: r_LUFS, z_LUFS ! Location of scrape-off point of last flux surface
+
+real(KIND=rkind) :: Aphi_LUFS ! Bounding value of Aphi evaluated at r_LUFS, z_LUFS
+
+
+Module data for: ode_m
+
+use constants_m, only : rkind
+
+implicit none
+
+Local data
+Number of ODEs to be solved. Calculated below depending on whether or not damping and
+diagnostic quantities are to be integrated.
+integer :: nv
+
+Derived type containing information on terminating ode integration, and error tolerances
+which may evolve along the ray e.g. as set by the SG ODE solver.
+type ode_stop
+
+logical :: stop_ode = .false.
+logical :: stop_ode
+
+character(len=30) :: ode_stop_flag
+
+real(KIND=rkind) :: rel_err, abs_err
+
+end type ode_stop
+
+Interfaces for Shampine and Gordon ODE
+interface initialize_SG_ode
+
+module subroutine initialize_SG_ode(read_input)
+
+logical, intent(in) :: read_input
+
+end subroutine initialize_SG_ode
+
+end interface initialize_SG_ode
+
+interface ray_init_SG_ode
+
+module subroutine ray_init_SG_ode(ray_stop)
+
+type(ode_stop) :: ray_stop
+
+end subroutine ray_init_SG_ode
+
+end interface ray_init_SG_ode
+
+interface SG_ode
+
+module subroutine SG_ode(eqn_ray, nv, v, s, sout, ray_stop)
+
+use diagnostics_m, only : message_unit, message, verbosity
+
+use constants_m, only : rkind
+
+Arguments of ODE
+external eqn_ray
+
+integer, intent(in) :: nv
+
+real(KIND=rkind), intent(inout) :: v(nv)
+
+real(KIND=rkind), intent(inout) :: s, sout
+
+type(ode_stop)  :: ray_stop
+
+end subroutine SG_ode
+
+end interface SG_ode
+
+Interfaces for RK4 ODE
+interface initialize_RK4_ode
+
+module subroutine initialize_RK4_ode
+
+end subroutine initialize_RK4_ode
+
+end interface initialize_RK4_ode
+
+interface ray_init_RK4_ode
+
+module subroutine ray_init_RK4_ode
+
+end subroutine ray_init_RK4_ode
+
+end interface ray_init_RK4_ode
+
+interface RK4_ode
+
+module subroutine RK4_ode(eqn_ray, nv, v, s, sout, ray_stop)
+
+use diagnostics_m, only : message_unit, message, verbosity
+
+use constants_m, only : rkind
+
+Arguments of ODE
+external eqn_ray
+
+integer, intent(in) :: nv
+
+real(KIND=rkind), intent(inout) :: v(nv)
+
+real(KIND=rkind), intent(inout) :: s, sout
+
+type(ode_stop)  :: ray_stop
+
+end subroutine RK4_ode
+
+end interface RK4_ode
+
+
+Module data for: one_ray_init_XYZ_k_direction_m
+
+use constants_m, only : rkind, zero, one
+
+implicit none
+
+
+Module data for: openmp_m
+
+use ray_init_m, only : nray
+
+use omp_lib
+
+use diagnostics_m, only : message, text_message
+
+implicit none
+
+Local data
+integer :: num_procs
+
+logical :: have_OMP
+
+
+Module data for: ray_init_m
+
+use constants_m, only : rkind
+
+implicit none
+
+Local data
+real(KIND=rkind), allocatable :: rvec0(:,:)
+
+real(KIND=rkind), allocatable :: rindex_vec0(:,:)
+
+real(KIND=rkind), allocatable :: ray_pwr_wt(:)
+
+Number of rays that were successfully initialized. Calculated in the specific ray
+initialization routine
+integer :: nray
+
+
+Module data for: ray_results_m
+
+use constants_m, only : rkind
+
+implicit none
+
+Local data
+Time and date vector, get from diagnostics_m
+integer :: date_vector(8)
+
+Run label (N.B. should be legal in a file name, get from diagnostics_m)
+character(len=60) :: RAYS_run_label = ''
+
+integer :: number_of_rays, max_number_of_points, dim_v_vector
+
+ray data
+real(KIND=rkind), allocatable :: ray_vec(:,:,:) ! nv, max_number_of_points=nstep_max+1, nray
+
+real(KIND=rkind), allocatable :: residual(:,:)  ! nstep_max, nray
+
+integer, allocatable :: npoints(:)              ! nray
+
+Summary data
+real(KIND=rkind), allocatable :: initial_ray_power(:) ! nray
+
+real(KIND=rkind), allocatable :: ray_trace_time(:)    ! nray
+
+real(KIND=rkind), allocatable :: end_residuals(:)     ! nray
+
+real(KIND=rkind), allocatable :: max_residuals(:)     ! nray
+
+real(KIND=rkind), allocatable :: end_ray_parameter(:) ! nray
+
+real(KIND=rkind), allocatable :: start_ray_vec(:,:)   ! nv, nray
+
+real(KIND=rkind), allocatable :: end_ray_vec(:,:)     ! nv, nray
+
+character(len=60), allocatable :: ray_stop_flag(:)    ! nray
+
+real(KIND=rkind)  :: total_trace_time
+
+Derived type containing same data as above so can have multiple run results in memory
+type run_results
+
+Time and date vector, get from diagnostics_m
+integer :: date_vector(8)
+
+Run label (N.B. should be legal in file name, get from diagnostics_m)
+character(len=60) :: RAYS_run_label = ''
+
+integer :: number_of_rays, max_number_of_points, dim_v_vector
+
+ray data
+real(KIND=rkind), allocatable :: ray_vec(:,:,:) ! nv, nstep_max+1, nray
+
+real(KIND=rkind), allocatable :: residual(:,:)  ! nstep_max+1, nray
+
+integer, allocatable :: npoints(:)              ! nray
+
+Summary data
+real(KIND=rkind), allocatable :: initial_ray_power(:) ! nray
+
+real(KIND=rkind), allocatable :: ray_trace_time(:)    ! nray
+
+real(KIND=rkind), allocatable :: end_residuals(:)     ! nray
+
+real(KIND=rkind), allocatable :: max_residuals(:)     ! nray
+
+real(KIND=rkind), allocatable :: end_ray_parameter(:) ! nray
+
+real(KIND=rkind), allocatable :: start_ray_vec(:,:)   ! nv, nray
+
+real(KIND=rkind), allocatable :: end_ray_vec(:,:)     ! nv, nray
+
+character(len=60), allocatable :: ray_stop_flag(:)    ! nray
+
+real(KIND=rkind)  :: total_trace_time
+
+contains
+
+procedure :: from_module, to_module, read_results_instance_NC
+
+end type run_results
+
+
+Module data for: rf_m
+
+use constants_m, only : rkind
+
+implicit none
+
+Local data
+RF wave frequency: omgrf = 2*pi*frf
+real(KIND=rkind) :: omgrf
+
+wave number in vacuum: k0 = clight / omgrf
+real(KIND=rkind) :: k0
+
+
+Module data for: RK4_ode_m
+
+use constants_m, only : rkind
+
+Access type definition ode_stop should be available by host association from ode_m.
+But it confuses make not to use ode_m since it thinks RK4_ode_m doesn't depend on it.
+Therefore:
+use ode_m, only : ode_stop
+
+implicit none
+
+namelist /RK4_ode_list/  N.B. RK4 has no parameters so there is no namelist to read
+
+Module data for: SG_ode_m
+
+use constants_m, only : rkind
+
+Access type definition ode_stop should be available by host association from ode_m.
+But it confuses MAKE not to use ode_m since it thinks SG_ode_m doesn't depend on it.
+Therefore:
+use ode_m, only : ode_stop
+
+implicit none
+
+
+Module data for: simple_slab_ray_init_m
+
+use constants_m, only : rkind, one, zero
+
+implicit none
+
+
+Module data for: slab_eq_m
+
+use constants_m, only : rkind, zero, one
+
+implicit none
+
+
+Module data for: solovev_eq_m
+
+use constants_m, only : rkind
+
+implicit none
+
+Local data
+real(KIND=rkind) :: inner_bound, vert_bound, r_Zmax
+
+
+Module data for: solovev_magnetics_m
+
+use constants_m, only : rkind
+
+implicit none
+
+Local data
+Flux function psi at plasma boundary
+real(KIND=rkind) :: psiB
+
+
+Module data for: solovev_ray_init_nphi_ntheta_m
+
+use constants_m, only : rkind
+
+implicit none
+
+
+Module data for: species_m
+
+use constants_m, only : rkind
+
+implicit none
+
+Local data
+Maximum No. of ion species: nspec0;
+integer, parameter :: nspec0 = 5
+
+Actual No. of ion species: nspec
+integer :: nspec  ! Calculated from species contained in namelist species_list
+
+Static declarations and initializations
+character(len=9), dimension(0:5) :: spec_name0 = &
+
+& (/ 'electron ', 'hydrogen ', 'deuterium', 'tritium  ', '3He      ', 'alpha    '/)
+
+real(KIND=rkind), dimension(0:5) :: qs0 = (/-1., 1., 1., 1., 2., 2. /) ! units of electron charge
+
+real(KIND=rkind), dimension(0:5) :: ms0 = (/1., 1836., 3670., 5497., 5496., 7294. /) ! in units of me
+
+nmins, nmaxs: minimum and maximum harmonics kept in susceptibility tensor for
+for species is.  +/- n_limit is size of nimns,nmax arrays
+integer, parameter :: n_limit = 5
+
+integer, dimension(-n_limit:n_limit) :: nmins, nmaxs
+
+n0s: actual species number density calculated in init = n0*eta(is)
+real(KIND=rkind), dimension(0:nspec0) :: n0s = 0.
+
+t0s: temperature in MKS (Joules) calculated in init from t0s_eV(is)
+real(KIND=rkind), dimension(0:nspec0) :: t0s = 0.
+
+tseps: temperature in MKS (Joules) calculated in init from tseps_eV(is)
+real(KIND=rkind), dimension(0:nspec0) :: tseps = 0.
+
+
+Module data for: suscep_m
+
+use constants_m, only : rkind
+
+implicit none
+
+
+Module data for: temperature_spline_interp_m
+
+use constants_m, only : rkind
+
+use quick_cube_splines_m, only : cube_spline_function_1D
+
+implicit none
+
+Local data
+integer, parameter :: n_grid_max = 200 ! Max dimension of input arrays, truncated later
+
+Stuff for 1D spline profiles
+type(cube_spline_function_1D) :: Te_profileN  ! Te profile normalized to 1. on axis
+
+type(cube_spline_function_1D) :: Ti_profileN  ! Ti profile normalized to 1. on axis
+
+character (len = 80) :: Te_name = 'Te_profile'
+
+character (len = 80) :: Ti_name = 'Ti_profile'
+
+
+Module data for: XY_curves_netCDF_m
+
+implicit none
+
+integer, parameter :: rkind = selected_real_kind(15,307) ! kind parameter for reals
+
+integer, parameter :: str_max_len = 60
+
+Derived type containing data needed to define an XY curve
+type XY_curve_netCDF
+
+character(len=:), allocatable :: grid_name
+
+character(len=:), allocatable :: curve_name
+
+real(kind=rkind), allocatable :: grid(:)
+
+real(kind=rkind), allocatable :: curve(:)
+
+end type XY_curve_netCDF
+

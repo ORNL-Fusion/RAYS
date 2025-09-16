@@ -6,12 +6,15 @@
 ! write_XY_curves_netCDF, which accepts a list of type XY_curve_netCDF instances and writes
 ! a netCDF file contining the curve data plus some metadata.
 
+!_________________________________________________________________________________________
 ! Working notes:
 !_________________________________________________________________________________________
 
-	implicit none
+!_________________________________________________________________________________________
+! Module data
+!_________________________________________________________________________________________
 
-! Local data **************************************************
+	implicit none
 
     integer, parameter :: rkind = selected_real_kind(15,307) ! kind parameter for reals
     integer, parameter :: str_max_len = 60
@@ -25,7 +28,6 @@
 	end type XY_curve_netCDF
 
 !_________________________________________________________________________________________
-
 contains
 !_________________________________________________________________________________________
 

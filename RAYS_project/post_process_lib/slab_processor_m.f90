@@ -1,6 +1,14 @@
  module slab_processor_m
 ! Post processing for slab equilibrium, all variation in x direction
 
+!_________________________________________________________________________________________
+! Working notes:
+!_________________________________________________________________________________________
+
+!_________________________________________________________________________________________
+! Module data
+!_________________________________________________________________________________________
+
     use constants_m, only : rkind
 
     implicit none
@@ -18,6 +26,10 @@
 ! Alpha at hybrid cutoffs
     real(KIND=rkind), dimension(n_locs) :: alpha_e_H_cut
     real(KIND=rkind), dimension(n_locs) :: alpha_e_det
+
+!_________________________________________________________________________________________
+! Namelist data for /slab_processor_list/
+!_________________________________________________________________________________________
 
 ! Number of k vectors to plot for each ray in graphics
     integer :: num_plot_k_vectors
@@ -46,7 +58,9 @@
              & calculate_dep_profiles, write_dep_profiles, calculate_ray_diag, &
              & write_eq_X_profile_data, n_X
 
- contains
+!_________________________________________________________________________________________
+contains
+!_________________________________________________________________________________________
 
  subroutine initialize_slab_processor(read_input)
 

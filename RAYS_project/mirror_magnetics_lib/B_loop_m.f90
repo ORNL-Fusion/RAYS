@@ -3,7 +3,13 @@ module B_loop_m
 ! Routines to calculate magnetic field from a circular loop of radius a, carrying
 ! current of 1 Amp, centered at (x,y,z) = 0, lying in the z = 0 plane
 
-!   use constants_m, only : rkind, pi, mu0, zero, one
+!_________________________________________________________________________________________
+! Working notes:
+!_________________________________________________________________________________________
+
+!_________________________________________________________________________________________
+! Module data
+!_________________________________________________________________________________________
 
     use complete_elliptic_int_m, only : elliptic_Em, elliptic_Km
 
@@ -27,11 +33,9 @@ module B_loop_m
 !    real(KIND=rkind),parameter :: mu0 = 1.0
     real(KIND=rkind),parameter :: c0 = mu0/(n2*pi)
 
-!******************************
-
+!_________________________________________________________________________________________
 contains
-
-!******************************
+!_________________________________________________________________________________________
 
 subroutine Brz_loop(r, z, a, Br, Bz, Aphi)
 

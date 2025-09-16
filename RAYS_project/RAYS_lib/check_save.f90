@@ -2,6 +2,11 @@
 !   Does checking for ray stop criteria and saves output after each step.
 !   External routines: deriv_cold (deriv_cold.f90)
 
+!_________________________________________________________________________________________
+! Working notes:
+!_________________________________________________________________________________________
+
+
     use constants_m, only : rkind
     use diagnostics_m, only : integrate_eq_gradients, message, text_message, &
                             & write_formatted_ray_files, output_unit
@@ -29,8 +34,7 @@
     real(KIND=rkind) :: ksi(0:nspec), ki
     real(KIND=rkind) :: total_absorption, total_species_absorption
     real(KIND=rkind) :: bmod, diff_vec(3)
-
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!_________________________________________________________________________________________
 
 !   Calculate the plasma equilibrium.
     call equilibrium(v(1:3), eq)

@@ -7,7 +7,10 @@ module  eqdsk_magnetics_spline_interp_m
 !      in poloidal flux.  It uses the same grid dimension as R -> NW.
 !      For the splined profiles below the grid is PsiN -> [0,1]
 
+!_________________________________________________________________________________________
 ! Working notes
+!_________________________________________________________________________________________
+
 ! DBB (1/27/2025) Added stuff to get splined profiles of Q of psi and RBhi of psi.
 ! DBB (8/2/2024) Changed error return 'if psi > 1' to 'if psi > plasma_psi_limit' to
 ! allow rays outside last closed flux surface. plasma_psi_limit defaults to 1.0 but can be
@@ -19,7 +22,9 @@ module  eqdsk_magnetics_spline_interp_m
 
     implicit none
 
-! Local data **************************************************
+!_________________________________________________________________________________________
+! Module data
+!_________________________________________________________________________________________
 
 ! Stuff for 2D spline profiles i.e. psi
 
@@ -48,18 +53,18 @@ module  eqdsk_magnetics_spline_interp_m
     ! Flux function psi at plasma boundary
     real(KIND=rkind) :: psiB
 
-! Namelist data for /eqdsk_magnetics_spline_interp_list/  *****************************
+!_________________________________________________________________________________________
+! Namelist data for /eqdsk_magnetics_spline_interp_list/
+!_________________________________________________________________________________________
 
 ! Name of input eqdsk file
     character (len = 100) :: eqdsk_file_name
 
   namelist / eqdsk_magnetics_spline_interp_list/ eqdsk_file_name
 
-!********************************************************************
-
+!_________________________________________________________________________________________
 contains
-
-!********************************************************************
+!_________________________________________________________________________________________
 
   subroutine initialize_eqdsk_magnetics_spline_interp(read_input, r_axis, z_axis, &
                & box_rmin, box_rmax, box_zmin, box_zmax, &
