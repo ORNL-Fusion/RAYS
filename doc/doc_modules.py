@@ -8,8 +8,8 @@ It does not check that or try to accomodate if it doesn't follow the template.
 The header consists of:
 1) the top-level comments <--> module description
 2) Working notes comments
-3) declaration of module data (not including variables that are input from namelists)
-   definitions of derived types and interfaces
+3) declaration of module data (not including variables that are input from namelists),
+   definitions of derived types, and interfaces
 4) declaration of variables that come in from namelists.
 
 i.e. everything above the 'contains' line if there is one.
@@ -192,7 +192,7 @@ def add_line_breaks(lines):
 # 			print('temp_line 1 = ', temp_line)
 		temp_line = temp_line.split(',')[0]
 # 			print('temp_line2 = ', temp_line)
-		if temp_line in key_words: # Is a declaration
+		if temp_line in key_words: # Is a declaration, prepend a line break
 			line = '<br>' + line
 		fixed_lines.append(line)
 	return fixed_lines
