@@ -1,0 +1,46 @@
+
+# Module Descriptions for mirror_magnetics_lib
+
+Description of module: B_loop_m
+
+Routines to calculate magnetic field from a circular loop of radius a, carrying
+current of 1 Amp, centered at (x,y,z) = 0, lying in the z = 0 plane
+
+Description of module: mirror_magnetics_m
+
+Routines and derived types to generate magnetic fields for multiple mirrors aligned
+along the z-axis.  The present intent is to be able to generate the fields, then to use
+these to do spline fits in various r,z domains.  The spline fits and the spline
+derivatives would then be used in RAYS rather than using these fields directly.  We'll
+see how it turns out.
+This module is used by stand-alone code mirror_magnetics.f90.  The output of that code is
+a netcdf file containing magnetic fields on an r,z grid and other data needed to generate
+spline fits for use in the RAYS code.  The spline fits, and the magnetic field routines
+are in mirror_magnetics_spline_interp_m.f90 which lives in RAYS_lib.  However that module
+in RAYS_lib uses this module to read in the netCDF file and to get that data.
+We define a derived type "coil" which has the data defining the location of conductors
+in the coil.  Inner and outer coil radius and coil z center are self explanatory. There
+can be thousands of turns in the coil, so we discretize the arrangement of turns into
+a small number of filaments arranged in a (n_r_layers X n_z_slices) grid such that
+n_turns = n_r_layers * n_z_slices.
+A type-bound procedure 'coil_rz_field_1Amp' is provided which gives (Br, Bz, Aphi)
+per amp of current as functions of (r,z).
+Input data comes from three namelists, in three separate files:
+"mirror_magnetics_list" contains general data for the particular case to be generated
+"coil_data_list" describes the fixed coil configuration - coil locations and radii
+"current_data_list" lists the current in each coil
+Boundaries
+The domain over which fields are to be calculated for the netCDF field file are specified
+in the namelist_file: mirror_magnetics.nml as  r_min, r_max, z_min, z_max
+
+In addition the strike-point of the last un-interupted flux surface, LUFS, must be
+specified as r_LUFS, z_LUFS.  These depend on the coil configuration, the geometry
+of the first wall, as well as the coil current list, which varies from case to case. So,
+for now they must be calculated externally on a case-by-case basis and put into the
+namelist by hand.  Variables r_LUFS, z_LUFS are not used in this routine. But they are
+used in the mirror equilibrium routines to specify the plasma boundary, and since they are
+determined by the coil configuration and currents, this is the logical place to specify
+them.
+N.B. For generality subroutine write_mirror_fields_Brz_NC() allows for a non-zero r_min
+in /mirror_magnetics_list/.  Although for normal application to magnetic mirrors
+r_min would always be 0.  So the default is 0, but can me reset in the namelist.

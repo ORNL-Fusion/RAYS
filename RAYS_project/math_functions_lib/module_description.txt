@@ -1,4 +1,6 @@
 
+# Module Descriptions for math_functions_lib
+
 Description of module: bin_to_uniform_grid_m
 
 generic procedure: uniform grid binner to accumulate an extensive quantity, Q, into a

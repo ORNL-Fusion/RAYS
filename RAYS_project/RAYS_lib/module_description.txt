@@ -1,4 +1,6 @@
 
+# Module Descriptions for RAYS_lib
+
 Description of module: axisym_toroid_eq_m
 
 A general toroidal equilibrium module that supports a choice of magnetics, density,

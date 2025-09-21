@@ -3,12 +3,12 @@ module template_m
 ! intended to allow a parser script to automatically generate documentation files.
 
 ! The header consists of:
-! 1) the top-level comments
+! 1) the top-level comments <--> module description
 ! 2) Working notes comments
 ! 3) declaration of module data (not including variables that are input from namelists)
 !    definitions of derived types and interfaces
 ! 4) declaration of variables that come in from namelists.
-!
+
 ! So the header is the material above the "contains" line.  Each of these blocks is
 ! considered to be a section of the header. Each section is delineated by marker lines
 ! of the form "!_____ ...".  These marker lines are signals to the parser. Except for the

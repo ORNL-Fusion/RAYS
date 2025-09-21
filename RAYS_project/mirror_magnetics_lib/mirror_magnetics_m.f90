@@ -22,7 +22,7 @@ module mirror_magnetics_m
 
 ! Input data comes from three namelists, in three separate files:
 ! "mirror_magnetics_list" contains general data for the particular case to be generated
-! "coil_data_list" contains data on the fixed coil configuration e.g. coil locations
+! "coil_data_list" describes the fixed coil configuration - coil locations and radii
 ! "current_data_list" lists the current in each coil
 
 

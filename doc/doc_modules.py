@@ -4,6 +4,17 @@
 Code to document header information for the fortran modules in a static library.
 This code assumes that the modules follow the template format -> module_template_m.f90
 It does not check that or try to accomodate if it doesn't follow the template.
+
+The header consists of:
+1) the top-level comments <--> module description
+2) Working notes comments
+3) declaration of module data (not including variables that are input from namelists)
+   definitions of derived types and interfaces
+4) declaration of variables that come in from namelists.
+
+i.e. everything above the 'contains' line if there is one.
+
+For more details see the module template -> module_template_m.f90
 """
 
 # Working notes:
@@ -15,6 +26,9 @@ import glob
 
 debug = False
 debug0 = True
+
+key_words = ['real', 'complex', 'integer', 'character', 'logical',\
+             'real(', 'complex(', 'integer(', 'character(', 'logical(']
 
 #---------------------------------------------------------------------------------------
 # classes and functions
@@ -119,12 +133,110 @@ def strip_comment_characters(lines):
 		new_line = line.lstrip()
 		if new_line[0] == '!': # It's a comment
 			new_line = new_line[1:-1].strip()
-# 			if len(new_line) > 1 and new_line[1] == ' ': # If there's a space, strip it too
-# 				new_line = new_line[2:-1].rstrip()
-# 			else:
 		stripped_lines.append(new_line)
 	return stripped_lines
 
+#---------------------------------------------------------------------------------------
+# In a list of lines find the variable declaration lines and make sure there is a line
+# break before it.  This is used in generating the namelist data lines so that declarations
+# appear in markdown as a separate line from the comment above it.  Without this
+# declaration lines run together with any comments before.  Have to check the line before
+# to see if it is already blank or not even there.
+# def add_line_breaks(lines):
+# 	fixed_lines = []
+# 	line_before = ''
+# 	is_first_line = True
+# 	for line in lines:
+# 		if is_first_line: # Just add to list and go on
+# 			is_first_line = False
+# 			fixed_lines.append(line)
+# 			line_before = line
+# 			continue
+#
+# 		stripped_line = line.strip()
+# 		if len(stripped_line) == 0 or stripped_line[0]=='!': # Blank or comment, leave it alone
+# 			print('add_line_breaks: line = ', line)
+# 			fixed_lines.append(line)
+# 			line_before = stripped_line
+# 			continue
+# 		else:
+# 			temp_line = stripped_line.split()[0].lower()
+# # 			print('temp_line = ', temp_line)
+# 			temp_line = temp_line.split('(')[0]
+# # 			print('temp_line 1 = ', temp_line)
+# 			temp_line = temp_line.split(',')[0]
+# # 			print('temp_line2 = ', temp_line)
+# 			if temp_line in key_words: # Is a declaration
+# 				if len(line_before.strip())  == 0: # Preceded by blank line, go on
+# 					fixed_lines.append(stripped_line)
+# 					line_before = line
+# 					continue
+# 				else: # Not preceded by blank line, add line break
+# 					stripped_line = '<br>' + stripped_line
+# 					fixed_lines.append(stripped_line)
+# 					line_before = line
+# 	return fixed_lines
+
+def add_line_breaks(lines):
+	fixed_lines = []
+	for line in lines:
+
+		stripped_line = line.strip()
+		if len(stripped_line) == 0: # Blank , leave it alone
+			fixed_lines.append(line)
+			continue
+
+		temp_line = stripped_line.split()[0].lower()
+# 			print('temp_line = ', temp_line)
+		temp_line = temp_line.split('(')[0]
+# 			print('temp_line 1 = ', temp_line)
+		temp_line = temp_line.split(',')[0]
+# 			print('temp_line2 = ', temp_line)
+		if temp_line in key_words: # Is a declaration
+			line = '<br>' + line
+		fixed_lines.append(line)
+	return fixed_lines
+
+# def add_line_breaks(lines):
+# 	fixed_lines = []
+# 	line_before = ''
+# 	is_first_line = True
+# 	for line in lines:
+# 		if is_first_line: # Just add to list and go on
+# 			is_first_line = False
+# 			fixed_lines.append(line)
+# 			line_before = line
+# 			continue
+#
+# 		stripped_line = line.strip()
+# 		if len(stripped_line) == 0: # Blank, leave it alone append stripped line
+# 			print('add_line_breaks: line = ', line)
+# 			fixed_lines.append(stripped_line)
+# 			line_before = stripped_line
+# 			continue
+# 		if len(stripped_line) > 0 and stripped_line[0]=='!': # Comment, leave it alone
+# 			print('add_line_breaks: line = ', line)
+# 			fixed_lines.append('<br>' + line)
+# 			line_before = line
+# 			continue
+#
+# 		temp_line = stripped_line.split()[0].lower()
+# # 			print('temp_line = ', temp_line)
+# 		temp_line = temp_line.split('(')[0]
+# # 			print('temp_line 1 = ', temp_line)
+# 		temp_line = temp_line.split(',')[0]
+# # 			print('temp_line2 = ', temp_line)
+# 		if temp_line in key_words: # Is a declaration
+# 			if len(line_before.strip())  == 0: # Preceded by blank line, go on
+# 				fixed_lines.append(stripped_line)
+# 				line_before = line
+# 				continue
+# 			else: # Not preceded by blank line, add line break
+# 				stripped_line = '<br>' + stripped_line
+# 				fixed_lines.append(stripped_line)
+# 				line_before = line
+# 	return fixed_lines
+#
 
 #---------------------------------------------------------------------------------------
 # Get module name.	Should be the first line
@@ -284,6 +396,9 @@ def get_namelist_data(lines, module_name):
 # Update namelist_dict
 
 			namelist_data_lines = lines[n_data_start: marker_line_number]
+			print('\nnamelist_data_lines = ', namelist_data_lines)
+			namelist_data_lines = add_line_breaks(namelist_data_lines)
+			print('\nnamelist_data_lines 2 = ', namelist_data_lines)
 			namelist_data_lines = strip_comment_characters(namelist_data_lines)
 
 			namelist_dict[namelist_name] = namelist_data_lines
@@ -389,7 +504,7 @@ if __name__ == '__main__':
 
 	lib_list = ['RAYS_lib', 'post_process_lib', 'math_functions_lib', 'splines_lib', \
 	            'mirror_magnetics_lib']
-#	 lib_list = ['splines_lib']
+# 	lib_list = ['mirror_magnetics_lib']
 
 	print('Libraries: ', lib_list)
 
@@ -412,7 +527,8 @@ if __name__ == '__main__':
 
 		mod_description_lines = ['\n# Module Descriptions for ' + lib]
 		mod_data_lines = ['\n# Module data for modules in ' + lib]
-		namelist_data_lines = ['\n# Namelist Descriptions for modules in ' + lib]
+# 		namelist_data_lines = ['\n# Namelist Descriptions for modules in ' + lib]
+		namelist_data_lines = []
 
 		for mod_name in libs[lib].mod_names:
 			mod_description_lines.append('\nDescription of module: ' + mod_name + '\n')
@@ -443,7 +559,7 @@ if __name__ == '__main__':
 			if len(namelist_names) == 0:
 				continue
 			namelist_data_lines.append('\n## Namelist data for module: ' + mod_name)
-			print('\nnamelists in ', mod_name, ' = ', namelist_names)
+			if debug: print('\nnamelists in ', mod_name, ' = ', namelist_names)
 
 			if len(namelist_names) > 0:
 
@@ -455,9 +571,9 @@ if __name__ == '__main__':
 				for line in namelist_data_lines:
 					if debug: print(line)
 
-# 			if debug0:
-# 				for line in lines:
-# 					print(namelist_data_lines)
+			if debug:
+				for line in lines:
+					print(namelist_data_lines)
 
 # Write module description file to output directory
 		filename = lib + '_module_description.txt'

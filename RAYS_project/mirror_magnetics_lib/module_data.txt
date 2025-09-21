@@ -1,0 +1,86 @@
+
+# Module data for modules in mirror_magnetics_lib
+
+Module data for: B_loop_m
+
+use complete_elliptic_int_m, only : elliptic_Em, elliptic_Km
+
+implicit none
+
+integer, parameter :: rkind = selected_real_kind(15,307) ! kind parameter for reals
+
+real(KIND=rkind),parameter :: zero = 0.0_rkind
+
+real(KIND=rkind),parameter :: one = 1.0_rkind
+
+real(KIND=rkind),parameter :: n2 = 2.0_rkind, n3 = 3.0_rkind, n4 = 4.0_rkind
+
+real(KIND=rkind),parameter :: n5 = 5.0_rkind, n6 = 6.0_rkind, n8 = 8.0_rkind
+
+real(KIND=rkind),parameter :: n10 = 10.0_rkind,  n12 = 12.0_rkind
+
+real(KIND=rkind),parameter :: n14 = 14.0_rkind, n15 = 15.0_rkind, n16 = 16.0_rkind
+
+real(KIND=rkind),parameter :: n32 = 32.0_rkind, n45 = 45.0_rkind, n128 = 128.0_rkind
+
+real(KIND=rkind),parameter :: n256 = 256.0_rkind, n484 = 484.0_rkind
+
+real(KIND=rkind),parameter :: r0 = 0.001_rkind ! Threshold for small arg expansion
+
+real(KIND=rkind),parameter :: pi = 3.1415926535897932385
+
+real(KIND=rkind),parameter :: mu0 = pi * 4.e-7
+
+real(KIND=rkind),parameter :: mu0 = 1.0
+real(KIND=rkind),parameter :: c0 = mu0/(n2*pi)
+
+
+Module data for: mirror_magnetics_m
+
+implicit none
+
+integer, parameter :: rkind = selected_real_kind(15,307) ! kind parameter for reals
+
+real(KIND=rkind),parameter :: zero = 0.0_rkind
+
+Local data
+Data for coils
+number of sub-groups of turns = n_r_layers*n_z_slices
+integer, allocatable :: n_filaments(:)
+
+Derived type with data for a mirror coil consisting of one or more current loops
+type coil_type
+
+real(KIND=rkind) :: inner_radius ! Inner radius of coil conductors
+
+real(KIND=rkind) :: outer_radius ! Outer radius of coil conductors
+
+real(KIND=rkind) :: z_center ! z of coil center
+
+real(KIND=rkind) :: z_width ! coil width
+
+integer :: n_turns ! number of turns
+
+integer :: n_filaments ! number of sub-groups of the turns
+
+integer :: n_r_layers ! number of turn layers in radius
+
+integer :: n_z_slices ! number of turn slices in z
+
+real(KIND=rkind), allocatable :: r_filament(:) ! r positon of filament, size n_r_layers
+
+real(KIND=rkind), allocatable :: z_filament(:) ! z positon of filament, size n_z_slices
+
+contains
+
+procedure :: coil_Brz_field_1Amp ! Br(r,z), Bz(r,z for one amp in coil)
+
+end type coil_type
+
+type(coil_type), allocatable :: coil(:)
+
+2D field data to be written to netCDF file
+real(KIND=rkind), allocatable  :: r_grid(:), z_grid(:)
+
+real(KIND=rkind), allocatable  :: Br(:,:), Bz(:,:), Aphi(:,:)
+
