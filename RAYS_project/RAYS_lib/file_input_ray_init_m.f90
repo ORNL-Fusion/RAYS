@@ -3,7 +3,10 @@
 ! Generate the initial conditions for the rays
 ! i.e. intitial position for each ray: rvec0(1:3, iray) and
 ! information necessary to initialize k for each ray: kvec0(1:3, iray).
-! Also generates a power weight for each ray.
+! Also generates a power weight for each ray.  It derives this data from an input
+! namelist file "ray_init_<run_label>.in" where <run_label> must match the run_label
+! variable in the RAYS input namelist file.
+!
 
 ! This routine initializes based on initial launch position (X,Y,Z) and initial
 ! refractive indices (nx, ny, nz) from data in an input file.  Such data could represent

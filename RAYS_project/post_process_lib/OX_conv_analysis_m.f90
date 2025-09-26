@@ -417,18 +417,24 @@ subroutine analyze_OX_conv
 		character(len=80) :: out_file
 
 		! Open file to put deposition data in
-! 		OX_conv_unit = get_unit_number()
-! 		out_file = 'OX_conv_data.'//trim(run_label)
-! 		open(unit=OX_conv_unit, file=out_file, action='write', status='replace',&
-! 		     & form='formatted')
+		OX_conv_unit = get_unit_number()
+		out_file = 'OX_conv_data.'//trim(run_label)//'.dat'
+		open(unit=OX_conv_unit, file=out_file, action='write', status='replace',&
+		     & form='formatted')
 
 		do i_ray = 1, number_of_rays_converted
-			write(*,*)'ray ', i_ray, 'conv coeff = ', OX_conv_data(i_ray)%conv_coeff, 'nz_c = ', &
+			write(*,*)'ray ', i_ray, '  conv coeff = ', OX_conv_data(i_ray)%conv_coeff, 'nz_c = ', &
 			 & norm2(OX_conv_data(i_ray)%nvecz_c), 'ny_c = ', &
 			 & norm2(OX_conv_data(i_ray)%nvecy_c)
+
+			write(OX_conv_unit,*) &
+			 & 'ray ', i_ray, '  conv coeff = ', OX_conv_data(i_ray)%conv_coeff, 'nz_c = ', &
+			 & norm2(OX_conv_data(i_ray)%nvecz_c), 'ny_c = ', &
+			 & norm2(OX_conv_data(i_ray)%nvecy_c)
+
 		end do
 
-!         close(unit = OX_conv_unit)
+        close(unit = OX_conv_unit)
 
 	return
     end subroutine write_OX_conversion_data_LD
