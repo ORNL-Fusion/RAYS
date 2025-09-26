@@ -1,0 +1,24 @@
+ &post_process_list
+  processor = 'multiple_mirror'
+  ray_data_input_mode = 'NC'
+/
+ &mirror_processor_list
+  num_plot_k_vectors = 0
+  scale_k_vec = 'True'
+  k_vec_base_length = .02
+  set_XY_lim = 'True'
+  calculate_dep_profiles = .false.
+  write_dep_profiles = .false.
+  calculate_ray_diag = .true.
+!  write_contour_data = .true.
+  write_eq_XZ_grid_data = .true.
+  do_OX_conv_analysis = .true.
+  N_pointsX_eq = 51
+  N_pointsZ_eq = 101
+  n_AphiN = 51
+  n_rho = 51
+  z_reference = 3.2638
+/
+ &deposition_profiles_list
+  n_bins = 501
+/

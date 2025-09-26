@@ -1,0 +1,73 @@
+ &diagnostics_list
+  verbosity= 1,
+  messages_to_stdout = .true.
+  write_formatted_ray_files = .false.
+  run_description='MPEX ECH'
+  run_label='2nd_harm_11_rays_nz_30deg'
+  integrate_eq_gradients=.true.
+/
+ &species_list
+ n0=9.0e+19,
+ spec_name(0) = 'electron',
+ spec_model(0) = 'cold',
+ t0s_ev(0)=5.0d-3 ,
+ spec_name(1) = 'deuterium',
+ spec_model(1) = 'cold',
+ eta(1) = 1.0
+ t0s_ev(1)=1.0e3 ,
+/
+ &rf_list
+  frf=70.0d+9,
+  k0_sign = 1
+  wave_mode='plus'
+  ray_dispersion_model='cold',
+  ray_param='time',
+  dispersion_resid_limit = 1.0d-3
+/
+ &damping_list
+  damping_model='no_damp'
+  multi_spec_damping = .false.
+  total_damping_limit = 0.99
+/
+ &equilibrium_list
+ equilib_model='multiple_mirror',
+/
+ &multiple_mirror_eq_list
+  magnetics_model = 'mirror_magnetics_spline_interp'
+  density_prof_model = 'hyperbolic'
+  d_scrape_off = 0.0001
+  Aphin0_d = 0.05
+  delta_d = 0.05
+  temperature_prof_model(0) = 'parabolic'
+  alphat1(0) = 5.0
+  alphat2(0) = 2.0
+  temperature_prof_model(1) = 'zero'
+/
+&mirror_magnetics_spline_interp_list
+  mirror_field_NC_file = 'Brz_fields.MPEX_9_filaments_D3-6_ECH_2nd_harm.nc'
+/
+ &ray_init_list
+ ray_init_model = 'file_input_ray_init',
+ nray_max = 21
+/
+ &ode_list
+  ode_solver_name='RK4_ODE',
+  ray_deriv_name='cold'
+  nstep_max=1000,
+!  nstep_max=1,
+  ds=1.0E-012,
+!  ds=1.9597843137430383E-011,
+  s_max = 5.e-8
+/
+ &SG_ode_list
+ rel_err0=1.e-9,
+ abs_err0=1.e-9
+ SG_error_limit = 0.01
+/
+ &ray_results_list
+ write_results_list_directed = .false.
+ write_results_netCDF = .true.
+/
+ &openmp_list
+ num_threads=8
+/
