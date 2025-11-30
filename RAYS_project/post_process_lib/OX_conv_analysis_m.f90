@@ -1,7 +1,7 @@
  module OX_conv_analysis_m
 
 ! Analyzes ray data obtained from an instance of type run_results as defined in module
-! module ray_results_m.  The presumption is that the RAYS raun consists of O-mode rays
+! module ray_results_m.  The presumption is that the RAYS run consists of O-mode rays
 ! that approach the cutoff from low density.  The steps are
 ! 1) Find the point, x_max, on the ray having maximum density, which should be closest to
 !    the cutoff.
@@ -11,8 +11,8 @@
 !    is less than conversion_threshold, ignore this ray and consider that it didn't convert
 ! 5) Allocate and load array of type OX_conv for the rays that did convert.
 !
-! This is written for axisymmetric mirror equilibria, but I think it will work little
-! change for tokamaks
+! This is written for axisymmetric mirror equilibria, but I think it will with work little
+! (or no) change for tokamaks
 
 !_________________________________________________________________________________________
 ! Working notes:
@@ -182,6 +182,11 @@ subroutine analyze_OX_conv
 		OX_conv_data(i)%nvecz_c = conv_data_temp(i_ray)%nvecz_c
 		OX_conv_data(i)%ray_number = conv_data_temp(i_ray)%ray_number
 		OX_conv_data(i)%step_number = conv_data_temp(i_ray)%step_number
+
+! Calculate initial x and k for restarting X-mode on hight density side
+
+		call X_mode_conv(OX_conv_data(i)%x_max, OX_conv_data(i)%x_cut, &
+		& OX_conv_data(i)%nvecy_c, OX_conv_data(i)%nvecz_c)
 
 	end do
 

@@ -1,5 +1,5 @@
  module suscep_m
-!   Contains routines to calculate susceptibility tensor, chi, for a single species and
+!   Contains routines to calculate susceptibility tensor, chi, for a single species, and
 !   dielectric tensor, eps. eps is of derived type dielectric_tensor.
 !
 !   N.B. is = species number (0:nspec), and eps = I + sum(chis(is))
@@ -12,6 +12,14 @@
 !
 !   2) A specific cold dielectric tensor where all species are cold
 !
+! Definitions:
+!    susceptibility tensor, chi, in this module means 4*pi*i*/omega*sigma where sigma
+!    is the conductivity tensor, i.e. plasma current J = sigma dot E.  Also note that total
+!    chi is the sum over individual species chi(is).
+!
+!    dielectric tensor, eps, is I + sum[chi(is)] where I is the identity.  The dispersion
+!    relation is generally written in terms of eps.
+
 ! N.B. Plasma quantities come in from equilibrium_m.  An equilibrium routine must have been
 ! called previously.
 
@@ -209,6 +217,74 @@ contains
 
     return
  end subroutine RLSDP_cold
+!****************************************************************************
+
+complex function disp_fun_cold_cmplx(eq, n1, n2, n3)
+! calculates the cold plasma dispersion relation versus the components of n perpendicular
+! to B (i.e. n1, n2), and the component parallel to B (i.e. n3)
+
+! N.B. The components of n, and the return value, disp_fun_cold_cmplx, are complex.
+
+    use constants_m, only : rkind, one
+    use equilibrium_m, only : eq_point
+
+       implicit none
+
+!      Derived type containing equilibrium data for a spatial point in the plasma
+       type(eq_point), intent(in) :: eq
+
+       complex(KIND=rkind), intent(in) :: n1, n2, n3
+
+       real(KIND=rkind) :: S ,D , P,  R, L
+       real(KIND=rkind) :: a, b, c
+       complex(KIND=rkind) :: n_perp_sq
+
+       call RLSDP_cold(eq, S ,D , P, R, L)
+
+!      Coefficients for A(n3)*(n1sq)^2 + B(n3)*n1sq + C(n3) = 0.
+       a = S
+       b = -R*L - P*S +n3**2*(P+S)
+       c = P*(n3**2 - R)*(n3**2 - L)
+
+       n_perp_sq = n1**2 + n2**2
+       disp_fun_cold_cmplx = a*n_perp_sq**2 + b*n_perp_sq + c
+
+       return
+ end function disp_fun_cold_cmplx
+!****************************************************************************
+
+real function disp_fun_cold_real(eq, n1, n2, n3)
+! calculates the cold plasma dispersion relation versus the components of n perpendicular
+! to B (i.e. n1, n2), and the component parallel to B (i.e. n3)
+
+! N.B. The components of n, and the return value, disp_fun_cold_real, are real.
+
+    use constants_m, only : rkind, one
+    use equilibrium_m, only : eq_point
+
+       implicit none
+
+!      Derived type containing equilibrium data for a spatial point in the plasma
+       type(eq_point), intent(in) :: eq
+
+       real(KIND=rkind), intent(in) :: n1, n2, n3
+
+       real(KIND=rkind) :: S ,D , P,  R, L
+       real(KIND=rkind) :: a, b, c
+       real(KIND=rkind) :: n_perp_sq
+
+       call RLSDP_cold(eq, S ,D , P, R, L)
+
+!      Coefficients for A(n3)*(n1sq)^2 + B(n3)*n1sq + C(n3) = 0.
+       a = S
+       b = -R*L - P*S +n3**2*(P+S)
+       c = P*(n3**2 - R)*(n3**2 - L)
+
+       n_perp_sq = n1**2 + n2**2
+       disp_fun_cold_real = a*n_perp_sq**2 + b*n_perp_sq + c
+
+       return
+ end function disp_fun_cold_real
 
 ! ********************************************************************************
 

@@ -15,8 +15,17 @@
 ! ierr = -1 => (y(x1)-y(x0))(x1-x0) > 0 => no solution or multiple solutions in [x0,x1]
 ! ierr = 0 => no convergence after max_iter iterations
 ! ierr >= 1 => sucessful solution, ierr = number of iterations
-
-!_________________________________________________________________________________________
+!
+! There are four routines under the solve_bisection interface. bisect_single, bisect_real
+! which accept the arguments listed above. The calling sequence for these is:
+!   call solve_bisection(f, x,  x0_in, x1_in, y, eps, ierr)
+! The routines bisect_singleX and bisect_realX accept an additional argument,
+! extra_data(:), which is an assumed shape vector.  The calling sequence for these is:
+!   call solve_bisection(f, x,  x0_in, x1_in, y, eps, ierr, extra_data)
+! The actual length of extra_data(:) must be declared in the code calling solve_bisection
+! and also declared in f().
+!
+!______________________________________________________________________________________
 ! Working notes:
 !_________________________________________________________________________________________
 
@@ -31,7 +40,7 @@
 	INTEGER, PARAMETER :: max_iter = 1000
 
     interface solve_bisection
-        module procedure bisect_single, bisect_real
+        module procedure bisect_single, bisect_real, bisect_singleX, bisect_realX
     end interface
 
 !_________________________________________________________________________________________
@@ -149,5 +158,121 @@ contains
 
   RETURN
   END SUBROUTINE bisect_real
+
+ !*********************************************************************************
+
+  SUBROUTINE bisect_singleX(f, x,  x0_in, x1_in, y, eps, ierr, extra_data)
+
+	IMPLICIT NONE
+
+	REAL(kind = skind),	EXTERNAL :: f
+	REAL(kind = skind), INTENT(IN) :: x0_in
+	REAL(kind = skind), INTENT(IN) :: x1_in
+	REAL(kind = skind), INTENT(IN) :: y
+	REAL(kind = skind), INTENT(IN) :: eps
+	REAL(kind = skind), INTENT(IN) :: extra_data(:)
+	REAL(kind = skind), INTENT(out) :: x
+	INTEGER, INTENT(out) :: ierr
+
+! Local variables
+	REAL(kind = skind) :: y0, y1, y2, x0, x1, x2
+	INTEGER :: i
+
+	x0 = x0_in
+	x1 = x1_in
+
+	DO i = 1, max_iter
+		ierr = i
+		y0 = f(x0, extra_data(:)) - y
+		y1 = f(x1, extra_data(:)) - y
+
+		if (abs(y0) <= eps) then
+			x = x0
+			exit
+		end if
+
+		if (abs(y1) <= eps) then
+			x = x1
+			exit
+		end if
+
+		if (y0*y1 > 0.) then
+			ierr = -1
+			exit
+		end if
+
+		x2 = (x0 + x1)/2.0
+		y2 = f(x2, extra_data(:)) - y
+
+		if(y0*y2<0)then
+		   x1=x2
+		else
+		   x0=x2
+		endif
+	END DO
+
+	ierr = i
+	if (i >= max_iter)ierr = 0 ! No convergence in max_iter iterations
+
+  RETURN
+  END SUBROUTINE bisect_singleX
+
+ !*********************************************************************************
+
+  SUBROUTINE bisect_realX(f, x,  x0_in, x1_in, y, eps, ierr, extra_data)
+
+	IMPLICIT NONE
+
+	REAL(kind = rkind),	EXTERNAL :: f
+	REAL(kind = rkind), INTENT(IN) :: x0_in
+	REAL(kind = rkind), INTENT(IN) :: x1_in
+	REAL(kind = rkind), INTENT(IN) :: y
+	REAL(kind = rkind), INTENT(IN) :: eps
+	REAL(kind = rkind), INTENT(IN) :: extra_data(:)
+	REAL(kind = rkind), INTENT(out) :: x
+	INTEGER, INTENT(out) :: ierr
+
+	REAL(kind = rkind) :: y0, y1, y2, x0, x1, x2
+	INTEGER :: i
+
+	ierr = 0
+	x0 = x0_in
+	x1 = x1_in
+
+	DO i = 1, max_iter
+		ierr = i
+		y0 = f(x0, extra_data(:)) - y
+		y1 = f(x1, extra_data(:)) - y
+
+		if (abs(y0) <= eps) then
+			x = x0
+			exit
+		end if
+
+		if (abs(y1) <= eps) then
+			x = x1
+			exit
+		end if
+
+		if (y0*y1 > 0.0_rkind) then
+			ierr = -1
+			exit
+		end if
+
+		x2 = (x0 + x1)/2.0_rkind
+		y2 = f(x2, extra_data(:)) - y
+
+		if(y0*y2<0)then
+		   x1=x2
+		else
+		   x0=x2
+		endif
+	END DO
+
+	ierr = i
+	if (i >= max_iter)ierr = 0 ! No convergence in max_iter iterations
+
+  RETURN
+  END SUBROUTINE bisect_realX
 
   END MODULE bisect_m
