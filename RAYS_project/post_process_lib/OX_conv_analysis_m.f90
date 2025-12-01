@@ -143,8 +143,8 @@ subroutine analyze_OX_conv
 				conv_data_temp(i_ray)%x_cut = zero
 			end if
 
-			write(*,*) 'found_cutoff = ', found_cutoff,'  iteration = ', iteration,&
-			         & '  x_cutoff = ', x_cutoff_ray
+			write(*,*) 'found_cutoff = ', found_cutoff,'  iteration = ', iteration
+			write(*,*) 'x_cutoff = ', x_cutoff_ray
 		end if
 
 ! Calculate conversion coefficient to X-mode
@@ -183,10 +183,10 @@ subroutine analyze_OX_conv
 		OX_conv_data(i)%ray_number = conv_data_temp(i_ray)%ray_number
 		OX_conv_data(i)%step_number = conv_data_temp(i_ray)%step_number
 
-! Calculate initial x and k for restarting X-mode on hight density side
+! Calculate initial x and k for restarting X-mode on high density side
 
-		call X_mode_conv(OX_conv_data(i)%x_max, OX_conv_data(i)%x_cut, &
-		& OX_conv_data(i)%nvecy_c, OX_conv_data(i)%nvecz_c)
+! 		call X_mode_conv(OX_conv_data(i)%x_max, OX_conv_data(i)%x_cut, &
+! 		& OX_conv_data(i)%nvecy_c, OX_conv_data(i)%nvecz_c)
 
 	end do
 
@@ -354,30 +354,31 @@ subroutine analyze_OX_conv
 	type(eq_point) :: eq
 
 ! N.B. These things are evaluated at the cutoff surface
-	call equilibrium(x_cutoff_ray, eq)
+    call equilibrium(x_cutoff_ray, eq)
+	n_parallel = dot_product(k_max_ray, eq%bunit)/k0
 	xc_unit = eq%gradns(:,0)/norm2(eq%gradns(:, 0)) ! Unit vector along grad(ne)
 	v_temp = cross_product(eq%bunit, xc_unit) ! perpendicular to x and B, i.e. y direction
 	yc_unit = v_temp/norm2(v_temp)
 	zc_unit = cross_product(xc_unit, yc_unit)
 	theta = acos(dot_product(xc_unit, eq%bunit))
 	gamma = abs(eq%gamma(0))
+	L = eq%ns(0)/norm2(eq%gradns(:,0))
 
  write(*,*) 'xc_unit = ', xc_unit
  write(*,*) 'yc_unit = ', yc_unit
  write(*,*) 'zc_unit = ', zc_unit
  write(*,*) 'theta = ', theta
  write(*,*) 'gamma = ', gamma
+ write(*,*) 'L = ', L
 
 ! N.B. k vector is evaluated on the ray at x_max_ray.  If the plasma were plane stratified,
 ! as in Mjohus model, n_parallel and n_transverse would be constant along the ray.  I'm
 ! evaluating them using bunit at the reflection point.  There might be some ambiguity
 ! relative to evaluating bunit at the cutoff surface, but at least they do satisfy the
 ! dispersion relation where they are evaluated.
-	call equilibrium(x_max_ray, eq)
-	n_parallel = dot_product(k_max_ray, eq%bunit)/k0
+	n_vertical = dot_product(k_max_ray, xc_unit)/k0
 	nz_c = dot_product(k_max_ray, zc_unit)/k0
 	ny_c = dot_product(k_max_ray, yc_unit)/k0
-	n_vertical = dot_product(k_max_ray, xc_unit)/k0
 
 	nvecx_c = n_vertical*xc_unit
 	nvecy_c = ny_c*yc_unit
@@ -389,8 +390,6 @@ subroutine analyze_OX_conv
 	 &  sin(theta)**2/two)**1.5_rkind
 
 	G = 0.5_rkind*sqrt(gamma)/sqrt((one+gamma)*cos(theta)**2 + sin(theta)**2/two)
-
-	L = eq%ns(0)/norm2(eq%gradns(:,0))
 
     conv_coeff = exp(-pi*k0*L*(F*(abs(nz_c)-n_crit)**2 + G*abs(ny_c)**2))
 
