@@ -20,6 +20,7 @@ plot_XY_Curves_Fig and after the last call to plot_XY_Curves_Fig respectively
 This script requires external modules:
     matplotlib
     numpy
+    math
 
 change log:
  1/5/2011
@@ -37,6 +38,13 @@ change log:
 
  11/2/2022 (DBB)
  Modified XY_Curves_Fig to accept figsize and aspect_ratio as keyword args
+
+ 12/11/2025 (DBB)
+ Reworked the whole script to use more of the matplotlib object oriented interface instead
+ of the functional interface.  Now all interaction with matplotlib has been moved out of
+ the XY_Curves_Fig constructor and into plot_XY_Curves_Fig().  Also added capability to
+ add vectors to the curves, and keyword arg 'margins' which puts a little extra space around
+ the data area so that things like vectors don't stick off the plot.
 
 """
 
@@ -60,6 +68,8 @@ debug = False
 sci_threshold = 1.e4
 figure_count = 0
 page_count = 0
+default_figsize = (8., 6.25)
+default_aspect_ratio = 'auto'
 
 #_________________________________________________________________________________________________
 def scale_curve_list(curve_list):
@@ -73,6 +83,8 @@ def scale_curve_list(curve_list):
     fig_xmax = 0.
     fig_ymax = 0.
     for curve in curve_list:
+#         print('\nscale_curve_list: dir(curve) = ', dir(curve))
+
         max_abs_x = max(list(map(abs,curve.x)))
         if max_abs_x >= fig_xmax:
             fig_xmax = max_abs_x
@@ -194,90 +206,6 @@ def plot_index(index, entries_per_line = 2, **kwargs):
 
 #_________________________________________________________________________________________________
 
-class XY_Curves_Fig:
-    def __init__(self, curve_list, title = '', xlabel = '', ylabel = '', **kwargs):
-
-        if debug:
-            print('XYCurves_Fig: curve_list = ', curve_list)
-# Check the arguments
-        if isinstance(curve_list, XY_curve): # It's legal to pass in a single XY_curve instance
-            self.curve_list = [curve_list]
-        elif type(curve_list) == list:
-            for curve in curve_list: # check that everything is an instance of XY_curve
-                if not  isinstance(curve, XY_curve):
-                    print('curve type not = instance')
-                    print('plt_XY_Curves: arg curve_list must be a list of instances of XY_curve')
-                    raise Exception('plt_XY_Curves: arg curve_list must be a list of instances of\
-                    XY_curve')
-                self.curve_list = curve_list
-        else:
-            print('curve_list type = ', type(curve_list))
-            print('plt_XY_Curves: arg curve_list must be a list of instances of XY_curve')
-            raise Exception('plt_XY_Curves: arg curve_list must be a list of instances of XY_curve')
-
-        self.title = str(title)
-        self.xlabel = str(xlabel)
-        self.ylabel = str(ylabel)
-        self.kwargs = kwargs
-# Arguments are OK
-
-# Create figure
-        global figure_count
-        figure_count = figure_count + 1
-        self.fig_number = figure_count
-
-        self.figsize = (9.0, 6.0)
-        if 'figsize' in kwargs:
-            self.figsize = kwargs['figsize']
-            print('figsize = ', self.figsize)
-
-        fig = plt.figure(figsize=self.figsize)
-
-        if 'aspect_ratio' in kwargs:
-            self.aspect_ratio = kwargs['aspect_ratio']
-            print('aspect_ratio = ', self.aspect_ratio)
-            plt.axes((0.1, 0.1, 0.75, 0.75), aspect = self.aspect_ratio)
-        else:
-           plt.axes((0.1, 0.1, 0.75, 0.75))
-
-#        plt.axes((0.15, 0.1, 0.3, 0.75))
-
-        if 'xlim' in kwargs:
-            self.xlim = kwargs['xlim']
-            print('xlim = ', self.xlim)
-            plt.xlim(self.xlim)
-
-        if 'ylim' in kwargs:
-            self.ylim = kwargs['ylim']
-            print('ylim = ', self.ylim)
-            plt.ylim(self.ylim)
-
-        # Note to DBB: Annotating figure number below is confusing because it doesn't coincide with
-        # page number.  Change this to add page number instead.
-        #str_fig_number = str(figure_count)
-        #plt.annotate(str_fig_number, (0.9, 0.05), xycoords = 'figure fraction')
-
-        # Check if the maximum of data in the x or y of any curve in the curve_list is outside
-        # the threshold to use scientific notation in the axis labels.  If so divide the values
-        # by the appropriate scale factor and change the x and/or y axis labels to reflect this.
-
-        scaleX, scaleY = scale_curve_list(self.curve_list)
-        if scaleX != 1:
-            power_string = '  ' + r'$' + r'\times' + '10^{' + str(scaleX) + r'})$'
-            self.xlabel = xlabel + power_string
-        if scaleY != 1:
-            power_string = '  (' + r'$' + r'\times' + '10^{' + str(scaleY) + r'})$'
-            self.ylabel = ylabel + power_string
-
-        if debug:
-            print('scaleX = ', scaleX)
-            print('scaleX = ', scaleX)
-            print('self.xlabel = ', self.xlabel)
-            print('self.ylabel = ', self.ylabel)
-
-        return
-#_________________________________________________________________________________________________
-
 class XY_curve:
 
     count = 0
@@ -330,32 +258,153 @@ class XY_curve:
 
 #_________________________________________________________________________________________________
 
-def plot_XY_Curves_Fig(fig):
+class XY_Curves_Fig:
+    def __init__(self, curve_list, title = '', xlabel = '', ylabel = '', **kwargs):
 
-    if not isinstance(fig, XY_Curves_Fig):
+#         if debug:
+#             for curve in curve_list:
+#                 print('\nXYCurves_Fig: dir(curve) = ', dir(curve))
+
+# Check the arguments
+        if isinstance(curve_list, XY_curve): # It's legal to pass in a single XY_curve instance
+            self.curve_list = [curve_list]
+        elif type(curve_list) == list:
+            for curve in curve_list: # check that everything is an instance of XY_curve
+                if not  isinstance(curve, XY_curve):
+                    print('curve type not = instance')
+                    print('plt_XY_Curves: arg curve_list must be a list of instances of XY_curve')
+                    raise Exception('plt_XY_Curves: arg curve_list must be a list of instances of\
+                    XY_curve')
+                self.curve_list = curve_list
+        else:
+            print('curve_list type = ', type(curve_list))
+            print('plt_XY_Curves: arg curve_list must be a list of instances of XY_curve')
+            raise Exception('plt_XY_Curves: arg curve_list must be a list of instances of XY_curve')
+
+        self.curve_list = curve_list
+        self.title = str(title)
+        self.xlabel = str(xlabel)
+        self.ylabel = str(ylabel)
+        self.kwargs = kwargs
+
+        print('\ntitle = ', self.title)
+
+
+# Create figure
+# Deal with keyword args
+        global figure_count
+        figure_count = figure_count + 1
+        self.fig_number = figure_count
+
+        global default_figsize
+        self.figsize = default_figsize
+        if 'figsize' in kwargs:
+            self.figsize = kwargs['figsize']
+            print('figsize = ', self.figsize)
+
+        self.aspect_ratio = default_aspect_ratio
+        if 'aspect_ratio' in kwargs:
+            self.aspect_ratio = kwargs['aspect_ratio']
+            print('aspect_ratio = ', self.aspect_ratio)
+
+        self.xlim = 'none'
+        if 'xlim' in kwargs:
+            self.xlim = kwargs['xlim']
+            print('xlim = ', self.xlim)
+
+        self.ylim = 'none'
+        if 'ylim' in kwargs:
+            self.ylim = kwargs['ylim']
+            print('ylim = ', self.ylim)
+
+        self.vectors = 'none'
+        if 'vectors' in kwargs:
+            self.vectors = kwargs['vectors']
+            print('Plotting vectors')
+
+        self.margins = 'none'
+        if 'margins' in kwargs:
+            self.margins = kwargs['margins']
+            print('margins = ', self.xlim)
+
+
+        # Note to DBB: Annotating figure number below is confusing because it doesn't coincide with
+        # page number.  Change this to add page number instead.
+        #str_fig_number = str(figure_count)
+        #plt.annotate(str_fig_number, (0.9, 0.05), xycoords = 'figure fraction')
+
+        # Check if the maximum of data in the x or y of any curve in the curve_list is outside
+        # the threshold to use scientific notation in the axis labels.  If so divide the values
+        # by the appropriate scale factor and change the x and/or y axis labels to reflect this.
+
+        scaleX, scaleY = scale_curve_list(self.curve_list)
+        if scaleX != 1:
+            power_string = '  ' + r'$' + r'\times' + '10^{' + str(scaleX) + r'})$'
+            self.xlabel = xlabel + power_string
+        if scaleY != 1:
+            power_string = '  (' + r'$' + r'\times' + '10^{' + str(scaleY) + r'})$'
+            self.ylabel = ylabel + power_string
+
+        if debug:
+            print('scaleX = ', scaleX)
+            print('scaleX = ', scaleX)
+            print('self.xlabel = ', self.xlabel)
+            print('self.ylabel = ', self.ylabel)
+
+        return
+
+#_________________________________________________________________________________________________
+
+def plot_XY_Curves_Fig(XY_fig):
+
+    if not isinstance(XY_fig, XY_Curves_Fig):
         print('plot_XY_Curves_FIG: arg fig must be an instances of XY_Curves_Fig')
         raise Exception('plot_XY_Curves_FIG: arg fig must be an instances of XY_Curves_Fig')
 
-    fig_has_legend = False
-    for curve in fig.curve_list:
+    print('plot_XY_Curves_Fig: fig.figsize = ', XY_fig.figsize)
+#     fig, ax = plt.subplots(layout="constrained", figsize=(9.,6.))
+    fig, ax = plt.subplots(layout="tight")
+
+    ax.set_title(XY_fig.title)
+    ax.set_xlabel(XY_fig.xlabel)
+    ax.set_ylabel(XY_fig.ylabel)
+
+
+    XY_fig_has_legend = False
+    for curve in XY_fig.curve_list:
         if debug:
-            print('plot_XY_Curves_Fig: curve = ', curve)
+            print('plot_XY_Curves_Fig: dir(curve) = ', dir(curve))
 
-        plt.plot(curve.x, curve.y, **curve.kwargs)
+        ax.plot(curve.x, curve.y, **curve.kwargs)
         if 'label' in curve.kwargs:
-            fig_has_legend = True
-
-    plt.title(fig.title)
-    plt.xlabel(fig.xlabel)
-    plt.ylabel(fig.ylabel)
+            XY_fig_has_legend = True
 
     # print 'dealing with legend'
 
     # deal with legend format only if curves on this fig have labels
-    if fig_has_legend:
+    if XY_fig_has_legend:
         prop = font_mgr.FontProperties(size = 'small')
-        leg = plt.legend(shadow=True,loc = 'upper left', bbox_to_anchor = (1.01, 1.0), \
+        leg = ax.legend(shadow=True,loc = 'upper left', bbox_to_anchor = (1.01, 1.0), \
               borderaxespad=0., prop = prop)
+
+    ax.set_aspect(XY_fig.aspect_ratio)
+
+    if XY_fig.xlim != 'none':
+        ax.set_xlim(XY_fig.xlim)
+
+    if XY_fig.ylim != 'none':
+        ax.set_ylim(XY_fig.ylim)
+
+    # Deal with vectors if there are any
+    if XY_fig.vectors != 'none':
+        ax.quiver(XY_fig.vectors[0], XY_fig.vectors[1], XY_fig.vectors[2], \
+          XY_fig.vectors[3], width = .0015)
+
+    if XY_fig.margins != 'none':
+        ax.margins(XY_fig.margins)
+
+    fig.set_size_inches(XY_fig.figsize[0],XY_fig.figsize[1])
+#     fig.set_size_inches(XY_fig.figsize[0],XY_fig.figsize[1])
 
     plt.draw()
     #plt.show()
@@ -399,11 +448,13 @@ if __name__ == '__main__':
         lbl = 'curve(' + str(i) + ')'
         y = [-2.0e4 + 1.e5*i*r for r in x]
         new_curve = XY_curve(x, y, label = lbl)
+#         print('\nmain: dir(new_curve) = ', dir(new_curve))
         curve_list.append(new_curve)
 
     curve_list[0].setLinestyle('dashed')
 
     title = 'Some real good stuff'
+    print(title)
     xlabel = 'x(cm)'
     ylabel = 'volts'
     plot1 = XY_Curves_Fig(curve_list, title, xlabel, ylabel)
@@ -411,16 +462,19 @@ if __name__ == '__main__':
     plot_XY_Curves_Fig(plot1)
 
     title = 'Even better stuff'
+    print(title)
     plot2 = XY_Curves_Fig(curve_list, title, xlabel, ylabel)
     plot_XY_Curves_Fig(plot2)
 
-    title = 'Try to set xlim'
-    plot3 = XY_Curves_Fig(curve_list, title, xlabel, ylabel, xlim = [0.2, 0.8])
+    title = 'Try to set xlim, ylim'
+    print(title)
+    plot3 = XY_Curves_Fig(curve_list, title, xlabel, ylabel, xlim = [0.2, 0.8],\
+            ylim = [0.0, 2.0])
 #    plot3 = XY_Curves_Fig(curve_list, title, xlabel, ylabel)
     plot_XY_Curves_Fig(plot3)
 
     title = 'Try to set aspect_ratio'
-#     plot4 = XY_Curves_Fig(curve_list, title, xlabel, ylabel, aspect_ratio = 'equal')
+    print(title)
     plot4 = XY_Curves_Fig(curve_list, title, xlabel, ylabel, aspect_ratio = 2.0)
     plot_XY_Curves_Fig(plot4)
 
@@ -433,35 +487,42 @@ if __name__ == '__main__':
         t = 0.1*3.1415926*i
         x.append(math.cos(t))
         y.append(math.sin(t))
-        vx.append(math.cos(t))
-        vy.append(math.sin(t))
+        vx.append(0.1*t*math.cos(t))
+        vy.append(0.1*t*math.sin(t))
         vscale.append(0.1*t)
 
     title = 'Parametric Plot - different fig size'
+    print(title)
     xlabel = 'x(cm)'
     ylabel = 'y(cm)'
     curve_list = [XY_curve(x, y)]
-    plot_parametric2 = XY_Curves_Fig(curve_list, title, xlabel, ylabel, aspect_ratio = 'equal')
+    plot_parametric2 = XY_Curves_Fig(curve_list, title, xlabel, ylabel,\
+           aspect_ratio = 'equal', figsize = (6.,6.))
     plot_XY_Curves_Fig(plot_parametric2)
 
+    plot_vecs = [x, y, vx, vy]
 
     title = 'Parametric Plot'
+    print(title)
     xlabel = 'x(cm)'
     ylabel = 'y(cm)'
     curve_list = [XY_curve(x, y)]
     plot_parametric = XY_Curves_Fig(curve_list, title, xlabel, ylabel,figsize = (8., 8.),\
-                      aspect_ratio = 'equal')
+                      aspect_ratio = 'equal', vectors = plot_vecs, margins = 0.15)
 
-    for i in range(16):
-        plt.arrow(x[i], y[i], vscale[i]*vx[i], vscale[i]*vy[i], shape='full', head_width = 0.02)
     plot_XY_Curves_Fig(plot_parametric)
 
+#     for i in range(16):
+#         plt.arrow(x[i], y[i], vscale[i]*vx[i], vscale[i]*vy[i], shape='full', head_width = 0.02)
+#     plot_XY_Curves_Fig(plot_parametric)
 
     title = 'Parametric Plot - different aspect ratio'
+    print(title)
     xlabel = 'x(cm)'
     ylabel = 'y(cm)'
     curve_list = [XY_curve(x, y)]
-    plot_parametric2 = XY_Curves_Fig(curve_list, title, xlabel, ylabel, aspect_ratio = 2.0)
+    plot_parametric2 = XY_Curves_Fig(curve_list, title, xlabel, ylabel, aspect_ratio = 2.0,\
+                       vectors = plot_vecs)
 
     plot_XY_Curves_Fig(plot_parametric2)
 

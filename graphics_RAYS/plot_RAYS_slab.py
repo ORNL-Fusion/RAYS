@@ -7,6 +7,14 @@ DBB 11/19/2021
 """
 # Working notes:
 #
+# DBB (12/11/2025)
+# Reworked the vector plots using the new version of plt_XY_curves.py, which itself has
+# been reworked to use the object oriented interface of matplotlib.  The vectors are added
+# through keyword args to XY_Curves_Fig() instead of being tacked on using the functional
+# interface after the plot was generated.  Also added function, index_intervals(), which
+# finds indices of equal arclength steps along the ray to place vectors, instead of equal
+# number of ray steps.  This gives better plots when the group velocity changes a lot.
+
 # DBB (8/26/2025)
 # Changed input from reading the ASCII files 'ray_out.' + run_label to read the netCDF file
 # 'ray_results.' + run_label + '.nc'. Lifted straight out of plot_RAYS_axisym_toroid.py
@@ -20,7 +28,8 @@ DBB 11/19/2021
 # That makes it possible to combine ray plots from multiple runs. (Actually that was done
 # a while ago). With no command line args the default file name is:
 # 'run_results.' + run_label + '.nc' where run_label comes from file
-# graphics_description_axisym_toroid.dat.
+# graphics_description_axisym_toroid.dat.  To set the plot title for multiple file plots
+# you need to edit the graphics_description_slab.dat file.
 #
 # DBB (4/21/2024)
 # Changed input from reading the ASCII files 'ray_out.' + run_label to read the netCDF file
@@ -47,7 +56,7 @@ from simple_file_editing_functions import get_lines, input_file_to_variable_dict
 from plt_XY_Curves import *
 
 debug = 0
-k_vec_base_length = 0.001
+k_vec_base_length = 0.005
 
 #----------------------------------------------------------------------------------------------
 # Utility functions
@@ -68,6 +77,7 @@ def  n_evenly_spaced_integers(n, Length):
     if (type(n) != int) or (type(Length) != int) or (Length < 1):
         print('error n_evenly_spaced_integers: arguments must be positive integers',\
               ' n = ', n, 'Length = ', Length)
+        return
 
     if n >= Length:
         return list(range(Length))
@@ -77,6 +87,50 @@ def  n_evenly_spaced_integers(n, Length):
         return [-1]
     else:
         return [int((i)*float(Length-1)/(n-1)) for i in range(n)]
+
+#----------------------------------------------------------------------------------------------
+
+def index_intervals(x, n):
+
+# Given a list of increasing numbers, x, return n+1 indices which give x intervals
+# of approximately the same length. index[0] = 0 => xmin, index[n+1] = len(n) => xmax
+
+    if type(n) != int:
+        print('\nindex_intervals error')
+        print('n must be integer')
+        return
+
+    for i in range(len(x)-1):
+        if (x[i+1]-x[i] <= 0.):
+            print('\nindex_intervals error')
+            print('x must be non-decreasing')
+            return
+
+    delta = (x[-1]-x[0])/n
+    index = [i for i in range(n+1)]
+
+    if (n >= len(x)): # As many intervals as data points
+        print('\nindex_intervals error')
+        print('As many intervals as data points, can not split them')
+        return
+
+    i = 0
+    j = 1
+    s = x[0]
+    index[0] = 0
+    index[-1] = len(x)
+
+    while i < len(x)-1:  # stop before x max
+        while x[i] < j*delta:
+            i = i +1
+        # Crossed an interval, check to see if x[i-1] or x[i] is closer to j*delta
+        index[j] = i
+        if abs(x[i-1] - j*delta) < abs(x[i] - j*delta):
+            index[j] = i-1
+        j = j +1
+
+    return index
+
 #
 #----------------------------------------------------------------------------------------------
 # Main program
@@ -128,6 +182,7 @@ print ('results files = ', results_file_list)
 nray = 0
 ray_ymin = 0. # Keep track of range of y.  Many plots will be in Z-X plane
 ray_ymax = 0.
+ray_kmax = 0.
 
 rays_s_list = []
 rays_x_list = []
@@ -156,21 +211,21 @@ zx_curve_list = []
 zy_curve_list = []
 n_all_rays = 0
 
+
+x_draw_list = []; y_draw_list = []; z_draw_list = []
+kx_draw_list = []; ky_draw_list = []; kz_draw_list = []
+
 for file in results_file_list:
 
-    print('Processing CDF file ', file)
+    print('\nProcessing CDF file ', file)
     CDF = Dataset(file, 'r', format = 'NETCDF3_CLASSIC')
     CDF_dims = CDF.dimensions
 
     n_rays = len(CDF_dims['number_of_rays'])
     ray_vec = ma.getdata(CDF.variables['ray_vec'])
     npoints = ma.getdata(CDF.variables['npoints']).tolist()
-    print('type(npoints) = ', type(npoints))
     print('npoints = ', npoints)
-    print('ray_vec.shape = ', ray_vec.shape)
-
-    x_draw_list = []; y_draw_list = []; z_draw_list = []
-    kx_draw_list = []; ky_draw_list = []; kz_draw_list = []; kr_draw_list = []
+#     print('ray_vec.shape = ', ray_vec.shape)
 
     for i in range(n_rays):
         n_all_rays = n_all_rays +1
@@ -186,15 +241,8 @@ for file in results_file_list:
         ray_ymin = min(ray_ymin, min(y))
         ray_ymax = max(ray_ymax, max(y))
 
-#         print('npoints[i] = ', npoints[i])
-#         print('len(x) = ',len(x), ' x = ', x[0:10])
-#         print('len(kx) = ',len(kx), ' kx[0:10] = ', kx[0:10])
-#         print('len(z) = ',len(z), ' z = ', z[0:10])
-#         print('type(x) = ', type(x))
-#         print('type(y) = ', type(y))
-#         print('type(z) = ', type(z))
-#         print('type(R) = ', type(R))
-#         print('R = ', R[0:10])
+        k_norm = [math.sqrt(kx[j]**2+ky[j]**2+kz[j]**2) for j in range(len(kx))]
+        ray_kmax = max(ray_kmax, max(k_norm))
 
         lbl = 'ray ' + str(n_all_rays)
         new_curve = XY_curve(z, x, label = lbl)
@@ -204,17 +252,16 @@ for file in results_file_list:
 
 # Get data to draw k vectors if doing that
         if num_plot_k_vectors > 0:
-            print('type(num_plot_k_vectors) = ', type(num_plot_k_vectors))
-            print('type(npoints[i]) = ', type(npoints[i]))
-            indices = n_evenly_spaced_integers(num_plot_k_vectors, npoints[i])
+#             indices = n_evenly_spaced_integers(num_plot_k_vectors, npoints[i])
+            indices = index_intervals(s, num_plot_k_vectors)
             x_draw = [x[j] for j in indices]
             y_draw = [y[j] for j in indices]
             z_draw = [z[j] for j in indices]
             if scale_k_vec in ['True', 'true', 'T']:
                 print('Scaling k')
-                kx_draw = [max_size*k_vec_base_length*kx[j]/k_max for j in indices]
-                ky_draw = [max_size*k_vec_base_length*ky[j]/k_max for j in indices]
-                kz_draw = [max_size*k_vec_base_length*kz[j]/k_max for j in indices]
+                kx_draw = [max_size*k_vec_base_length*kx[j]/ray_kmax for j in indices]
+                ky_draw = [max_size*k_vec_base_length*ky[j]/ray_kmax for j in indices]
+                kz_draw = [max_size*k_vec_base_length*kz[j]/ray_kmax for j in indices]
             else:
                 print('Not Scaling k')
                 kx_draw  = [max_size*k_vec_base_length*kx[j]/ \
@@ -229,11 +276,6 @@ for file in results_file_list:
                 math.sqrt(pow(kx[j],2) + pow(ky[j],2) + pow(kz[j],2))\
                 for j in indices]
 
-
-#                 kx_draw  = [max_size*k_vec_base_length*kx[j]/knorm[j] for j in indices]
-#                 ky_draw  = [max_size*k_vec_base_length*ky[j]/knorm[j] for j in indices]
-#                 kz_draw  = [max_size*k_vec_base_length*kz[j]/knorm[j] for j in indices]
-
             x_draw_list.append(x_draw)
             y_draw_list.append(y_draw)
             z_draw_list.append(z_draw)
@@ -242,9 +284,7 @@ for file in results_file_list:
             ky_draw_list.append(ky_draw)
             kz_draw_list.append(kz_draw)
 
-#           if debug > 1: print('kr = ', kr, ' kz = ', kz)
-#           plt.arrow(rays_r_list[i_ray][i], rays_z_list[i_ray][i],\
-#             kr, kz, shape='full', head_width = 0.01)
+print('Total number of rays = ', n_all_rays)
 
 #----------------------------------------------------------------------------------------------
 # Open graphics output file.  N.B. run_label comes from graphics description file.
@@ -267,24 +307,19 @@ diagonal = math.sqrt(pow(x_size,2) + pow(z_size,2))
 xlabel = 'z(m)'
 ylabel = 'x(m)'
 
+kwargs = {'figsize' : (11.,8.5)}
+# kwargs = {'figsize' : figsize}
+# kwargs = {}
+
 if set_XY_lim in ['True', 'true', 'T']:
-    plotZX = XY_Curves_Fig(zx_curve_list, title, xlabel, ylabel, figsize=figsize, \
-             ylim = [xmin,xmax], xlim = [zmin,zmax])
-else:
-    plotZX = XY_Curves_Fig(zx_curve_list, title, xlabel, ylabel, figsize=figsize)
+    kwargs.update({'xlim':[zmin,zmax], 'ylim':[xmin,xmax]} )
 
 # Add k vectors at selected points
 if num_plot_k_vectors > 0:
-    for i_ray in range(n_all_rays):
-        z_draw = z_draw_list[i_ray]
-        x_draw = x_draw_list[i_ray]
-        kz_draw  = kz_draw_list[i_ray]
-        kx_draw  = kx_draw_list[i_ray]
+    kwargs.update({'vectors':[z_draw_list, x_draw_list, kz_draw_list, kx_draw_list],\
+                   'aspect_ratio':'equal'})
 
-        for j in range(num_plot_k_vectors):
-            plt.arrow(z_draw[j], x_draw[j], kz_draw[j], kx_draw[j], shape='full',\
-            head_width = 0.01)
-
+plotZX = XY_Curves_Fig(zx_curve_list, title, xlabel, ylabel, **kwargs)
 plot_XY_Curves_Fig(plotZX)
 
 #----------------------------------------------------------------------------------------------
@@ -294,34 +329,26 @@ plot_XY_Curves_Fig(plotZX)
 #Many plots will be restricted to ZX plane.  Check to see y extent at least 1% of max_size
 if ray_ymax-ray_ymin > 0.01*max_size:
 
-	zx_ratio = (zmax-zmin)/(xmax-xmin)
-	z_size = max_size
-	x_size = z_size*xz_ratio
-	figsize = (z_size, x_size)
+    zx_ratio = (zmax-zmin)/(xmax-xmin)
+    z_size = max_size
+    x_size = z_size*xz_ratio
+    figsize = (z_size, x_size)
 
-	xlabel = 'z(m)'
-	ylabel = 'y(m)'
+    xlabel = 'z(m)'
+    ylabel = 'y(m)'
 
-	if set_XY_lim in ['True', 'true', 'T']:
-		plotZY = XY_Curves_Fig(zy_curve_list, title, xlabel, ylabel, figsize=figsize, \
-				 ylim = [zmin,zmax], xlim = [ymin,ymax], aspect_ratio = 'equal')
-	else:
-		plotZY = XY_Curves_Fig(zy_curve_list, title, xlabel, ylabel, figsize=figsize,\
-				 aspect_ratio = 'equal')
+    kwargs = {'figsize' : figsize, 'aspect_ratio': 'equal'}
 
-	# Add k vectors at selected points
-	if num_plot_k_vectors > 0:
-		for i_ray in range(n_all_rays):
-			z_draw = z_draw_list[i]
-			y_draw = y_draw_list[i]
-			kz_draw  = kz_draw_list[i]
-			kx_draw  = kr_draw_list[i]
+if set_XY_lim in ['True', 'true', 'T']:
+    kwargs.update({'xlim':[zmin,zmax], 'ylim':[xmin,xmax] })
 
-			for j in range(num_plot_k_vectors):
-				plt.arrow(z_draw[j], y_draw[j], kz_draw[j], ky_draw[j], shape='full',\
-				head_width = 0.01)
+    # Add k vectors at selected points
+    if num_plot_k_vectors > 0:
+        kwargs.update({'vectors':[z_draw_list, y_draw_list, kz_draw_list, ky_draw_list],\
+                   'aspect_ratio':'equal'})
 
-	plot_XY_Curves_Fig(plotZY)
+    plotZY = XY_Curves_Fig(zy_curve_list, title, xlabel, ylabel, **kwargs)
+    plot_XY_Curves_Fig(plotZY)
 
 #-----------------------------------------------------------------------------------------
 # Finalize
