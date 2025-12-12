@@ -281,7 +281,6 @@ class XY_Curves_Fig:
             print('plt_XY_Curves: arg curve_list must be a list of instances of XY_curve')
             raise Exception('plt_XY_Curves: arg curve_list must be a list of instances of XY_curve')
 
-        self.curve_list = curve_list
         self.title = str(title)
         self.xlabel = str(xlabel)
         self.ylabel = str(ylabel)
