@@ -223,6 +223,7 @@ contains
           stop 1
        end if
 
+!       residual = abs(ctmp)
        residual = abs(ctmp) / &
           & ( eps_norm(3,3)*(eps_norm(1,1)*eps_norm(2,2)) &
           & + eps_norm(3,3)*(eps_norm(2,1)*eps_norm(1,2)) &

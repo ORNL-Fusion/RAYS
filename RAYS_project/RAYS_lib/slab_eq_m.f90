@@ -18,6 +18,8 @@ module slab_eq_m
 ! Working notes:
 !_________________________________________________________________________________________
 
+! DBB (12/3/2025) Generalized Bx model to allow non-zero Bx.  This makes sense now that we
+!     have solver for Booker quartic.
 !_________________________________________________________________________________________
 ! Module data
 !_________________________________________________________________________________________
@@ -46,6 +48,8 @@ module slab_eq_m
     character(len=12) :: bx_prof_model, by_prof_model, bz_prof_model
     ! Magnetic field in Tesla at x,y,z = 0
     real(KIND=rkind) :: bx0, by0, bz0
+    ! Parameters for linear models of Bx
+    real(KIND=rkind) :: LBx_scale
     ! Parameters for linear models of Bz and By shear
     real(KIND=rkind) :: LBy_shear_scale, LBz_scale
     ! Slope for Linear_2 model
@@ -81,8 +85,8 @@ module slab_eq_m
      & bx_prof_model, by_prof_model, bz_prof_model, bx0, by0, bz0,                    &
      & rmaj, rmin, dens_prof_model, alphan1, alphan2, n_min,                          &
      & t_prof_model, alphat1, alphat2, T_min, &
-     & Ln_scale, LT_scale, LBy_shear_scale, LBz_scale, dBzdx, dndx, dtdx, x0, &
-     & xmin, xmax, ymin, ymax, zmin, zmax
+     & Ln_scale, LT_scale, LBy_shear_scale, LBx_scale, LBz_scale, dBzdx, dndx, dtdx,  &
+     & x0, xmin, xmax, ymin, ymax, zmin, zmax
 
 !_________________________________________________________________________________________
 contains
@@ -173,6 +177,14 @@ contains
 
        case ('zero')
           bvec(1) = 0.
+
+       case ('constant')
+          bvec(1) = bx0
+
+       case ('linear')
+!         Linear with scale length LBz_scale
+          bvec(1) = bx0 * (1.+x/LBx_scale)
+          gradbtensor(1,3) = bx0/LBx_scale
 
        case default
           write(0,*) 'SLAB: invalid bx_prof_model = ', bx_prof_model

@@ -90,7 +90,7 @@
  end subroutine solve_cold_n1sq_vs_n3
 !****************************************************************************
 
-complex function residual_cold_n1_n3(eq, n1, n3)
+complex function disp_fun_cold_n1_n3(eq, n1, n3)
 ! calculates the residual of cold plasma dispersion relation versus perpendicular, n1 and
 ! parallel, n3, refractive index indices
 ! N.B. n1 is complex, n3 is real
@@ -120,8 +120,8 @@ complex function residual_cold_n1_n3(eq, n1, n3)
        c = P*(n3**2 - R)*(n3**2 - L)
 
        n1sq = n1**2
-       residual_cold_n1_n3 = a*n1sq**2 + b*n1sq + c
+       disp_fun_cold_n1_n3 = a*n1sq**2 + b*n1sq + c
 
        return
- end function residual_cold_n1_n3
+ end function disp_fun_cold_n1_n3
 

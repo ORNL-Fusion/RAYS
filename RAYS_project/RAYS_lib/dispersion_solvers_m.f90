@@ -4,20 +4,36 @@
 ! The particular model to be solved is specified by argument "dispersion_model"
 ! Presently one model is supported: cold, (warm real soon now)
 !
-! Presently two forms for this model are supported:
+! Presently four forms for this model are supported:
 ! 1) solve_n1_vs_n2_n3
 !   n1 = component of nvec perpendicular to B to be solved for (e.g. x or radial component)
 !   n2 = transverse component of nvec i.e. perpendicular to both B and n1
 !   n3 = parallel component of kvec (nvec)
 !
-!2) solve_n_vs_theta
+! 2) solve_nx_vs_ny_nz_by_bz
+!   n1 = component of nvec perpendicular to B to be solved for (e.g. x or radial component)
+!   n2 = transverse component of nvec i.e. perpendicular to both B and n1
+!   n3 = parallel component of kvec (nvec)
+!   Allows for magnetic field to have component in y -> transverse) direction.  Still
+!   quadratic dispersion relation.
+!
+!3) solve_n_vs_theta
 !   n = scalar refractive index
 !	theta = angle between vector refractive index and B
 !   This is essentially Appleton_Hartree
 !
+!4) solve_Booker_n1_vs_n2_n3 -> Booker quartic, electron dynamics only
+!   n1 = component of nvec in x direction.  The distinguished direction solved for,
+!        e.g. the direction of grad(n)
+!   n2 = component of nvec in y direction = transverse component of nvec
+!        <--> perpendicular to both B and x
+!   n3 = component in z direction = x cross y <--> i.e. B direction if B is perpendicular
+!        to grad(n).  Or, B lies in the n1-n3 plane
+!
 ! The user also specifies which mode to select (wave_mode).
 ! Cold plasma presents 4 possibilites -> plus/minus in solution of quadratic, or
 ! fast/slow meaning smaller/larger magnitude of refractive index.
+! For Booker there are 4 roots.  Haven't figured out how to sort them yet
 ! For warm plasma there will be other modes (e.g. Bernstein).  Haven't figured that out yet.
 !
 ! N.B. The plasma magnetic and species quantities come in through argument 'eq' which
@@ -28,7 +44,7 @@
 
 ! External procedures:
 ! disp_solve_cold_nxsq_vs_nz in disp_solve_cold_nxsq_vs_nz.f90
-! solve_cold_nsq_vs_theta in solve_cold_nsq_vs_theta.f90
+! solve_cold_nsq_vs_theta in disp_solve_cold_nsq_vs_theta.f90
 
 !_________________________________________________________________________________________
 ! Working notes:

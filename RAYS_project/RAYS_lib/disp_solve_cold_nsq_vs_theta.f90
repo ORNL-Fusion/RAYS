@@ -73,7 +73,7 @@
  end subroutine solve_cold_nsq_vs_theta
 !****************************************************************************
 
-complex function residual_cold_n_theta(eq, theta, n)
+complex function disp_fun_cold_n_theta(eq, theta, n)
 ! calculates the residual of cold plasma dispersion relation versus refractive index, n,
 ! and angle theta
 ! N.B. n is complex, theta is real
@@ -107,9 +107,9 @@ complex function residual_cold_n_theta(eq, theta, n)
        c = P*R*L
 
        nsq = n**2
-       residual_cold_n_theta = a*nsq**2 + b*nsq + c
+       disp_fun_cold_n_theta = a*nsq**2 + b*nsq + c
 
 
        return
- end function residual_cold_n_theta
+ end function disp_fun_cold_n_theta
 

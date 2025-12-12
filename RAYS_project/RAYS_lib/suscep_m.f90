@@ -220,7 +220,7 @@ contains
 !****************************************************************************
 
 complex function disp_fun_cold_cmplx(eq, n1, n2, n3)
-! calculates the cold plasma dispersion relation versus the components of n perpendicular
+! calculates the cold plasma dispersion function versus the components of n perpendicular
 ! to B (i.e. n1, n2), and the component parallel to B (i.e. n3)
 
 ! N.B. The components of n, and the return value, disp_fun_cold_cmplx, are complex.
@@ -254,7 +254,7 @@ complex function disp_fun_cold_cmplx(eq, n1, n2, n3)
 !****************************************************************************
 
 real function disp_fun_cold_real(eq, n1, n2, n3)
-! calculates the cold plasma dispersion relation versus the components of n perpendicular
+! calculates the cold plasma dispersion function versus the components of n perpendicular
 ! to B (i.e. n1, n2), and the component parallel to B (i.e. n3)
 
 ! N.B. The components of n, and the return value, disp_fun_cold_real, are real.
