@@ -1,5 +1,5 @@
   subroutine solve_n_vs_k_vec(eq, dispersion_model, wave_mode, k_sign, k_vec, n_out)
-! Solves for n in the direction of k_vec
+! Solves for |n| in the direction of k_vec
 ! N.B. n_out is complex(KIND=rkind).  Calling program must account for that.
 
     use constants_m, only : rkind, one
@@ -27,8 +27,8 @@
     integer :: i_mode  ! plus mode -> 1, minus mode -> 2, fast mode -> 3, slow mode -> 3
 
 ! normalize k_vec
-    kmag = sqrt( sum(kunit**2) )
-    kunit = kunit/kmag
+    kmag = norm2(k_vec)
+    kunit = k_vec/kmag
 
 	theta = acos(dot_product(kunit,eq%bunit))
     mode: select case (trim(wave_mode))

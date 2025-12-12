@@ -19,7 +19,7 @@ module dispersion_solver_test_m
     integer :: n_theta_points ! Number of points in theta scan
     real(KIND=rkind) :: theta_min, theta_max ! min and max of nz scan
 
-! Switches to select specific damping models
+! Switches to select specific parameter scans
     logical :: scan_nz = .true.
     logical :: scan_theta = .true.
 
@@ -74,7 +74,7 @@ module dispersion_solver_test_m
    complex(KIND=rkind) :: nxsq(4), nx1(4)
    real(KIND=rkind) :: nx1r(4)
    real(KIND=rkind) :: nz
-   real(KIND=rkind) :: residual_cold_n1_n3
+   real(KIND=rkind) :: disp_fun_cold_n1_n3
 
 ! Args for solve_cold_nsq_vs_theta
    real(KIND=rkind) :: nsq(4)
@@ -82,7 +82,7 @@ module dispersion_solver_test_m
    real(KIND=rkind) :: n1z(4)
    complex(KIND=rkind) :: n1x(4)
    real(KIND=rkind) :: theta
-   real(KIND=rkind) :: residual_cold_n_theta
+   real(KIND=rkind) :: disp_fun_cold_n_theta
 
 ! Results
     real(KIND=rkind) :: x, x_vec(n_xpoints), nz_vec(n_nz_points), theta_vec(n_theta_points)
@@ -202,7 +202,7 @@ module dispersion_solver_test_m
 				call solve_cold_nsq_vs_theta(eq, theta, nsq)
 				write (*,*) 'theta = ', theta,'  nsq = ', nsq
 				n1 = sqrt(cmplx(nsq, zero))
-				write (*,*) 'n1 = ', n1, '   residual = ', residual_cold_n_theta(eq, theta, n1)
+				write (*,*) 'n1 = ', n1, '   residual = ', disp_fun_cold_n_theta(eq, theta, n1)
 
 				do i = 1,4
 					! Comparison to nx(nz) meaningful only for n(theta) real
@@ -219,9 +219,9 @@ module dispersion_solver_test_m
 						write (*,*) 'nx1(i) = ', nx1(i)
 						nx1r = real(nx1(i), KIND=rkind)
 						write (*,*) 'nx1r = ', nx1r(i), '   residual = ', &
-						       & residual_cold_n1_n3(eq, n1z(i), nx1(i))
+						       & disp_fun_cold_n1_n3(eq, n1z(i), nx1(i))
 						write (*,*) 'cross residual = ', &
-						       & residual_cold_n1_n3(eq, n1z(i), n1x(i))
+						       & disp_fun_cold_n1_n3(eq, n1z(i), n1x(i))
 					end if
 				end do
 

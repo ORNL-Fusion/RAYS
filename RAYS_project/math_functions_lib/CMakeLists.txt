@@ -7,6 +7,8 @@ list (APPEND lib_sources
                 $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/monotonic_function_inversion.f90>
                 $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/complete_elliptic_int_m.f90>
                 $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/vectors3_m.f90>
+#                $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/Solve_Real_Poly_m.f90>
+                $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/rpoly_m.f90>
 )
 add_library (math_functions ${lib_sources})
 
@@ -111,3 +113,14 @@ target_link_libraries (test_vectors3
                        math_functions
 )
 
+add_executable (test_rpoly)
+
+target_sources (test_rpoly
+                PRIVATE
+                $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/test_rpoly.f90>
+)
+
+target_link_libraries (test_rpoly
+                       PUBLIC
+                       math_functions
+)

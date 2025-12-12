@@ -195,8 +195,8 @@ contains
  !  File name for  output
     character(len=128) :: out_filename
 
-    if (verbosity > 0) call text_message('Writing ray_detailed_diagnostics_slab')
-    out_filename = 'ray_detailed_diagnostics_slab.'//trim(RAYS_run_label)//'.nc'
+    if (verbosity > 0) call text_message('Writing ray_detailed_diagnostics')
+    out_filename = 'ray_detailed_diagnostics.'//trim(RAYS_run_label)//'.nc'
 
 !   Allocate local arrays
 !    allocate(npoints(number_of_rays))

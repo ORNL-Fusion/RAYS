@@ -3,16 +3,26 @@
 ! Analyzes ray data obtained from an instance of type run_results as defined in module
 ! module ray_results_m.  The presumption is that the RAYS run consists of O-mode rays
 ! that approach the cutoff from low density.  The steps are
-! 1) Find the point, x_max, on the ray having maximum density, which should be closest to
+! 1) Find the point, r_max, on the ray having maximum density, which should be closest to
 !    the cutoff.
-! 2) Determine the point, x_cut, on the cutoff surface closest to the x_max point.
-! 3) Evaluate the conversion coefficient to X mode
-! 4) If don't find density maximum or don't find cutoff surface or conversion coefficient
+! 2) Determine the point, r_cut, on the cutoff surface closest to the r_max point. Do this
+!    by marching along grad(n) until we hit alpha = 1
+! 3) Evaluate the conversion coefficient to X-mode at r_cut.
+! 4) If don't find density maximum, or don't find cutoff surface, or conversion coefficient
 !    is less than conversion_threshold, ignore this ray and consider that it didn't convert
 ! 5) Allocate and load array of type OX_conv for the rays that did convert.
+! 6) Calculate the initial position and k-vector for converted X-mode. This has subtasks:
+!    a) Find density (alpha = alphaX) of X-mode cutoff by root-finding nx**0 component
+!       of the Booker quartic
+!    b) Determine the point, r_restart, on the alpha = alphaX surface closest to r_cut.
+!       Do this by marching along grad(n) until we hit alpha = alphaX
+!    b) Solve Booker quartic for nx <-> refractive index in direction grad(n), giving k
+!       of X-mode restart
+!    c) Write a "ray_init_<run_label>_restart.in" file to be read by
+!       RAYS file_input_ray_init()
 !
-! This is written for axisymmetric mirror equilibria, but I think it will with work little
-! (or no) change for tokamaks
+! This is written for axisymmetric mirror equilibria, but I think it will with work with
+! little (or no) change for tokamaks
 
 !_________________________________________________________________________________________
 ! Working notes:
@@ -33,17 +43,21 @@
 
 ! derived type containing data for OX_conv
 	type OX_conv
-		real(KIND=rkind) :: x_max(3) ! point on ray with maximum density, alpha < 1
-		real(KIND=rkind) :: k_max(3) ! k vector at x_max
-		real(KIND=rkind) :: alpha_max ! omega_pe**2/Omga**2 at x_max
-		real(KIND=rkind) :: x_cut(3) ! point on cutoff surface closest to x_max
+		real(KIND=rkind) :: r_max(3) ! point on ray with maximum density, alpha < = 1
+		real(KIND=rkind) :: k_max(3) ! k vector at r_max
+		real(KIND=rkind) :: r_restart(3) ! point on X-mode cutoff
+		real(KIND=rkind) :: k_restart(3) ! k vector at r_restart
+		real(KIND=rkind) :: alpha_max ! omega_pe**2/Omga**2 at r_max
+		real(KIND=rkind) :: r_cut(3) ! point on cutoff surface closest to r_max
 		real(KIND=rkind) :: conv_coeff ! value of conversion coefficient
-		real(KIND=rkind) :: nvecx_c(3) ! n vector at x_max in direction grad(ne)
-		real(KIND=rkind) :: nvecy_c(3) ! n vector at x_max transverse to grad(ne), B
-		real(KIND=rkind) :: nvecz_c(3) ! n vector at x_max perp to grad(ne) in
-		                               ! grad(ne),B plane
+		real(KIND=rkind) :: nvecx_c(3) ! n vector at alpha = 1 surface in direction grad(ne)
+		real(KIND=rkind) :: nvecy_c(3) ! n vector at alpha = 1 surface to grad(ne), B
+		real(KIND=rkind) :: nvecz_c(3) ! n vector at alpha = 1 surface perpendicular to
+		                               ! grad(ne) in grad(ne),B plane
+		real(KIND=rkind) ::	ny_c	   ! Component of n vector at alpha = 1 surface
+		real(KIND=rkind) ::	nz_c
 		integer :: ray_number ! RAYS ray number for this ray
-		integer :: step_number ! ray step number at x_max
+		integer :: step_number ! ray step number at r_max
 	end type OX_conv
 
 	type(OX_conv), allocatable :: OX_conv_data(:)
@@ -97,13 +111,14 @@ subroutine analyze_OX_conv
 	integer :: i_ray ! Number of this ray from RAYS run
 	integer :: step_number ! running step number along this ray
 	real(KIND=rkind) :: alpha_max ! maximum alpha on this ray
-	real(KIND=rkind) :: x_max_ray(3) ! position of maximum alpha on this ray
+	real(KIND=rkind) :: r_max_ray(3) ! position of maximum alpha on this ray
 	real(KIND=rkind) :: k_max_ray(3) ! k value at found_cutoff
-	real(KIND=rkind) :: x_cutoff_ray(3) ! position on O-mode cutoff surface nearest x_max_ray
+	real(KIND=rkind) :: r_cutoff_ray(3) ! position on O-mode cutoff surface nearest r_max_ray
 	real(KIND=rkind) :: conv_coeff ! value of conversion coefficient
 	real(KIND=rkind) :: nvecx_c(3)
 	real(KIND=rkind) :: nvecy_c(3)
 	real(KIND=rkind) :: nvecz_c(3)
+	real(KIND=rkind) :: ny_c, nz_c
 
 	logical :: found_max, found_cutoff
 	integer :: iteration, i
@@ -115,15 +130,15 @@ subroutine analyze_OX_conv
 	ray_loop: do i_ray = 1, number_of_rays
 		conv_data_temp(i_ray)%ray_number = i_ray
 
-! Find x_max_ray
-		call find_x_max_ray(i_ray, found_max, step_number, alpha_max,  x_max_ray, k_max_ray)
+! Find r_max_ray
+		call find_r_max_ray(i_ray, found_max, step_number, alpha_max,  r_max_ray, k_max_ray)
 		if (found_max) then
-			conv_data_temp(i_ray)%x_max = x_max_ray
+			conv_data_temp(i_ray)%r_max = r_max_ray
 			conv_data_temp(i_ray)%k_max = k_max_ray
 			conv_data_temp(i_ray)%alpha_max = alpha_max
 			conv_data_temp(i_ray)%step_number = step_number
 		else
-			conv_data_temp(i_ray)%x_max = zero
+			conv_data_temp(i_ray)%r_max = zero
 			conv_data_temp(i_ray)%k_max = zero
 			conv_data_temp(i_ray)%alpha_max = zero
 			conv_data_temp(i_ray)%step_number = 0
@@ -132,25 +147,25 @@ subroutine analyze_OX_conv
 		write(*,*)
 		write(*,*) 'ray ', i_ray,  '   found_max = ', found_max, '  alpha_max = ',&
 		        &   alpha_max, '   step_number = ', step_number
-		write(*,*) 'x_max = ', x_max_ray, '   k_max = ', k_max_ray
+		write(*,*) 'r_max = ', r_max_ray, '   k_max = ', k_max_ray
 
 ! Find nearest point on O-mode cutoff surface
 		if (found_max) then
-			call find_x_cutoff_ray(x_max_ray, found_cutoff, x_cutoff_ray, iteration)
+			call find_r_cutoff_ray(r_max_ray, found_cutoff, r_cutoff_ray, iteration)
 			if(found_cutoff) then
-				conv_data_temp(i_ray)%x_cut = x_cutoff_ray
+				conv_data_temp(i_ray)%r_cut = r_cutoff_ray
 			else
-				conv_data_temp(i_ray)%x_cut = zero
+				conv_data_temp(i_ray)%r_cut = zero
 			end if
 
 			write(*,*) 'found_cutoff = ', found_cutoff,'  iteration = ', iteration
-			write(*,*) 'x_cutoff = ', x_cutoff_ray
+			write(*,*) 'r_cutoff = ', r_cutoff_ray
 		end if
 
 ! Calculate conversion coefficient to X-mode
 		if (found_max .and. found_cutoff ) then
-			call OX_conv_coeff(x_max_ray, k_max_ray, x_cutoff_ray, conv_coeff, &
-				& nvecx_c, nvecy_c, nvecz_c)
+			call OX_conv_coeff(r_max_ray, k_max_ray, r_cutoff_ray, conv_coeff, &
+				& nvecx_c, nvecy_c, nvecz_c, ny_c, nz_c)
 			if (conv_coeff > conversion_threshold) then
 				number_of_rays_converted = number_of_rays_converted + 1
 				converted_ray_number(number_of_rays_converted) = i_ray
@@ -158,6 +173,8 @@ subroutine analyze_OX_conv
 				conv_data_temp(i_ray)%nvecx_c = nvecx_c
 				conv_data_temp(i_ray)%nvecy_c = nvecy_c
 				conv_data_temp(i_ray)%nvecz_c = nvecz_c
+				conv_data_temp(i_ray)%ny_c = ny_c
+				conv_data_temp(i_ray)%nz_c = nz_c
 				write(*,*) 'conv_coeff = ', conv_coeff
 			end if
 		end if
@@ -172,20 +189,22 @@ subroutine analyze_OX_conv
 
 		i_ray = converted_ray_number(i)
 
-		OX_conv_data(i)%x_max = conv_data_temp(i_ray)%x_max
+		OX_conv_data(i)%r_max = conv_data_temp(i_ray)%r_max
 		OX_conv_data(i)%k_max = conv_data_temp(i_ray)%k_max
 		OX_conv_data(i)%alpha_max = conv_data_temp(i_ray)%alpha_max
-		OX_conv_data(i)%x_cut = conv_data_temp(i_ray)%x_cut
+		OX_conv_data(i)%r_cut = conv_data_temp(i_ray)%r_cut
 		OX_conv_data(i)%conv_coeff = conv_data_temp(i_ray)%conv_coeff
 		OX_conv_data(i)%nvecx_c = conv_data_temp(i_ray)%nvecx_c
 		OX_conv_data(i)%nvecy_c = conv_data_temp(i_ray)%nvecy_c
 		OX_conv_data(i)%nvecz_c = conv_data_temp(i_ray)%nvecz_c
+		OX_conv_data(i)%ny_c = conv_data_temp(i_ray)%ny_c
+		OX_conv_data(i)%nz_c = conv_data_temp(i_ray)%nz_c
 		OX_conv_data(i)%ray_number = conv_data_temp(i_ray)%ray_number
 		OX_conv_data(i)%step_number = conv_data_temp(i_ray)%step_number
 
 ! Calculate initial x and k for restarting X-mode on high density side
 
-! 		call X_mode_conv(OX_conv_data(i)%x_max, OX_conv_data(i)%x_cut, &
+! 		call X_mode_conv(OX_conv_data(i)%r_max, OX_conv_data(i)%r_cut, &
 ! 		& OX_conv_data(i)%nvecy_c, OX_conv_data(i)%nvecz_c)
 
 	end do
@@ -199,8 +218,8 @@ subroutine analyze_OX_conv
 
 !****************************************************************************
 
- subroutine find_x_max_ray(i_ray, found_max, step_number, alpha_max, &
-                         & x_max_ray, k_max_ray)
+ subroutine find_r_max_ray(i_ray, found_max, step_number, alpha_max, &
+                         & r_max_ray, k_max_ray)
 ! Find point on ray with maximum density, i.e. maximum alpha = omega_pe**2 / omega**2
 ! Some refinements to consider if turns out to be needed.  Instead of taking ray point
 ! with highest ne, fit quadratic to last 3 points and interpolate to max.  Also could
@@ -215,7 +234,7 @@ subroutine analyze_OX_conv
 	integer, intent(in) :: i_ray
 	integer, intent(out) :: step_number
 	real(KIND=rkind), intent(out) :: alpha_max
-	real(KIND=rkind), intent(out) :: x_max_ray(3)
+	real(KIND=rkind), intent(out) :: r_max_ray(3)
 	real(KIND=rkind), intent(out) :: k_max_ray(3)
 	logical, intent(out) :: found_max
 
@@ -241,7 +260,7 @@ subroutine analyze_OX_conv
 			found_max = .true.
 			alpha_max = alpha_low
 			step_number = i-1
-			x_max_ray = ray_vec(1:3,i-1, i_RAY)
+			r_max_ray = ray_vec(1:3,i-1, i_RAY)
 			k_max_ray = ray_vec(4:6,i-1, i_RAY)
 			exit
 		end if
@@ -249,19 +268,19 @@ subroutine analyze_OX_conv
 	end do
 
 	return
- end subroutine find_x_max_ray
+ end subroutine find_r_max_ray
 
 !****************************************************************************
 
- subroutine find_x_cutoff_ray(x_max_ray, found_cutoff, x_cutoff_ray, iteration)
-! Find point on O-mode cutoff surface closest to x_max by steepest ascent
+ subroutine find_r_cutoff_ray(r_max_ray, found_cutoff, r_cutoff_ray, iteration)
+! Find point on O-mode cutoff surface closest to r_max by steepest ascent
 
     use equilibrium_m, only : equilibrium, eq_point
 
 	implicit none
 
-	real(KIND=rkind), intent(in) :: x_max_ray(3)
-	real(KIND=rkind), intent(out) :: x_cutoff_ray(3)
+	real(KIND=rkind), intent(in) :: r_max_ray(3)
+	real(KIND=rkind), intent(out) :: r_cutoff_ray(3)
 	logical, intent(out) :: found_cutoff
 	integer, intent(out) :: iteration
 
@@ -278,7 +297,7 @@ subroutine analyze_OX_conv
 
 	found_cutoff = .false.
 	iteration = 0
-	x_temp = x_max_ray
+	x_temp = r_max_ray
 	call equilibrium(x_temp, eq)
 	alpha_temp = eq%alpha(0)
 ! 	write(*,*) ''
@@ -305,15 +324,15 @@ subroutine analyze_OX_conv
 ! 	write(*,*) 'alpha_temp = ', alpha_temp, '   mod_grad_alpha = ', mod_grad_alpha, '   grad_alpha_unit = ', grad_alpha_unit
 ! 	write(*,*) 'delta_x = ', delta_x,  '   x_temp = ', x_temp
 	end do
-	x_cutoff_ray = x_temp
+	r_cutoff_ray = x_temp
 
 	return
- end subroutine find_x_cutoff_ray
+ end subroutine find_r_cutoff_ray
 
 !****************************************************************************
 
- subroutine OX_conv_coeff(x_max_ray, k_max_ray, x_cutoff_ray,&
-          & conv_coeff, nvecx_c, nvecy_c, nvecz_c)
+ subroutine OX_conv_coeff(r_max_ray, k_max_ray, r_cutoff_ray,&
+          & conv_coeff, nvecx_c, nvecy_c, nvecz_c ,ny_c, nz_c)
 
 ! Calculate O-X mode conversion coefficient according to the model of Mjolhus, 1984,
 ! Eq 19.  I introduce a different coordinate system and translate his notation from
@@ -324,7 +343,7 @@ subroutine analyze_OX_conv
 ! of grad(ne), the magnetic field is in the zc,xc plane, and the orthogonal direction is yc.
 ! If the density is constant on magnetic field lines then zc is in the same direction as B.
 ! Generally we expect for fusion applications that B will be nearly orthogonal to grad(ne)
-! then B will make a small angle to zc.  grad(ne) is evaluated at x_cutoff_ray.  Also, I
+! then B will make a small angle to zc.  grad(ne) is evaluated at r_cutoff_ray.  Also, I
 ! call the angle between grad(ne) and B theta instead of alpha to avoid confusion with
 ! my alpha = omega_pe**2/omega_rf**2.  Also Mjolhus uses Y for omega_ce/omega at cutoff,
 ! whereas in RAYS equilibrium_m this is abs(gamma(0))
@@ -337,25 +356,25 @@ subroutine analyze_OX_conv
 
 	implicit none
 
-	real(KIND=rkind), intent(in) :: x_max_ray(3)
+	real(KIND=rkind), intent(in) :: r_max_ray(3)
 	real(KIND=rkind), intent(in) :: k_max_ray(3)
-	real(KIND=rkind), intent(in) :: x_cutoff_ray(3)
+	real(KIND=rkind), intent(in) :: r_cutoff_ray(3)
 	real(KIND=rkind), intent(out) :: conv_coeff
 	real(KIND=rkind), intent(out) :: nvecx_c(3)
 	real(KIND=rkind), intent(out) :: nvecy_c(3)
 	real(KIND=rkind), intent(out) :: nvecz_c(3)
+	real(KIND=rkind), intent(out) ::  ny_c, nz_c
 
 	real(KIND=rkind) :: xc_unit(3), yc_unit(3), zc_unit(3)
 	real(KIND=rkind) :: v_temp(3)
 	real(KIND=rkind) :: theta, gamma, F, G
-	real(KIND=rkind) :: n_parallel, ny_c, nz_c, n_vertical, n_crit
+	real(KIND=rkind) :: n_parallel, n_vertical, n_crit
 	real(KIND=rkind) :: L
 
 	type(eq_point) :: eq
 
 ! N.B. These things are evaluated at the cutoff surface
-    call equilibrium(x_cutoff_ray, eq)
-	n_parallel = dot_product(k_max_ray, eq%bunit)/k0
+    call equilibrium(r_cutoff_ray, eq)
 	xc_unit = eq%gradns(:,0)/norm2(eq%gradns(:, 0)) ! Unit vector along grad(ne)
 	v_temp = cross_product(eq%bunit, xc_unit) ! perpendicular to x and B, i.e. y direction
 	yc_unit = v_temp/norm2(v_temp)
@@ -371,7 +390,7 @@ subroutine analyze_OX_conv
  write(*,*) 'gamma = ', gamma
  write(*,*) 'L = ', L
 
-! N.B. k vector is evaluated on the ray at x_max_ray.  If the plasma were plane stratified,
+! N.B. k vector is evaluated on the ray at r_max_ray.  If the plasma were plane stratified,
 ! as in Mjohus model, n_parallel and n_transverse would be constant along the ray.  I'm
 ! evaluating them using bunit at the reflection point.  There might be some ambiguity
 ! relative to evaluating bunit at the cutoff surface, but at least they do satisfy the
@@ -405,6 +424,126 @@ subroutine analyze_OX_conv
 
 	return
  end subroutine OX_conv_coeff
+
+!****************************************************************************
+
+ subroutine restart_X_mode(rvecO_cutoff, ny_c, nz_c, rvecr_restart, kvecr_restart)
+
+! Calculate the initial conditions for a the x-mode on high density side of the
+! conversion layer.
+!
+! Subject to the slab geometry approximation inherent in the conversion model we assume
+! that the components of n perpendicular to grad(n) (i.e ny_c and nz_c) are
+! constant along the path from the ray turning point to the X-mode propagation location
+! (these were also assumed the same at the O-mode cutoff surface to calculate the
+! conversion coefficient).  For more discussion see notes "O-X conversion",11/21/2025.
+!
+! First we find the density for the X-mode cutoff (i.e. alphaX) by solving for the root
+! of the nx**0 coefficient of the Booker quartic at or above the alpha = 1 surface.
+
+! First find the point on the high density side where the X-mode
+! starts to propagate. We take the restart location to be the in the direction of grad(n)
+! from the O-mode cutoff position, r_cut, found above.  We search a distane, s, along the
+! grad(n) vector until we find a root of the dispersion function. That will be the X-mode
+! cutoff.  Then extend it a little further so the X-mode is propagating.
+
+    use constants_m, only : rkind, zero, one, two
+    use equilibrium_m, only : equilibrium, eq_point
+    use rf_m, only : k0
+    use vectors3_m, only : cross_product
+    use bisect_m, only : solve_bisection
+
+	implicit none
+
+	real(KIND=rkind), intent(in) :: rvecO_cutoff(3)
+	real(KIND=rkind), intent(in) :: ny_c
+	real(KIND=rkind), intent(in) :: nz_c
+	real(KIND=rkind), intent(out) :: rvecr_restart(3)
+	real(KIND=rkind), intent(out) :: kvecr_restart(3)
+
+	real(KIND=rkind) :: alphaX ! (omega plasma/omega rf)**2 at X cutoff
+	real(KIND=rkind) :: theta ! angle between B and grad(n)
+	real(KIND=rkind) :: gamma ! |omega_c_e|/omega rf
+	real(KIND=rkind) :: v_temp(3)
+	real(KIND=rkind) :: xc_unit(3) ! unit vector along grad(n)
+
+	integer :: ierr
+
+! 	real(KIND=rkind), intent(out) :: h_vec(3)
+! 	real(KIND=rkind) :: n_parallel, n_vertical, n_crit
+
+! ! Distance along grad(n) for X-mode cutoff
+! 	real(KIND=rkind) :: s_cut
+!
+! ! Maximum distance along grad(n) to search for X-mode cutoff with bisection
+!     real(KIND=rkind), parameter :: s_max = 0.02_rkind
+!
+! Tolerance for finding s, distance along grad(n) for X-mode cutoff
+    real(KIND=rkind), parameter :: bisection_eps = one*10d-6
+
+! ! Distance along grad(n) to extend the restart point past the X-mode cutoff
+! 	real(KIND=rkind), parameter :: s_extend = 0.001_rkind ! one millimeter
+
+! Additional data to feed to solve_bisection
+	real(KIND=rkind) :: data(4)
+
+	type(eq_point) :: eq
+
+! N.B. These things are evaluated at the O-mode cutoff surface
+	call equilibrium(rvecO_cutoff, eq)
+	xc_unit = eq%gradns(:,0)/norm2(eq%gradns(:, 0)) ! Unit vector along grad(ne)
+	v_temp = cross_product(eq%bunit, xc_unit) ! perpendicular to x and B, i.e. y direction
+	theta = acos(dot_product(xc_unit, eq%bunit))
+	gamma = abs(eq%gamma(0))
+
+! Find density alphaX = (omega plasma/omega rf)**2 of X-mode cutoff (i.e. root of Booker
+! quartic)
+	data(1) = gamma
+	data(2) = ny_c
+	data(3) = nz_c
+	data(4) = theta
+    call solve_bisection(f_Booker0, alphaX, one, two, zero,&
+       & bisection_eps, ierr, data)
+
+    write(*,*) 'restart_X_mode: alphaX = ', alphaX
+!  write(*,*) 'restart_X_mode: r_cutoff_ray = ', r_cutoff_ray
+!  write(*,*) 'restart_X_mode: r_restart = ', r_restart
+!  write(*,*) 'restart_X_mode: k_max_ray = ', k_max_ray
+!  write(*,*) 'restart_X_mode: k_restart = ', k_restart
+
+	return
+ end subroutine restart_X_mode
+
+!****************************************************************************
+
+ function f_Booker0(X, data) result(d)
+! Evaluates the nx**0 coefficient of the Booker quartic versus X=(plasma freq/rf freq)**2
+! This is the magnetoionic notation.  Gives the density of cutoff. Components
+! of n_vec perpendicular to grad(in) are taken to be constant, and the same as at the
+! O-mode turning point, and also at the O-mode cutoff.
+
+	implicit none
+	real(KIND=rkind) :: X
+	real(KIND=rkind) :: data(4)
+	real(KIND=rkind) :: d
+
+
+	real(KIND=rkind) :: Y, ny, nz, theta
+
+	Y = data(1)
+	ny = data(2)
+	nz = data(3)
+	theta = data(4)
+
+	d = &
+     & ((1 - X)*((1 - X)**2 - Y**2))/(1 - Y**2) + ny**4*(1 - X/(1 - Y**2)) - &
+     & ny**2*(-((X*Y**2)/(1 - Y**2)) + 2*(1 - X)*(1 - X/(1 - Y**2))) + &
+     & ny**2*nz**2*(2*(1 - X/(1 - Y**2)) + (X*Y**2*Cos(theta)**2)/(1 - Y**2)) + &
+     & nz**4*(1 - (X*(1 - Y**2*Cos(theta)**2))/(1 - Y**2)) - &
+     & nz**2*(2*(1 - X)*(1 - X/(1 - Y**2)) - (X*Y**2*Sin(theta)**2)/(1 - Y**2))
+
+    return
+ end function f_Booker0
 
 !****************************************************************************
 
