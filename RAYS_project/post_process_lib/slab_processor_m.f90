@@ -52,11 +52,16 @@
 	logical :: write_dep_profiles = .true. ! Write depositon profile netCDF file
 	logical :: calculate_ray_diag = .true. ! Write detailed ray diagnostic netCDF file
 	logical :: write_eq_X_profile_data = .true.  ! Write data for radial profiles netCDF file
+	logical :: do_OX_conv_analysis = .true.  ! Write data to restart X-mode after OX conversion
+
+!   File to put x-mode converted ray restart data in
+    character(len=80) :: OX_restart_ray_data_file
 
     namelist /slab_processor_list/ num_plot_k_vectors, scale_k_vec,&
              & k_vec_base_length, set_XY_lim, &
              & calculate_dep_profiles, write_dep_profiles, calculate_ray_diag, &
-             & write_eq_X_profile_data, n_X
+             & write_eq_X_profile_data, n_X, do_OX_conv_analysis, OX_restart_ray_data_file
+
 
 !_________________________________________________________________________________________
 contains
@@ -94,6 +99,7 @@ contains
     use diagnostics_m, only : message_unit, message, text_message
     use deposition_profiles_m, only : calculate_deposition_profiles, &
                         & write_deposition_profiles_LD
+	use OX_conv_analysis_m, only : analyze_OX_conv
 
     implicit none
 
@@ -112,6 +118,8 @@ contains
     if (write_dep_profiles .eqv. .true.) call write_deposition_profiles_LD
 
     if (write_eq_X_profile_data .eqv. .true.) call write_eq_X_profile_data_NC
+
+    if (do_OX_conv_analysis .eqv. .true.) call analyze_OX_conv(OX_restart_ray_data_file)
 
     call text_message('Finished slab_processor work')
 
@@ -169,8 +177,8 @@ contains
 ! Declarations: variable IDs
     integer, parameter :: n_vars =  19
     integer :: date_vector_id, npoints_id, s_id, ne_id, Te_kev_id, modB_id, alpha_e_id, &
-             & gamma_e_id, X_id, Y_id, Z_id, n_par_id, n_perp_id, P_absorbed_id, &
-             & n_imag_id, xi_0_id, xi_1_id, xi_2_id, residual_id
+             & gamma_e_id, X_id, Y_id, Z_id, nx_id, ny_id, nz_id, n_par_id, n_perp_id, &
+             & P_absorbed_id, n_imag_id, xi_0_id, xi_1_id, xi_2_id, residual_id
 !   Declare local arrays
 !    integer :: date_vector - from ray_results
 !    integer :: npoints - from ray_results
@@ -183,6 +191,9 @@ contains
     real(kind=rkind), allocatable :: X(:,:)
     real(kind=rkind), allocatable :: Y(:,:)
     real(kind=rkind), allocatable :: Z(:,:)
+    real(kind=rkind), allocatable :: nx(:,:)
+    real(kind=rkind), allocatable :: ny(:,:)
+    real(kind=rkind), allocatable :: nz(:,:)
     real(kind=rkind), allocatable :: n_par(:,:)
     real(kind=rkind), allocatable :: n_perp(:,:)
     real(kind=rkind), allocatable :: P_absorbed(:,:)
@@ -209,6 +220,9 @@ contains
     allocate(X(max_number_of_points,number_of_rays),source=0.0_rkind)
     allocate(Y(max_number_of_points,number_of_rays),source=0.0_rkind)
     allocate(Z(max_number_of_points,number_of_rays),source=0.0_rkind)
+    allocate(nx(max_number_of_points,number_of_rays),source=0.0_rkind)
+    allocate(ny(max_number_of_points,number_of_rays),source=0.0_rkind)
+    allocate(nz(max_number_of_points,number_of_rays),source=0.0_rkind)
     allocate(n_par(max_number_of_points,number_of_rays),source=0.0_rkind)
     allocate(n_perp(max_number_of_points,number_of_rays),source=0.0_rkind)
     allocate(P_absorbed(max_number_of_points,number_of_rays),source=0.0_rkind)
@@ -231,6 +245,11 @@ contains
         	Y(istep, iray) = rvec(2)
        		Z(istep, iray) = rvec(3)
 
+			nvec = kvec/k0
+        	nx(istep, iray) = nvec(1)
+        	ny(istep, iray) = nvec(2)
+       		nz(istep, iray) = nvec(3)
+
         	call equilibrium(rvec, eq)
         	Te_kev(istep, iray) = eq%Ts(0)/e/1000.0_rkind
         	modB(istep, iray) = eq%bmag
@@ -240,7 +259,7 @@ contains
 
 			k3 = sum(kvec*eq%bunit)
 			k1 = sqrt( sum((kvec-k3*eq%bunit)**2) )
-			nvec = kvec/k0; n1 = k1/k0; n3 = k3/k0
+			n1 = k1/k0; n3 = k3/k0
 			n_par(istep, iray) = n3
 			n_perp(istep, iray) = n1
 			residual(istep, iray) = residual_results(istep, iray)
@@ -309,6 +328,9 @@ contains
     call check( nf90_def_var(ncid, 'X', NF90_DOUBLE, [max_number_of_points_id,number_of_rays_id], X_id))
     call check( nf90_def_var(ncid, 'Y', NF90_DOUBLE, [max_number_of_points_id,number_of_rays_id], Y_id))
     call check( nf90_def_var(ncid, 'Z', NF90_DOUBLE, [max_number_of_points_id,number_of_rays_id], Z_id))
+    call check( nf90_def_var(ncid, 'nx', NF90_DOUBLE, [max_number_of_points_id,number_of_rays_id], nx_id))
+    call check( nf90_def_var(ncid, 'ny', NF90_DOUBLE, [max_number_of_points_id,number_of_rays_id], ny_id))
+    call check( nf90_def_var(ncid, 'nz', NF90_DOUBLE, [max_number_of_points_id,number_of_rays_id], nz_id))
     call check( nf90_def_var(ncid, 'n_par', NF90_DOUBLE, [max_number_of_points_id,number_of_rays_id], n_par_id))
     call check( nf90_def_var(ncid, 'n_perp', NF90_DOUBLE, [max_number_of_points_id,number_of_rays_id], n_perp_id))
     call check( nf90_def_var(ncid, 'P_absorbed', NF90_DOUBLE, [max_number_of_points_id,number_of_rays_id], P_absorbed_id))
@@ -335,6 +357,9 @@ call check( nf90_enddef(ncid))
     call check( nf90_put_var(ncid, X_id, X))
     call check( nf90_put_var(ncid, Y_id, Y))
     call check( nf90_put_var(ncid, Z_id, Z))
+    call check( nf90_put_var(ncid, nx_id, nx))
+    call check( nf90_put_var(ncid, ny_id, ny))
+    call check( nf90_put_var(ncid, nz_id, nz))
     call check( nf90_put_var(ncid, n_par_id, n_par))
     call check( nf90_put_var(ncid, n_perp_id, n_perp))
     call check( nf90_put_var(ncid, P_absorbed_id, P_absorbed))

@@ -92,13 +92,17 @@
 	logical :: write_eq_radial_profile_data = .true.  ! Write data for radial profiles netCDF file
 	logical :: do_OX_conv_analysis = .false.  ! Special case OX conversion so, default = false
 
+
+!   File to put x-mode converted ray restart data in
+    character(len=80) :: OX_restart_ray_data_file
+
     namelist /mirror_processor_list/ num_plot_k_vectors, scale_k_vec,&
              & k_vec_base_length, set_XY_lim, &
              & calculate_dep_profiles, write_dep_profiles, calculate_ray_diag, &
              & write_contour_data, N_pointsX_eq, N_pointsZ_eq, &
              & write_eq_XZ_grid_data, write_eq_radial_profile_data, n_AphiN, &
              & bisection_eps, n_rho, z_reference, &
-             & do_OX_conv_analysis
+             & do_OX_conv_analysis, OX_restart_ray_data_file
 
 !_________________________________________________________________________________________
 contains
@@ -148,7 +152,6 @@ contains
     implicit none
 
     if (verbosity > 0) call text_message('Begin mirror_processor')
-
     call write_graphics_description_file
 
     if (calculate_dep_profiles .eqv. .true.) call calculate_deposition_profiles
@@ -156,7 +159,7 @@ contains
 	if (calculate_ray_diag .eqv. .true.) call ray_detailed_diagnostics
 	if (write_contour_data .eqv. .true.) call write_eq_contour_data_NC
     if (write_eq_radial_profile_data .eqv. .true.) call write_eq_radial_profile_data_NC
-    if (do_OX_conv_analysis .eqv. .true.) call analyze_OX_conv
+    if (do_OX_conv_analysis .eqv. .true.) call analyze_OX_conv(OX_restart_ray_data_file)
 
     if (verbosity > 0) call text_message('Finished mirror_processor work')
 
@@ -598,7 +601,7 @@ subroutine write_eq_contour_data_NC
 		gamma(:) = eq%gamma(0:nspec)
 		gamma_array(i, j, :) = gamma
 	end do
-	end do
+ 	end do
 
 ! Put NC variables
     call check( nf90_put_var(ncid, box_xmin_id, box_xmin))
@@ -886,7 +889,7 @@ subroutine write_eq_contour_data_NC
 	rvec = (/R, zero, z_reference/)
 	call multiple_mirror_Aphi(rvec, Aphi, gradAphi, AphiN, gradAphiN)
 	f_R_AphiN = AphiN
-write(*,*) 'rvec = ', rvec,  '  f_R_Aphi = ', f_R_AphiN
+!	write(*,*) 'rvec = ', rvec,  '  f_R_Aphi = ', f_R_AphiN
 
 	return
  end function f_R_AphiN

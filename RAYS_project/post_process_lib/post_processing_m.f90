@@ -28,10 +28,27 @@
 !
 ! It also reads the "rays.in" file (done in subroutine initialize_diagnostics) to get
 ! some metadata from the RAYS run.
+!
+! Note about input file name, "post_process_rays.in": It first looks for a file named
+! "post_process_<run_label>.in" where <run_label> comes out of the "ray.in" file.  If it
+! finds that it copies it to post_process_rays.in and goes on.  If it doesn't find a file
+! with that name it looks for "post_process_rays.in".  So the best practice is to name the
+! post processing input file according to the first option.
 
 !_________________________________________________________________________________________
 ! Working notes:
 !_________________________________________________________________________________________
+
+! 3/1/2026 (DBB) Reverted to a generic name for the namelist file 'post_process_rays.in'
+!   for a while I allowed a commandline argument to specify the input file which was then
+!   copied to 'post_process_rays.in'.  But this caused some complicated logic when it
+!   came to running restarts, so I reverted to the simple solution.  Best practice is to
+!   use a specific post process namelist file, which you can progressively edit, and soft
+!   link that to 'post_process_rays.in'.  Similar structure is used in RAYS itself.
+
+! 2/13/2026 (DBB) Changed getting number of rays from ray_init_m to rays_results_m.
+! Simplifies initialization -> eliminate call to initialize_ray_init_m.  Also deleted ASCII
+! ray data read, subroutine read_ray_data.  Obsolete.
 
 !_________________________________________________________________________________________
 ! Module data
@@ -81,7 +98,7 @@ contains
                 & run_description, run_label
     use equilibrium_m, only : equilib_model, initialize_equilibrium_m
     use ode_m, only : initialize_ode_solver_m
-    use ray_init_m, only : initialize_ray_init_m
+!     use ray_init_m, only : initialize_ray_init_m
     use rf_m, only : initialize_rf_m
     use damping_m, only : initialize_damping_m
     use species_m, only : initialize_species_m
@@ -91,11 +108,13 @@ contains
     use solovev_processor_m, only : initialize_solovev_processor
     use axisym_toroid_processor_m, only : initialize_axisym_toroid_processor
 	use mirror_processor_m, only : initialize_mirror_processor
-    use ray_init_m, only : nray_ray_init => nray
+!     use ray_init_m, only : nray_ray_init => nray
 
     implicit none
     logical, intent(in) :: read_input
 	integer :: input_unit, get_unit_number ! External, free unit finder
+	logical :: file_exists
+    character(len=80) :: pp_input_file ! Post prociessing input file name
 
     call text_message('initialize_post_process_rays', 1)
 
@@ -119,7 +138,7 @@ contains
     call initialize_equilibrium_m(read_input)
     call message(1)
 
-    call initialize_ray_init_m(read_input)
+!     call initialize_ray_init_m(read_input)
     call message(1)
 
     call initialize_ode_solver_m(read_input)
@@ -128,18 +147,21 @@ contains
     call initialize_ray_results_m(read_input)
     call message(1)
 
-! Read post process namelist file
+! Read post-process namelist file
     if (read_input .eqv. .true.) then
-	! Read and write input namelist
-  		input_unit = get_unit_number()
-        open(unit=input_unit, file='post_process_rays.in',action='read', status='old', form='formatted')
-        read(input_unit, post_process_list)
-        close(unit=input_unit)
+
+		! Read and write input namelist
+		input_unit = get_unit_number()
+		open(unit=input_unit, file='post_process_rays.in' ,action='read', status='old',&
+			& form='formatted')
+		read(input_unit, post_process_list)
+		close(unit=input_unit)
+
+		if (verbosity > 0) then
+			write(message_unit, post_process_list)
+			if (messages_to_stdout) write(*, post_process_list)
+		end if
 	end if
-    if (verbosity > 0) then
-		write(message_unit, post_process_list)
-		if (messages_to_stdout) write(*, post_process_list)
-    end if
 
     select case (trim(processor))
 
@@ -174,8 +196,8 @@ contains
        case ('NC')
            call read_results_data_NC
 
-       case ('ASCII')
-          call read_ray_data
+!        case ('ASCII')
+!           call read_ray_data
 
        case default
           error_message = 'post_process_rays: unimplemented ray_data_input_mode ='//&
@@ -295,70 +317,70 @@ contains
 !  respectively.
 !
 
- subroutine read_ray_data
-
-    use diagnostics_m, only : message_unit, message, text_message, verbosity, &
-                            & output_unit, ray_list_unit, run_label
-
-    implicit none
-
-    integer :: nray, nv, iray, ipoint
-    real(KIND=rkind) :: s
-    real(KIND=rkind), allocatable :: v(:)
-    real(KIND=rkind), allocatable :: end_residuals(:)
-    character(len = 20), allocatable :: ray_stop(:)
-
-!	integer :: input_unit, output_unit, get_unit_number ! External, free unit finder
-
-!*************** Open Input files containing ray data ******************************
-
-!   Open a formatted file containing number of rays and number of steps per ray
-    open(unit=ray_list_unit, file='ray_list.'//trim(run_label),action='read', &
-                & status='old', form='formatted')
-
-!   Open file containing ray data. File generated in rays as ray.out. Here open for read
-    open(unit=output_unit, file='ray_out.'//trim(run_label),action='read', &
-                & status='old', form='formatted')
-
-    read(ray_list_unit, *) nray
-    call message('nray = ', nray, 1)
-    allocate(npoints(nray))
-    read(ray_list_unit, *) nv
-    allocate(v(nv))
-
-    read(ray_list_unit, *) npoints
-    npoints_max = maxval(npoints)
-    allocate(end_residuals(nray))
-    read(ray_list_unit, *) end_residuals
-    allocate(ray_stop(nray))
-    read(ray_list_unit, *) ray_stop
-
-    allocate(s_vec(nray, npoints_max))
-    allocate(v_vec(nray, npoints_max, nv ))
-
-    ray_loop : do iray = 1, nray
-        do ipoint = 1, npoints(iray)
-
-            read (output_unit, *) s, v
-            s_vec(iray, ipoint) = s
-            v_vec(iray, ipoint, :) = v
-        end do
-    end do ray_loop
-
-! Write data to an ASCII file for diagnostic
-    if (verbosity >= 3) then
-       call message(1)
-       call text_message('Ray data')
-       do iray = 1, nray
-            call message('ray number = ', iray)
-            do ipoint = 1, npoints(iray)
-                write(message_unit, *) s_vec(iray, ipoint), v_vec(iray, ipoint, 1:nv)
-            end do
-            call text_message('stopped ',ray_stop(iray))
-        end do
-    end if
-
-  end subroutine read_ray_data
+!  subroutine read_ray_data
+!
+!     use diagnostics_m, only : message_unit, message, text_message, verbosity, &
+!                             & output_unit, ray_list_unit, run_label
+!
+!     implicit none
+!
+!     integer :: nray, nv, iray, ipoint
+!     real(KIND=rkind) :: s
+!     real(KIND=rkind), allocatable :: v(:)
+!     real(KIND=rkind), allocatable :: end_residuals(:)
+!     character(len = 20), allocatable :: ray_stop(:)
+!
+! !	integer :: input_unit, output_unit, get_unit_number ! External, free unit finder
+!
+! !*************** Open Input files containing ray data ******************************
+!
+! !   Open a formatted file containing number of rays and number of steps per ray
+!     open(unit=ray_list_unit, file='ray_list.'//trim(run_label),action='read', &
+!                 & status='old', form='formatted')
+!
+! !   Open file containing ray data. File generated in rays as ray.out. Here open for read
+!     open(unit=output_unit, file='ray_out.'//trim(run_label),action='read', &
+!                 & status='old', form='formatted')
+!
+!     read(ray_list_unit, *) nray
+!     call message('nray = ', nray, 1)
+!     allocate(npoints(nray))
+!     read(ray_list_unit, *) nv
+!     allocate(v(nv))
+!
+!     read(ray_list_unit, *) npoints
+!     npoints_max = maxval(npoints)
+!     allocate(end_residuals(nray))
+!     read(ray_list_unit, *) end_residuals
+!     allocate(ray_stop(nray))
+!     read(ray_list_unit, *) ray_stop
+!
+!     allocate(s_vec(nray, npoints_max))
+!     allocate(v_vec(nray, npoints_max, nv ))
+!
+!     ray_loop : do iray = 1, nray
+!         do ipoint = 1, npoints(iray)
+!
+!             read (output_unit, *) s, v
+!             s_vec(iray, ipoint) = s
+!             v_vec(iray, ipoint, :) = v
+!         end do
+!     end do ray_loop
+!
+! ! Write data to an ASCII file for diagnostic
+!     if (verbosity >= 3) then
+!        call message(1)
+!        call text_message('Ray data')
+!        do iray = 1, nray
+!             call message('ray number = ', iray)
+!             do ipoint = 1, npoints(iray)
+!                 write(message_unit, *) s_vec(iray, ipoint), v_vec(iray, ipoint, 1:nv)
+!             end do
+!             call text_message('stopped ',ray_stop(iray))
+!         end do
+!     end if
+!
+!   end subroutine read_ray_data
 
 !*************************************************************************
 

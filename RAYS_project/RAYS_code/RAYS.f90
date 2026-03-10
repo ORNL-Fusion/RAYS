@@ -4,7 +4,6 @@
 !                        finalize (finalize.f90), all in RAYS_lib
     implicit none
     logical :: read_input = .true.
-
 !   Read input file and initialize variables.
     call initialize(read_input)
 
