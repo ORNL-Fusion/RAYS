@@ -488,16 +488,30 @@ contains
 !
 ! f_min is the floor, rho0 is the profile inflection point and delta is a gradient
 ! scale length
-
+!
+! To avoid underflow put a limit on args to hyberbolics
     implicit none
 
     real(KIND=rkind), intent(in) :: rho, f_min, rho0, delta
     real(KIND=rkind), intent(out) :: f, fp
+    real(KIND=rkind) :: argP, argM, arg0
+    real(KIND=rkind) :: argLimit
+
+    argP = (rho+rho0)/delta
+    argM = (rho-rho0)/delta
+    arg0 = rho0/delta
+    argLimit = 35.
+
+    if (argP > argLimit) then
+    	f = f_min
+    	fp = zero
+    	return
+    end if
 
 	f = zero
-	f = (tanh((rho+rho0)/delta)-tanh((rho-rho0)/delta))/two/tanh((rho0)/delta)
-	fp = (one/cosh((rho+rho0)/delta)**2 - one/cosh((rho-rho0)/delta)**2)/(two*delta)/&
-		& tanh((rho0)/delta)
+	f = (tanh(argP)-tanh(argM))/two/tanh(arg0)
+	fp = (one/cosh(argP)**2 - one/cosh(argM)**2)/(two*delta)/&
+		& tanh(arg0)
 
 	f = (one - f_min)*f + f_min
 	fp = (one - f_min)*fp
@@ -520,6 +534,19 @@ contains
 
     real(KIND=rkind), intent(in) :: rho, f_min, rho0, delta
     real(KIND=rkind), intent(out) :: f, fp
+    real(KIND=rkind) :: argP, argM, arg0
+    real(KIND=rkind) :: argLimit
+
+    argP = (rho+rho0)/delta
+    argM = (rho-rho0)/delta
+    arg0 = rho0/delta
+    argLimit = 10.
+
+    if (argP > argLimit) then
+    	f = f_min
+    	fp = zero
+    	return
+    end if
 
 	f = zero
 	if (rho < one) then

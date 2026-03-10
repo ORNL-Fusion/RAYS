@@ -28,6 +28,7 @@
     real(KIND=rkind),parameter :: zero = 0.0_rkind
     real(KIND=rkind),parameter :: one = 1.0_rkind
     real(KIND=rkind),parameter :: two = 2.0_rkind
+    real(KIND=rkind),parameter :: ten = 10.0_rkind
 
 !_________________________________________________________________________________________
 contains

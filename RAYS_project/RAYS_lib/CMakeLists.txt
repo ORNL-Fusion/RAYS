@@ -3,6 +3,7 @@ list (APPEND lib_sources
 	axisym_toroid_eq_m.f90
     axisym_toroid_ray_init_R_Z_nphi_ntheta_m.f90
 	check_save.f90
+	classify_mode_OX.f90
 	constants_m.f90
 	damping_m.f90
 	damp_fund_ECH.f90
@@ -11,6 +12,7 @@ list (APPEND lib_sources
 	deriv_cold.f90
 	deriv_num.f90
 	diagnostics_m.f90
+    disp_solve_Booker_nx_vs_ny_nz.f90
 	disp_solve_cold_n1sq_vs_n3.f90
 	disp_solve_cold_nsq_vs_theta.f90
 	disp_solve_n_vs_k_vec.f90

@@ -258,8 +258,8 @@ contains
 
         case ('linear_2')
 !         Linear centered at x0: Specify n0s => ns(x0) & slope => dndx
-            ns = n0s(0:nspec) + dndx*eta*(x - x0)
-            gradns(1,0:nspec) = n0s(0:nspec) * dndx
+           ns = n0s(0:nspec) + dndx*eta(0:nspec)*(x - x0)
+            gradns(1,0:nspec) = eta(0:nspec) * dndx
 
         case ('parabolic')
 !       Parabolic around x = 0
@@ -296,7 +296,9 @@ contains
 
         case ('linear_2')
 !       Linear: Specify t0s => ns(rmin) & slope => dtdx
+ write(*,*) 'slab_eq: Got to 4.1'
             ts(is)=t0s(is) + dtdx*(x - x0)
+ write(*,*) 'slab_eq: Got to 4.2'
             gradts(1,is) = t0s(is) * dtdx
 
        case ('parabolic')
@@ -341,8 +343,8 @@ contains
     character (len = *), parameter :: b10 = '          '
     character (len = *), parameter :: b12 = '            '
 
-    dx = 2.*rmin/(nx_points-1)
-    xstart = -rmin
+    dx = (xmax-xmin)/(nx_points-1)
+    xstart = xmin
 
     if (trim(bz_prof_model) == 'linear_2') then
 		xstart = rmin
@@ -357,6 +359,7 @@ contains
         call slab_eq(rvec, bvec, gradbtensor, ns, gradns, ts, gradts, equib_err)
         write (message_unit,'(f11.5, a, e12.5, 3f11.5, 7f11.5)') &
                & x,'  ', ns(0), bvec, (ts(i), i=0, nspec)
+
     end do
 
  end subroutine write_slab_profiles

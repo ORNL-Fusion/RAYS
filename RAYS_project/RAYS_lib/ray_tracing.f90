@@ -22,7 +22,7 @@
     use species_m, only : nspec
     use ray_results_m, only : ray_stop_flag, ray_vec, residual, npoints, end_residuals,&
                             & max_residuals, end_ray_parameter, start_ray_vec, end_ray_vec,&
-                            & initial_ray_power, ray_trace_time, total_trace_time
+                            & initial_ray_power, end_ray_power, ray_trace_time, total_trace_time
     use openmp_m, only : num_threads
     use omp_lib
     implicit none
@@ -61,7 +61,7 @@
 
 !$OMP parallel do schedule(static) DEFAULT(FIRSTPRIVATE) &
 !$OMP& SHARED(ray_stop_flag, ray_vec, npoints, residual, ray_trace_time, initial_ray_power, &
-!$OMP& end_residuals, max_residuals, end_ray_parameter, start_ray_vec, end_ray_vec)
+!$OMP& end_ray_power, end_residuals, max_residuals, end_ray_parameter, start_ray_vec, end_ray_vec)
 
 !!$OMP DO
     ray_loop: do iray = 1, nray
@@ -259,12 +259,22 @@
         start_ray_vec(:,iray) = ray_vec(:,1,iray)
         end_ray_vec(:, iray) = v(:)
 
+        if (damping_model == 'no_damp') then
+        	end_ray_power(iray) = ray_pwr_wt(iray)
+ write(*,*) 'trace_rays: end_ray_power(iray) = ', end_ray_power(iray)
+        else
+        	end_ray_power(iray) = ray_pwr_wt(iray)*v(8)
+        end if
+
 !!$  write(12,*) 'ray_tracing end: ray# = ',iray,'  omp_get_thread_num = ', omp_get_thread_num()
 
     end do ray_loop
 
 !$omp end parallel do
 !$      t_finish_tracing = omp_get_wtime()
+
+ write(*,*) 'trace_rays: ray_pwr_wt = ', ray_pwr_wt
+ write(*,*) 'trace_rays: end_ray_power = ', end_ray_power
 
 !   Get date and time i.e. after ray loop, convert to Julian -> t_finish_tracing
     call date_and_time (values=date_v)

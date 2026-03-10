@@ -2,7 +2,7 @@
 ! Contains routines to solve various forms of the plasma dispersion relation
 !
 ! The particular model to be solved is specified by argument "dispersion_model"
-! Presently one model is supported: cold, (warm real soon now)
+! Presently one model is supported: cold, (warm coming real soon now)
 !
 ! Presently four forms for this model are supported:
 ! 1) solve_n1_vs_n2_n3
@@ -81,7 +81,9 @@ contains
 !   fast, slow etc
     character(len=20), intent(in) :: wave_mode
 
+! Use k_sign to change sign of n1 for dispersion relations that give n1 rather than |n|.
     integer, intent(in) :: k_sign
+
     real(KIND=rkind), intent(in) :: n2 ! n transverse
     real(KIND=rkind), intent(in) :: n3 ! n parallel
     complex(KIND=rkind), intent(out) :: n1
@@ -182,11 +184,18 @@ contains
   end  subroutine solve_nx_vs_ny_nz_by_bz
 !****************************************************************************
 
-  subroutine solve_n_vs_theta(eq, dispersion_model, wave_mode, k_sign, theta, n_out)
-! Appleton_Hartree like solver
+  subroutine solve_n_vs_theta(eq, dispersion_model, wave_mode, theta, n_out)
+! Appleton_Hartree-like solver, but includes ions
 ! N.B. n_out output is complex(KIND=rkind).  Calling program must account for that.
+! N.B. k_sign is not applicable here because what is returned is |n|
+! wave_mode = plus  -> O-mode
+! wave_mode = minus -> X-mode
+! wave_mode = fast
+! wave_mode = slow
+
 
     use diagnostics_m, only : message, text_message
+    use constants_m, only : zero
     use species_m, only : nspec
     use equilibrium_m, only : eq_point
 
@@ -201,7 +210,6 @@ contains
 !   fast, slow etc
     character(len=20), intent(in) :: wave_mode
 
-    integer, intent(in) :: k_sign
     real(KIND=rkind), intent(in) :: theta ! Angle between vector n and B
     complex(KIND=rkind), intent(out) :: n_out
 
@@ -210,10 +218,10 @@ contains
 
    mode: select case (trim(wave_mode))
 
-       case ('plus')
+       case ('plus') ! -> O-mode
           i_mode = 1
 
-       case ('minus')
+       case ('minus') ! -> X-mode
           i_mode = 2
 
        case ('fast')
@@ -234,7 +242,9 @@ contains
        case ('cold')
           ! Solve for n squared
           call solve_cold_nsq_vs_theta(eq,theta, nsq)
-          n_out = real(k_sign, kind=rkind) * sqrt(nsq(i_mode))
+  write(*,*) 'solve_n_vs_theta: nsq = ', nsq, '  i_mode = ', i_mode
+          n_out = sqrt(cmplx(nsq(i_mode), zero))
+  write(*,*) 'solve_n_vs_theta: n_out = ', n_out
 
        case default
           write(0,*) 'solve_disp: unimplemented dispersion_model =', trim(dispersion_model)

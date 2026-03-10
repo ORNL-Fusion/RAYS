@@ -180,7 +180,6 @@ contains
 		ray_pwr_wt = ray_pwr_wt_temp(1:nray)/nray ! Note: Q&D power model 1/nray
 
 		deallocate ( rvec_temp, rindex_vec_temp, ray_pwr_wt_temp )
-			ray_pwr_wt = ray_pwr_wt/nray
     end if
 
     end  subroutine simple_slab_ray_init

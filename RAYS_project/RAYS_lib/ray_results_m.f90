@@ -47,6 +47,7 @@
 
 ! Summary data
     real(KIND=rkind), allocatable :: initial_ray_power(:) ! nray
+    real(KIND=rkind), allocatable :: end_ray_power(:)	  ! nray
     real(KIND=rkind), allocatable :: ray_trace_time(:)    ! nray
     real(KIND=rkind), allocatable :: end_residuals(:)     ! nray
     real(KIND=rkind), allocatable :: max_residuals(:)     ! nray
@@ -75,6 +76,7 @@
 
 	! Summary data
 		real(KIND=rkind), allocatable :: initial_ray_power(:) ! nray
+		real(KIND=rkind), allocatable :: end_ray_power(:) 	  ! nray
 		real(KIND=rkind), allocatable :: ray_trace_time(:)    ! nray
 		real(KIND=rkind), allocatable :: end_residuals(:)     ! nray
 		real(KIND=rkind), allocatable :: max_residuals(:)     ! nray
@@ -133,6 +135,7 @@ contains
 			allocate (residual(max_number_of_points, nray))
 			allocate (npoints(nray))
 			allocate (initial_ray_power(nray))
+			allocate (end_ray_power(nray))
 			allocate (ray_trace_time(nray))
 			allocate (end_ray_parameter(nray))
 			allocate (end_residuals(nray))
@@ -155,6 +158,7 @@ contains
         residual = 0.
         npoints = 0
         initial_ray_power = 0.
+        end_ray_power = 0.
         ray_trace_time = 0.
         end_ray_parameter = 0.
         end_residuals = 0.
@@ -188,6 +192,7 @@ contains
 ! Declarations: variables
     integer, parameter :: n_vars =  12
     integer :: date_vector_id, ray_vec_id, residual_id, npoints_id, initial_ray_power_id,&
+             & end_ray_power_id,&
              & ray_trace_time_id, end_residuals_id, max_residuals_id, end_ray_parameter_id,&
              & start_ray_vec_id, end_ray_vec_id, ray_stop_flag_id, total_trace_time_id
 
@@ -214,6 +219,7 @@ contains
     call check( nf90_def_var(ncid, 'residual', NF90_DOUBLE, [max_number_of_points_id,number_of_rays_id], residual_id))
     call check( nf90_def_var(ncid, 'npoints', NF90_INT, [number_of_rays_id], npoints_id))
     call check( nf90_def_var(ncid, 'initial_ray_power', NF90_FLOAT, [number_of_rays_id], initial_ray_power_id))
+    call check( nf90_def_var(ncid, 'end_ray_power', NF90_FLOAT, [number_of_rays_id], end_ray_power_id))
     call check( nf90_def_var(ncid, 'ray_trace_time', NF90_FLOAT, [number_of_rays_id], ray_trace_time_id))
     call check( nf90_def_var(ncid, 'end_residuals', NF90_FLOAT, [number_of_rays_id], end_residuals_id))
     call check( nf90_def_var(ncid, 'max_residuals', NF90_FLOAT, [number_of_rays_id], max_residuals_id))
@@ -234,6 +240,7 @@ call check( nf90_enddef(ncid))
     call check( nf90_put_var(ncid, residual_id, residual(1:actual_max_npoints,:)))
     call check( nf90_put_var(ncid, npoints_id, npoints))
     call check( nf90_put_var(ncid, initial_ray_power_id, initial_ray_power))
+    call check( nf90_put_var(ncid, end_ray_power_id, end_ray_power))
     call check( nf90_put_var(ncid, ray_trace_time_id, ray_trace_time))
     call check( nf90_put_var(ncid, end_residuals_id, end_residuals))
     call check( nf90_put_var(ncid, max_residuals_id, max_residuals))
@@ -268,6 +275,7 @@ call check( nf90_enddef(ncid))
 ! Declarations: variables
     integer, parameter :: n_vars =  13
     integer :: date_vector_id, ray_vec_id, residual_id, npoints_id, initial_ray_power_id,&
+             & end_ray_power_id,&
              & ray_trace_time_id, end_residuals_id, max_residuals_id, end_ray_parameter_id,&
              & start_ray_vec_id, end_ray_vec_id, ray_stop_flag_id, total_trace_time_id
 
@@ -279,6 +287,7 @@ call check( nf90_enddef(ncid))
   if (allocated(this%residual)) deallocate(this%residual)
   if (allocated(this%npoints)) deallocate(this%npoints)
   if (allocated(this%initial_ray_power)) deallocate(this%initial_ray_power)
+  if (allocated(this%end_ray_power)) deallocate(this%end_ray_power)
   if (allocated(this%ray_trace_time)) deallocate(this%ray_trace_time)
   if (allocated(this%end_residuals)) deallocate(this%end_residuals)
   if (allocated(this%max_residuals)) deallocate(this%max_residuals)
@@ -303,6 +312,7 @@ call check( nf90_enddef(ncid))
     allocate(this%residual(this%max_number_of_points,this%number_of_rays))
     allocate(this%npoints(this%number_of_rays))
     allocate(this%initial_ray_power(this%number_of_rays))
+    allocate(this%end_ray_power(this%number_of_rays))
     allocate(this%ray_trace_time(this%number_of_rays))
     allocate(this%end_residuals(this%number_of_rays))
     allocate(this%max_residuals(this%number_of_rays))
@@ -322,7 +332,9 @@ call check( nf90_enddef(ncid))
     call check( nf90_get_var(ncid, npoints_id, this%npoints))
     call check(nf90_inq_varid(ncid, 'npoints', npoints_id))
     call check(nf90_inq_varid(ncid, 'initial_ray_power', initial_ray_power_id))
+    call check(nf90_inq_varid(ncid, 'end_ray_power', end_ray_power_id))
     call check( nf90_get_var(ncid, initial_ray_power_id, this%initial_ray_power))
+    call check( nf90_get_var(ncid, end_ray_power_id, this%end_ray_power))
     call check(nf90_inq_varid(ncid, 'ray_trace_time', ray_trace_time_id))
     call check( nf90_get_var(ncid, ray_trace_time_id, this%ray_trace_time))
     call check(nf90_inq_varid(ncid, 'end_residuals', end_residuals_id))
@@ -396,6 +408,8 @@ call check( nf90_enddef(ncid))
     write (results_star_unit,*) total_trace_time
     write (results_star_unit,*) 'initial_ray_power'
     write (results_star_unit,*) initial_ray_power
+    write (results_star_unit,*) 'end_ray_power'
+    write (results_star_unit,*) end_ray_power
     write (results_star_unit,*) 'ray_trace_time'
     write (results_star_unit,*) ray_trace_time
     write (results_star_unit,*) 'end_ray_parameter'
@@ -484,6 +498,7 @@ call check( nf90_enddef(ncid))
 	allocate (residual(nstep_max, nray))
 	allocate (npoints(nray))
 	allocate (initial_ray_power(nray))
+	allocate (end_ray_power(nray))
 	allocate (ray_trace_time(nray))
 	allocate (end_ray_parameter(nray))
 	allocate (end_residuals(nray))
@@ -515,6 +530,13 @@ call check( nf90_enddef(ncid))
     	stop
     end if
     read (results_star_unit,*) initial_ray_power
+
+    read (results_star_unit,*) var_name
+    if (var_name .ne. 'end_ray_power') then
+    	write(*,*) 'read_results_LD: inconsistent variable name = ', var_name
+    	stop
+    end if
+    read (results_star_unit,*) end_ray_power
 
     read (results_star_unit,*) var_name
     if (var_name .ne. 'ray_trace_time') then
@@ -608,6 +630,7 @@ call check( nf90_enddef(ncid))
         deallocate (residual)
         deallocate (npoints)
         deallocate (initial_ray_power)
+        deallocate (end_ray_power)
         deallocate (ray_trace_time)
         deallocate (end_ray_parameter)
         deallocate (end_residuals)
@@ -631,6 +654,7 @@ call check( nf90_enddef(ncid))
 ! 	allocate ( this%residual(max_number_of_points, number_of_rays))
 ! 	allocate ( this%npoints(number_of_rays))
 ! 	allocate ( this%initial_ray_power(number_of_rays))
+! 	allocate ( this%end_ray_power(number_of_rays))
 ! 	allocate ( this%ray_trace_time(number_of_rays))
 ! 	allocate ( this%end_ray_parameter(number_of_rays))
 ! 	allocate ( this%end_residuals(number_of_rays))
@@ -648,6 +672,7 @@ call check( nf90_enddef(ncid))
 
      this%total_trace_time = total_trace_time
      this%initial_ray_power = initial_ray_power
+     this%end_ray_power = end_ray_power
      this%ray_trace_time = ray_trace_time
      this%end_ray_parameter = end_ray_parameter
      this%end_residuals = end_residuals
@@ -672,6 +697,7 @@ call check( nf90_enddef(ncid))
 ! 	allocate ( this%residual(max_number_of_points, number_of_rays))
 ! 	allocate ( this%npoints(number_of_rays))
 ! 	allocate ( this%initial_ray_power(number_of_rays))
+! 	allocate ( this%end_ray_power(number_of_rays))
 ! 	allocate ( this%ray_trace_time(number_of_rays))
 ! 	allocate ( this%end_ray_parameter(number_of_rays))
 ! 	allocate ( this%end_residuals(number_of_rays))
@@ -691,6 +717,7 @@ call check( nf90_enddef(ncid))
 
      total_trace_time = this%total_trace_time
      initial_ray_power = this%initial_ray_power
+     end_ray_power = this%end_ray_power
      ray_trace_time = this%ray_trace_time
      end_ray_parameter = this%end_ray_parameter
      end_residuals = this%end_residuals

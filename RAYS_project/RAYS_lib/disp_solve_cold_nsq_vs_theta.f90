@@ -1,16 +1,21 @@
  subroutine solve_cold_nsq_vs_theta(eq, theta, nsq)
-! calculates cold plasma refractive index squared versus theta = angle between n and B.
+! Calculates cold plasma refractive index squared versus theta = angle between n and B.
+! This is the Appleton-Harteree form of the cold plasma dispersion relation including ions.
 ! In cold plasma nsq is real, but may be negative
 !
 ! The dispersion relation is quadratic in n^2.  The roots are classified according to
 ! whether the sign in front of the discriminant is + or -.  Roots are also classified as
 ! to which |n| is larger -> slow mode, or smaller -> fast mode.  This returns both choices:
-! nsq(1) -> plus
-! nsq(2) -> minus
+! nsq(1) -> plus  -> O-mode
+! nsq(2) -> minus -> X-mode
 ! nsq(3) -> fast
 ! nsq(4) -> slow
 
-    use constants_m, only : rkind, one
+! N.B.  Stix (Eq 1-29) defines b as negative of the usual quadratic eqation b.
+! i.e. An^4- Bn^2 +C =0.  This has the effect of making O-mode correspond to + discr below,
+! and X-mode correspond to - discr.
+
+    use constants_m, only : rkind, one, two
     use diagnostics_m, only : message
     use equilibrium_m, only : eq_point
 !    use suscep_m, only :  dielectric_cold
@@ -28,7 +33,7 @@
        real(KIND=rkind) :: S ,D , P,  R, L
        real(KIND=rkind) :: sin2, cos2, a, b, c, sgn_b
        real(KIND=rkind) :: discr, sqrt_discr
-       real, parameter :: two = 2.0_rkind, four = 4.0_rkind
+       real, parameter :: four = 4.0_rkind
 
        call RLSDP_cold(eq, S ,D , P, R, L)
 
@@ -50,11 +55,11 @@
        end if
        sqrt_discr = sqrt(discr)
        if (sgn_b < 0.) then
-           nsq(1) = ( -b + sqrt_discr) / (two*a) ! plus root
-           nsq(2) = two*c/(-b + sqrt_discr)      ! minus root
+           nsq(1) = ( -b + sqrt_discr) / (two*a) ! plus root  -> O-mode
+           nsq(2) = two*c/(-b + sqrt_discr)      ! minus root -> X-mode
        else
-           nsq(2) = ( -b - sqrt_discr) / (two*a) ! minus root
-           nsq(1) = two*c/(-b - sqrt_discr)      ! plus root
+           nsq(2) = ( -b - sqrt_discr) / (two*a) ! minus root -> X-mode
+           nsq(1) = two*c/(-b - sqrt_discr)      ! plus root  -> O-mode
        end if
 
 !   write(*,*) 'a = ', a, ' b = ', b, ' c = ', c

@@ -1,9 +1,20 @@
  module species_m
 ! contains plasma species data.
+! N.B. electrons are species 0.  There are 5 built in ion species (H,D,T,3He, alpha).  Not
+! all need be present.  The species names and concentrations relative to electron density,
+! eta(i), are specified in the input namelist /species_list/. eta(0 ==1 (i.e. electrons)
 
 !_________________________________________________________________________________________
 ! Working notes:
 !_________________________________________________________________________________________
+
+! (1-8-2026 DBB)  The handling of charge neutrality is rather primitive.  Presently the
+! only model takes the ion densities to be specified fractions, eta(i), of the electron
+! density as noted above. The only neutrality checking is done on initialization, where
+! sum(qs(i) x eta(i)) = 0.  In fact this can be turned off by setting input variable
+! enforce_charge_neutrality = .false.  You might want to do this for example for ECH where
+! you don't want to bother with ion dynamics at all.  I'll wait until somebody wants some
+! specific model before doing more.
 
 ! (2-22-2025 DBB) As of now, none of the equilibrium models use the edge density and
 ! temperature variables (nseps, tseps).  Instead there are variables in the equilibrium
@@ -84,11 +95,14 @@
 !   spec_model(is) = 'bessel' susceptibility model is full besssel function. Not yet.
     character(len=12) :: spec_model(0:nspec0) = ''
 
+!   Switch to turn off charge neutrality checking
+    logical :: enforce_charge_neutrality = .false.
 !   Criterion for checking charge neutrality.  Default here can be reset on input.
     real(KIND=rkind) :: neutrality = 1.e-10
 
     namelist /species_list/ &
-      & n0, nseps, spec_name, spec_model, qs, ms, t0s_eV, tseps_eV, eta, neutrality
+      & n0, nseps, spec_name, spec_model, qs, ms, t0s_eV, tseps_eV, eta, &
+      & enforce_charge_neutrality, neutrality
 
 !_________________________________________________________________________________________
 contains
@@ -126,8 +140,8 @@ contains
 ! load up arrays with values from non-zero eta
 
         nspec=0
-        do is = 1, nspec0
-          if (eta(is) > 0.) then
+        do is = 0, nspec0
+          if (is > 0 .and. eta(is) > 0.) then
             nspec = nspec+1
             do j = 1, nspec0
                 if ( trim(spec_name(nspec)) == trim(spec_name0(j)) ) then
@@ -143,7 +157,7 @@ contains
            write(message_unit, *) 'initialize_species: charge neutrality violated, charge =',&
             &  charge
            call message('initialize_species: charge neutrality violated, charge', charge, 0)
-           stop 1
+           if (enforce_charge_neutrality) stop 1
         end if
 
 !   Convert mass unit to kg:

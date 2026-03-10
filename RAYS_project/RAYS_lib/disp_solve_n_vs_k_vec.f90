@@ -1,6 +1,13 @@
   subroutine solve_n_vs_k_vec(eq, dispersion_model, wave_mode, k_sign, k_vec, n_out)
-! Solves for |n| in the direction of k_vec
+! Solves for |n| in the direction of k_vec.  It uses solve_cold_nsq_vs_theta() to get
+! n**2 and takes the appropriate square root.
 ! N.B. n_out is complex(KIND=rkind).  Calling program must account for that.
+
+! nsq(1) -> plus  -> O-mode
+! nsq(2) -> minus -> X-mode
+! nsq(3) -> fast
+! nsq(4) -> slow
+
 
     use constants_m, only : rkind, one
     use diagnostics_m, only : message, text_message
@@ -33,10 +40,10 @@
 	theta = acos(dot_product(kunit,eq%bunit))
     mode: select case (trim(wave_mode))
 
-       case ('plus')
+       case ('plus') ! -> O-mode
           i_mode = 1
 
-       case ('minus')
+       case ('minus') ! -> X-mode
           i_mode = 2
 
        case ('fast')

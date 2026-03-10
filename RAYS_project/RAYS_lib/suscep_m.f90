@@ -96,6 +96,7 @@ contains
 !   Output eps is derived type dielectric_tensor defined above.  Different species can have
 !   different susceptibility models.
 
+    use constants_m, only : rkind, zero, one, two
     use species_m, only : nspec, spec_model
     use equilibrium_m, only : eq_point
 
@@ -109,7 +110,7 @@ contains
 
     integer :: is, i
 
-    eps = 0.0_rkind
+    eps = zero
 
 !   Get susceptibility tensor for each species.
     do is = 0, nspec
@@ -131,7 +132,7 @@ contains
 !   Dielectric tensor.
 
     do i =1,3
-        eps(i,i) = eps(i,i) + 1.0_rkind
+        eps(i,i) = eps(i,i) + one
     end do
 
     return
@@ -143,6 +144,7 @@ contains
 !   calculates the cold plasma dielectric tensor eps for each species using suscep_cold().
 !   Output eps is derived type dielectric_tensor defined above.
 
+    use constants_m, only : rkind, zero, one, two
     use species_m, only : nspec, spec_model
     use equilibrium_m, only : eq_point
 
@@ -157,7 +159,7 @@ contains
 
     integer :: is, i
 
-    eps = 0.0_rkind
+    eps = zero
 
 !   Get susceptibility tensor for each species.
     do is = 0, nspec
@@ -169,7 +171,7 @@ contains
 !   Dielectric tensor.
 
     do i =1,3
-        eps(i,i) = eps(i,i) + 1.0_rkind
+        eps(i,i) = eps(i,i) + one
     end do
 
     return
@@ -181,7 +183,7 @@ contains
 ! Calculates S,D,P, R,L from cold plaama theory. e.g. Stix Eq 1.19 - 1.22
 ! N.B. Collisions not included so these are all real.
 
-    use constants_m, only : rkind, zero, one
+    use constants_m, only : rkind, zero, one, two
     use species_m, only : nspec, spec_model
     use equilibrium_m, only : eq_point
     use rf_m, only : omgrf
@@ -211,8 +213,8 @@ contains
 	R = one + R
 	L = one + L
 !	S = one + S
-	S = (R + L)/2._rkind
-	D = (R-L)/2._rkind
+	S = (R + L)/two
+	D = (R-L)/two
 	P = one + P
 
     return

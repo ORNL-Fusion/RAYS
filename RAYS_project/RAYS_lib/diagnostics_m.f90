@@ -17,6 +17,13 @@
 ! Working notes:
 !_________________________________________________________________________________________
 
+! 3/1/2026 (DBB) Reverted back to using a single generic name for the namelist file 'rays.in'
+!   for a while I allowed a commandline argument to specify the input file which was then
+!   copied to 'rays.in'.  But this caused some complicated logic when it came to running
+!   restarts, so I reverted to the simple solution.  Best practice is to use a specific RAYS
+!   namelist file, which you can progressively edit, and soft link that to 'rays.in'.  Similar
+!   structure is used in post_process_RAYS.
+
 !_________________________________________________________________________________________
 ! Module data
 !_________________________________________________________________________________________
@@ -126,19 +133,6 @@ contains
 		write(*,*) 'julian start, ierr = ', ierr
 		stop
 	end if
-
-! Default filename is 'rays.in'.  Optionally get input file name from command line. then
-! copy that file to 'ray.in'
-    n_args = command_argument_count()
-    if(n_args > 1) then
-        write(*,*) 'RAYS takes zero or one command line argument -> namelist filename'
-        stop 'incorrect command line arguments'
-    else if (n_args == 1) then
-        call get_command_argument(1,namelist_file)
-        if (trim(namelist_file) /= 'rays.in') then ! Don't copy if input filename already rays.in
- 	       call system('cp '//trim(namelist_file)//' rays.in')
-        end if
-    end if
 
 	! Get unit number and open file for output messages
 		message_unit = get_unit_number()
