@@ -41,7 +41,7 @@ change log:
 
  12/11/2025 (DBB)
  Reworked the whole script to use more of the matplotlib object oriented interface instead
- of the functional interface.  Now all interaction with matplotlib has been moved out of
+ of the functional interface.  Now all interaction with pyplot.plt has been moved out of
  the XY_Curves_Fig constructor and into plot_XY_Curves_Fig().  Also added capability to
  add vectors to the curves, and keyword arg 'margins' which puts a little extra space around
  the data area so that things like vectors don't stick off the plot.
@@ -286,7 +286,7 @@ class XY_Curves_Fig:
         self.ylabel = str(ylabel)
         self.kwargs = kwargs
 
-        print('\ntitle = ', self.title)
+        if debug: print('\ntitle = ', self.title)
 
 
 # Create figure
@@ -299,32 +299,32 @@ class XY_Curves_Fig:
         self.figsize = default_figsize
         if 'figsize' in kwargs:
             self.figsize = kwargs['figsize']
-            print('figsize = ', self.figsize)
+            if debug: print('figsize = ', self.figsize)
 
         self.aspect_ratio = default_aspect_ratio
         if 'aspect_ratio' in kwargs:
             self.aspect_ratio = kwargs['aspect_ratio']
-            print('aspect_ratio = ', self.aspect_ratio)
+            if debug: print('aspect_ratio = ', self.aspect_ratio)
 
         self.xlim = 'none'
         if 'xlim' in kwargs:
             self.xlim = kwargs['xlim']
-            print('xlim = ', self.xlim)
+            if debug: print('xlim = ', self.xlim)
 
         self.ylim = 'none'
         if 'ylim' in kwargs:
             self.ylim = kwargs['ylim']
-            print('ylim = ', self.ylim)
+            if debug: print('ylim = ', self.ylim)
 
         self.vectors = 'none'
         if 'vectors' in kwargs:
             self.vectors = kwargs['vectors']
-            print('Plotting vectors')
+            if debug: print('Plotting vectors')
 
         self.margins = 'none'
         if 'margins' in kwargs:
             self.margins = kwargs['margins']
-            print('margins = ', self.xlim)
+            if debug: print('margins = ', self.xlim)
 
 
         # Note to DBB: Annotating figure number below is confusing because it doesn't coincide with
@@ -360,13 +360,14 @@ def plot_XY_Curves_Fig(XY_fig):
         print('plot_XY_Curves_FIG: arg fig must be an instances of XY_Curves_Fig')
         raise Exception('plot_XY_Curves_FIG: arg fig must be an instances of XY_Curves_Fig')
 
-    print('plot_XY_Curves_Fig: fig.figsize = ', XY_fig.figsize)
+    if debug: print('plot_XY_Curves_Fig: fig.figsize = ', XY_fig.figsize)
 #     fig, ax = plt.subplots(layout="constrained", figsize=(9.,6.))
     fig, ax = plt.subplots(layout="tight")
 
     ax.set_title(XY_fig.title)
     ax.set_xlabel(XY_fig.xlabel)
     ax.set_ylabel(XY_fig.ylabel)
+    print ('plot_XY_Curves_Fig , ylabel = ', XY_fig.ylabel)
 
 
     XY_fig_has_legend = False
@@ -397,7 +398,7 @@ def plot_XY_Curves_Fig(XY_fig):
     # Deal with vectors if there are any
     if XY_fig.vectors != 'none':
         ax.quiver(XY_fig.vectors[0], XY_fig.vectors[1], XY_fig.vectors[2], \
-          XY_fig.vectors[3], width = .0015)
+          XY_fig.vectors[3], width = .0015, angles='xy', scale_units='xy', scale=1.)
 
     if XY_fig.margins != 'none':
         ax.margins(XY_fig.margins)

@@ -42,6 +42,7 @@ def lines_to_variable_dict(lines):
     for line in lines:
         if (line.strip() not in ['!', '#']) and (len(line) > 0):  # ignore comments
             if '=' in line:
+#                print('line = ', line)
                 name, val = line.split("=")
                 name = name.strip()
                 val = val.strip()

@@ -91,7 +91,7 @@ print('Plotting variables \n')
 
 for name in CDF_var_names:
     if name != 'date_vector' and name != 'npoints': # Skip these they are not plotable
-        print('name = ', name)
+#         print('name = ', name)
         curve_list = []
         for i in range(n_rays):
             n_points = ma.getdata(CDF.variables['npoints'][i])

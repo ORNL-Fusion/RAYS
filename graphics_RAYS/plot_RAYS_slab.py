@@ -121,7 +121,7 @@ def index_intervals(x, n):
     index[-1] = len(x)
 
     while i < len(x)-1:  # stop before x max
-        while x[i] < j*delta:
+        while i < len(x)-1 and x[i] < j*delta:
             i = i +1
         # Crossed an interval, check to see if x[i-1] or x[i] is closer to j*delta
         index[j] = i
@@ -174,10 +174,10 @@ if n_arg == 1: # No arg, get run_label from graphics description file
     results_file_list.append('run_results.' + run_label + '.nc')
 
 if n_arg > 1: # Get ray file names from command line
-    n_results_files = n_arg-1
-    results_file_list = sys.argv[1:]
+        n_results_files = n_arg-1
+        results_file_list = sys.argv[1:]
 
-print ('results files = ', results_file_list)
+print ('plot_RAYS: results files = ', results_file_list)
 
 nray = 0
 ray_ymin = 0. # Keep track of range of y.  Many plots will be in Z-X plane
@@ -243,6 +243,7 @@ for file in results_file_list:
 
         k_norm = [math.sqrt(kx[j]**2+ky[j]**2+kz[j]**2) for j in range(len(kx))]
         ray_kmax = max(ray_kmax, max(k_norm))
+        print('ray_kmax = ', ray_kmax)
 
         lbl = 'ray ' + str(n_all_rays)
         new_curve = XY_curve(z, x, label = lbl)
@@ -283,6 +284,7 @@ for file in results_file_list:
             kx_draw_list.append(kx_draw)
             ky_draw_list.append(ky_draw)
             kz_draw_list.append(kz_draw)
+
 
 print('Total number of rays = ', n_all_rays)
 
@@ -327,12 +329,14 @@ plot_XY_Curves_Fig(plotZX)
 #----------------------------------------------------------------------------------------------
 
 #Many plots will be restricted to ZX plane.  Check to see y extent at least 1% of max_size
-if ray_ymax-ray_ymin > 0.01*max_size:
+#if ray_ymax-ray_ymin > 0.01*max_size:
+if ray_ymax-ray_ymin > 0.01:
 
-    zx_ratio = (zmax-zmin)/(xmax-xmin)
+    zx_ratio = (zmax-zmin)/(ymax-ymin)
     z_size = max_size
     x_size = z_size*xz_ratio
     figsize = (z_size, x_size)
+    print('ZY plot: figsize = ', figsize)
 
     xlabel = 'z(m)'
     ylabel = 'y(m)'
@@ -342,13 +346,13 @@ if ray_ymax-ray_ymin > 0.01*max_size:
 if set_XY_lim in ['True', 'true', 'T']:
     kwargs.update({'xlim':[zmin,zmax], 'ylim':[xmin,xmax] })
 
-    # Add k vectors at selected points
-    if num_plot_k_vectors > 0:
-        kwargs.update({'vectors':[z_draw_list, y_draw_list, kz_draw_list, ky_draw_list],\
-                   'aspect_ratio':'equal'})
+# Add k vectors at selected points
+if num_plot_k_vectors > 0:
+    kwargs.update({'vectors':[z_draw_list, y_draw_list, kz_draw_list, ky_draw_list],\
+               'aspect_ratio':'equal'})
 
-    plotZY = XY_Curves_Fig(zy_curve_list, title, xlabel, ylabel, **kwargs)
-    plot_XY_Curves_Fig(plotZY)
+plotZY = XY_Curves_Fig(zy_curve_list, title, xlabel, ylabel, **kwargs)
+plot_XY_Curves_Fig(plotZY)
 
 #-----------------------------------------------------------------------------------------
 # Finalize

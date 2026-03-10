@@ -97,7 +97,7 @@ CDF_var_names = list(CDF.variables.keys())
 # print('***************')
 
 n_curves = CDF.dimensions['n_curves'].size
-print('n_curves = ' , n_curves)
+# print('n_curves = ' , n_curves)
 
 for i in list(range(n_curves)):
     n_grid = CDF.variables['n_grid'][i]
@@ -141,8 +141,8 @@ print('Plotting curves \n')
 for curve_name in curve_names:
     if debug:
         print('curve_name = ', curve_name)
-#         q = [x for x in curve_dict[curve_name]]
-#         print('q = ', q)
+        q = [x for x in curve_dict[curve_name]]
+        print('q = ', q)
 
     xlabel = grid_names_dict[curve_name]
     ylabel = curve_name
