@@ -1,7 +1,7 @@
 #! /usr/bin/env python
 
 """
-eRAYS -> Does everything to run a RAYS case for slab geometry
+eRAYS -> Does everything to run a RAYS case for axisym_toroid, multiple_mirror or slab geometry
 Runs RAYS
 Runs post_process_RAYS
 Plots ray trajectories using bash function plot_rays
