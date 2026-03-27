@@ -57,12 +57,13 @@ import matplotlib.pyplot as plt
 import matplotlib.font_manager as font_mgr
 from matplotlib.backends.backend_pdf import PdfPages
 from matplotlib.ticker import FuncFormatter
+from matplotlib.patches import Circle
 import numpy as np
 import math
 #import string
 
 __all__ = ['XY_Curves_Fig', 'XY_curve', 'plot_XY_Curves_Fig', 'open_file_XY_Curves_Fig',\
-           'close_file_XY_Curves_Fig', 'plot_summary', 'plot_index' ]
+           'XY_contour', 'XY_circle', 'close_file_XY_Curves_Fig', 'plot_summary', 'plot_index' ]
 
 debug = False
 sci_threshold = 1.e4
@@ -258,6 +259,69 @@ class XY_curve:
 
 #_________________________________________________________________________________________________
 
+class XY_contour:
+
+    count = 0
+
+    def __init__(self, x, y, z, levels, **kwargs):
+
+        if (type(x) == list or type(x) == np.ndarray or type(x) == np.ma.core.MaskedArray) and\
+            (type(y) == list or type(y) == np.ndarray or type(y) == np.ma.core.MaskedArray) and\
+            (type(z) == list or type(z) == np.ndarray or type(z) == np.ma.core.MaskedArray) and\
+            type(levels) == list:
+            self.x = x
+            self.y = y
+            self.z = z
+            self.levels = levels
+            self.kwargs = kwargs
+        else:
+            print('type(x) = ', type(x))
+            print('type(y) = ', type(y))
+            print('type(z) = ', type(z))
+            print('XY_curve: args x, y and z must be lists or numpy.ndarrays')
+            raise Exception('XY_curve: args x, y and z must be lists or numpy.ndarrays')
+        nx = len(x)
+        ny = len(y)
+        zy = len(z)
+        zx = len(z[0])
+        if nx != zx or nx != zx:
+            print('XY_contour: shape of z does not conform to lengths of x, y')
+            raise Exception('XY_contour: shape of z does not conform to lengths of x, y')
+
+        self.__class__.count = self.__class__.count +1
+#_________________________________________________________________________________________________
+
+class XY_circle:
+
+    count = 0
+
+    def __init__(self, x, y, r, **kwargs):
+        self.center = (x, y)
+        self.r = r
+        self.kwargs = kwargs
+        if 'fill' not in kwargs.keys():
+            kwargs.update({'fill': False})
+        self.__class__.count = self.__class__.count +1
+
+#_________________________________________________________________________________________________
+
+class XY_line:
+
+    count = 0
+
+    def __init__(self, x0, y0, x1, y1, **kwargs):
+        self.x0 = x0
+        self.x1 = x1
+        self.y0 = y0
+        self.y1 = y1
+        self.kwargs = kwargs
+        if 'color' not in kwargs.keys():
+            kwargs.update({'color': 'black'})
+
+        self.__class__.count = self.__class__.count +1
+
+#_________________________________________________________________________________________________
+
 class XY_Curves_Fig:
     def __init__(self, curve_list, title = '', xlabel = '', ylabel = '', **kwargs):
 
@@ -321,6 +385,21 @@ class XY_Curves_Fig:
             self.vectors = kwargs['vectors']
             if debug: print('Plotting vectors')
 
+        self.contours = 'none'
+        if 'contours' in kwargs:
+            self.contours = kwargs['contours']  # should be a list of class contour
+            if debug: print('Plotting contours')
+
+        self.circles = 'none'
+        if 'circles' in kwargs:
+            self.circles = kwargs['circles']  # should be a list of class circle
+            if debug: print('Plotting circles')
+
+        self.lines = 'none'
+        if 'lines' in kwargs:
+            self.lines = kwargs['lines']  # should be a list of class lines
+            if debug: print('Plotting lines')
+
         self.margins = 'none'
         if 'margins' in kwargs:
             self.margins = kwargs['margins']
@@ -379,8 +458,6 @@ def plot_XY_Curves_Fig(XY_fig):
         if 'label' in curve.kwargs:
             XY_fig_has_legend = True
 
-    # print 'dealing with legend'
-
     # deal with legend format only if curves on this fig have labels
     if XY_fig_has_legend:
         prop = font_mgr.FontProperties(size = 'small')
@@ -399,6 +476,21 @@ def plot_XY_Curves_Fig(XY_fig):
     if XY_fig.vectors != 'none':
         ax.quiver(XY_fig.vectors[0], XY_fig.vectors[1], XY_fig.vectors[2], \
           XY_fig.vectors[3], width = .0015, angles='xy', scale_units='xy', scale=1.)
+
+    # Deal with contours if there are any
+    if XY_fig.contours != 'none':
+        for C_plot in XY_fig.contours:
+            ax.contour(C_plot.x, C_plot.y, C_plot.z, C_plot.levels, **C_plot.kwargs)
+
+    # Deal with circles if there are any
+    if XY_fig.circles != 'none':
+        for C_plot in XY_fig.circles:
+            ax.add_patch(Circle(C_plot.center, C_plot.r, **C_plot.kwargs))
+
+    # Deal with lines if there are any
+    if XY_fig.lines != 'none':
+        for ln in XY_fig.lines:
+            ax.plot([ln.x0, ln.x1],[ln.y0, ln.y1], **ln.kwargs)
 
     if XY_fig.margins != 'none':
         ax.margins(XY_fig.margins)
@@ -525,6 +617,48 @@ if __name__ == '__main__':
                        vectors = plot_vecs)
 
     plot_XY_Curves_Fig(plot_parametric2)
+
+
+    title = 'Parametric Plot with Contours'
+    print(title)
+    xlabel = 'x(cm)'
+    ylabel = 'y(cm)'
+    curve_list = [XY_curve(x, y)]
+
+    xc = np.arange(-1., 1.1, 0.2)
+    yc = xc
+    zc = []
+    for y in yc:
+        zc.append([2*x*x + y*y for x in xc])
+    levels1 = [0.2*l for l in range(4)]
+    levels2 = [0.3*l for l in range(4)]
+
+    C_plot_list = []
+    new_C_plot = XY_contour(xc, yc, zc, levels1, colors='k', linewidths=0.5, \
+                 linestyles='dashed')
+    C_plot_list.append(new_C_plot)
+    new_C_plot = XY_contour(xc, yc, zc, levels2, colors='red', linewidths=0.5, \
+                 linestyles='dashed')
+    C_plot_list.append(new_C_plot)
+
+    circle_list = []
+    new_circle = XY_circle(.5, .5, .2, color='blue')
+    circle_list.append(new_circle)
+    new_circle = XY_circle(-.5, .5, .2, color='blue', fill=True)
+    circle_list.append(new_circle)
+
+    line_list = []
+    new_line = XY_line(-.6,0.,.6,0.)
+    line_list.append(new_line)
+    new_line = XY_line(-.6,0.2,.6,0.2, color='red', linestyle='--')
+    line_list.append(new_line)
+
+    plot_parametric3 = XY_Curves_Fig(curve_list, title, xlabel, ylabel,figsize = (8., 8.),\
+                      aspect_ratio = 'equal', vectors = plot_vecs, contours = C_plot_list,\
+                      circles = circle_list, lines = line_list, margins = 0.15)
+
+    plot_XY_Curves_Fig(plot_parametric3)
+
 
     global_attributes = [['Global_label = ', 'Global_label'], ['RunID = ', 'RunID'],\
                       ['tokamak_id = ', 'tokamak_id'], ['shot_number = ', str(2)] ]

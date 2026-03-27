@@ -9,23 +9,27 @@
 ! Module data
 !_________________________________________________________________________________________
 
-    use constants_m, only : rkind
+    use constants_m, only : rkind, zero
 
     implicit none
 
 !   Number and x locations of cyclotron resonances, 2nd harmonic resonances and hybrid
 !   resonances found between x_min and x_max.  Allow for multiple resonances <= n_locs
-    integer, parameter :: n_locs = 5
+    integer, parameter :: n_locs = 3
     integer :: n_ce_res, n_2ce_res, n_hybrid_res
-    real(KIND=rkind), dimension(n_locs) :: x_ce_res, x_2ce_res, x_hybrid_res
+    real(KIND=rkind), dimension(n_locs) :: x_ce_res = zero
+    real(KIND=rkind), dimension(n_locs) :: x_2ce_res = zero
+    real(KIND=rkind), dimension(n_locs) :: x_hybrid_res = zero
 
 !   Number and x locations of cutoffs
     integer :: n_P_cut, n_H_cut, n_det
-    real(KIND=rkind), dimension(n_locs) :: x_P_cut, x_H_cut, x_det
+    real(KIND=rkind), dimension(n_locs) :: x_P_cut = zero
+    real(KIND=rkind), dimension(n_locs) :: x_H_cut = zero
+    real(KIND=rkind), dimension(n_locs) :: x_det = zero
 
 ! Alpha at hybrid cutoffs
-    real(KIND=rkind), dimension(n_locs) :: alpha_e_H_cut
-    real(KIND=rkind), dimension(n_locs) :: alpha_e_det
+    real(KIND=rkind), dimension(n_locs) :: alpha_e_H_cut = zero
+    real(KIND=rkind), dimension(n_locs) :: alpha_e_det = zero
 
 !_________________________________________________________________________________________
 ! Namelist data for /slab_processor_list/
@@ -393,7 +397,7 @@ call check( nf90_enddef(ncid))
     use equilibrium_m, only : equilibrium, eq_point
     use slab_eq_m, only : xmin, xmax
     use suscep_m, only : dielectric_cold
-    use ray_init_m, only : nray, rindex_vec0
+	use ray_results_m, only : number_of_rays, start_ray_vec
 
     implicit none
 
@@ -404,11 +408,11 @@ call check( nf90_enddef(ncid))
 
     integer, parameter :: n_xpoints = 1000 ! Number of x points in scan
 
-    real(KIND=rkind) :: rvec(3)
+    real(KIND=rkind) :: rvec(3), rindex_vec(3)
     real(KIND=rkind) :: v_ce_0, v_ce_1, v_2ce_0, v_2ce_1, v_hybrid_0, v_hybrid_1
     real(KIND=rkind) :: v_P_cut_0, v_P_cut_1,  v_H_cut_0, v_H_cut_1
     real(KIND=rkind) :: a, b, c, v_det_0, v_det_1 ! parameters for calculating determinant
-    integer :: iray, ix
+    integer :: iray, nray, ix
     real(KIND=rkind) :: nz, x, dx
     complex :: vH
 
@@ -419,10 +423,11 @@ call check( nf90_enddef(ncid))
             & action='write', status='replace', form='formatted')
 
     dx = (xmax - xmin)/(n_xpoints-1)
+    nray = number_of_rays
 
     ray_loop: do iray = 1, nray
         write(*,*) ' '
-        write(*,*) 'ray ', iray
+        write(*,*) 'find_res_and_cuts: ray ', iray
 
         write(res_and_cut_unit,*) ' '
         write(res_and_cut_unit,*) 'ray ', iray
@@ -442,12 +447,14 @@ call check( nf90_enddef(ncid))
         x_det = 0.
 
         rvec = (/real(0., KIND=rkind), real(0., KIND=rkind), real(0., KIND=rkind)/)
+        rindex_vec(:) = start_ray_vec(4:6, iray)
+
        x_loop: do ix = 0, n_xpoints-1
             x = xmin + ix*dx
             rvec(1) = real(x, KIND=rkind)
 
             call equilibrium(rvec, eq )
-            nz = sum(rindex_vec0(:, iray)*eq%bunit(:))
+            nz = sum(rindex_vec(:)*eq%bunit(:))
             v_ce_1 = eq%gamma(0)+1. ! remember gamma(0) is negative
             v_2ce_1 = eq%gamma(0)+0.5
 
@@ -759,9 +766,9 @@ call check( nf90_enddef(ncid))
     use diagnostics_m, only : run_label
     use equilibrium_m, only : equilibrium, eq_point
     use slab_eq_m, only : xmin, xmax
-    use ray_init_m, only : nray, rindex_vec0
     use rf_m, only : ray_dispersion_model, k0
     use dispersion_solvers_m, only : solve_nx_vs_ny_nz_by_bz
+	use ray_results_m, only : number_of_rays, start_ray_vec
 
     implicit none
 
@@ -771,9 +778,9 @@ call check( nf90_enddef(ncid))
     character(len=60) :: wave_mode
 
     integer, parameter :: n_xpoints = 101 ! Number of x points in scan
-    integer :: iray, ix
+    integer :: iray, nray, ix
     real(KIND=rkind) :: x, dx
-    real(KIND=rkind) :: rvec(3)
+    real(KIND=rkind) :: rvec(3), rindex_vec(3)
     real(KIND=rkind) :: ny, nz
     real(KIND=skind), dimension(9) :: profile_vec
     character(len = 17), dimension(9) :: profile_name_vec
@@ -784,7 +791,7 @@ call check( nf90_enddef(ncid))
 !   Derived type containing equilibrium data for a spatial point in the plasma
     type(eq_point) :: eq
 
-    write(*,*)  'Start writing kx profile vectors'
+    write(*,*)  'Start writing kx profile vectors, nray = ', nray
 
     profile_name_vec = (/'x                ', 'kx_real_plus     ', 'kx_im_plus       ',&
                          'kx_real_minus    ', 'kx_im_minus      ', 'kx_real_fast     ',&
@@ -794,8 +801,9 @@ call check( nf90_enddef(ncid))
     open(unit = kx_profile_unit, file = 'kx_profiles_slab.'//trim(run_label))
 
     ray_loop: do iray = 1, nray
-        ny = rindex_vec0(2, iray)
-        nz = rindex_vec0(3, iray)
+        rindex_vec(:) = start_ray_vec(4:6, iray)
+        ny = rindex_vec(2)
+        nz = rindex_vec(3)
         ny_sngl = real(ny, KIND=skind)
         nz_sngl = real(nz, KIND=skind)
 
@@ -805,6 +813,8 @@ call check( nf90_enddef(ncid))
 
      rvec = (/real(0., KIND=rkind), real(0., KIND=rkind), real(0., KIND=rkind)/)
      dx = (xmax - xmin)/(n_xpoints-1)
+     nray = number_of_rays
+
      x_loop: do ix = 0, n_xpoints-1
 
         x = xmin + ix*dx

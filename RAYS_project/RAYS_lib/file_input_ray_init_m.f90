@@ -193,12 +193,8 @@ contains
     ray_loop: do i = 1, n_rays_in
 
          rvec(:) = rvec_in(:,i)
-        write(*,*) 'i = ', i, '   rvec = ', rvec
          rindex_vec(:) = rindex_vec_in(:,i)
-        write(*,*) 'i = ', i, '   rindex_vec = ', rindex_vec
-       write(*,*) 'i = ', i, '   ray_pwr_wt_in = ', ray_pwr_wt_in(i)
          ray_pwr_wt = ray_pwr_wt_in(i)
-        write(*,*) 'i = ', i, '   ray_pwr_wt = ', ray_pwr_wt
 
 ! Solve dispersion for magnitude of refractive index in direction rindex_vec, maybe.
 	    if (scale_n_vecs) then

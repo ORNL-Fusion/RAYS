@@ -261,7 +261,6 @@
 
         if (damping_model == 'no_damp') then
         	end_ray_power(iray) = ray_pwr_wt(iray)
- write(*,*) 'trace_rays: end_ray_power(iray) = ', end_ray_power(iray)
         else
         	end_ray_power(iray) = ray_pwr_wt(iray)*v(8)
         end if
@@ -272,9 +271,6 @@
 
 !$omp end parallel do
 !$      t_finish_tracing = omp_get_wtime()
-
- write(*,*) 'trace_rays: ray_pwr_wt = ', ray_pwr_wt
- write(*,*) 'trace_rays: end_ray_power = ', end_ray_power
 
 !   Get date and time i.e. after ray loop, convert to Julian -> t_finish_tracing
     call date_and_time (values=date_v)

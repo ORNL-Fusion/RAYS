@@ -2,7 +2,7 @@
 
 """
 plot_RAYS.py -> Plots ray trajectories and k vectors from data ray_results netCDF file
-DBB 6/9/2025
+DBB 3/14/2026
 
 N.B. This is taken, with only a few changes from plot_RAYS_axisym_toroid.py.  There are
      some possibly informative working notes for that code up to 7/29/2024.  See it.
@@ -15,6 +15,37 @@ to add a x,z plot.
 """
 # Working notes:
 #
+# DBB (3/16/2026)
+# Modified to use the more object oriented version of plt_XY_Curves.  No changes in
+# function but better control of things like vectors and added contours.
+#
+# DBB (12/11/2025)
+# Reworked the vector plots using the new version of plt_XY_curves.py, which itself has
+# been reworked to use the object oriented interface of matplotlib.  The vectors are added
+# through keyword args to XY_Curves_Fig() instead of being tacked on using the functional
+# interface after the plot was generated.  Also added function, index_intervals(), which
+# finds indices of equal arclength steps along the ray to place vectors, instead of equal
+# number of ray steps.  This gives better plots when the group velocity changes a lot.
+
+# DBB (8/26/2025)
+# Changed input from reading the ASCII files 'ray_out.' + run_label to read the netCDF file
+# 'ray_results.' + run_label + '.nc'. Lifted straight out of plot_RAYS_axisym_toroid.py
+#
+# DBB (7/28/2024)
+# Added optional command line args to specify multiple input ray data input netCDF files
+# That makes it possible to combine ray plots from multiple runs. (Actually that was done
+# a while ago). With no command line args the default file name is:
+# 'run_results.' + run_label + '.nc' where run_label comes from file
+# graphics_description_axisym_toroid.dat.  To set the plot title for multiple file plots
+# you need to edit the graphics_description_slab.dat file.
+#
+# DBB (4/21/2024)
+# Changed input from reading the ASCII files 'ray_out.' + run_label to read the netCDF file
+# 'ray_results.' + run_label + '.nc'.  The old version is stashed in spare parts.
+#
+# DBB (11/23/2021)
+# Changed input file from generic ray.out to run-specific ray_out.<run_label>.
+# <run_label> is specified in graphics_description_solovev file.
 #
 
 import sys
@@ -31,6 +62,7 @@ from simple_file_editing_functions import get_lines, input_file_to_variable_dict
 from plt_XY_Curves import *
 
 debug = 0
+k_vec_base_length = 0.005
 
 #----------------------------------------------------------------------------------------------
 # Utility functions
@@ -51,6 +83,7 @@ def  n_evenly_spaced_integers(n, Length):
     if (type(n) != int) or (type(Length) != int) or (Length < 1):
         print('error n_evenly_spaced_integers: arguments must be positive integers',\
               ' n = ', n, 'Length = ', Length)
+        return
 
     if n >= Length:
         return list(range(Length))
@@ -61,6 +94,48 @@ def  n_evenly_spaced_integers(n, Length):
     else:
         return [int((i)*float(Length-1)/(n-1)) for i in range(n)]
 
+#----------------------------------------------------------------------------------------------
+
+def index_intervals(x, n):
+
+# Given a list of increasing numbers, x, return n+1 indices which give x intervals
+# of approximately the same length. index[0] = 0 => xmin, index[n+1] = len(n) => xmax
+
+    if type(n) != int:
+        print('\nindex_intervals error')
+        print('n must be integer')
+        return
+
+    for i in range(len(x)-1):
+        if (x[i+1]-x[i] <= 0.):
+            print('\nindex_intervals error')
+            print('x must be non-decreasing')
+            return
+
+    delta = (x[-1]-x[0])/n
+    index = [i for i in range(n+1)]
+
+    if (n >= len(x)): # As many intervals as data points
+        print('\nindex_intervals error')
+        print('As many intervals as data points, can not split them')
+        return
+
+    i = 0
+    j = 1
+    s = x[0]
+    index[0] = 0
+    index[-1] = len(x)
+
+    while i < len(x)-1:  # stop before x max
+        while i < len(x)-1 and x[i] < j*delta:
+            i = i +1
+        # Crossed an interval, check to see if x[i-1] or x[i] is closer to j*delta
+        index[j] = i
+        if abs(x[i-1] - j*delta) < abs(x[i] - j*delta):
+            index[j] = i-1
+        j = j +1
+
+    return index
 
 #
 #----------------------------------------------------------------------------------------------
@@ -114,7 +189,7 @@ if n_arg > 1: # Get ray file names from command line
     n_results_files = n_arg-1
     results_file_list = sys.argv[1:]
 
-print ('results files = ', results_file_list)
+print ('plot_RAYS_mirror: results files = ', results_file_list)
 
 nray = 0
 rays_s_list = []
@@ -129,6 +204,15 @@ rays_kr_list = []
 rays_knorm_list = []
 rays_npoints_list =[]
 
+x_draw_list = []
+y_draw_list = []
+z_draw_list = []
+
+kx_draw_list = []
+ky_draw_list = []
+kz_draw_list = []
+
+
 #----------------------------------------------------------------------------------------------
 # Cycle through ray file list
 #----------------------------------------------------------------------------------------------
@@ -140,20 +224,15 @@ n_all_rays = 0
 
 for file in results_file_list:
 
-    print('Processing CDF file ', file)
+    print('\nProcessing CDF file ', file)
     CDF = Dataset(file, 'r', format = 'NETCDF3_CLASSIC')
     CDF_dims = CDF.dimensions
 
     n_rays = len(CDF_dims['number_of_rays'])
     ray_vec = ma.getdata(CDF.variables['ray_vec'])
     npoints = ma.getdata(CDF.variables['npoints']).tolist()
-    print('type(npoints) = ', type(npoints))
-    print('npoints = ', npoints)
-    print('ray_vec.shape = ', ray_vec.shape)
 
-    x_draw_list = []; y_draw_list = []; z_draw_list = []; R_draw_list = []
-    kx_draw_list = []; ky_draw_list = []; kz_draw_list = []; kr_draw_list = []
-
+    ray_kmax = 0.
     for i in range(n_rays):
         n_all_rays = n_all_rays +1
         x = ray_vec[i,0:npoints[i],0]
@@ -165,20 +244,10 @@ for file in results_file_list:
         s = ray_vec[i,0:npoints[i],6]
         R = [math.sqrt(pow(x[j],2) + pow(y[j],2)) for j in range(npoints[i])]
         kr = [(x[j]*kx[j]+y[j]*ky[j])/R[j] for j in range(npoints[i])]
-        knorm = [math.sqrt(pow(kx[j],2) + pow(ky[j],2) + pow(kz[j],2))\
-                for j in range(npoints[i])]
-        k_max = max(knorm)
 
-#         print('npoints[i] = ', npoints[i])
-#         print('len(x) = ',len(x), ' x = ', x[0:10])
-#         print('len(kx) = ',len(kx), ' kx[0:10] = ', kx[0:10])
-#         print('len(z) = ',len(z), ' z = ', z[0:10])
-#         print('type(x) = ', type(x))
-#         print('type(y) = ', type(y))
-#         print('type(z) = ', type(z))
-#         print('type(R) = ', type(R))
-#         print('R = ', R[0:10])
-#         print('plot: y = ', y)
+        k_norm = [math.sqrt(kx[j]**2+ky[j]**2+kz[j]**2) for j in range(len(kx))]
+        ray_kmax = max(ray_kmax, max(k_norm))
+        print('ray_kmax = ', ray_kmax)
 
         lbl = 'ray ' + str(n_all_rays)
         new_curve = XY_curve(z,x, label = lbl)
@@ -190,17 +259,18 @@ for file in results_file_list:
 
 # Get data to draw k vectors if doing that
         if num_plot_k_vectors > 0:
-            indices = n_evenly_spaced_integers(num_plot_k_vectors, npoints[i])
+#             indices = n_evenly_spaced_integers(num_plot_k_vectors, npoints[i])
+            indices = index_intervals(s, num_plot_k_vectors)
             x_draw = [x[j] for j in indices]
             y_draw = [y[j] for j in indices]
             z_draw = [z[j] for j in indices]
             R_draw = [R[j] for j in indices]
             if scale_k_vec in ['True', 'true', 'T']:
                 print('Scaling k')
-                kx_draw = [max_size*k_vec_base_length*kx[j]/k_max for j in indices]
-                ky_draw = [max_size*k_vec_base_length*ky[j]/k_max for j in indices]
-                kr_draw = [max_size*k_vec_base_length*kr[j]/k_max for j in indices]
-                kz_draw = [max_size*k_vec_base_length*kz[j]/k_max for j in indices]
+                kx_draw = [max_size*k_vec_base_length*kx[j]/ray_kmax for j in indices]
+                ky_draw = [max_size*k_vec_base_length*ky[j]/ray_kmax for j in indices]
+                kr_draw = [max_size*k_vec_base_length*kr[j]/ray_kmax for j in indices]
+                kz_draw = [max_size*k_vec_base_length*kz[j]/ray_kmax for j in indices]
             else:
                 print('Not Scaling k')
                 kx_draw  = [max_size*k_vec_base_length*kx[j]/ \
@@ -222,16 +292,18 @@ for file in results_file_list:
             x_draw_list.append(x_draw)
             y_draw_list.append(y_draw)
             z_draw_list.append(z_draw)
-            R_draw_list.append(R_draw)
+#            R_draw_list.append(R_draw)
 
             kx_draw_list.append(kx_draw)
             ky_draw_list.append(ky_draw)
             kz_draw_list.append(kz_draw)
-            kr_draw_list.append(kr_draw)
+#            kr_draw_list.append(kr_draw)
 
 #           if debug > 1: print('kr = ', kr, ' kz = ', kz)
 #           plt.arrow(rays_r_list[i_ray][i], rays_z_list[i_ray][i],\
 #             kr, kz, shape='full', head_width = 0.01)
+
+print('Total number of rays = ', n_all_rays)
 
 #----------------------------------------------------------------------------------------------
 # Open graphics output file.  N.B. run_label comes from graphics description file.
@@ -255,43 +327,15 @@ aspect = 'equal'
 xlabel = 'z(m)'
 ylabel = 'x(m)'
 
+kwargs = {'figsize' : (11.,8.5), 'aspect_ratio' : aspect}
+
 if set_XY_lim in ['True', 'true', 'T']:
-    plotZX = XY_Curves_Fig(xz_curve_list, title, xlabel, ylabel, figsize=figsize, \
-             ylim = [xmin,xmax], xlim = [zmin,zmax], aspect_ratio = aspect)
-else:
-    plotZX = XY_Curves_Fig(xz_curve_list, title, xlabel, ylabel, figsize=figsize, \
-             aspect_ratio = aspect)
+    kwargs.update({'xlim':[zmin,zmax], 'ylim':[xmin,xmax]} )
 
 # Add k vectors at selected points
 if num_plot_k_vectors > 0:
-    for i_ray in range(n_all_rays):
-        z_draw = z_draw_list[i]
-        x_draw = x_draw_list[i]
-        kz_draw  = kz_draw_list[i]
-        kx_draw  = kx_draw_list[i]
-
-        for j in range(num_plot_k_vectors):
-            plt.arrow(z_draw[j], x_draw[j], kz_draw[j], kx_draw[j],  shape='full', head_width = 0.01)
-
-# # Plot plasma boundary from R_boundary,Z_boundary
-#
-# X_boundary = dict_variable_to_list_of_floats(graphics_variable_dict, 'R_boundary')
-# Z_boundary = dict_variable_to_list_of_floats(graphics_variable_dict, 'Z_boundary')
-#
-# # for i in range(len(R_boundary)):
-# #     print('R_boundary[i] = ', R_boundary[i], '   Z_boundary[i] = ', Z_boundary[i] )
-#
-# lbl = ''
-# new_curve = XY_curve(X_boundary, Z_boundary, label = lbl, color='black')
-# xz_curve_list.append(new_curve)
-#
-# n_Bpoints = len(X_boundary)
-# print(' ')
-# #print('R_boundary = ', R_boundary)
-# print('max(X_boundary) = ', max(X_boundary))
-# print(' ')
-# #print('Z_boundary = ', Z_boundary)
-# print('max(Z_boundary) = ', max(Z_boundary))
+    kwargs.update({'vectors':[z_draw_list, x_draw_list, kz_draw_list, kx_draw_list],\
+                   'aspect_ratio':'equal'})
 
 #----------------------------------------------------------------------------------------------
 # Add eq contours to  ZX ray plot
@@ -319,11 +363,16 @@ if os.path.exists(CDF_file_name):
     AphiN = ma.getdata(CDF.variables['AphiN'])
     levels = [0.05*(i) for i in range(10)]
     levels.insert(1,0.025)
-    plt.contour(Z, X, AphiN, levels, colors='k', linewidths=0.5, linestyles='dashed', \
-                aspect_ratio = aspect)
+
+    C_plot_list = []
+    new_C_plot = XY_contour(Z, X, AphiN, levels, colors='k', linewidths=0.5,  \
+                linestyles='dashed')
+    C_plot_list.append(new_C_plot)
+
     levels = [1.0]
-    plt.contour(Z, X, AphiN, levels, colors='green', linewidths=0.5, linestyles='solid', \
-                aspect_ratio = aspect)
+    new_C_plot = XY_contour(Z, X, AphiN, levels, colors='green', linewidths=0.5, \
+                linestyles='solid')
+    C_plot_list.append(new_C_plot)
 
 # Stuff for resonance contours
     gamma_array = ma.getdata(CDF.variables['gamma_array'])
@@ -332,8 +381,9 @@ if os.path.exists(CDF_file_name):
     gamma_min = ma.min(abs_gamma)
     gamma_max = ma.max(abs_gamma)
     levels = [0.5, 1.0]
-    plt.contour(Z, X, abs_gamma, levels, colors='red', linewidths=0.5, \
-                linestyles=['dashed','solid'], aspect_ratio = aspect)
+    new_C_plot = XY_contour(Z, X, abs_gamma, levels, colors='red', linewidths=0.5, \
+                linestyles=['dashed','solid'])
+    C_plot_list.append(new_C_plot)
 
     # Do ion resonances later
 
@@ -345,12 +395,15 @@ if os.path.exists(CDF_file_name):
     omega_pN_max = ma.max(omega_pN)
     print('omega_pN_min = ', omega_pN_min, '   omega_pN_max = ', omega_pN_max)
     levels = [1.0]
-    plt.contour(Z, X, omega_pN, levels, colors='blue', linewidths=1.0, \
-                linestyles=['solid'], aspect_ratio = aspect)
+    new_C_plot = XY_contour(Z, X, omega_pN, levels, colors='blue', linewidths=1.0, \
+                linestyles=['solid'])
+    C_plot_list.append(new_C_plot)
 
+    kwargs.update({'contours': C_plot_list})
 #----------------------------------------------------------------------------------------------
 # Plot fig ZX plot
 #----------------------------------------------------------------------------------------------
+    plotZX = XY_Curves_Fig(xz_curve_list, title, xlabel, ylabel, **kwargs)
 
 plot_XY_Curves_Fig(plotZX)
 
@@ -368,65 +421,26 @@ aspect = 'equal'
 xlabel = 'z(m)'
 ylabel = 'y(m)'
 
+kwargs = {'figsize' : (11.,8.5), 'aspect_ratio': 'equal'}
+
 if set_XY_lim in ['True', 'true', 'T']:
-    plotZY = XY_Curves_Fig(yz_curve_list, title, xlabel, ylabel, figsize=figsize, \
-             ylim = [ymin,ymax], xlim = [zmin,zmax], aspect_ratio = aspect)
-else:
-    plotZY = XY_Curves_Fig(yz_curve_list, title, xlabel, ylabel, figsize=figsize, \
-             aspect_ratio = aspect)
+    kwargs.update({'xlim':[zmin,zmax], 'ylim':[xmin,xmax] })
 
 # Add k vectors at selected points
 if num_plot_k_vectors > 0:
-    for i_ray in range(n_all_rays):
-        z_draw = z_draw_list[i]
-        y_draw = y_draw_list[i]
-        kz_draw  = kz_draw_list[i]
-        ky_draw  = ky_draw_list[i]
-
-        for j in range(num_plot_k_vectors):
-            plt.arrow(z_draw[j], y_draw[j], kz_draw[j], ky_draw[j],  shape='full', head_width = 0.01)
-
-# # Plot plasma boundary from R_boundary,Z_boundary
-#
-# X_boundary = dict_variable_to_list_of_floats(graphics_variable_dict, 'R_boundary')
-# Z_boundary = dict_variable_to_list_of_floats(graphics_variable_dict, 'Z_boundary')
-#
-# # for i in range(len(R_boundary)):
-# #     print('R_boundary[i] = ', R_boundary[i], '   Z_boundary[i] = ', Z_boundary[i] )
-#
-# lbl = ''
-# new_curve = XY_curve(X_boundary, Z_boundary, label = lbl, color='black')
-# yz_curve_list.append(new_curve)
-#
-# n_Bpoints = len(X_boundary)
-# print(' ')
-# #print('R_boundary = ', R_boundary)
-# print('max(X_boundary) = ', max(X_boundary))
-# print(' ')
-# #print('Z_boundary = ', Z_boundary)
-# print('max(Z_boundary) = ', max(Z_boundary))
+    kwargs.update({'vectors':[z_draw_list, y_draw_list, kz_draw_list, ky_draw_list],\
+               'aspect_ratio':'equal'})
 
 #----------------------------------------------------------------------------------------------
 # Add eq contours to  ZY ray plot.  N.B. Contours for ZY are exactly the same as for ZX
 #----------------------------------------------------------------------------------------------
-levels = [0.05*(i) for i in range(10)]
-levels.insert(1,0.025)
-plt.contour(Z, X, AphiN, levels, colors='k', linewidths=0.5, linestyles='dashed',\
-			aspect_ratio = aspect)
-levels = [1.0]
-plt.contour(Z, X, AphiN, levels, colors='green', linewidths=0.5, linestyles='solid', \
-			aspect_ratio = aspect)
-levels = [0.5, 1.0]
-plt.contour(Z, X, abs_gamma, levels, colors='red', linewidths=0.5, \
-			linestyles=['dashed','solid'], aspect_ratio = aspect)
-levels = [1.0]
-plt.contour(Z, X, omega_pN, levels, colors='blue', linewidths=1.0, \
-			linestyles=['solid'], aspect_ratio = aspect)
-
+kwargs.update({'contours': C_plot_list})
 
 #----------------------------------------------------------------------------------------------
 # Plot fig ZY plot
 #----------------------------------------------------------------------------------------------
+
+plotZY = XY_Curves_Fig(yz_curve_list, title, xlabel, ylabel, **kwargs)
 
 plot_XY_Curves_Fig(plotZY)
 
@@ -462,40 +476,27 @@ figsize = (y_size, x_size)
 xlabel = 'x(m)'
 ylabel = 'y(m)'
 
+
 if set_XY_lim in ['True', 'true', 'T']:
-    plotXY = XY_Curves_Fig(xy_curve_list, title, xlabel, ylabel, figsize=figsize, \
-             ylim = [ymin,ymax], xlim = [xmin,xmax])
-else:
-    plotXY = XY_Curves_Fig(xy_curve_list, title, xlabel, ylabel, figsize=figsize)
+    kwargs.update({'ylim':[ymin,ymax], 'xlim':[xmin,xmax]} )
 
+# Add k vectors at selected points
 if num_plot_k_vectors > 0:
-    for i_ray in range(n_all_rays):
-        x_draw = x_draw_list[i]
-        y_draw = y_draw_list[i]
-        kx_draw  = kx_draw_list[i]
-        ky_draw  = ky_draw_list[i]
-
-        for j in range(num_plot_k_vectors):
-            plt.arrow(x_draw[j], y_draw[j], kx_draw[j], ky_draw[j], shape='full', head_width = 0.01)
+    kwargs.update({'vectors':[x_draw_list, y_draw_list, kx_draw_list, ky_draw_list],\
+               'aspect_ratio':'equal'})
 
 if (r_Omode_cut_at_z_ref > 0.):
-	fig = plt.gcf()
-	ax = fig.gca()
-	ax.set_aspect('equal')
-	circle1 = plt.Circle((0, 0), r_Omode_cut_at_z_ref, color='blue', fill=False)
-	ax.add_patch(circle1)
-# circle2 = plt.Circle((0, 0), outer_bound, color='black', fill=False)
-# ax.add_patch(circle2)
+    circle_list = [XY_circle(0, 0, r_Omode_cut_at_z_ref, color='blue')]
+    kwargs.update({'circles': circle_list})
+
+plotXY = XY_Curves_Fig(xy_curve_list, title, xlabel, ylabel, **kwargs)
 
 plot_XY_Curves_Fig(plotXY)
 
-#
+
 #----------------------------------------------------------------------------------------------
 # Finalize
-#----------------------------------------------------------------------------------------------
-#
-# plot_index(index, 1)
-#
+#-----------------------------------------------------------------------------------------
 
 close_file_XY_Curves_Fig()
 

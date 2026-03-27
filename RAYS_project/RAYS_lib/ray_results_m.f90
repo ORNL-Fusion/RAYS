@@ -67,7 +67,8 @@
 	!  Run label (N.B. should be legal in file name, get from diagnostics_m)
 		character(len=60) :: RAYS_run_label = ''
 
-		integer :: number_of_rays, max_number_of_points, dim_v_vector
+		integer :: number_of_rays ! AKA nray in other modules
+		integer :: max_number_of_points, dim_v_vector
 
 	! ray data
 		real(KIND=rkind), allocatable :: ray_vec(:,:,:) ! nv, nstep_max+1, nray

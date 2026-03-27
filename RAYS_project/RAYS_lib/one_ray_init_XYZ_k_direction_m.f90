@@ -67,7 +67,7 @@ contains
     complex(KIND=rkind) :: n_cmplx
 
     call message(1)
-    call text_message( 'Initializing ray_init_axisym_toroid_nphi_ntheta ', 1)
+    call text_message( 'one_ray_init_XYZ_n_direction ', 1)
 
 ! Read and write input namelist
   	input_unit = get_unit_number()
@@ -161,15 +161,15 @@ contains
 
 	cos_theta = dot_product(eq%bunit, nvec) ! Parallel component
 	theta = acos(cos_theta)
- write(*,*) 'ray_init_XYZ_k_direction 1: nvec = ', nvec
- write(*,*) 'ray_init_XYZ_k_direction 1: ray_dispersion_model = ', ray_dispersion_model
- write(*,*) 'ray_init_XYZ_k_direction 1: theta = ', theta
- write(*,*) 'ray_init_XYZ_k_direction 1: wave_mode = ', wave_mode
- write(*,*) 'ray_init_XYZ_k_direction 1: k0_sign = ', k0_sign
+!  write(*,*) 'ray_init_XYZ_k_direction 1: nvec = ', nvec
+!  write(*,*) 'ray_init_XYZ_k_direction 1: ray_dispersion_model = ', ray_dispersion_model
+!  write(*,*) 'ray_init_XYZ_k_direction 1: theta = ', theta
+!  write(*,*) 'ray_init_XYZ_k_direction 1: wave_mode = ', wave_mode
+!  write(*,*) 'ray_init_XYZ_k_direction 1: k0_sign = ', k0_sign
 
 ! Solve dispersion for complex refractive index in nvec direction
 	call solve_n_vs_theta(eq, ray_dispersion_model, wave_mode, theta, n_cmplx)
- write(*,*) 'ray_init_XYZ_k_direction: n_cmplx = ', n_cmplx
+!  write(*,*) 'ray_init_XYZ_k_direction: n_cmplx = ', n_cmplx
 ! Test for evanescence
 	if (abs(n_cmplx%im) > 10.*tiny(abs(n_cmplx))) then
 		if (verbosity > 0) then
@@ -181,7 +181,7 @@ contains
 	end if
 
 	nvec = n_cmplx%re*nvec  ! i.e. magnitude times unit vector
- write(*,*) 'ray_init_XYZ_k_direction: nvec = ', nvec
+!  write(*,*) 'ray_init_XYZ_k_direction: nvec = ', nvec
 
     end subroutine ray_init_XYZ_k_direction
 !****************************************************************************

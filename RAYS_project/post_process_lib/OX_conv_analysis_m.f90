@@ -596,7 +596,7 @@ subroutine analyze_OX_conv(OX_restart_ray_data_file)
 				nx_min = nx_c
 			end if
 		end do
-
+	end if
 
 	found_restart = .false.
 	if (nx_min == huge(one)) return
@@ -801,7 +801,7 @@ subroutine analyze_OX_conv(OX_restart_ray_data_file)
 	    & status='replace', form='formatted')
 
 	write(ray_init_unit,*) '&input_ray_data_list'
-	write(ray_init_unit,*) '  scale_n_vecs =  .false.'
+	write(ray_init_unit,*) '  scale_n_vecs =  .true.'
 	write(ray_init_unit,*) '  n_rays_in = ', number_of_rays_converted
 
 	write(ray_init_unit,*) '  rvec_in = '
