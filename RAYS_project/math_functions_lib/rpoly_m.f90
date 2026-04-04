@@ -36,7 +36,9 @@ MODULE rpoly_m
     real(wp), parameter :: pi = acos(-1.0_wp)
     real(wp), parameter :: deg2rad = pi/180.0_wp
 
+!_________________________________________________________________________________________
 contains
+!_________________________________________________________________________________________
 
 subroutine rpoly(op, degree, zeror, zeroi, istat)
 

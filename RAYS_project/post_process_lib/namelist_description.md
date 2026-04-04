@@ -117,6 +117,9 @@ in namelist file
 
 <br>	logical :: do_OX_conv_analysis = .false.  ! Special case OX conversion so, default = false
 
+File to put x-mode converted ray restart data in
+<br>    character(len=80) :: OX_restart_ray_data_file
+
 
 ## Namelist data for module: post_processing_m
 
@@ -157,6 +160,11 @@ in namelist file
 <br>	logical :: calculate_ray_diag = .true. ! Write detailed ray diagnostic netCDF file
 
 <br>	logical :: write_eq_X_profile_data = .true.  ! Write data for radial profiles netCDF file
+
+<br>	logical :: do_OX_conv_analysis = .true.  ! Write data to restart X-mode after OX conversion
+
+File to put x-mode converted ray restart data in
+<br>    character(len=80) :: OX_restart_ray_data_file
 
 
 ## Namelist data for module: solovev_processor_m

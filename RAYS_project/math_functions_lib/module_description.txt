@@ -19,7 +19,7 @@ of range is ignored.
 
 Description of module: bisect_m
 
-generic procedure: solve_bisection() to sole an equation by the bisection method.
+generic procedure: solve_bisection() to solve an equation by the bisection method.
 This is slightly different in that it solves f(x)=y rather than f(x)=0
 Usual caveats for non-linear solvers apply.  May fail if inverse function is
 multi-valued in search domain.  There is no attempt to find multiple solutions.
@@ -34,6 +34,16 @@ ierr return:
 ierr = -1 => (y(x1)-y(x0))(x1-x0) > 0 => no solution or multiple solutions in [x0,x1]
 ierr = 0 => no convergence after max_iter iterations
 ierr >= 1 => sucessful solution, ierr = number of iterations
+
+There are four routines under the solve_bisection interface. bisect_single, bisect_real
+which accept the arguments listed above. The calling sequence for these is:
+call solve_bisection(f, x,  x0_in, x1_in, y, eps, ierr)
+The routines bisect_singleX and bisect_realX accept an additional argument,
+extra_data(:), which is an assumed shape vector.  The calling sequence for these is:
+call solve_bisection(f, x,  x0_in, x1_in, y, eps, ierr, extra_data)
+The actual length of extra_data(:) must be declared in the code calling solve_bisection
+and also declared in f().
+
 
 Description of module: complete_elliptic_int_m
 
@@ -51,6 +61,69 @@ In order to put these functions in a module it was necessary to comment out the
 declarations for functions "rd" and "rf" in subroutines elliptic_em(m) and
 elliptic_fm(m).  The declarations shadowed "rd" and "rf" as being module functions.
 
+Description of module: newtonR3_m
+
+generic procedure: solve_newtonR3() to solve a scalar equation on R3 by
+Newtons method, f(x)=y. User must supply functions f(x) and gradf(x)
+Usual caveats for non-linear solvers apply. There is no attempt to find multiple
+solutions.
+
+f = objective function y = f(x)
+gradf = gradient of objective function f(x)
+x = solution, dimension = 3
+x0 starting point, dimension = 3
+step_max = upper limit on norm2 of length of x step to take
+y = equation rhs, constant
+eps = error tolerance: ABS(f(x)-y) <= eps
+nsig = Stopping criteria if successive iterations agree to nsig significant figures
+i_iter return:
+i_iter = -2 => error return, no convergence after max_iter iterations
+i_iter = -1 => error return, |gradf| = 0
+i_iter >= 0 => sucessful solution, i_iter = number of iterations
+max_iter_in, optional => can be used to override the default maximum number of iterations.
+
+There are four routines under the solve_newtonR3 interface.
+Routines newtonR3_single and newtonR3_real
+accept the arguments listed above. The calling sequence for these is:
+call solve_newtonR3(f, x, x0, step_max, y, eps, i_iter, max_iter_in[keyword, optional])
+
+Routines newtonR3_singleX and newtonR3_realX
+accept an additional argument,extra_data(:), which is an assumed shape vector.
+The calling sequence for these is:
+call solve_newtonR3(f, x,  x0, step_max, y, eps, i_iter, &
+& extra_data, max_iter_in[keyword, optional])
+N.B. The actual length of extra_data(:) must be declared in the code calling
+solve_newtonR3 and also declared in f().
+
+Description of module: newtonRN_m
+
+generic procedure: solve_newtonRN() to solve a scalar equation on RN by
+Newtons method, f(x)=y.  The user must also provide
+Usual caveats for non-linear solvers apply. There is no attempt to find multiple
+solutions.
+
+f = objective function y = f(x)
+x = solution, is assumed shape dimension = N
+x0 starting point
+step_max = upper limit on norm2 of step to take
+y = equation rhs, scalar
+eps = error tolerance: ABS(f(x)-y) <= eps
+nsig = Stopping criteria if successive iterations agree to nsig significant figures
+ierr return:
+ierr = -1 => (y(x1)-y(x0))(x1-x0) > 0 => no solution or multiple solutions in [x0,x1]
+ierr = 0 => no convergence after max_iter iterations
+ierr >= 1 => sucessful solution, ierr = number of iterations
+
+There are four routines under the solve_newtonRN interface. newtonRN_single, newtonRN_real
+which accept the arguments listed above. The calling sequence for these is:
+call solve_newtonRN(f, x,  x0, step_max, y, eps, ierr)
+The routines newtonRN_singleX and newtonRN_realX accept an additional argument,
+extra_data(:), which is an assumed shape vector.  The calling sequence for these is:
+call solve_newtonRN(f, x,  x0, step_max, y, eps, ierr, extra_data)
+The actual length of extra_data(:) must be declared in the code calling solve_newtonRN
+and also declared in f().
+
+
 Description of module: quad_trapezoid_m
 
 generic procedure: trapezoid_quad, calculates integral from a vector of y
@@ -60,6 +133,19 @@ values, y(:), using simple trapezoidal approximation and also returns the cumula
 integral at each grid point in a vector, cum(:) of length size(y).
 Input x is either a fixed increment, h, or a vector of x(:) values (not necessarily
 evenly spaced). x,y vector value can be real or complex, single precision or kind = rkind.
+
+Description of module: rpoly_m
+
+*****************************************************************************************
+
+Finds the zeros of a general real polynomial using the Jenkins & Traub algorithm.
+
+### History
+* M. A. Jenkins, "[Algorithm 493: Zeros of a Real Polynomial](https://dl.acm.org/doi/10.1145/355637.355643)",
+ACM Transactions on Mathematical SoftwareVolume 1, Issue 2, June 1975, pp 178-189
+* code converted using to_f90 by alan miller, 2003-06-02
+* Jacob Williams, 9/13/2022 : modernized this code
+https://github.com/jacobwilliams/polyroots-fortran/blob/master/src/polyroots_module.F90
 
 Description of module: vectors3_m
 

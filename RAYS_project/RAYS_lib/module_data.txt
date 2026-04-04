@@ -55,6 +55,8 @@ real(KIND=rkind),parameter :: one = 1.0_rkind
 
 real(KIND=rkind),parameter :: two = 2.0_rkind
 
+real(KIND=rkind),parameter :: ten = 10.0_rkind
+
 
 Module data for: damping_m
 
@@ -287,8 +289,12 @@ use constants_m, only : rkind
 implicit none
 
 Local data **************************************************
-File name for input
+File name for ray input
+Default is the form: 'ray_init_' + run_label + '.in' but can be reset in namelist
 character(len=80) :: in_filename
+
+Input ray data file name can be set in rays.in
+character(len=80) :: input_ray_data_filename
 
 
 Module data for: mirror_magnetics_spline_interp_m
@@ -521,6 +527,8 @@ integer, allocatable :: npoints(:)              ! nray
 Summary data
 real(KIND=rkind), allocatable :: initial_ray_power(:) ! nray
 
+real(KIND=rkind), allocatable :: end_ray_power(:)	  ! nray
+
 real(KIND=rkind), allocatable :: ray_trace_time(:)    ! nray
 
 real(KIND=rkind), allocatable :: end_residuals(:)     ! nray
@@ -546,7 +554,9 @@ integer :: date_vector(8)
 Run label (N.B. should be legal in file name, get from diagnostics_m)
 character(len=60) :: RAYS_run_label = ''
 
-integer :: number_of_rays, max_number_of_points, dim_v_vector
+integer :: number_of_rays ! AKA nray in other modules
+
+integer :: max_number_of_points, dim_v_vector
 
 ray data
 real(KIND=rkind), allocatable :: ray_vec(:,:,:) ! nv, nstep_max+1, nray
@@ -557,6 +567,8 @@ integer, allocatable :: npoints(:)              ! nray
 
 Summary data
 real(KIND=rkind), allocatable :: initial_ray_power(:) ! nray
+
+real(KIND=rkind), allocatable :: end_ray_power(:) 	  ! nray
 
 real(KIND=rkind), allocatable :: ray_trace_time(:)    ! nray
 

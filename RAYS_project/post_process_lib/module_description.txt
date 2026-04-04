@@ -55,18 +55,30 @@ N.B. This code is adapted, with very few changes from axisym_toroid_processor.f9
 Description of module: OX_conv_analysis_m
 
 Analyzes ray data obtained from an instance of type run_results as defined in module
-module ray_results_m.  The presumption is that the RAYS raun consists of O-mode rays
+module ray_results_m.  The presumption is that the RAYS run consists of O-mode rays
 that approach the cutoff from low density.  The steps are
-1) Find the point, x_max, on the ray having maximum density, which should be closest to
+1) Find the point, r_max, on the ray having maximum density, which should be closest to
 the cutoff.
-2) Determine the point, x_cut, on the cutoff surface closest to the x_max point.
-3) Evaluate the conversion coefficient to X mode
-4) If don't find density maximum or don't find cutoff surface or conversion coefficient
+2) Determine the point, r_cut, on the cutoff surface closest to the r_max point. Do this
+by marching along grad(n) until we hit alpha = 1
+3) Evaluate the conversion coefficient to X-mode at r_cut.
+4) If don't find density maximum, or don't find cutoff surface, or conversion coefficient
 is less than conversion_threshold, ignore this ray and consider that it didn't convert
 5) Allocate and load array of type OX_conv for the rays that did convert.
+6) Calculate the initial position and k-vector for converted X-mode. This has subtasks:
+a) Find density (alpha = alphaX) of X-mode cutoff by root-finding nx**0 component
+of the Booker quartic
+b) Determine the point, r_restart, on the alpha = alphaX surface closest to r_cut.
+Do this by marching along grad(n) until we hit alpha = alphaX
+b) Solve Booker quartic for nx <-> refractive index in direction grad(n), giving k
+of X-mode restart
+c) Write a "ray_init_<run_label>_restart.in" file to be read by
+RAYS file_input_ray_init()
 
-This is written for axisymmetric mirror equilibria, but I think it will work little
-change for tokamaks
+This is written for axisymmetric mirror equilibria, but I think it will with work with
+little (or no) change for tokamaks.  It does work for slab.
+
+N.B. My theta is angle between B and the local z-axis = sin(Mjohus alpha)
 
 Description of module: post_processing_m
 
@@ -99,6 +111,12 @@ for whichever processor is being used.
 
 It also reads the "rays.in" file (done in subroutine initialize_diagnostics) to get
 some metadata from the RAYS run.
+
+Note about input file name, "post_process_rays.in": It first looks for a file named
+"post_process_<run_label>.in" where <run_label> comes out of the "ray.in" file.  If it
+finds that it copies it to post_process_rays.in and goes on.  If it doesn't find a file
+with that name it looks for "post_process_rays.in".  So the best practice is to name the
+post processing input file according to the first option.
 
 Description of module: slab_processor_m
 

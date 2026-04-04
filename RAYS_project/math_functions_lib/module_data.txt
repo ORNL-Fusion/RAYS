@@ -28,7 +28,7 @@ INTEGER, PARAMETER :: max_iter = 1000
 
 interface solve_bisection
 
-module procedure bisect_single, bisect_real
+module procedure bisect_single, bisect_real, bisect_singleX, bisect_realX
 
 end interface
 
@@ -46,6 +46,40 @@ integer, parameter :: rk = rkind
 real(KIND=rkind),parameter :: lolim = 3.D-78
 
 real(KIND=rkind),parameter :: uplim = 1.D+75
+
+
+Module data for: newtonR3_m
+
+IMPLICIT NONE
+
+integer, parameter :: rkind = selected_real_kind(15,307) ! kind parameter for reals
+
+integer, parameter :: skind = selected_real_kind(6,37) ! kind parameter single precision
+
+INTEGER :: max_iter = 1000
+
+interface solve_newtonR3
+
+module procedure newtonR3_single, newtonR3_real, newtonR3_singleX, newtonR3_realX
+
+end interface
+
+
+Module data for: newtonRN_m
+
+IMPLICIT NONE
+
+integer, parameter :: rkind = selected_real_kind(15,307) ! kind parameter for reals
+
+integer, parameter :: skind = selected_real_kind(6,37) ! kind parameter single precision
+
+INTEGER, PARAMETER :: max_iter = 1000
+
+interface solve_newtonRN
+
+module procedure newtonRN_single, newtonRN_real, newtonRN_singleX, newtonRN_realX
+
+end interface
 
 
 Module data for: quad_trapezoid_m
@@ -71,6 +105,27 @@ module procedure h_yvec_cum_real, h_yvec_cum_D,&
 & xvec_yvec_cum_real, xvec_yvec_cum_D
 
 end interface
+
+
+Module data for: rpoly_m
+
+use iso_fortran_env
+
+use ieee_arithmetic
+
+implicit none
+
+integer, parameter :: rkind = selected_real_kind(15,307) ! kind parameter for reals
+
+integer, parameter :: skind = selected_real_kind(6,37) ! kind parameter single precision
+
+integer, parameter :: wp = rkind  !! a shorter name
+
+real(wp), parameter :: eps = epsilon(1.0_wp) !! machine epsilon
+
+real(wp), parameter :: pi = acos(-1.0_wp)
+
+real(wp), parameter :: deg2rad = pi/180.0_wp
 
 
 Module data for: vectors3_m

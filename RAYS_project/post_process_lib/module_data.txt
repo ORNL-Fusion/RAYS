@@ -99,30 +99,53 @@ real(KIND=rkind), parameter :: conversion_threshold = 0.0001
 derived type containing data for OX_conv
 type OX_conv
 
-real(KIND=rkind) :: x_max(3) ! point on ray with maximum density, alpha < 1
+real(KIND=rkind) :: r_max(3) ! point on ray with maximum density, alpha < = 1
 
-real(KIND=rkind) :: k_max(3) ! k vector at x_max
+real(KIND=rkind) :: k_max(3) ! k vector at r_max
 
-real(KIND=rkind) :: alpha_max ! omega_pe**2/Omga**2 at x_max
+real(KIND=rkind) :: r_restart(3) ! point on X-mode cutoff
 
-real(KIND=rkind) :: x_cut(3) ! point on cutoff surface closest to x_max
+real(KIND=rkind) :: k_restart(3) ! k vector at r_restart
+
+real(KIND=rkind) :: alpha_max ! omega_pe**2/Omga**2 at r_max
+
+real(KIND=rkind) :: r_cut(3) ! point on cutoff surface closest to r_max
 
 real(KIND=rkind) :: conv_coeff ! value of conversion coefficient
 
-real(KIND=rkind) :: nvecx_c(3) ! n vector at x_max in direction grad(ne)
+real(KIND=rkind) :: nvecx_c(3) ! n vector at alpha = 1 surface in direction grad(ne)
 
-real(KIND=rkind) :: nvecy_c(3) ! n vector at x_max transverse to grad(ne), B
+real(KIND=rkind) :: nvecy_c(3) ! n vector at alpha = 1 surface to grad(ne), B
 
-real(KIND=rkind) :: nvecz_c(3) ! n vector at x_max perp to grad(ne) in
+real(KIND=rkind) :: nvecz_c(3) ! n vector at alpha = 1 surface perpendicular to
 
-grad(ne),B plane
+grad(ne) in grad(ne),B plane
+real(KIND=rkind) ::	ny_c	   ! Y,Z components of n vector at alpha = 1 surface
+
+real(KIND=rkind) ::	nz_c
+
+real(KIND=rkind) ::	rvec_restart(3) ! Position for X-mode restart
+
+real(KIND=rkind) ::	nvec_restart(3) ! k vector for X-mode restart
+
+real(KIND=rkind) ::	alphaX_cut ! omega_pe**2/Omga**2 at X-mode cutoff
+
 integer :: ray_number ! RAYS ray number for this ray
 
-integer :: step_number ! ray step number at x_max
+integer :: step_number ! ray step number at r_max
 
 end type OX_conv
 
 type(OX_conv), allocatable :: OX_conv_data(:)
+
+Data for search for points matching cutoff densities (alpha = 1, alpha = X-mode cutoff)
+real(KIND=rkind), parameter :: step_max = 10._rkind**(-2)
+
+real(KIND=rkind), parameter :: alpha_tolerence = one/10.0_rkind**6
+
+integer, parameter :: nsig = 6
+
+integer, parameter :: max_iterations = 20
 
 
 Module data for: post_processing_m
@@ -143,27 +166,35 @@ real(KIND=rkind), allocatable :: s_vec(:,:), v_vec(:,:,:)
 
 Module data for: slab_processor_m
 
-use constants_m, only : rkind
+use constants_m, only : rkind, zero
 
 implicit none
 
 Number and x locations of cyclotron resonances, 2nd harmonic resonances and hybrid
 resonances found between x_min and x_max.  Allow for multiple resonances <= n_locs
-integer, parameter :: n_locs = 5
+integer, parameter :: n_locs = 3
 
 integer :: n_ce_res, n_2ce_res, n_hybrid_res
 
-real(KIND=rkind), dimension(n_locs) :: x_ce_res, x_2ce_res, x_hybrid_res
+real(KIND=rkind), dimension(n_locs) :: x_ce_res = zero
+
+real(KIND=rkind), dimension(n_locs) :: x_2ce_res = zero
+
+real(KIND=rkind), dimension(n_locs) :: x_hybrid_res = zero
 
 Number and x locations of cutoffs
 integer :: n_P_cut, n_H_cut, n_det
 
-real(KIND=rkind), dimension(n_locs) :: x_P_cut, x_H_cut, x_det
+real(KIND=rkind), dimension(n_locs) :: x_P_cut = zero
+
+real(KIND=rkind), dimension(n_locs) :: x_H_cut = zero
+
+real(KIND=rkind), dimension(n_locs) :: x_det = zero
 
 Alpha at hybrid cutoffs
-real(KIND=rkind), dimension(n_locs) :: alpha_e_H_cut
+real(KIND=rkind), dimension(n_locs) :: alpha_e_H_cut = zero
 
-real(KIND=rkind), dimension(n_locs) :: alpha_e_det
+real(KIND=rkind), dimension(n_locs) :: alpha_e_det = zero
 
 
 Module data for: solovev_processor_m

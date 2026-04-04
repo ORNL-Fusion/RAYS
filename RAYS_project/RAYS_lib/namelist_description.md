@@ -127,10 +127,15 @@ Switch to select specific equilibrium model.
 
 ### namelist /file_input_ray_init_list/
 
+Switch to treat input n-vectors as direction vectors which must be scaled to be solutions
+of the dispersion relation.  The default is false, which means that the rindec_vec_in
+values read in are to be used as is for the initial ray n-vectors.
+<br>	logical :: scale_n_vecs = .false.
+
 Number of initial condition sets to be read in from namelist
 integer:: n_rays_in
 
-Initial positions and directions to be read in from namelist file.
+Initial positions and refractive indices to be read in from namelist file.
 N.B. The ordering of indices in rvec_in(nray_max,3), rindex_vec_in(nray_max,3) is
 opposite of that for rvec0(3, nray), rindex_vec0(3, nray)!!!  This is to make it
 simpler to put data into the namelist file i.e. (X, Y, Z) on one line of the
@@ -139,6 +144,7 @@ namelist.
 
 <br>    real(KIND=rkind), allocatable :: ray_pwr_wt_in(:)
 
+Namelist in standard RAYS input file rays.in
 
 ## Namelist data for module: mirror_magnetics_spline_interp_m
 
@@ -334,6 +340,9 @@ Model names for Bx, By, Bz
 Magnetic field in Tesla at x,y,z = 0
 <br>    real(KIND=rkind) :: bx0, by0, bz0
 
+Parameters for linear models of Bx
+<br>    real(KIND=rkind) :: LBx_scale
+
 Parameters for linear models of Bz and By shear
 <br>    real(KIND=rkind) :: LBy_shear_scale, LBz_scale
 
@@ -489,6 +498,9 @@ An array indicating which plasma dispersion model is to be used for each species
 spec_model(is) = 'cold' susceptibility model is cold plasma
 spec_model(is) = 'bessel' susceptibility model is full besssel function. Not yet.
 <br>    character(len=12) :: spec_model(0:nspec0) = ''
+
+Switch to turn off charge neutrality checking
+<br>    logical :: enforce_charge_neutrality = .false.
 
 Criterion for checking charge neutrality.  Default here can be reset on input.
 <br>    real(KIND=rkind) :: neutrality = 1.e-10
