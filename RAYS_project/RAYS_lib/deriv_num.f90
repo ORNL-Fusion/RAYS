@@ -4,7 +4,7 @@
 !   dddx = dD/dx, dddk = dD/dk, dddw = dD/d(omega).
 !
 !   N.B. omgrf and k0 are module variables and therefore global. They get changed
-!        and reset in this subroutine.  Therefore this subroutine, and omgrf, k0 
+!        and reset in this subroutine.  Therefore this subroutine, and omgrf, k0
 !        are not presently thread safe!!  In particular equilibrium uses omgrf to
 !        calculate alpha and beta so equilibrium() must be called after omgrf is
 !        changed.
@@ -14,7 +14,7 @@
     use rf_m, only : omgrf, k0, ray_dispersion_model
     use ode_m, only : nv
     use diagnostics_m, only : message_unit, verbosity
- 
+
     implicit none
 
     type(eq_point), intent(in) :: eq0
@@ -80,22 +80,22 @@
     dddw = (det_plus-det_minus)/(omgrf0*delta)
 
 ! Reset omgrf and k0 to module values
-    omgrf = omgrf0 
+    omgrf = omgrf0
     k0 = omgrf/clight
-    
+
     verb: if (verbosity > 3) then
        write(*,*) ''
        write(*,'(a,1p3e12.4)') 'deriv_num: dddx =', dddx
        write(*,'(a,1p3e12.4)') 'deriv_num: dddk =', dddk
        write(*,'(a,1p1e12.4)') 'deriv_num: dddw =', dddw
-       write(*,*) ''   
+       write(*,*) ''
 
     end if verb
 
     return
 
  contains
-    
+
     real(KIND=rkind) function determ(eq)
 !      calculates the determinant for epsn = eps + nn -n^2I.
 
@@ -103,10 +103,10 @@
        use rf_m, only : ray_dispersion_model
        use suscep_m, only : dielectric_cold
 
-       implicit none 
+       implicit none
 
-       type(eq_point), intent(in) :: eq       
-       complex(KIND=rkind) :: eps(3,3), eps_h(3,3), epsn(3,3) 
+       type(eq_point), intent(in) :: eq
+       complex(KIND=rkind) :: eps(3,3), eps_h(3,3), epsn(3,3)
        complex(KIND=rkind) :: ctmp
        real(KIND=rkind) :: k1, k3, n(3)
        integer :: i, j
@@ -153,4 +153,4 @@
     end function determ
 
  end subroutine deriv_num
- 
+

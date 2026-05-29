@@ -1,9 +1,9 @@
  subroutine initialize_components_in_RAYS_lib(read_input)
 
 ! N.B.  This routine only initializes components that are used in the tests, others are
-!       commented out. To add tests that need these components uncomment whatever is needed. 
+!       commented out. To add tests that need these components uncomment whatever is needed.
 
-! Calls the initialize routines for all other components, and opens some output files.
+! Calls the initialize routines for all other components.
 ! The argument read_input determines whether or not the initialization routines read the
 ! input data files.  Normally on startup this will be true, but when used as an internal
 ! component of a host code, the host code may modify initial values by directly using
@@ -40,7 +40,7 @@
     call text_message(trim(run_description))
     call text_message(trim(run_label))
     call message()
-   
+
     write(*,*) trim(run_description)
     write(*,*) trim(run_label)
 
@@ -51,45 +51,24 @@
 
     call initialize_species_m(read_input)
     call message()
- 
-   call initialize_rf_m(read_input)
+
+    call initialize_rf_m(read_input)
     call message()
-    
+
     call initialize_damping_m(read_input)
     call message()
+
     call initialize_equilibrium_m(read_input)
     call message()
 
 !     call initialize_ray_init_m(read_input)
 !     call message()
-!     
+!
 !     call initialize_ode_solver_m(read_input)
 !     call message()
-! 
-!     call initialize_ray_results_m(read_input)    
+!
+!     call initialize_ray_results_m(read_input)
 !     call message()
 
-!*************** Open output files ******************************
-
-!   Open a formatted file to receive number of rays and number of steps per ray
-    open(unit=ray_list_unit, file='ray_list.'//trim(run_label),action='write', &
-                & status='replace', form='formatted')
-
-
-!   Open a file for formatted ray output.
-    open(unit=output_unit, file='ray_out.'//trim(run_label),action='write', &
-                & status='replace', form='formatted')
-
-! Nota Bene: For now don't write binary output files since nothing uses them.  In long term
-!            should replace with netCDF or something.
-!   Open a binary file for post-processing.
-!     open(unit=94, file='rays.bin',                    &
-!        & action='write', status='replace', form='unformatted')
-    
-!   Open a binary file to receive number of rays and number of steps per ray
-!     open(unit=95, file='ray_list.bin',                  &
-!        & action='write', status='replace', form='unformatted')
-!    write(95) date_v
-    
-    return 
+     return
  end subroutine initialize_components_in_RAYS_lib

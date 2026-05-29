@@ -10,6 +10,7 @@ list (APPEND lib_sources
 	deallocate.f90
     density_spline_interp_m.f90
 	deriv_cold.f90
+	deriv_general.f90
 	deriv_num.f90
 	diagnostics_m.f90
     disp_solve_Booker_nx_vs_ny_nz.f90

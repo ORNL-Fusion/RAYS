@@ -44,11 +44,6 @@
     real(KIND=rkind), dimension(0:5) :: qs0 = (/-1., 1., 1., 1., 2., 2. /) ! units of electron charge
     real(KIND=rkind), dimension(0:5) :: ms0 = (/1., 1836., 3670., 5497., 5496., 7294. /) ! in units of me
 
-!   nmins, nmaxs: minimum and maximum harmonics kept in susceptibility tensor for
-!   for species is.  +/- n_limit is size of nimns,nmax arrays
-    integer, parameter :: n_limit = 5
-    integer, dimension(-n_limit:n_limit) :: nmins, nmaxs
-
 !   n0s: actual species number density calculated in init = n0*eta(is)
     real(KIND=rkind), dimension(0:nspec0) :: n0s = 0.
 !   t0s: temperature in MKS (Joules) calculated in init from t0s_eV(is)
@@ -92,8 +87,16 @@
 
 !   An array indicating which plasma dispersion model is to be used for each species
 !   spec_model(is) = 'cold' susceptibility model is cold plasma
-!   spec_model(is) = 'bessel' susceptibility model is full besssel function. Not yet.
+!   spec_model(is) = 'bessel' susceptibility model is full besssel function.
     character(len=12) :: spec_model(0:nspec0) = ''
+
+!   Maximum number of cyclotron harmonics (+/-) kept in suscep_bessel for ANY species
+!   with warm_bessel model. i.e. -n_limit <= nmins, nmaxs <= +n_limit.  It might be more
+!   logical to place this in the suscep_m module, but putting it here eliminates the need
+!   for initialization in suscep_m.
+    integer :: n_limit = 5
+!   Minimum and maximum harmonics kept in bessel susceptibility tensor for species s.
+    integer, dimension(0:nspec0) :: nmins, nmaxs
 
 !   Switch to turn off charge neutrality checking
     logical :: enforce_charge_neutrality = .false.
@@ -102,7 +105,8 @@
 
     namelist /species_list/ &
       & n0, nseps, spec_name, spec_model, qs, ms, t0s_eV, tseps_eV, eta, &
-      & enforce_charge_neutrality, neutrality
+      & n_limit, nmins, nmaxs, &
+      & nmins, nmaxs, enforce_charge_neutrality, neutrality
 
 !_________________________________________________________________________________________
 contains

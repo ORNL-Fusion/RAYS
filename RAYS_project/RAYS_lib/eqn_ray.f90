@@ -79,8 +79,22 @@
        end subroutine deriv_num
     end interface deriv_num
 
+    interface deriv_general
+       subroutine deriv_general(eq, v, dddx, dddk, dddw)
+            use constants_m, only : rkind, clight
+            use equilibrium_m, only : equilibrium, eq_point, write_eq_point
+            use rf_m, only : omgrf, k0, ray_dispersion_model
+            use ode_m, only : nv
+            use diagnostics_m, only : message_unit, verbosity
+            type(eq_point), intent(in) :: eq
+            real(KIND=rkind), intent(in) :: v(nv)
+            real(KIND=rkind), intent(out) :: dddx(3), dddk(3), dddw
+       end subroutine deriv_general
+    end interface deriv_general
+
 !   kvec (nvec) = k (k/k0) in xyz coordinates (vector)
-    rvec = v(1:3); kvec = v(4:6)
+    rvec = v(1:3)
+    kvec = v(4:6)
     nvec = kvec/k0
 
 !   Calculate the plasma equilibrium.
@@ -109,6 +123,11 @@
 
     !      Derivatives of D for a cold plasma.
            call deriv_cold(eq, nvec, dddx, dddk, dddw)
+
+        case ('general' )
+
+    !      Derivatives of D for a dispersion model warm_bessel
+           call deriv_general(eq, v, dddx, dddk, dddw)
 
         case ('numerical' )
     !      Numerical differentiation.

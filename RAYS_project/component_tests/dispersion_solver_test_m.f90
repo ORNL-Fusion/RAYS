@@ -1,10 +1,10 @@
 module dispersion_solver_test_m
 ! Tests various dispersion solvers.  At present this cycles through a series of
 ! position x points and gets the equilibrium at those points.  Then cycles through
-! a series of nz values and evaluates nx(x,nz)
+! a series of nz or theta values and evaluates nx(x,nz) or n(x,theta)
 ! As of 3/3/2025 the only things evaluated are solve_cold_n1sq_vs_n3 and
 ! solve_cold_nsq_vs_theta.
-! Also the equilibrium position is taken as rvec = (x,0,0)
+! N.B. the equilibrium position is taken as rvec = (x,0,0)
 
     use constants_m, only : rkind
 

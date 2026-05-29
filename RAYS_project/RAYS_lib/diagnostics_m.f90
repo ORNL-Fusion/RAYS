@@ -55,7 +55,7 @@
     interface message
     module procedure blank_message, &
     &   i_message, logical_message, r_message, rdbl_message, c_message, &
-    &   ivn_message,  rvn_message, rvndbl_message, cvn_message, &
+    &   ivn_message, rvn_message, rvndbl_message, cdbl_message, cvn_message, &
     &   cvndbl_message, rmatrix_message, rmatrixdbl_message, cmatrix_message, &
     &   cmatrixdbl_message
     end interface
@@ -541,17 +541,261 @@ contains
     end subroutine cvn_message
 
 
+!   print messsage with real mxn matrix value
+    subroutine rmatrix_message (mess, value, m_dim, n_dim, threshold)
 
-!   print messsage with complex double precision n-vector value
+    implicit none
+    character (len=*), intent (in) :: mess
+    integer, intent (in) :: m_dim, n_dim
+    real, intent (in) :: value(m_dim, n_dim)
+    integer, optional, intent (in) :: threshold
+
+    real :: v_min, v_max
+    integer :: i, j
+
+        if (present(threshold)) then
+           if (verbosity < threshold) then
+             return
+           end if
+        end if
+!******************************
+        v_min = huge(v_min)
+        v_max = tiny(v_max)
+
+        do i = 1, m_dim
+            do j = 1, n_dim
+
+                if ((abs(value(i,j)) > 0.).and.(abs(value(i,j)) < v_min)) &
+                    & v_min = abs(value(i,j))
+                if (abs(value(i,j)) > v_max ) v_max = abs(value(i,j))
+            end do
+        end do
+
+
+        if ((v_max < 1.e4) .and. (v_min > 1.e-3)) then
+
+            write(message_unit, '(a, " = ")' ) mess
+			if (messages_to_stdout) then
+				write(*, '(a, " = ")' ) mess
+			end if
+            do i = 1, m_dim
+                write(message_unit, '(10f12.5)' )  (value(i, j), j=1, n_dim)
+				if (messages_to_stdout) then
+					write(*, '(10f12.5)' )  (value(i, j), j=1, n_dim)
+				end if
+            end do
+
+        else
+
+            write(message_unit, '(a, " = ")' ) mess
+			if (messages_to_stdout) then
+				write(*, '(a, " = ")' ) mess
+			end if
+            do i = 1, m_dim
+                write(message_unit, '(10(1pe12.4))' )  (value(i, j), j=1, n_dim)
+				if (messages_to_stdout) then
+					write(*, '(10(1pe12.4))' )  (value(i, j), j=1, n_dim)
+				end if
+            end do
+
+        end if
+!******************************
+    return
+    end subroutine rmatrix_message
+
+
+
+! Print message with real rkind precision value
+
+    subroutine rdbl_message (mess, value, threshold)
+
+    implicit none
+    character (len=*), intent (in) :: mess
+    real(kind=rkind), intent (in) :: value
+    integer, optional, intent (in) :: threshold
+
+        if (present(threshold)) then
+           if (verbosity < threshold) then
+             return
+           end if
+        end if
+!******************************
+        if ( (abs(value) <  1.e4) .and. (abs(value) > 1.e-3) ) then
+            write(message_unit, '(a, " = ", f11.4)') &
+            & mess, value
+            if (messages_to_stdout) then
+				write(*, '(a, " = ", f11.4)') &
+				& mess, value
+            end if
+        else
+            write(message_unit, '(a, " = ", 1pe11.4)') &
+            & mess, value
+            if (messages_to_stdout) then
+				write(*, '(a, " = ", 1pe11.4)') &
+				& mess, value
+            end if
+        end if
+!******************************
+    return
+    end subroutine rdbl_message
+
+
+!   print messsage with real rkind precision n-vector value
+
+    subroutine rvndbl_message (mess, value, length_n, threshold)
+
+    implicit none
+    character (len=*), intent (in) :: mess
+    real(kind=rkind), dimension(*), intent (in) :: value
+    integer, intent (in) :: length_n
+    integer, optional, intent (in) :: threshold
+
+
+    real(kind=rkind) :: v_min, v_max
+    integer :: i
+
+        if (present(threshold)) then
+           if (verbosity < threshold) then
+             return
+           end if
+        end if
+!******************************
+        v_min = huge(v_min)
+        v_max = tiny(v_max)
+
+        do i = 1, length_n
+            if ((abs(value(i)) > 0.).and.(abs(value(i)) < v_min)) v_min = abs(value(i))
+            if (abs(value(i)) > v_max ) v_max = abs(value(i))
+        end do
+
+        if ((v_max < 1.e4) .and. (v_min > 1.e-3)) then
+            write(message_unit, '(a, " = ", 10f12.4,")")') &
+            & mess, (value(i), i=1, length_n)
+            if (messages_to_stdout) then
+				write(*, '(a, " = ", 10f12.4,")")') &
+				& mess, (value(i), i=1, length_n)
+            end if
+       else
+            write(message_unit, '(a, " = ", 10(1pe12.4),")")') &
+            & mess, (value(i), i=1, length_n)
+            if (messages_to_stdout) then
+				write(*, '(a, " = ", 10(1pe12.4),")")') &
+				& mess, (value(i), i=1, length_n)
+            end if
+        end if
+!******************************
+    return
+    end subroutine rvndbl_message
+
+
+
+!   print messsage with real rkind precision mxn matrix value
+
+    subroutine rmatrixdbl_message (mess, value, m_dim, n_dim, threshold)
+
+    implicit none
+    character (len=*), intent (in) :: mess
+    integer, intent (in) :: m_dim, n_dim
+    real(kind=rkind), intent (in) :: value(m_dim, n_dim)
+    integer, optional, intent (in) :: threshold
+
+    real(kind=rkind) :: v_min, v_max
+    integer :: i, j
+
+        if (present(threshold)) then
+           if (verbosity < threshold) then
+             return
+           end if
+        end if
+!******************************
+        v_min = huge(v_min)
+        v_max = tiny(v_max)
+
+        do i = 1, m_dim
+            do j = 1, n_dim
+
+                if ((abs(value(i,j)) > 0.).and.(abs(value(i,j)) < v_min)) &
+                    & v_min = abs(value(i,j))
+                if (abs(value(i,j)) > v_max ) v_max = abs(value(i,j))
+            end do
+        end do
+
+
+        if ((v_max < 1.e4) .and. (v_min > 1.e-3)) then
+
+            write(message_unit, '(a, " = ")' ) mess
+            if (messages_to_stdout) then
+				write(*, '(a, " = ")' ) mess
+            end if
+            do i = 1, m_dim
+                write(message_unit, '(10f12.5)' )  (value(i, j), j=1, n_dim)
+				if (messages_to_stdout) then
+					write(*, '(10f12.5)' )  (value(i, j), j=1, n_dim)
+				end if
+            end do
+
+        else
+
+            write(message_unit, '(a, " = ")' ) mess
+			if (messages_to_stdout) then
+				write(*, '(a, " = ")' ) mess
+			end if
+           do i = 1, m_dim
+                write(message_unit, '(10(1pe12.4))' )  (value(i, j), j=1, n_dim)
+				if (messages_to_stdout) then
+					write(*, '(10(1pe12.4))' )  (value(i, j), j=1, n_dim)
+				end if
+            end do
+
+        end if
+!******************************
+    return
+    end subroutine rmatrixdbl_message
+
+
+!   print messsage with complex rkind precision value
+    subroutine cdbl_message (mess, value, threshold)
+
+    implicit none
+    character (len=*), intent (in) :: mess
+    integer, optional, intent (in) :: threshold
+    complex(kind=rkind), intent (in) :: value
+
+        if (present(threshold)) then
+           if (verbosity < threshold) then
+             return
+           end if
+        end if
+        if ( (abs(value) <  1.e4) .and. (abs(value) > 1.e-3) ) then
+            write(message_unit, '(a, " = (", f11.4,", ",f11.4,")")')&
+            & mess, value
+            if (messages_to_stdout) then
+            write(*, '(a, " = (", f11.4,", ",f11.4,")")')&
+            & mess, value
+            end if
+        else
+            write(message_unit, '(a, " = (", 1pe11.4,", ",1pe11.4,")")')&
+            & mess, value
+            if (messages_to_stdout) then
+				write(*, '(a, " = (", 1pe11.4,", ",1pe11.4,")")')&
+				& mess, value
+            end if
+        end if
+    return
+    end subroutine cdbl_message
+
+
+
+!   print messsage with complex rkind precision n-vector value
     subroutine cvndbl_message (mess, value, length_n, threshold)
 
     implicit none
     character (len=*), intent (in) :: mess
-    complex(kind=kind(1.d0)), dimension(*), intent (in) :: value
+    complex(kind=rkind), dimension(*), intent (in) :: value
     integer, intent (in) :: length_n
     integer, optional, intent (in) :: threshold
 
-    real(kind=kind(1.d0)) :: Re_min, Re_max, Im_min, Im_max, absRe, absIm, &
+    real(kind=rkind) :: Re_min, Re_max, Im_min, Im_max, absRe, absIm, &
         & v_min, v_max
     integer :: i
 
@@ -621,218 +865,6 @@ contains
     end subroutine cvndbl_message
 
 
-!   print messsage with real mxn matrix value
-    subroutine rmatrix_message (mess, value, m_dim, n_dim, threshold)
-
-    implicit none
-    character (len=*), intent (in) :: mess
-    integer, intent (in) :: m_dim, n_dim
-    real, intent (in) :: value(m_dim, n_dim)
-    integer, optional, intent (in) :: threshold
-
-    real :: v_min, v_max
-    integer :: i, j
-
-        if (present(threshold)) then
-           if (verbosity < threshold) then
-             return
-           end if
-        end if
-!******************************
-        v_min = huge(v_min)
-        v_max = tiny(v_max)
-
-        do i = 1, m_dim
-            do j = 1, n_dim
-
-                if ((abs(value(i,j)) > 0.).and.(abs(value(i,j)) < v_min)) &
-                    & v_min = abs(value(i,j))
-                if (abs(value(i,j)) > v_max ) v_max = abs(value(i,j))
-            end do
-        end do
-
-
-        if ((v_max < 1.e4) .and. (v_min > 1.e-3)) then
-
-            write(message_unit, '(a, " = ")' ) mess
-			if (messages_to_stdout) then
-				write(*, '(a, " = ")' ) mess
-			end if
-            do i = 1, m_dim
-                write(message_unit, '(10f12.5)' )  (value(i, j), j=1, n_dim)
-				if (messages_to_stdout) then
-					write(*, '(10f12.5)' )  (value(i, j), j=1, n_dim)
-				end if
-            end do
-
-        else
-
-            write(message_unit, '(a, " = ")' ) mess
-			if (messages_to_stdout) then
-				write(*, '(a, " = ")' ) mess
-			end if
-            do i = 1, m_dim
-                write(message_unit, '(10(1pe12.4))' )  (value(i, j), j=1, n_dim)
-				if (messages_to_stdout) then
-					write(*, '(10(1pe12.4))' )  (value(i, j), j=1, n_dim)
-				end if
-            end do
-
-        end if
-!******************************
-    return
-    end subroutine rmatrix_message
-
-
-
-! Print message with real double precision value
-
-    subroutine rdbl_message (mess, value, threshold)
-
-    implicit none
-    character (len=*), intent (in) :: mess
-    real(kind=kind(1.D0)), intent (in) :: value
-    integer, optional, intent (in) :: threshold
-
-        if (present(threshold)) then
-           if (verbosity < threshold) then
-             return
-           end if
-        end if
-!******************************
-        if ( (abs(value) <  1.e4) .and. (abs(value) > 1.e-3) ) then
-            write(message_unit, '(a, " = ", f11.4)') &
-            & mess, value
-            if (messages_to_stdout) then
-				write(*, '(a, " = ", f11.4)') &
-				& mess, value
-            end if
-        else
-            write(message_unit, '(a, " = ", 1pe11.4)') &
-            & mess, value
-            if (messages_to_stdout) then
-				write(*, '(a, " = ", 1pe11.4)') &
-				& mess, value
-            end if
-        end if
-!******************************
-    return
-    end subroutine rdbl_message
-
-
-!   print messsage with real double precision n-vector value
-
-    subroutine rvndbl_message (mess, value, length_n, threshold)
-
-    implicit none
-    character (len=*), intent (in) :: mess
-    real(kind=kind(1.D0)), dimension(*), intent (in) :: value
-    integer, intent (in) :: length_n
-    integer, optional, intent (in) :: threshold
-
-
-    real(kind=kind(1.D0)) :: v_min, v_max
-    integer :: i
-
-        if (present(threshold)) then
-           if (verbosity < threshold) then
-             return
-           end if
-        end if
-!******************************
-        v_min = huge(v_min)
-        v_max = tiny(v_max)
-
-        do i = 1, length_n
-            if ((abs(value(i)) > 0.).and.(abs(value(i)) < v_min)) v_min = abs(value(i))
-            if (abs(value(i)) > v_max ) v_max = abs(value(i))
-        end do
-
-        if ((v_max < 1.e4) .and. (v_min > 1.e-3)) then
-            write(message_unit, '(a, " = ", 10f12.4,")")') &
-            & mess, (value(i), i=1, length_n)
-            if (messages_to_stdout) then
-				write(*, '(a, " = ", 10f12.4,")")') &
-				& mess, (value(i), i=1, length_n)
-            end if
-       else
-            write(message_unit, '(a, " = ", 10(1pe12.4),")")') &
-            & mess, (value(i), i=1, length_n)
-            if (messages_to_stdout) then
-				write(*, '(a, " = ", 10(1pe12.4),")")') &
-				& mess, (value(i), i=1, length_n)
-            end if
-        end if
-!******************************
-    return
-    end subroutine rvndbl_message
-
-
-
-!   print messsage with real double precision mxn matrix value
-
-    subroutine rmatrixdbl_message (mess, value, m_dim, n_dim, threshold)
-
-    implicit none
-    character (len=*), intent (in) :: mess
-    integer, intent (in) :: m_dim, n_dim
-    real(kind=kind(1.D0)), intent (in) :: value(m_dim, n_dim)
-    integer, optional, intent (in) :: threshold
-
-    real(kind=kind(1.D0)) :: v_min, v_max
-    integer :: i, j
-
-        if (present(threshold)) then
-           if (verbosity < threshold) then
-             return
-           end if
-        end if
-!******************************
-        v_min = huge(v_min)
-        v_max = tiny(v_max)
-
-        do i = 1, m_dim
-            do j = 1, n_dim
-
-                if ((abs(value(i,j)) > 0.).and.(abs(value(i,j)) < v_min)) &
-                    & v_min = abs(value(i,j))
-                if (abs(value(i,j)) > v_max ) v_max = abs(value(i,j))
-            end do
-        end do
-
-
-        if ((v_max < 1.e4) .and. (v_min > 1.e-3)) then
-
-            write(message_unit, '(a, " = ")' ) mess
-            if (messages_to_stdout) then
-				write(*, '(a, " = ")' ) mess
-            end if
-            do i = 1, m_dim
-                write(message_unit, '(10f12.5)' )  (value(i, j), j=1, n_dim)
-				if (messages_to_stdout) then
-					write(*, '(10f12.5)' )  (value(i, j), j=1, n_dim)
-				end if
-            end do
-
-        else
-
-            write(message_unit, '(a, " = ")' ) mess
-			if (messages_to_stdout) then
-				write(*, '(a, " = ")' ) mess
-			end if
-           do i = 1, m_dim
-                write(message_unit, '(10(1pe12.4))' )  (value(i, j), j=1, n_dim)
-				if (messages_to_stdout) then
-					write(*, '(10(1pe12.4))' )  (value(i, j), j=1, n_dim)
-				end if
-            end do
-
-        end if
-!******************************
-    return
-    end subroutine rmatrixdbl_message
-
-
 
 
 !   print messsage with complex mxn matrix value
@@ -899,17 +931,17 @@ contains
     end subroutine cmatrix_message
 
 
-!   print messsage with complex double precision mxn matrix value
+!   print messsage with complex rkind precision mxn matrix value
 
     subroutine cmatrixdbl_message (mess, value, m_dim, n_dim, threshold)
 
     implicit none
     character (len=*), intent (in) :: mess
     integer, intent (in) :: m_dim, n_dim
-    complex(kind=kind(1.D0)), intent (in) :: value(m_dim, n_dim)
+    complex(kind=rkind), intent (in) :: value(m_dim, n_dim)
     integer, optional, intent (in) :: threshold
 
-    real(kind=kind(1.D0)) :: v_min, v_max
+    real(kind=rkind) :: v_min, v_max
     integer :: i, j
 
         if (present(threshold)) then

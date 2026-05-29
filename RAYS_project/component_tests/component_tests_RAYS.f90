@@ -1,11 +1,15 @@
  program component_test_RAYS
+! This program runs any one of several provided tests of different RAYS code components.
+! The components to be tested are complete modules that reside in, or link to, the
+! static libraries of RAYS_project.  So the tests are essentially in the environment
+! they would find themselves in the full code.
 
-    use diagnostics_m, only : message_unit, message, text_message, verbosity, &
-                            & output_unit, ray_list_unit
+    use diagnostics_m, only : message_unit, message, text_message, verbosity
 
     use damping_slab_test_m, only : init_damping_slab_test, damping_slab_test
     use read_results_LD_test_m, only : init_read_results_LD_test, read_results_LD_test
 	use dispersion_solver_test_m, only : init_dispersion_solver_test, dispersion_solver_test
+	use dielectric_tensor_test_m, only : init_dielectric_tensor_test, dielectric_tensor_test
     implicit none
     logical :: read_input = .true.
 	integer :: input_unit, get_unit_number ! External, free unit finder
@@ -40,6 +44,10 @@
        case ('dispersion_solvers')
           call init_dispersion_solver_test(read_input)
           call dispersion_solver_test
+
+       case ('dielectric_tensors')
+          call init_dielectric_tensor_test(read_input)
+          call dielectric_tensor_test
 
        case default
           write(*,*) 'Unimplemented component tester =', trim(test_name)
