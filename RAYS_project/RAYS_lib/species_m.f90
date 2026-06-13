@@ -88,7 +88,7 @@
 !   An array indicating which plasma dispersion model is to be used for each species
 !   spec_model(is) = 'cold' susceptibility model is cold plasma
 !   spec_model(is) = 'bessel' susceptibility model is full besssel function.
-    character(len=12) :: spec_model(0:nspec0) = ''
+    character(len=60) :: spec_model(0:nspec0) = ''
 
 !   Maximum number of cyclotron harmonics (+/-) kept in suscep_bessel for ANY species
 !   with warm_bessel model. i.e. -n_limit <= nmins, nmaxs <= +n_limit.  It might be more

@@ -579,7 +579,7 @@ subroutine depsdq_bessel(eq, is, kvec, depsdw_hs, depsdk_hs, depsdx_hs)
 
     use constants_m, only : rkind, one, two
     use equilibrium_m, only : eq_point
-    use suscep_m, only : dielectric
+    use suscep_m, only : dielectric_general_n1_n3_real
 
     implicit none
     type(eq_point), intent(in) :: eq
@@ -593,7 +593,7 @@ subroutine depsdq_bessel(eq, is, kvec, depsdw_hs, depsdk_hs, depsdx_hs)
 
     n3 = dot_product(nvec, eq%bunit)
     n1 = sqrt( sum((nvec-n3*eq%bunit)**2) )
-	call dielectric(eq, n1, n3, eps)
+	call dielectric_general_n1_n3_real(eq, n1, n3, eps)
     eps_h = half*( eps + conjg(transpose(eps)) )
 
     g(1) = n1**4 + n1**2*n3**2 + n1**2*(-eps_h(2,2) - eps_h(3,3)) - n3**2*eps_h(3,3) +&

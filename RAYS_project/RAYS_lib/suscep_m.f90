@@ -5,11 +5,15 @@
 !   N.B. is = species number (0:nspec), and eps = I + sum(chis(is)). The dispersion
 !             relation is generally written in terms of eps.
 !
-!   There are 3 forms for the dielectric tensor:
+!   There are several forms for the dielectric tensor and dispersion functions.  For
+!   ray tracing, refractive indices (n vectors, also k vectors), are all real.  But for
+!   root finding the refractive indices are in general complex.  So included are routines
+!   with n arguments real and also with n-parallel real and n-perp complex.  I'll deal
+!   with the general case of complex n-parallel later.
 !   1) A general routine, dielectric_tensor, where the susceptibility model for each
 !      species is selected by setting "spec_model" in module species_m to various values
-!      e.g. "bessel" or "cold".  Different suscep routines must be written for each spec_model
-!      As of right now only "suscep_cold" and ‘suscep_bessel" are implemented.
+!      e.g. "bessel" or "cold".  Different suscep routines must be written for each
+!      spec_model.
 !
 !   2) A specific dielectric_cold tensor where all species are cold
 !
@@ -22,8 +26,8 @@
 !
 !    dielectric tensor, eps, is I + sum[chi(is)] where I is the identity.
 
-! N.B. Plasma quantities come in from equilibrium_m.  An equilibrium routine must have been
-! called previously.
+! N.B. Plasma quantities come in from type eq_point defined in equilibrium_m.
+! An equilibrium routine must have been called previously to generate eq
 
 ! Routines exported:
 !   suscep_cold(is)
@@ -91,8 +95,9 @@ contains
 
 ! ********************************************************************************
 
- subroutine suscep_bessel(eq, n1, n3, is, chi)
-!   calculates the warm plasma susceptibility for a single species "is".
+ subroutine suscep_bessel_n1_n3_real(eq, n1, n3, is, chi)
+!   Calculates the warm plasma susceptibility for a single species "is".
+!   N.B. Args n1, n3 are real
 !   Notations in Stix's book are used.
 
     use constants_m, only : zi=>i, zero, one, two
@@ -104,16 +109,140 @@ contains
     implicit none
 
     type(eq_point), intent(in) :: eq
-    real(KIND=rkind), intent(in) :: n1, n3
+    real(KIND=rkind), intent(in) :: n1
+    real(KIND=rkind), intent(in) :: n3
     integer, intent(in) :: is
     complex(KIND=rkind), intent(out) :: chi(3,3)
 
     real(KIND=rkind) :: alphas, gammas
 
-    complex(KIND=rkind) :: lambda, a, b, ei(-n_limit:n_limit), eip(-n_limit:n_limit)
+    real(KIND=rkind) :: a, b
+    complex(KIND=rkind) :: lambda, ei(-n_limit:n_limit), eip(-n_limit:n_limit)
+    real(KIND=rkind) :: xi(-n_limit:n_limit)
     complex(KIND=rkind) :: zf(-n_limit:n_limit), zfp(-n_limit:n_limit)
     complex(KIND=rkind) :: chin(6,-n_limit:n_limit)
-    real(KIND=rkind) :: vth, beta, xi(-n_limit:n_limit), iomgc
+    real(KIND=rkind) :: vth, beta, iomgc
+
+    integer :: n, nmin, nmax
+
+!   alpha = (omgp/omgrf)^2, gamma = (omgc/omgrf).
+    alphas= eq%alpha(is)
+    gammas= eq%gamma(is)
+    nmin = nmins(is)
+    nmax = nmaxs(is)
+
+!   Sign of omgc:
+    iomgc = sign(one,eq%omgc(is))
+
+!   Thermal speed:
+    vth = sqrt( two*eq%ts(is)/ms(is) )
+
+!   Eq.(10-55) for lambda:
+    lambda = cmplx((k0*n1)**2*eq%ts(is)/(ms(is)*eq%omgc(is)**2), zero)
+
+!   ei = exp(-lambda)*I_n(lambda), eip = exp(-lambda)*I'_n(lambda).
+
+       call ebessel_dbb(lambda, nmin, nmax, ei(nmin:nmax), eip(nmin:nmax))
+!  write(*,*) 'suscep_bessel: vth = ', vth, '  lambda = ', lambda
+!  write(*,*) 'suscep_bessel: ei = ', ei
+!  write(*,*) 'suscep_bessel: eip = ', eip
+
+    if ( abs(n3) > zero ) then
+       beta = eq%omgp2(is)/(omgrf*k0*n3*vth)
+!  write(*,*) 'suscep_bessel: species ', is, '   beta = ', beta
+
+!      Z function.
+       do n = nmin, nmax
+         xi(n) = (omgrf-n*eq%omgc(is)) / (k0*n3*vth)
+		 zf(n) = zfun0_real_arg(xi(n), n3)
+		 zfp(n) = -two*(1+xi(n)*zf(n)) ! Z'
+       end do
+!  write(*,*) 'suscep_bessel: species ', is, '  xi = ', xi
+!  write(*,*) 'suscep_bessel: species ', is, '  zf = ', zf
+!  write(*,*) 'suscep_bessel: species ', is, '  zfp = ', zfp
+
+       do n = nmin, nmax
+          chin(1,n) = n**2 * (ei(n)/lambda) * zf(n)
+          chin(2,n) = chin(1,n) + two*lambda*(ei(n)-eip(n)) * zf(n)
+          chin(3,n) = -ei(n) * xi(n) * zfp(n)
+
+          chin(4,n) = zi * n * (eip(n)-ei(n)) * zf(n)
+          chin(5,n) = -iomgc * sqrt(lambda/two) * n * ei(n) * zfp(n)
+          chin(6,n) = iomgc * zi * sqrt(lambda/two) * (eip(n)-ei(n)) * zfp(n)
+!   write(*,*) 'suscep_bessel: ','  n = ', n, '  chin(1,n) = ', chin(1,n)
+!   write(*,*) 'suscep_bessel: ','  n = ', n, '  chin(2,n) = ', chin(2,n)
+!   write(*,*) 'suscep_bessel: ','  n = ', n, '  chin(3,n) = ', chin(3,n)
+!   write(*,*) 'suscep_bessel: ','  n = ', n, '  chin(4,n) = ', chin(4,n)
+!   write(*,*) 'suscep_bessel: ','  n = ', n, '  chin(5,n) = ', chin(5,n)
+!   write(*,*) 'suscep_bessel: ','  n = ', n, '  chin(6,n) = ', chin(6,n)
+      end do
+
+    else ! n3 = 0
+!      See Eq.(11-32). Here, an=A_n, but bn=B_n/k3.
+
+       do n = nmin, nmax
+          a = -one / (omgrf-n*eq%omgc(is))
+          b = -one/two * (vth/(omgrf-n*eq%omgc(is)))**2
+
+!         Eq.(10-57):
+          chin(1,n) = n**2 * (ei(n)/lambda) * a
+          chin(4,n) = zi * n * (eip(n)-ei(n)) * a
+          chin(5,n) = zero
+
+          chin(2,n) = chin(1,n) + two*lambda*(ei(n)-eip(n)) * a
+          chin(6,n) = zero
+
+          chin(3,n) = two*(omgrf-n*eq%omgc(is))/vth**2 * ei(n) * b
+
+       end do
+
+        beta = eq%omgp2(is)/omgrf
+
+    end if
+
+     chi(1,1) = beta*sum(chin(1,nmin:nmax))
+     chi(2,2) = beta*sum(chin(2,nmin:nmax))
+     chi(3,3) = beta*sum(chin(3,nmin:nmax))
+     chi(1,2) = beta*sum(chin(4,nmin:nmax))
+     chi(1,3) = beta*sum(chin(5,nmin:nmax))
+     chi(2,3) = beta*sum(chin(6,nmin:nmax))
+
+     chi(2,1) = -chi(1,2)
+     chi(3,1) = chi(1,3)
+     chi(3,2) = -chi(2,3)
+
+    return
+ end subroutine suscep_bessel_n1_n3_real
+
+! ********************************************************************************
+
+ subroutine suscep_bessel_n1_cmplx_n3_real(eq, n1, n3, is, chi)
+!   Calculates the warm plasma susceptibility for a single species "is".
+!   N.B. Args n1 is complex, n3 is real
+!   Notations in Stix's book are used.
+
+    use constants_m, only : zi=>i, zero, one, two
+    use species_m, only : ms, n_limit, nmins, nmaxs
+    use equilibrium_m, only : eq_point
+    use rf_m, only : omgrf, k0
+    use zfunctions_m, only : zfun, zfun0, zfun0_real_arg
+
+    implicit none
+
+    type(eq_point), intent(in) :: eq
+    complex(KIND=rkind), intent(in) :: n1
+    real(KIND=rkind), intent(in) :: n3
+    integer, intent(in) :: is
+    complex(KIND=rkind), intent(out) :: chi(3,3)
+
+    real(KIND=rkind) :: alphas, gammas
+
+    real(KIND=rkind) :: a, b
+    complex(KIND=rkind) :: lambda, ei(-n_limit:n_limit), eip(-n_limit:n_limit)
+    real(KIND=rkind) :: xi(-n_limit:n_limit)
+    complex(KIND=rkind) :: zf(-n_limit:n_limit), zfp(-n_limit:n_limit)
+    complex(KIND=rkind) :: chin(6,-n_limit:n_limit)
+    real(KIND=rkind) :: vth, beta, iomgc
 
     integer :: n, nmin, nmax
 
@@ -139,20 +268,19 @@ contains
 !  write(*,*) 'suscep_bessel: ei = ', ei
 !  write(*,*) 'suscep_bessel: eip = ', eip
 
-    if ( n3 /= zero ) then
-!      beta = (Omga_p/Omega)^2 * [Omega/(k3*vth)].
+    if ( abs(n3) > zero ) then
        beta = eq%omgp2(is)/(omgrf*k0*n3*vth)
-!  write(*,*) 'suscep_bessel: beta = ', beta
+!  write(*,*) 'suscep_bessel: species ', is, '   beta = ', beta
 
 !      Z function.
        do n = nmin, nmax
          xi(n) = (omgrf-n*eq%omgc(is)) / (k0*n3*vth)
 		 zf(n) = zfun0_real_arg(xi(n), n3)
-		 zfp(n) = -2.*(1+xi(n)*zf(n)) ! Z'
+		 zfp(n) = -two*(1+xi(n)*zf(n)) ! Z'
        end do
-!  write(*,*) 'suscep_bessel: xi = ', xi
-!  write(*,*) 'suscep_bessel: zf = ', zf
-!  write(*,*) 'suscep_bessel: zfp = ', zfp
+!  write(*,*) 'suscep_bessel: species ', is, '  xi = ', xi
+!  write(*,*) 'suscep_bessel: species ', is, '  zf = ', zf
+!  write(*,*) 'suscep_bessel: species ', is, '  zfp = ', zfp
 
        do n = nmin, nmax
           chin(1,n) = n**2 * (ei(n)/lambda) * zf(n)
@@ -170,8 +298,7 @@ contains
 !   write(*,*) 'suscep_bessel: ','  n = ', n, '  chin(6,n) = ', chin(6,n)
       end do
 
-    else
-!      For k3=0.
+    else ! n3 = 0
 !      See Eq.(11-32). Here, an=A_n, but bn=B_n/k3.
 
        do n = nmin, nmax
@@ -183,7 +310,7 @@ contains
           chin(4,n) = zi * n * (eip(n)-ei(n)) * a
           chin(5,n) = zero
 
-          chin(2,n) = chin(1,n) + 2.*lambda*(ei(n)-eip(n)) * a
+          chin(2,n) = chin(1,n) + two*lambda*(ei(n)-eip(n)) * a
           chin(6,n) = zero
 
           chin(3,n) = two*(omgrf-n*eq%omgc(is))/vth**2 * ei(n) * b
@@ -206,7 +333,7 @@ contains
      chi(3,2) = -chi(2,3)
 
     return
- end subroutine suscep_bessel
+ end subroutine suscep_bessel_n1_cmplx_n3_real
 
 ! ********************************************************************************
 
@@ -255,9 +382,10 @@ contains
 !       Dielectric tensor ROUTINES
 ! ********************************************************************************
 
- subroutine dielectric(eq, n1, n3, eps)
+ subroutine dielectric_general_n1_cmplx_n3_real(eq, n1, n3, eps)
 
 !   General form: Plasma dielectric tensor eps summed each species susceptibility, chi.
+!   N.B. Args n1 is complex, n3 is real
 !   Different species can have different susceptibility models.
 
     use constants_m, only : rkind, zero, one, two
@@ -270,7 +398,8 @@ contains
     type(eq_point(nspec=nspec)), intent(in) :: eq
 
 !   Refractive indices, n1 -> n perp, n3 -> n parallel
-    real(KIND=rkind), intent(in) :: n1, n3
+    complex(KIND=rkind), intent(in) :: n1
+    real(KIND=rkind), intent(in) :: n3
 
     complex(KIND=rkind), intent(out) :: eps(3,3)
     complex(KIND=rkind) :: chi(3,3)
@@ -287,11 +416,12 @@ contains
 		  case ('cold')
 			call suscep_cold(eq, is, chi)
 
-		  case ('bessel')
-			call suscep_bessel(eq, n1, n3, is, chi)
+		  case ('bessel_n1_cmplx_n3_real')
+			call suscep_bessel_n1_cmplx_n3_real(eq, n1, n3, is, chi)
 
 		  case default
-			write (0,*) 'dielectric_tensor: unimplemented suscep model =', spec_model(is)
+			write (0,*) 'bessel_n1_cmplx_n3_real:&
+			  &  unimplemented suscep model = ', spec_model(is)
 
 	  end select plasma_model
 
@@ -306,7 +436,64 @@ contains
     end do
 
     return
- end subroutine dielectric
+ end subroutine dielectric_general_n1_cmplx_n3_real
+
+! ********************************************************************************
+
+ subroutine dielectric_general_n1_n3_real(eq, n1, n3, eps)
+
+!   General form: Plasma dielectric tensor eps summed each species susceptibility, chi.
+!   N.B. Args n1 , n3 are real
+!   Different species can have different susceptibility models.
+
+    use constants_m, only : rkind, zero, one, two
+    use species_m, only : nspec, spec_model
+    use equilibrium_m, only : eq_point
+
+    implicit none
+
+!   Derived type containing equilibrium data for a spatial point in the plasma
+    type(eq_point(nspec=nspec)), intent(in) :: eq
+
+!   Refractive indices, n1 -> n perp, n3 -> n parallel
+    real(KIND=rkind), intent(in) :: n1
+    real(KIND=rkind), intent(in) :: n3
+
+    complex(KIND=rkind), intent(out) :: eps(3,3)
+    complex(KIND=rkind) :: chi(3,3)
+
+    integer :: is, i
+
+    eps = zero
+
+!   Get susceptibility tensor for each species.
+    do is = 0, nspec
+
+	  plasma_model: select case (spec_model(is) )
+
+		  case ('cold')
+			call suscep_cold(eq, is, chi)
+
+		  case ('bessel_n1_n3_real')
+			call suscep_bessel_n1_n3_real(eq, n1, n3, is, chi)
+		  case default
+			write (0,*) 'dielectric_general_n1_n3_real: unimplemented suscep model = ',&
+			           & trim(spec_model(is))
+
+	  end select plasma_model
+
+	  eps = eps + chi
+
+    end do
+
+!   Dielectric tensor.
+
+    do i =1,3
+        eps(i,i) = eps(i,i) + one
+    end do
+
+    return
+ end subroutine dielectric_general_n1_n3_real
 
 ! ********************************************************************************
 
@@ -349,9 +536,8 @@ contains
 
 ! ********************************************************************************
 
- subroutine dielectric_bessel(eq, n1, n3, eps)
-!   calculates the cold plasma dielectric tensor eps for each species using suscep_bessel().
-!   Output eps is derived type dielectric_tensor defined above.
+ subroutine dielectric_bessel_n1_cmplx_n3_real(eq, n1, n3, eps)
+!   Calculates the dielectric tensor eps using suscep_bessel() for all species
 
     use constants_m, only : rkind, zero, one, two
     use species_m, only : nspec, spec_model
@@ -359,9 +545,9 @@ contains
 
     implicit none
 
-!   Derived type containing equilibrium data for a spatial point in the plasma
     type(eq_point), intent(in) :: eq
-    real(KIND=rkind), intent(in) :: n1, n3
+    complex(KIND=rkind), intent(in) :: n1
+    real(KIND=rkind), intent(in) :: n3
     complex(KIND=rkind), intent(out) :: eps(3,3)
 
     complex(KIND=rkind) :: chi(3,3)
@@ -373,7 +559,7 @@ contains
 
 !   Get susceptibility tensor for each species.
     do is = 0, nspec
-        call suscep_bessel(eq, n1, n3, is, chi)
+        call suscep_bessel_n1_cmplx_n3_real(eq, n1, n3, is, chi)
         eps = eps + chi
 
     end do
@@ -385,7 +571,7 @@ contains
     end do
 
     return
- end subroutine dielectric_bessel
+ end subroutine dielectric_bessel_n1_cmplx_n3_real
 
 !****************************************************************************
 

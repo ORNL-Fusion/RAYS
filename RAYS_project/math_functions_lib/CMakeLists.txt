@@ -11,6 +11,8 @@ list (APPEND lib_sources
                 $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/newtonR3_m.f90>
                 $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/complex_bessel_m.f90>
                 $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/ebessel_dbb.f90>
+                $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/matrix3x3_m.f90>
+                $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/write_matrix_m.f90>
 )
 add_library (math_functions ${lib_sources})
 
@@ -27,6 +29,18 @@ target_link_libraries(math_functions
 #********************************************
 
 #SET(CMAKE_RUNTIME_OUTPUT_DIRECTORY "../../tests")
+
+add_executable (test_matrix3x3)
+
+target_sources (test_matrix3x3
+                PRIVATE
+                $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/test_matrix3x3.f90>
+)
+
+target_link_libraries (test_matrix3x3
+                       PUBLIC
+                       math_functions
+)
 
 add_executable (test_bessel)
 

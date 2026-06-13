@@ -56,7 +56,7 @@ contains
 
   subroutine initialize_rf_m(read_input)
 
-    use constants_m, only : pi, clight
+    use constants_m, only : pi, clight, two
     use diagnostics_m, only : message_unit, message, text_message,  &
                             & messages_to_stdout, verbosity
 
@@ -84,7 +84,7 @@ contains
        write (0,*) 'initialize_rf: frf =', frf
        stop 1
     else
-       omgrf = 2.*pi * frf
+       omgrf = two*pi * frf
     end if
 
 !   Wave number in vacuum.
