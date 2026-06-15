@@ -137,8 +137,9 @@ contains
 !   Thermal speed:
     vth = sqrt( two*eq%ts(is)/ms(is) )
 
-!   Eq.(10-55) for lambda:
-    lambda = cmplx((k0*n1)**2*eq%ts(is)/(ms(is)*eq%omgc(is)**2), zero)
+!   Eq.(10-55) for lambda.  N.B. eq%omgc(is) carries the sign of the charge
+    b= k0*n1*vth/eq%omgc(is)/sqrt(two)
+    lambda = cmplx(b**2, zero)
 
 !   ei = exp(-lambda)*I_n(lambda), eip = exp(-lambda)*I'_n(lambda).
 
@@ -167,8 +168,8 @@ contains
           chin(3,n) = -ei(n) * xi(n) * zfp(n)
 
           chin(4,n) = zi * n * (eip(n)-ei(n)) * zf(n)
-          chin(5,n) = -iomgc * sqrt(lambda/two) * n * ei(n) * zfp(n)
-          chin(6,n) = iomgc * zi * sqrt(lambda/two) * (eip(n)-ei(n)) * zfp(n)
+          chin(5,n) = -one/sqrt(two)/b * n * ei(n) * zfp(n)
+          chin(6,n) = zi/sqrt(two) * b * (eip(n)-ei(n)) * zfp(n)
 !   write(*,*) 'suscep_bessel: ','  n = ', n, '  chin(1,n) = ', chin(1,n)
 !   write(*,*) 'suscep_bessel: ','  n = ', n, '  chin(2,n) = ', chin(2,n)
 !   write(*,*) 'suscep_bessel: ','  n = ', n, '  chin(3,n) = ', chin(3,n)
@@ -258,8 +259,9 @@ contains
 !   Thermal speed:
     vth = sqrt( two*eq%ts(is)/ms(is) )
 
-!   Eq.(10-55) for lambda:
-    lambda = (k0*n1)**2*eq%ts(is) / (ms(is)*eq%omgc(is)**2)
+!   Eq.(10-55) for lambda.  N.B. eq%omgc(is) carries the sign of the charge
+    b= k0*n1*vth/eq%omgc(is)/sqrt(two)
+    lambda = b**2
 
 !   ei = exp(-lambda)*I_n(lambda), eip = exp(-lambda)*I'_n(lambda).
 
@@ -288,8 +290,8 @@ contains
           chin(3,n) = -ei(n) * xi(n) * zfp(n)
 
           chin(4,n) = zi * n * (eip(n)-ei(n)) * zf(n)
-          chin(5,n) = -iomgc * sqrt(lambda/two) * n * ei(n) * zfp(n)
-          chin(6,n) = iomgc * zi * sqrt(lambda/two) * (eip(n)-ei(n)) * zfp(n)
+          chin(5,n) = -one/sqrt(two)/b * n * ei(n) * zfp(n)
+          chin(6,n) = zi/sqrt(two) * b * (eip(n)-ei(n)) * zfp(n)
 !   write(*,*) 'suscep_bessel: ','  n = ', n, '  chin(1,n) = ', chin(1,n)
 !   write(*,*) 'suscep_bessel: ','  n = ', n, '  chin(2,n) = ', chin(2,n)
 !   write(*,*) 'suscep_bessel: ','  n = ', n, '  chin(3,n) = ', chin(3,n)

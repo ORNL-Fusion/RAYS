@@ -75,6 +75,7 @@ contains
 
     use diagnostics_m, only : message_unit, message, text_message, messages_to_stdout, verbosity
     use species_m, only : nspec0
+    use uniform_eq_m, only : initialize_uniform_eq_m
     use slab_eq_m, only : initialize_slab_eq_m
     use solovev_eq_m, only : initialize_solovev_eq_m
     use axisym_toroid_eq_m, only : initialize_axisym_toroid_eq_m
@@ -99,6 +100,10 @@ contains
     end if
 
     equilibria: select case (trim(equilib_model))
+
+       case ('uniform')
+!         Uniform plasma, all gradients 0.0
+          call initialize_uniform_eq_m(read_input)
 
        case ('slab')
 !         A 1-D slab equilibrium with stratification in x
@@ -145,6 +150,7 @@ contains
     use species_m, only : nspec, ms, qs
     use diagnostics_m, only : message, text_message
 
+    use uniform_eq_m, only : uniform_eq
     use slab_eq_m, only : slab_eq
     use solovev_eq_m, only : solovev_eq
     use axisym_toroid_eq_m, only : axisym_toroid_eq
@@ -175,6 +181,10 @@ contains
 
     integer :: ivec, ivec1, ivec2
     equilibria: select case (trim(equilib_model))
+       case ('uniform')
+!         Uniform plasma, all gradients 0.0
+          call uniform_eq(rvec, bvec, gradbtensor, ns, gradns, ts, gradts, equib_err)
+
        case ('slab')
 !         A 1-D slab equilibrium with stratification in x
           call slab_eq(rvec, bvec, gradbtensor, ns, gradns, ts, gradts, equib_err)
