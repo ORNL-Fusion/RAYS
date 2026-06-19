@@ -1,6 +1,6 @@
  module suscep_m
 !   Contains routines to calculate susceptibility tensor, chi, for a single species,
-!   dielectric tensor, eps, and dispersion functions D = k x k + eps
+!   dielectric tensor, eps, and dispersion functions, disp_fun
 !
 !   N.B. is = species number (0:nspec), and eps = I + sum(chis(is)). The dispersion
 !             relation is generally written in terms of eps.
@@ -25,6 +25,8 @@
 !    chi is the sum over individual species chi(is).
 !
 !    dielectric tensor, eps, is I + sum[chi(is)] where I is the identity.
+!
+!    dispersion function, disp_fun, is det(nn-n.nI + eps)
 
 ! N.B. Plasma quantities come in from type eq_point defined in equilibrium_m.
 ! An equilibrium routine must have been called previously to generate eq
@@ -418,6 +420,9 @@ contains
 		  case ('cold')
 			call suscep_cold(eq, is, chi)
 
+		  case ('bessel_n1_n3_real')
+			call suscep_bessel_n1_n3_real(eq, real(n1), n3, is, chi)
+
 		  case ('bessel_n1_cmplx_n3_real')
 			call suscep_bessel_n1_cmplx_n3_real(eq, n1, n3, is, chi)
 
@@ -644,7 +649,43 @@ real function disp_fun_cold_real(eq, n1, n2, n3)
        return
  end function disp_fun_cold_real
 
+! ********************************************************************************
 
+ function disp_fun_general_real(eq, n1, n3)
+! Calculates the general plasma dispersion function versus the components of n perpendicular
+! to B (i.e. n1), and the component parallel to B (i.e. n3)
+! n1 and n2 are real.  The dispersion function is the determinant of the Hermitian part
+! of dispersion tensor and is therefore real.  Used for root finding to initialize
+! k for ray tracing.
+
+! N.B. The components of n, and the return value, disp_fun_cold_real, are real.
+
+    use constants_m, only : rkind
+    use equilibrium_m, only : eq_point
+    USE matrix3x3_m, only : hermitian3x3, determinant3x3
+
+	implicit none
+
+	real(KIND=rkind) :: disp_fun_general_real
+
+	! Derived type containing equilibrium data for a spatial point in the plasma
+	type(eq_point), intent(in) :: eq
+	real(KIND=rkind), intent(in) :: n1, n3
+
+	complex(KIND=rkind) :: eps(3,3), disp_tensor(3,3)
+
+	call dielectric_general_n1_n3_real(eq, n1, n3, eps)
+	disp_tensor = hermitian3x3(eps)
+	disp_tensor(1,1) = disp_tensor(1,1)-n3**2
+	disp_tensor(1,3) = disp_tensor(1,3)+n1*n3
+	disp_tensor(2,2) = disp_tensor(2,2)-n1**2-n3**2
+	disp_tensor(3,1) = disp_tensor(3,1)+n1*n3
+	disp_tensor(3,3) = disp_tensor(3,3)-n1**2
+
+	disp_fun_general_real = determinant3x3(disp_tensor)
+
+       return
+ end function disp_fun_general_real
 
 ! ********************************************************************************
 

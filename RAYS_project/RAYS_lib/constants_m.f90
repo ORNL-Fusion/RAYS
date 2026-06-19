@@ -40,7 +40,7 @@ contains
        sqrt_pi = sqrt(pi)
 
        clight = 2.997930d8
-       mu0 = pi * 4.e-7
+       mu0 = pi * 4.d-7
        eps0=1./(mu0*clight**2)   ! chosen to make c=1/sqrt(eps0*mu0)
 
        me = 9.1094d-31

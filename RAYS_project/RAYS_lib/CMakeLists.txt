@@ -48,6 +48,7 @@ list (APPEND lib_sources
 	species_m.f90
 	suscep_m.f90
 	temperature_spline_interp_m.f90
+	uniform_eq_m.f90
 	XY_curves_netCDF_m.f90
 )
 
