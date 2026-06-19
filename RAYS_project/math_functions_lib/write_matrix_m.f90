@@ -66,7 +66,7 @@ contains
 
 	if ((v_max < 1.e4) .and. (v_min > 1.e-3)) then ! Write in floating point
 
-		write(out_unit, '(a," ")')
+!		write(out_unit, '(a," ")')
 		write(out_unit, '(a, " = ")' ) trim(mess)
 !		write(*, '(a, " = ")' ) trim(mess)
 
@@ -77,7 +77,7 @@ contains
 
 	else ! Write in scientific notation
 
-		write(out_unit, '(a," ")')
+!		write(out_unit, '(a," ")')
 		write(out_unit, '(a, " = ")' ) trim(mess)
 !		write(*, '(a, " = ")' ) trim(mess)
 		do i = 1, m_dim
@@ -123,7 +123,7 @@ contains
 
 	if ((v_max < 1.e4) .and. (v_min > 1.e-3)) then ! Write in floating point
 
-		write(out_unit, '(a," ")')
+!		write(out_unit, '(a," ")')
 		write(out_unit, '(a, " = ")' ) trim(mess)
 !		write(*, '(a, " = ")' ) trim(mess)
 
@@ -134,7 +134,7 @@ contains
 
 	else ! Write in scientific notation
 
-		write(out_unit, '(a," ")')
+!		write(out_unit, '(a," ")')
 		write(out_unit, '(a, " = ")' ) trim(mess)
 !		write(*, '(a, " = ")' ) trim(mess)
 		do i = 1, m_dim
