@@ -651,14 +651,12 @@ real function disp_fun_cold_real(eq, n1, n2, n3)
 
 ! ********************************************************************************
 
- function disp_fun_general_real(eq, n1, n3)
+ function disp_fun_general_Hermitian(eq, n1, n3)
 ! Calculates the general plasma dispersion function versus the components of n perpendicular
-! to B (i.e. n1), and the component parallel to B (i.e. n3)
-! n1 and n2 are real.  The dispersion function is the determinant of the Hermitian part
-! of dispersion tensor and is therefore real.  Used for root finding to initialize
-! k for ray tracing.
-
-! N.B. The components of n, and the return value, disp_fun_cold_real, are real.
+! to B (i.e. n1), and the component parallel to B (i.e. n3).
+! N.B. n1 and n2 are complex.
+! The dispersion function is the determinant of the Hermitian part of dispersion tensor
+! and is therefore real.  Used for root finding to initialize k for ray tracing.
 
     use constants_m, only : rkind
     use equilibrium_m, only : eq_point
@@ -670,7 +668,7 @@ real function disp_fun_cold_real(eq, n1, n2, n3)
 
 	! Derived type containing equilibrium data for a spatial point in the plasma
 	type(eq_point), intent(in) :: eq
-	real(KIND=rkind), intent(in) :: n1, n3
+	complex(KIND=rkind), intent(in) :: n1, n3
 
 	complex(KIND=rkind) :: eps(3,3), disp_tensor(3,3)
 
@@ -685,7 +683,7 @@ real function disp_fun_cold_real(eq, n1, n2, n3)
 	disp_fun_general_real = determinant3x3(disp_tensor)
 
        return
- end function disp_fun_general_real
+ end function disp_fun_general_Hermitian
 
 ! ********************************************************************************
 

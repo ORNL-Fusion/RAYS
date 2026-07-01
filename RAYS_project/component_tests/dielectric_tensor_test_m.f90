@@ -73,7 +73,8 @@ module dielectric_tensor_test_m
     if (read_input .eqv. .true.) then
     ! Read and write input namelist
    		input_unit = get_unit_number()
-        open(unit=input_unit, file='component_test_rays.in',action='read', status='old', form='formatted')
+        open(unit=input_unit, file='component_test_rays.in',action='read', status='old',&
+           & form='formatted')
         read(input_unit, dielectric_tensor_test_list)
         close(unit=input_unit)
         write(message_unit, dielectric_tensor_test_list)
@@ -95,7 +96,8 @@ module dielectric_tensor_test_m
     use species_m, only : nspec, spec_name, spec_model
     use suscep_m, only : suscep_cold, dielectric_cold, &
               & suscep_bessel_n1_n3_real, dielectric_general_n1_n3_real, &
-              & suscep_bessel_n1_cmplx_n3_real, dielectric_general_n1_cmplx_n3_real
+              & suscep_bessel_n1_cmplx_n3_real, dielectric_general_n1_cmplx_n3_real, &
+              & disp_fun_cold_real, disp_fun_general_real
 
     implicit none
 
@@ -131,6 +133,7 @@ module dielectric_tensor_test_m
 
 		write(out_unit, *) ' '
 		write(out_unit, *) 'rvec = ', rvec
+		write(out_unit, *) 'n1_in = ', n1_in, '  n3_in = ', n3_in
 		write(out_unit, *) 'species ', spec_name(0:nspec)
 		write(out_unit, *) '|B| = ', eq%bmag
 		write(out_unit, *) 'n(s) = ', eq%ns
@@ -145,6 +148,7 @@ module dielectric_tensor_test_m
 			do is = 0, nspec
 				call suscep_cold(eq, is, chi)
 				label = 'cold suscep '//trim(spec_name(is))
+				write(out_unit, '(a," ")')
 				call write_matrix(label, chi, 3, 3, out_unit)
 			end do
 
@@ -157,25 +161,61 @@ module dielectric_tensor_test_m
 			do is = 0, nspec
 				call suscep_bessel_n1_n3_real(eq, n1_in, n3_in, is, chi)
 				label = 'suscep_bessel_n1_n3_real '//trim(spec_name(is))
+				write(out_unit, '(a," ")')
 				call write_matrix(label, chi, 3, 3, out_unit)
 			end do
 
+			spec_model(:) = 'bessel_n1_n3_real'
+			write(out_unit,*) 'spec_model = ', trim(spec_model(0))
 			call dielectric_general_n1_n3_real(eq, n1_in, n3_in, eps)
 			label = 'dielectric_general_n1_n3_real'
+			write(out_unit, '(a," ")')
 			call write_matrix(label, eps, 3, 3, out_unit)
 
-			spec_model(:) = 'bessel_n1_cmplx_n3_real'
 			n1_c = cmplx(n1_in, zero)
 			do is = 0, nspec
 				call suscep_bessel_n1_cmplx_n3_real(eq, n1_c, n3_in, is, chi)
 				label = 'suscep_bessel_n1_cmplx_n3_real '//trim(spec_name(is))
+				write(out_unit, '(a," ")')
 				call write_matrix(label, chi, 3, 3, out_unit)
 			end do
 
-			call dielectric_general_n1_cmplx_n3_real(eq, n1_c, n3_in, eps)
-			label = 'dielectric_general_n1_cmplx_n3_real'
+			spec_model(:) = 'bessel_n1_n3_real'
+			write(out_unit,*) 'spec_model(0) = ', trim(spec_model(0))
+			call dielectric_general_n1_n3_real(eq, n1_in, n3_in, eps)
+			label = 'dielectric_general_n1_n3_real'
+			write(out_unit, '(a," ")')
 			call write_matrix(label, eps, 3, 3, out_unit)
 		end if
+
+! Write dispersion functions
+
+      	if (test_cold .eqv. .true.) then
+			label = 'disp_fun_cold_real'
+			write(out_unit, '(a," ")')
+			write(out_unit,*) label, ' = ',&
+			  &   disp_fun_cold_real(eq, n1_in, zero, n3_in)
+		end if
+
+      	if (test_warm_bessel .eqv. .true.) then
+			spec_model(:) = 'cold'
+			write(out_unit, '(a," ")')
+			write(out_unit,*) 'spec_model(0) = ', trim(spec_model(0))
+			label = 'disp_fun_general_real'
+			write(out_unit,*) label, ' = ',&
+			  &   disp_fun_general_real(eq, n1_in, n3_in)
+		end if
+
+      	if (test_warm_bessel .eqv. .true.) then
+			spec_model(:) = 'bessel_n1_n3_real'
+			write(out_unit, '(a," ")')
+			write(out_unit,*) 'spec_model(0) = ', trim(spec_model(0))
+			label = 'disp_fun_general_real'
+			write(out_unit,*) label, ' = ',&
+			  &   disp_fun_general_real(eq, n1_in, n3_in)
+		end if
+
+		write(out_unit, '(a," ")')
 
 	end if
 
