@@ -14,7 +14,6 @@
     integer, parameter :: rkind = selected_real_kind(15,307) ! kind parameter for reals
     integer, parameter :: skind = selected_real_kind(6,37) ! kind parameter single precision
 
-    real(KIND=rkind) :: pi, sqrt_pi         ! usual pi= 3.14159.....
     real(KIND=rkind) :: clight, mu0, eps0   ! consistent electro-magnetic constants
     real(KIND=rkind) :: me, mp, e           ! electron mass, proton mass and unit charge
     real(KIND=rkind) :: epsmach             ! measure of machine precision
@@ -26,8 +25,12 @@
     real(KIND=rkind),parameter :: zero = 0.0_rkind
     real(KIND=rkind),parameter :: one = 1.0_rkind
     real(KIND=rkind),parameter :: two = 2.0_rkind
+    real(KIND=rkind),parameter :: three = 3.0_rkind
+    real(KIND=rkind),parameter :: four = 4.0_rkind
     real(KIND=rkind),parameter :: ten = 10.0_rkind
 
+    real(KIND=rkind),parameter :: pi = atan(zero,-one)
+    real(KIND=rkind),parameter :: sqrt_pi = sqrt(pi)
     complex(KIND=rkind), parameter :: i = cmplx(zero, one)
 
 !_________________________________________________________________________________________
@@ -35,9 +38,6 @@ contains
 !_________________________________________________________________________________________
 
     subroutine initialize_constants_m
-
-        pi = 3.1415926535897932385d0
-       sqrt_pi = sqrt(pi)
 
        clight = 2.997930d8
        mu0 = pi * 4.d-7
@@ -47,8 +47,8 @@ contains
        mp = 1.6726d-27
        e = 1.6022d-19
 
-       epsmach = epsilon(clight)
-       tinyr = tiny(clight)
+       epsmach = epsilon(pi)
+       tinyr = tiny(pi)
 
        unitmat2 = reshape( (/ one, zero, zero, one /), (/ 2, 2 /) )
        unitmat3 = reshape( (/ one, zero, zero, zero, one, zero, zero, zero, one /),    &

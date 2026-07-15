@@ -1,5 +1,15 @@
  module dispersion_solvers_m
-! Contains routines to solve various forms of the plasma dispersion relation
+! Contains routines to solve various forms of the plasma dispersion relation for various
+! components of the wave refractive index vector, nvec.
+!
+! N.B. naming conventions for components of n
+! nx, ny, nz are components in the lab Cartesian frame
+! n1, n2, n3 are components in what might be called the Stix frame
+!   n3 = parallel component of nvec parallel to B (AKA n-parallel)
+!   n1 = component of nvec perpendicular to B (AKA n-perp). Typically the component
+!        to be solved for (e.g. x or radial component)
+!   n2 = transverse component of nvec i.e. perpendicular to both B and n1
+
 !
 ! The particular model to be solved is specified by argument "dispersion_model"
 ! Presently one model is supported: cold, (warm coming real soon now)
@@ -7,8 +17,6 @@
 ! Presently four forms for this model are supported:
 ! 1) solve_n1_vs_n2_n3
 !   n1 = component of nvec perpendicular to B to be solved for (e.g. x or radial component)
-!   n2 = transverse component of nvec i.e. perpendicular to both B and n1
-!   n3 = parallel component of kvec (nvec)
 !
 ! 2) solve_nx_vs_ny_nz_by_bz
 !   n1 = component of nvec perpendicular to B to be solved for (e.g. x or radial component)
@@ -136,8 +144,8 @@ contains
 ! Convenience routine that resolves ny, nz into n2 and n3 (n transverse and n parallel) and
 ! calls subroutine above.
 
-! N.B. This requires that the magnetic field be in the y-z plane, otherwise n_parallel
-!      has a component along nx.  That would make dispersion relation 4th order instead of
+! N.B. This requires that the magnetic field be in the y-z plane. Otherwise n_parallel
+!      has a component along nx, which would make dispersion relation 4th order instead of
 !      bi-quadratic
 
 ! N.B. nx output is complex(KIND=rkind).  Calling program must account for that.

@@ -577,9 +577,10 @@ subroutine depsdq_bessel(eq, is, kvec, depsdw_hs, depsdk_hs, depsdx_hs)
 ! Generates the quantities g(1:6), h1 and h3 as defined in the notes from
 ! 11-4-99.  These are elements in the chain rule for dD/dq.
 
-    use constants_m, only : rkind, one, two
+    use constants_m, only : rkind, zero, one, two
     use equilibrium_m, only : eq_point
-    use suscep_m, only : dielectric_general_n1_n3_real
+    use suscep_m, only : dielectric_general
+    USE matrix3x3_m, only : hermitian3x3
 
     implicit none
     type(eq_point), intent(in) :: eq
@@ -593,8 +594,10 @@ subroutine depsdq_bessel(eq, is, kvec, depsdw_hs, depsdk_hs, depsdx_hs)
 
     n3 = dot_product(nvec, eq%bunit)
     n1 = sqrt( sum((nvec-n3*eq%bunit)**2) )
-	call dielectric_general_n1_n3_real(eq, n1, n3, eps)
-    eps_h = half*( eps + conjg(transpose(eps)) )
+
+! N.B.  Dielectric routines take complex args, but in ray tracing nvec is real
+	call dielectric_general(eq, cmplx(n1, zero, rkind), cmplx(n3, zero, rkind), eps)
+    eps_h = hermitian3x3(eps)
 
     g(1) = n1**4 + n1**2*n3**2 + n1**2*(-eps_h(2,2) - eps_h(3,3)) - n3**2*eps_h(3,3) +&
             & eps_h(2,2)*eps_h(3,3) + eps_h(2,3)**2

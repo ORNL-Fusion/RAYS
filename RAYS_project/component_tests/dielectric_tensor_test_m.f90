@@ -38,8 +38,9 @@ module dielectric_tensor_test_m
 ! Data for one_point test
 	integer :: number_of__models ! As of now 1 or 2
     real(KIND=rkind) :: x_in, y_in, z_in ! Eq point to evaluate
-    real(KIND=rkind) :: n1_in, n3_in ! n perp and n|| to evaluate
-    complex(KIND=rkind) :: n1_c, n3_c ! n perp and n|| to evaluate
+    real(KIND=rkind) :: n1_in, n3_in ! real part of n perp and n|| to evaluate
+    real(KIND=rkind) :: n1_im = zero, n3_im = zero ! imaginary part of n perp and n||
+    complex(KIND=rkind) :: n1_c, n3_c ! complex n perp and n|| to evaluate
 
 ! Data for x scan and nz scan
     integer :: n_xpoints ! Number of x points in scan
@@ -53,7 +54,8 @@ module dielectric_tensor_test_m
 
     namelist /dielectric_tensor_test_list/ one_point, scan, &
             & test_cold, test_warm_bessel, &
-            & x_in, y_in, z_in, n1_in, n3_in, &
+            & x_in, y_in, z_in, &
+            & n1_in, n3_in, n1_im, n3_im, &
             & scan_x, scan_nz, &
             & n_xpoints, xmin, xmax, n_nz_points, nz_min, nz_max
 
@@ -92,12 +94,11 @@ module dielectric_tensor_test_m
 	use constants_m, only : e
     use diagnostics_m, only : message_unit, message, text_message, messages_to_stdout
     use equilibrium_m, only : equilibrium, eq_point
-    use rf_m, only : ray_dispersion_model, wave_mode, k0
-    use species_m, only : nspec, spec_name, spec_model
+    use rf_m, only : ray_dispersion_model, wave_mode, k0, frf
+    use species_m, only : nspec, spec_name, spec_model, nmins, nmaxs
     use suscep_m, only : suscep_cold, dielectric_cold, &
-              & suscep_bessel_n1_n3_real, dielectric_general_n1_n3_real, &
-              & suscep_bessel_n1_cmplx_n3_real, dielectric_general_n1_cmplx_n3_real, &
-              & disp_fun_cold_real, disp_fun_general_real
+              & suscep_bessel, dielectric_general, &
+              & disp_fun_cold, disp_fun_general, disp_fun_general_Hermitian
 
     implicit none
 
@@ -133,16 +134,26 @@ module dielectric_tensor_test_m
 
 		write(out_unit, *) ' '
 		write(out_unit, *) 'rvec = ', rvec
+		write(out_unit, *) 'frf = ', frf
 		write(out_unit, *) 'n1_in = ', n1_in, '  n3_in = ', n3_in
 		write(out_unit, *) 'species ', spec_name(0:nspec)
 		write(out_unit, *) '|B| = ', eq%bmag
 		write(out_unit, *) 'n(s) = ', eq%ns
 		write(out_unit, *) 'T(s) ev = ', eq%ts/e
+		write(out_unit, *) 'nmin(s) = ', nmins
+		write(out_unit, *) 'nmax(s) = ', nmaxs
 		write(*, *) 'rvec = ', rvec
 		write(*, *) 'species ', spec_name(0:nspec)
 		write(*, *) '|B| = ', eq%bmag
 		write(*, *) 'n(s) = ', eq%ns
 		write(*, *) 'T(s) ev = ', eq%ts/e
+		write(*, *) 'nmin(s) = ', nmins
+		write(*, *) 'nmax(s) = ', nmaxs
+
+		write(out_unit, *) ' '
+		write(out_unit, *) 'alpha(0) = ', eq%alpha(0)
+		write(out_unit, *) 'gamma(0) = ', eq%gamma(0)
+
 
       	if (test_cold .eqv. .true.) then
 			do is = 0, nspec
@@ -158,62 +169,116 @@ module dielectric_tensor_test_m
 		end if
 
       	if (test_warm_bessel .eqv. .true.) then
-			do is = 0, nspec
-				call suscep_bessel_n1_n3_real(eq, n1_in, n3_in, is, chi)
-				label = 'suscep_bessel_n1_n3_real '//trim(spec_name(is))
-				write(out_unit, '(a," ")')
-				call write_matrix(label, chi, 3, 3, out_unit)
-			end do
+			write(out_unit, *) ' '
+			write(out_unit, *) 'Real arguments '
+			write(out_unit, *) 'n1_in = ', n1_in, '  n3_in = ', n3_in
+			n1_c = cmplx(n1_in, zero, rkind)
+			n3_c = cmplx(n3_in, zero, rkind)
+! 			do is = 0, nspec
+! 				call suscep_bessel(eq, n1_c, n3_c, is, chi)
+! 				label = 'suscep_bessel '//trim(spec_name(is))
+! 				write(out_unit, '(a," ")')
+! 				call write_matrix(label, chi, 3, 3, out_unit)
+! 			end do
 
-			spec_model(:) = 'bessel_n1_n3_real'
+			spec_model(:) = 'bessel'
+			write(out_unit,*) ' '
 			write(out_unit,*) 'spec_model = ', trim(spec_model(0))
-			call dielectric_general_n1_n3_real(eq, n1_in, n3_in, eps)
-			label = 'dielectric_general_n1_n3_real'
+			call dielectric_general(eq, n1_c, n3_c, eps)
+			label = 'dielectric_general'
 			write(out_unit, '(a," ")')
 			call write_matrix(label, eps, 3, 3, out_unit)
 
-			n1_c = cmplx(n1_in, zero)
-			do is = 0, nspec
-				call suscep_bessel_n1_cmplx_n3_real(eq, n1_c, n3_in, is, chi)
-				label = 'suscep_bessel_n1_cmplx_n3_real '//trim(spec_name(is))
-				write(out_unit, '(a," ")')
-				call write_matrix(label, chi, 3, 3, out_unit)
-			end do
+			n1_c = cmplx(n1_in, n1_im, rkind)
+			n3_c = cmplx(n3_in, n3_im, rkind)
 
-			spec_model(:) = 'bessel_n1_n3_real'
+			write(out_unit, *) ' '
+			write(out_unit, *) 'Complex arguments '
+			write(out_unit, *) 'n1_c = ', n1_c, '  n3_c = ', n3_c
+
+! 			do is = 0, nspec
+! 				call suscep_bessel(eq, n1_c, n3_c, is, chi)
+! 				label = 'suscep_bessel '//trim(spec_name(is))
+! 				write(out_unit, '(a," ")')
+! 				call write_matrix(label, chi, 3, 3, out_unit)
+! 			end do
+
+			spec_model(:) = 'bessel'
+			write(out_unit,*) ' '
 			write(out_unit,*) 'spec_model(0) = ', trim(spec_model(0))
-			call dielectric_general_n1_n3_real(eq, n1_in, n3_in, eps)
-			label = 'dielectric_general_n1_n3_real'
+			call dielectric_general(eq, n1_c, n3_c, eps)
+			label = 'dielectric_general'
 			write(out_unit, '(a," ")')
 			call write_matrix(label, eps, 3, 3, out_unit)
 		end if
 
 ! Write dispersion functions
 
-      	if (test_cold .eqv. .true.) then
-			label = 'disp_fun_cold_real'
-			write(out_unit, '(a," ")')
-			write(out_unit,*) label, ' = ',&
-			  &   disp_fun_cold_real(eq, n1_in, zero, n3_in)
-		end if
-
-      	if (test_warm_bessel .eqv. .true.) then
-			spec_model(:) = 'cold'
-			write(out_unit, '(a," ")')
-			write(out_unit,*) 'spec_model(0) = ', trim(spec_model(0))
-			label = 'disp_fun_general_real'
-			write(out_unit,*) label, ' = ',&
-			  &   disp_fun_general_real(eq, n1_in, n3_in)
-		end if
-
-      	if (test_warm_bessel .eqv. .true.) then
-			spec_model(:) = 'bessel_n1_n3_real'
-			write(out_unit, '(a," ")')
-			write(out_unit,*) 'spec_model(0) = ', trim(spec_model(0))
-			label = 'disp_fun_general_real'
-			write(out_unit,*) label, ' = ',&
-			  &   disp_fun_general_real(eq, n1_in, n3_in)
-		end if
+!       	write(out_unit,*) ''
+!       	write(out_unit,*) 'Dispersion function ******************'
+!       	write(out_unit,*) ''
+!       	if (test_cold .eqv. .true.) then
+! 			write(out_unit, '(a," ")')
+! 			write(out_unit,*) 'disp_fun_cold = ',&
+! 			  &   disp_fun_cold(eq, n1_c, cmplx(zero, zero,rkind), n3_c)
+! 		end if
+!
+!       	if (test_warm_bessel .eqv. .true.) then
+! 			spec_model(:) = 'cold'
+! 			write(out_unit,*) ' '
+! 			write(out_unit,*) 'spec_model(0) = ', trim(spec_model(0))
+! 			write(out_unit,*) 'disp_fun_general = ',&
+! 			  &   disp_fun_general(eq, n1_c, n3_c)
+! 		end if
+!
+!       	if (test_warm_bessel .eqv. .true.) then
+! 			write(out_unit, '(a," ")')
+! 			write(out_unit, *) 'Real arguments '
+! 			write(out_unit, *) 'n1_in = ', n1_in, '  n3_in = ', n3_in
+! 			n1_c = cmplx(n1_in, zero, rkind)
+! 			n3_c = cmplx(n3_in, zero, rkind)
+! 			spec_model(:) = 'bessel'
+! 			write(out_unit,*) 'spec_model(0) = ', trim(spec_model(0))
+! 			write(out_unit,*) 'disp_fun_general = ',&
+! 			  &   disp_fun_general(eq, n1_c, n3_c)
+! 		end if
+!
+!       	if (test_warm_bessel .eqv. .true.) then
+! 			n1_c = cmplx(n1_in, n1_im, rkind)
+! 			n3_c = cmplx(n3_in, n3_im, rkind)
+! 			write(out_unit, *) ' '
+! 			write(out_unit, *) 'Complex arguments '
+! 			write(out_unit, *) 'n1_c = ', n1_c, '  n3_c = ', n3_c
+! 			spec_model(:) = 'bessel'
+! 			write(out_unit, '(a," ")')
+! 			write(out_unit,*) 'spec_model(0) = ', trim(spec_model(0))
+! 			write(out_unit,*) 'disp_fun_general = ',&
+! 			  &   disp_fun_general(eq, n1_c, n3_c)
+! 		end if
+!
+!       	if (test_warm_bessel .eqv. .true.) then
+! 			write(out_unit, '(a," ")')
+! 			write(out_unit, *) 'Real arguments '
+! 			write(out_unit, *) 'n1_in = ', n1_in, '  n3_in = ', n3_in
+! 			n1_c = cmplx(n1_in, zero, rkind)
+! 			n3_c = cmplx(n3_in, zero, rkind)
+! 			spec_model(:) = 'bessel'
+! 			write(out_unit,*) 'spec_model(0) = ', trim(spec_model(0))
+! 			write(out_unit,*) 'disp_fun_general_Hermitian = ',&
+! 			  &   disp_fun_general_Hermitian(eq, n1_c, n3_c)
+! 		end if
+!
+!       	if (test_warm_bessel .eqv. .true.) then
+! 			n1_c = cmplx(n1_in, n1_im, rkind)
+! 			n3_c = cmplx(n3_in, n3_im, rkind)
+! 			write(out_unit, *) ' '
+! 			write(out_unit, *) 'Complex arguments '
+! 			write(out_unit, *) 'n1_c = ', n1_c, '  n3_c = ', n3_c
+! 			spec_model(:) = 'bessel'
+! 			write(out_unit,*) 'spec_model(0) = ', trim(spec_model(0))
+! 			write(out_unit,*) 'disp_fun_general_Hermitian = ',&
+! 			  &   disp_fun_general_Hermitian(eq, n1_c, n3_c)
+! 		end if
 
 		write(out_unit, '(a," ")')
 

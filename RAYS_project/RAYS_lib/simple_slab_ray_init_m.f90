@@ -63,7 +63,8 @@ contains
 ! solve dispersion relation for rindex_x0).
 !
 ! ray_pwr_wt(i) = fraction of total power carried by ray i.  Should provide a ray weight
-!                 subroutine as part of antenna model.  But for now al wights are just 1/nray.
+!                 subroutine as part of antenna model.  But for now all weights are just
+!                 1/nray.
 !
 ! N.B. Some of the ray initializations may fail (e.g. initial point is outside plasma or
 !      wave mode is evanescent).  This does not cause the program to stop.  It counts
