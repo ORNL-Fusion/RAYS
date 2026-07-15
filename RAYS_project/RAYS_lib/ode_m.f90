@@ -88,10 +88,20 @@
 !   ode_solver = RK4_ode: Simple Runge-Kutta 4th order integrator.
     character (len = 15) :: ode_solver_name
 
-!   Name of routine used to calculate RHS derivatives for ray equations. Presently
-!   supported routines are:
+!   Name of routine used to calculate RHS derivatives for ray equations.
+!   Presently supported routines are:
 !   ray_deriv_name = cold
 !   ray_deriv_name = numerical
+!	ray_deriv_name = general -> different species can have different dispersion model
+!
+!	N.B. There is a distinction between ray_dispersion_model in RF_m and ray_deriv_name
+!	found here in ode_m.f90:
+!		ray_dispersion_model refers to the physics of the dispersion model.
+!		ray_deriv_name refers to the subroutine name that calculates the ray derivatives.
+!	The same physics derivatives might be provided by different named subroutines. e.g.
+!	deriv_num works with an arbitrary dispersion function and can provide derivatives for
+!	any dispersion physics model.
+
     character(len=60) :: ray_deriv_name
 
 ! Maximum length of ray

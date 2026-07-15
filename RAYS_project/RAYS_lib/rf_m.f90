@@ -1,4 +1,6 @@
  module rf_m
+! Inputs and initializes RF related data.  Most is self explanatory.  But see note below
+! about ray_dispersion model.
 
 !_________________________________________________________________________________________
 ! Working notes:
@@ -24,6 +26,17 @@
 !_________________________________________________________________________________________
 
 !   Name of dispersion model used in ray tracing
+!   Presently supported are:
+!		cold -> All species are4 cold
+!		general -> different species can have different dispersion model
+!
+!	N.B. There is a distinction between ray_dispersion_model here and ray_deriv_name
+!	found in ode_m.f90:
+!		ray_dispersion_model refers to the physics of the dispersion model.
+!		ray_deriv_name refers to the subroutine name that calculates the ray derivatives.
+!	The same physics derivatives might be provided by different named subroutines. e.g.
+!	deriv_num works with an arbitrary dispersion function and can provide derivatives for
+!	any dispersion physics model.
     character(len=60) :: ray_dispersion_model
 
 !   RF in Hz,

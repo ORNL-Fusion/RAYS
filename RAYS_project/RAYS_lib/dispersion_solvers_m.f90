@@ -31,8 +31,8 @@
 !   This is essentially Appleton_Hartree
 !
 !4) solve_Booker_n1_vs_n2_n3 -> Booker quartic, electron dynamics only
-!   n1 = component of nvec in x direction.  The distinguished direction solved for,
-!        e.g. the direction of grad(n)
+!   n1 = component of nvec in the distinguished direction solved for,
+!        e.g. typically the x direction or the direction of grad(n)
 !   n2 = component of nvec in y direction = transverse component of nvec
 !        <--> perpendicular to both B and x
 !   n3 = component in z direction = x cross y <--> i.e. B direction if B is perpendicular
@@ -178,7 +178,11 @@ contains
     dispersion_relation: select case (trim(dispersion_model))
 
        case ('cold')
-          ! Solve for n-perp squared
+          ! Solve for x
+          call solve_n1_vs_n2_n3(eq, dispersion_model, wave_mode, k_sign, n2, n3, nx)
+
+       case ('general')
+          ! Solve for nx
           call solve_n1_vs_n2_n3(eq, dispersion_model, wave_mode, k_sign, n2, n3, nx)
 
        case default
