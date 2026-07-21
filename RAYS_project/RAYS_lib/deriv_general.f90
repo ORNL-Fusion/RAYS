@@ -1,19 +1,15 @@
- subroutine deriv_general(eq, v, dddx, dddk, dddw, depsdw_h)
+ subroutine deriv_general(eq, v, dddx, dddk, dddw)
 !   calculates the derivatives of D with respect to k, r, omega.
 !   v(1:3) = (x,y,z); v(4:6) = (kx, ky, kz),
 !   dddx = dD/dx
 !   dddk = dD/dk
 !   dddw = dD/d(omega)
 
-!   depsdw_h = Hermitian part of d(eps)/d(omega), and warm plasma eps are
-!   used in routine POYNTING().  A side effect of routine depsdq_ below is
-!   to calculate these and store them in the appropriate module.
-
 !   This uses the convention for storing the six independent values of
 !   eps(i,j) as a six vector
 !   eps(i) -> [ (eps(1,1), eps(2,2), eps(3,3), eps(1,2), eps(1,3), eps(2,3) ]
 
-    use constants_m, only : rkind
+    use constants_m, only : rkind, zero
     use equilibrium_m, only : eq_point
     use rf_m, only : omgrf, k0
     use ode_m, only : nv
@@ -22,26 +18,17 @@
 
     type(eq_point), intent(in) :: eq
     real(KIND=rkind), intent(in) :: v(nv)
-    real(KIND=rkind), intent(out), optional :: dddx(3), dddk(3), dddw
-    complex(KIND=rkind), intent(out), optional :: depsdw_h(6)
+    real(KIND=rkind), intent(out) :: dddx(3), dddk(3), dddw
 
     real(KIND=rkind) :: rvec(3), kvec(3), nvec(3)
     complex(KIND=rkind) :: n1, n3
     real(KIND=rkind) :: dn3dk(3), dn1dk(3), dn3dx(3), dn1dx(3), dn3dw, dn1dw
-    complex(KIND=rkind) :: depsdk_h(6,3), depsdx_h(6,3)
+    complex(KIND=rkind) :: depsdk_h(6,3), depsdx_h(6,3), depsdw_h(6)
 
     complex(KIND=rkind) :: g(6), h1, h3
+   complex(KIND=rkind) :: ddxc, ddkc, ddwc
 
     integer :: i
-
-    logical :: only_depsdw
-
-!   If optional output variables dddx, dddk, dddw are absent then just need to
-!   calculate depsdw_h.  So set flag
-
-    only_depsdw = .false.
-    if ( .not. ( present(dddx) .or. present(dddk) .or. present(dddw) ) ) &
-        &   only_depsdw = .true.
 
     rvec = v(1:3)
     kvec = v(4:6)
@@ -59,28 +46,40 @@
     dn1dw = -n1/omgrf
     dn3dw = -n3/omgrf
 
-
 ! *******************************
+    depsdw_h = zero
+    depsdk_h = zero
+    depsdx_h = zero
 
-    call depsdq_h(eq, kvec, depsdx_h, depsdk_h, depsdw_h)
-
-    if (only_depsdw) return
+! Send args by host association
+    call depsdq_h(eq, kvec)
+write(*,*) 'deriv_general: depsdx_h = ', depsdx_h
+write(*,*) 'deriv_general: depsdk_h = ', depsdk_h
+write(*,*) 'deriv_general: depsdw_h = ', depsdw_h
 
 ! ********************************
 
     call g_and_h(eq, nvec, g, h1, h3)
-
+! write(*,*) 'deriv_general: g = ', g
+! write(*,*) 'deriv_general: h1 = ', h1
+! write(*,*) 'deriv_general: h3 = ', h3
 ! ********************************
 
     do i = 1,3
-
-    dddk(i) = real( sum( g(:)*depsdk_h(:,i) ) + h1*dn1dk(i) + h3*dn3dk(i) )
-    dddx(i) = real( sum( g(:)*depsdx_h(:,i) ) + h1*dn1dx(i) + h3*dn3dx(i) )
-
+    ddkc = sum( g(:)*depsdk_h(:,i) ) + h1*dn1dk(i) + h3*dn3dk(i)
+    ddxc = sum( g(:)*depsdx_h(:,i) ) + h1*dn1dx(i) + h3*dn3dx(i)
+!  write(*,*) 'deriv_general: i = ', i, '  depsdx_h(:,i) = ',depsdx_h(:,i)
+!  write(*,*) 'deriv_general: i = ', i, '  dn1dx(i) = ', dn1dx(i)
+!  write(*,*) 'deriv_general: i = ', i, '  dn3dx(i) = ', dn3dx(i)
+    dddk(i) = ddkc%re
+    dddx(i) = ddxc%re
     end do
 
-    dddw = real( sum(depsdw_h*g) + h1*dn1dw + h3*dn3dw )
-
+	ddwc = sum(depsdw_h*g) + h1*dn1dw + h3*dn3dw
+    dddw = ddwc%re
+!  write(*,*) 'deriv_general: ddkc = ', ddkc
+!  write(*,*) 'deriv_general: ddxc = ', ddxc
+!  write(*,*) 'deriv_general: ddwc = ', ddwc
 
     return
 
@@ -91,8 +90,9 @@
 ! **************************************************************************
 
 
+! get args from host association above
 
- subroutine depsdq_h(eq, kvec, depsdx_h, depsdk_h, depsdw_h)
+ subroutine depsdq_h(eq, kvec)
 
 !   Calculates the partial of derivatives of eps_h with respect to k, x, omega.
 !   sums over  species is.
@@ -104,25 +104,20 @@
 
     type(eq_point), intent(in) :: eq
     real(KIND=rkind), intent(in) :: kvec(3)
-    complex(KIND=rkind), intent(out) :: depsdw_h(6), depsdk_h(6,3), depsdx_h(6,3)
 
     complex(KIND=rkind) :: depsdw_hs(6), depsdk_hs(6,3), depsdx_hs(6,3)
 
     integer :: is
 
-    depsdw_h = zero
-    depsdk_h = zero
-    depsdx_h = zero
-
     do is = 0, nspec
-
+ write(*,*) 'depsdq_h: spec_model(is) = ', spec_model(is)
       plasma_model: select case (spec_model(is) )
 
           case ('cold')
             call depsdq_cold(eq,is, depsdw_hs, depsdk_hs, depsdx_hs)
 
           case('bessel')
-            call depsdq_bessel(eq, is, kvec, depsdw_hs, depsdk_hs, depsdx_hs)
+           call depsdq_bessel(eq, is, kvec, depsdw_hs, depsdk_hs, depsdx_hs)
 
           case default
             write (0,*) 'depsdq_h: unimplemented species model =', spec_model(is)
@@ -143,8 +138,7 @@
 subroutine depsdq_cold(eq, is, depsdw_hs, depsdk_hs, depsdx_hs)
 
 !   calculates the partial of derivatives of the dielectric tensor with respect
-!   to k, r, omega for  species is using the cold plasma susceptibility
-!   Also generates and stores the contribution of species is to chis(:,:,:)
+!   to k, r, omega for species is using the cold plasma susceptibility
 !   Includes collision frequency/omgrf  => nu_collision to avoid singularity at
 !   fundamental resonance.
 
@@ -157,40 +151,24 @@ subroutine depsdq_cold(eq, is, depsdw_hs, depsdk_hs, depsdx_hs)
     type(eq_point), intent(in) :: eq
     integer, intent(in) :: is
 
-    real(KIND=rkind) :: iomgc
-    complex(KIND=rkind) :: alpha_c, gamma_c, chis_6v(6), chis(3,3)
     complex(KIND=rkind), intent(out) :: depsdw_hs(6), depsdk_hs(6,3), depsdx_hs(6,3)
 
+    complex(KIND=rkind) :: alpha_c, gamma_c, chis_6v(6)
     complex(KIND=rkind) :: depsdw(6), depsdk(6,3), depsdx(6,3)
     complex(KIND=rkind) :: d_chi_d_alpha_c(6), d_chi_d_gamma_c(6), d_alpha_c_dw, d_gamma_c_dw
 
     integer :: ivec
 
-!   Sign of omgc.
-    iomgc = sign(one,eq%omgc(is))
-!
-     alpha_c = eq%alpha(is)/cmplx(one,nus(is))**2
-     gamma_c = eq%gamma(is)/cmplx(one,nus(is))
+ write(*,*) 'depsdq_cold: nus(is) = ', nus(is)
+     alpha_c = eq%alpha(is)/cmplx(one,nus(is),rkind)**2
+     gamma_c = eq%gamma(is)/cmplx(one,nus(is),rkind)
 
-     chis_6v(1) = -alpha_c/(1.-gamma_c**2)
+     chis_6v(1) = -alpha_c/(one-gamma_c**2)
      chis_6v(2) = chis_6v(1)
      chis_6v(3) = -alpha_c
-     chis_6v(4) = -zi*gamma_c*chis_6v(1)
+     chis_6v(4) = -zi*gamma_c*alpha_c/(one-gamma_c**2)
      chis_6v(5) = zero
      chis_6v(6) = zero
-
-     chis(1,1) = chis_6v(1)
-     chis(2,2) = chis_6v(2)
-     chis(3,3) = chis_6v(3)
-     chis(1,2) = chis_6v(4)
-     chis(1,3) = chis_6v(5)
-     chis(2,3) = chis_6v(6)
-
-     chis(2,1) = -chis(1,2)
-     chis(3,1) = chis(1,3)
-     chis(3,2) = -chis(2,3)
-
-!    call v6_3x3( chis_6v, chis(:,:,is) )
 
 !   Generate derivatives of dielectric tensor for this species ********
 
@@ -201,15 +179,14 @@ subroutine depsdq_cold(eq, is, depsdw_hs, depsdk_hs, depsdx_hs)
     d_chi_d_alpha_c(5) = zero
     d_chi_d_alpha_c(6) = zero
 
-    d_chi_d_gamma_c(1) = -two*chis_6v(1)*gamma_c/(one-gamma_c**2)
+    d_chi_d_gamma_c(1) = two*gamma_c*alpha_c/(one-gamma_c**2)**2
     d_chi_d_gamma_c(2) = d_chi_d_gamma_c(1)
     d_chi_d_gamma_c(3) = zero
-    d_chi_d_gamma_c(4) = -zi*chis_6v(1)*(1.-gamma_c**2/(one-gamma_c**2))
+    d_chi_d_gamma_c(4) = -zi*alpha_c*(one+gamma_c**2)/(one-gamma_c**2)**2
     d_chi_d_gamma_c(5) = zero
     d_chi_d_gamma_c(6) = zero
 
 ! Derivatives with respect to omgrf
-!
 
     d_alpha_c_dw = -two*alpha_c/omgrf*cmplx(1.,-nus(is))
     d_gamma_c_dw = -gamma_c/omgrf/cmplx(1.,nus(is))
@@ -225,31 +202,20 @@ subroutine depsdq_cold(eq, is, depsdw_hs, depsdk_hs, depsdx_hs)
 
     call v6_Hermitian(depsdw, depsdw_hs)
 
-! ****************************************************************************
-
-!   If we only need depsdw (for Poynting) exit routine here.
-    if (only_depsdw) return
-
-! ****************************************************************************
-
-
 !   Derivatives with respect to k.
 !   For cold plasma all derivatives of chi w.r.t. k are zero
 
-
-
     do ivec = 1, 3
        depsdk(:,ivec) = zero
-       call v6_Hermitian( depsdk(:,ivec), depsdk_hs(:,ivec) )
+       depsdk_hs(:,ivec) = zero
     end do
-
-
 
 !   dddx = dD/dx:
 !   Derivatives with respect to space coordinates.
 
     do ivec = 1, 3
-       depsdx(:,ivec) = d_chi_d_alpha_c*eq%gradns(ivec,is)+d_chi_d_gamma_c*eq%gradbmag(ivec)
+       depsdx(:,ivec) = d_chi_d_alpha_c*alpha_c*eq%gradns(ivec,is)/eq%ns(is)+ &
+                      & d_chi_d_gamma_c*gamma_c*eq%gradbmag(ivec)/eq%bmag
        call v6_Hermitian( depsdx(:,ivec), depsdx_hs(:,ivec) )
     end do
 
@@ -288,7 +254,7 @@ subroutine depsdq_bessel(eq, is, kvec, depsdw_hs, depsdk_hs, depsdx_hs)
     real(KIND=rkind) :: vth, beta, lambda
     real(KIND=rkind), dimension(-n_limit:n_limit) :: xi
     complex(KIND=rkind), dimension(-n_limit:n_limit) :: zf, zfp, zfpp, ei, eip, eipp
-    complex(KIND=rkind) :: a, b, chin(6,-n_limit:n_limit), chis_6v(6), chis(3,3)
+    complex(KIND=rkind) :: a, b, chin(6,-n_limit:n_limit), chis_6v(6)
 
     complex(KIND=rkind) :: depsdw(6), depsdk(6,3), depsdx(6,3)
     complex(KIND=rkind), dimension(6) :: depsdb, depsdl
@@ -363,11 +329,9 @@ subroutine depsdq_bessel(eq, is, kvec, depsdw_hs, depsdk_hs, depsdx_hs)
 
 ! Generate susceptibility
 
-
     if ( k3 /= zero ) then
 
        beta = omgp2/(omgrf*k3*vth)
-
 
 !    Generate Plasma Z functions ***************************************
 
@@ -419,20 +383,6 @@ subroutine depsdq_bessel(eq, is, kvec, depsdw_hs, depsdk_hs, depsdx_hs)
      chis_6v(5) = beta*sum(chin(5,nmin:nmax))
      chis_6v(6) = beta*sum(chin(6,nmin:nmax))
 
-     chis(1,1) = chis_6v(1)
-     chis(2,2) = chis_6v(2)
-     chis(3,3) = chis_6v(3)
-     chis(1,2) = chis_6v(4)
-     chis(1,3) = chis_6v(5)
-     chis(2,3) = chis_6v(6)
-
-     chis(2,1) = -chis(1,2)
-     chis(3,1) = chis(1,3)
-     chis(3,2) = -chis(2,3)
-
-!    call v6_3x3( chis_6v, chis(:,:,is) )
-
-
 !   Generate derivatives of dielectric tensor for this species ********
 
 !   Derivatives of dielectric tensor eps with respect to beta:
@@ -471,14 +421,6 @@ subroutine depsdq_bessel(eq, is, kvec, depsdw_hs, depsdk_hs, depsdx_hs)
 ! Get Hermitian part
 
     call v6_Hermitian(depsdw, depsdw_hs)
-
-! ****************************************************************************
-
-!   If we only need depsdw (for Poynting) exit routine here.
-    if (only_depsdw) return
-
-! ****************************************************************************
-
 
 !   Derivatives with respect to k.
 !   dbdk = d(beta)/dk; dldk = d(lambda)/dk; dxidk = d(xi)/dk
@@ -541,13 +483,14 @@ subroutine depsdq_bessel(eq, is, kvec, depsdw_hs, depsdk_hs, depsdx_hs)
 
        dbdx(:) = beta * ( gradns(:)/ns  &
         & - matmul(gradbunit,kvec)/k3 - gradts(:)/(two*ts) )
+!  write(*,*) 'depsdq_bessel: dbdx = ', dbdx
 
        dldx(:) = lambda &
        & * ( -two*k3*matmul(gradbunit,kvec)/k1**2 &
        &      + gradts(:)/ts - two*gradbmag/bmag )
+!  write(*,*) 'depsdq_bessel: dldx = ', dldx
 
     depsdx_xi = zero
-
     do n = nmin, nmax
 
        dxidx(:,n) = -xi(n) &
@@ -558,6 +501,7 @@ subroutine depsdq_bessel(eq, is, kvec, depsdw_hs, depsdk_hs, depsdx_hs)
             depsdx_xi(i,:) = depsdx_xi(i,:) + depsdxi(i,n)*dxidx(:,n)
         end do
     end do
+!  write(*,*) 'depsdq_bessel: dxidx = ', dxidx
 
     do ivec = 1, 3
 
@@ -567,6 +511,8 @@ subroutine depsdq_bessel(eq, is, kvec, depsdw_hs, depsdk_hs, depsdx_hs)
         call v6_Hermitian( depsdx(:,ivec), depsdx_hs(:,ivec) )
 
     end do
+!  write(*,*) 'depsdq_bessel: depsdx = ', depsdx
+!  write(*,*) 'depsdq_bessel: depsdx_hs = ', depsdx_hs
 
     end subroutine depsdq_bessel
 
@@ -579,7 +525,8 @@ subroutine depsdq_bessel(eq, is, kvec, depsdw_hs, depsdk_hs, depsdx_hs)
 
     use constants_m, only : rkind, zero, one, two
     use equilibrium_m, only : eq_point
-    use suscep_m, only : dielectric_general
+    use rf_m, only : ray_dispersion_model
+    use suscep_m, only : dielectric_cold, dielectric_general
     USE matrix3x3_m, only : hermitian3x3
 
     implicit none
@@ -588,15 +535,25 @@ subroutine depsdq_bessel(eq, is, kvec, depsdw_hs, depsdk_hs, depsdx_hs)
     complex(KIND=rkind), intent(out) :: g(6), h1, h3
 
     real(KIND=rkind) :: n1, n3
+    complex(KIND=rkind) :: n1c, n3c
     complex(KIND=rkind) :: eps(3,3)
     complex(KIND=rkind) :: eps_h(3,3)   ! Hermitian part of eps_6v
     real(KIND=rkind) :: half = one/two
 
     n3 = dot_product(nvec, eq%bunit)
     n1 = sqrt( sum((nvec-n3*eq%bunit)**2) )
+    n3c = cmplx(n3, zero, rkind)
+    n1c = cmplx(n1, zero, rkind)
 
-! N.B.  Dielectric routines take complex args, but in ray tracing nvec is real
-	call dielectric_general(eq, cmplx(n1, zero, rkind), cmplx(n3, zero, rkind), eps)
+ write(*,*) 'g_and_h: ray_dispersion_model = ', ray_dispersion_model
+    dispersion_model: select case (ray_dispersion_model )
+	  case ('cold')
+		call dielectric_cold(eq, eps)
+	  case('bessel')
+! 	   N.B.  Dielectric routines take complex args n, but in ray tracing nvec is real
+	   call dielectric_general(eq, n1c, n3c, eps)
+    end select dispersion_model
+
     eps_h = hermitian3x3(eps)
 
     g(1) = n1**4 + n1**2*n3**2 + n1**2*(-eps_h(2,2) - eps_h(3,3)) - n3**2*eps_h(3,3) +&
@@ -617,6 +574,9 @@ subroutine depsdq_bessel(eq, is, kvec, depsdw_hs, depsdk_hs, depsdx_hs)
     h3 = 4.0_rkind*n3**3*eps_h(3,3) + two*n1**2*n3*(eps_h(1,1) + eps_h(3,3)) + two*n1**3*eps_h(1,3) +&
         & 6.0_rkind*n1*n3**2*eps_h(1,3) + n1*(-two*eps_h(2,2)*eps_h(1,3) + two*eps_h(1,2)*eps_h(2,3)) + &
         & two*n3*(-(eps_h(1,1)*eps_h(3,3)) - eps_h(2,2)*eps_h(3,3) + eps_h(1,3)**2 - eps_h(2,3)**2)
+
+!  write(*,*) 'g_and_h: g = ', g
+!  write(*,*) 'g_and_h: h = ', h1, '  h3 = ',h3
 
     return
     end subroutine g_and_h
@@ -642,7 +602,7 @@ subroutine depsdq_bessel(eq, is, kvec, depsdw_hs, depsdk_hs, depsdx_hs)
     v_h(5) = v(5) + conjg( v(5) )
     v_h(6) = v(6) - conjg( v(6) )
 
-    v_h = v_h/2.
+    v_h = v_h/two
 
     return
     end subroutine v6_Hermitian

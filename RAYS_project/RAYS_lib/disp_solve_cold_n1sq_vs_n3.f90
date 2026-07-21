@@ -91,8 +91,8 @@
 !****************************************************************************
 
 complex function disp_fun_cold_n1_n3(eq, n1, n3)
-! calculates the residual of cold plasma dispersion relation versus perpendicular, n1 and
-! parallel, n3, refractive index indices
+! Evaluates cold plasma dispersion function, i.e. determinant of cold plasma dielectric
+! tensor.
 ! N.B. n1 is complex, n3 is real
 
     use constants_m, only : rkind, one

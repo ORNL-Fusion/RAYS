@@ -1,4 +1,6 @@
  module dispersion_solvers_m
+! N.B. Temporary hack (17-16-2026) !!! Use cold dispersion for general
+
 ! Contains routines to solve various forms of the plasma dispersion relation for various
 ! components of the wave refractive index vector, nvec.
 !
@@ -127,6 +129,12 @@ contains
           call solve_cold_n1sq_vs_n3(eq, n3, nperp_sq)
           n1 = real(k_sign, kind=rkind) * sqrt(nperp_sq(i_mode)-n2**2)
 
+! N.B. Temporary hack (17-16-2026) !!! Use cold dispersion for general
+       case ('general')
+          ! Solve for n-perp squared
+          call solve_cold_n1sq_vs_n3(eq, n3, nperp_sq)
+          n1 = real(k_sign, kind=rkind) * sqrt(nperp_sq(i_mode)-n2**2)
+
        case default
           write(0,*) 'solve_disp: unimplemented dispersion_model =', trim(dispersion_model)
           call text_message('solve_disp: unimplemented dispersion_model ',trim(dispersion_model),0)
@@ -141,8 +149,8 @@ contains
 
   subroutine solve_nx_vs_ny_nz_by_bz(eq, dispersion_model, wave_mode, k_sign, ny, nz, nx)
 
-! Convenience routine that resolves ny, nz into n2 and n3 (n transverse and n parallel) and
-! calls subroutine above.
+! Convenience routine that resolves cartesian ny, nz into n2 and n3 (n transverse and n
+! parallel) and calls subroutine above.
 
 ! N.B. This requires that the magnetic field be in the y-z plane. Otherwise n_parallel
 !      has a component along nx, which would make dispersion relation 4th order instead of

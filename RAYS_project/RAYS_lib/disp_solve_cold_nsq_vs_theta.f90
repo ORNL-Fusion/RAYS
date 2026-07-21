@@ -79,8 +79,8 @@
 !****************************************************************************
 
 complex function disp_fun_cold_n_theta(eq, theta, n)
-! calculates the residual of cold plasma dispersion relation versus refractive index, n,
-! and angle theta
+! Evaluates cold plasma dispersion function versus refractive index, n, and angle theta.
+! i.e. residual of Appleton-Hartree.
 ! N.B. n is complex, theta is real
 
     use constants_m, only : rkind, one

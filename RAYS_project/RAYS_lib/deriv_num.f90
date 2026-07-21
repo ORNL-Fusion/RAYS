@@ -9,7 +9,7 @@
 !        calculate alpha and beta so equilibrium() must be called after omgrf is
 !        changed.
 
-    use constants_m, only : rkind, clight
+    use constants_m, only : rkind, zero, one, two, ten, epsmach, clight
     use equilibrium_m, only : equilibrium, eq_point, write_eq_point
     use rf_m, only : omgrf, k0, ray_dispersion_model
     use ode_m, only : nv
@@ -34,7 +34,7 @@
     kvec = kvec0
 
 !   Step for computing the derivaties.
-    delta = 1.e-6
+    delta = 1.0d-6
 
 !   Derivatives of D with respect to r.
     do i = 1, 3
@@ -59,21 +59,21 @@
 !   Derivatives of D with respect to k.
     do i = 1, 3
        kvec = kvec0
-       change = max(delta, abs(delta*kvec(i)))/2.
+       change = max(delta, abs(delta*kvec(i)))/two
        kvec(i) = kvec0(i) + change
        det_plus = determ(eq0)
        kvec(i) = kvec0(i) - change
        det_minus = determ(eq0)
-       dddk(i) = (det_plus-det_minus)/(2.*change)
+       dddk(i) = (det_plus-det_minus)/(two*change)
     end do
 
 !   Derivative of D with respect to omega.
     kvec = kvec0
-    omgrf = omgrf0 * (1.+delta/2.)
+    omgrf = omgrf0 * (one+delta/two)
     k0 = omgrf/clight
     call equilibrium(rvec0, eq_plus)
     det_plus = determ(eq_plus)
-    omgrf = omgrf0 * (1.-delta/2.)
+    omgrf = omgrf0 * (one-delta/two)
     k0 = omgrf/clight
     call equilibrium(rvec0, eq_minus)
     det_minus = determ(eq_minus)
@@ -99,9 +99,11 @@
     real(KIND=rkind) function determ(eq)
 !      calculates the determinant for epsn = eps + nn -n^2I.
 
+       use constants_m, only : rkind, zero, ten, epsmach
        use equilibrium_m, only : eq_point
        use rf_m, only : ray_dispersion_model
-       use suscep_m, only : dielectric_cold
+       use suscep_m, only : dielectric_cold, dielectric_general
+	   use matrix3x3_m, only : hermitian3x3, anti_hermitian3x3, determinant3x3
 
        implicit none
 
@@ -114,37 +116,39 @@
        k3 = dot_product(kvec, eq%bunit)
        k1 = sqrt( sum((kvec-k3*eq%bunit)**2) )
 !      Refractive index.
-       n(1) = k1/k0; n(2) = 0.; n(3) = k3/k0
-       call dielectric_cold(eq,eps)
+       n(1) = k1/k0; n(2) = zero; n(3) = k3/k0
+    deriv_name: select case (trim(ray_dispersion_model))
+       case ('cold')
+		   call dielectric_cold(eq, eps)
+       case ('general')
+           call dielectric_general(eq, cmplx(n(1), zero, rkind), cmplx(n(3), zero, rkind), eps)
+   end select deriv_name
 
 !      Hermitian part.
-       eps_h = .5 * (eps + conjg(transpose(eps)))
-
+       eps_h = hermitian3x3(eps)
 !      epsn = eps + nn -n^2I:
 !      epsn.E = eps.E + n x n x E = (eps + nn -n^2I).E,
 !      where E = (Ex,Ey,Ez)^T and I is the unit 3X3 tensor.
+
        do i = 1, 3; do j = 1, 3
           epsn(i,j) = eps_h(i,j) + n(i)*n(j) - int(i/j)*int(j/i)*sum(n**2)
        end do; end do
 
 !      Determinant for 3X3 epsn:
-       ctmp = &
-          &   epsn(3,3)*(epsn(1,1)*epsn(2,2)-epsn(2,1)*epsn(1,2)) &
-          & - epsn(3,2)*(epsn(1,1)*epsn(2,3)-epsn(2,1)*epsn(1,3)) &
-          & + epsn(3,1)*(epsn(1,2)*epsn(2,3)-epsn(2,2)*epsn(1,3))
+       ctmp = determinant3x3(epsn)
 
 !      For a Hermitian matrix, the imaginary part of its determinant vanishes.
-       if ( abs(ctmp%im) > 1.e-7 ) then
-          write(0,'(a,1p1e12.4)') 'RESIDUAL: Im(det) =', ctmp%im
+       if ( abs(aimag(ctmp)) > ten*epsmach ) then
+          write(0,'(a,1p1e12.4)') 'RESIDUAL: Im(det) = ', aimag(ctmp)
           stop 1
        end if
 
-       determ = 0.
+       determ = zero
        if ( ray_dispersion_model == 'cold' ) then
 !         For a cold plasma.  Note that the factor here corresponds to that
-!         used in DERIV_COLD.
-          determ = ctmp%re * product(1.-eq%gamma**2)
-       else if ( ray_dispersion_model == 'warm' ) then
+!         used in DERIV_COLD to eliminate resonant denominators.
+          determ = ctmp%re * product(one-eq%gamma**2)
+       else if ( trim(ray_dispersion_model) == 'general' ) then
 !         For a warm plasma.
           determ = ctmp%re
        end if

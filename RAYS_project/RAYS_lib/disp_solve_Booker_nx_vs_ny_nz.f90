@@ -89,8 +89,7 @@
 complex function disp_fun_Booker(eq, theta, nx, ny, nz)
 ! Calculates the dispersion function of the Booker quartic versus nx, ny, nz where the
 ! local coordinate system is as described above.
-!
-! N.B. nx is complex, as is the returned value disp_fun_Booker.
+! N.B. nx is complex, as is the returned value disp_fun_Booker.  But ny, nz are real.
 
     use constants_m, only : rkind, one
     use diagnostics_m, only : message

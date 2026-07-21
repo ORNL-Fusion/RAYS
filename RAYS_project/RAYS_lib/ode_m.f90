@@ -89,20 +89,23 @@
     character (len = 15) :: ode_solver_name
 
 !   Name of routine used to calculate RHS derivatives for ray equations.
-!   Presently supported routines are:
-!   ray_deriv_name = cold
-!   ray_deriv_name = numerical
-!	ray_deriv_name = general -> different species can have different dispersion model
-!
-!	N.B. There is a distinction between ray_dispersion_model in RF_m and ray_deriv_name
-!	found here in ode_m.f90:
-!		ray_dispersion_model refers to the physics of the dispersion model.
-!		ray_deriv_name refers to the subroutine name that calculates the ray derivatives.
+    character(len=60) :: ray_deriv_name
+
+!	N.B. There is a distinction between ray_dispersion_model in RF_m, ray_deriv_name
+!	in ode_m.f90 and spec_model in species_m:
+!		'ray_dispersion_model' refers to the physics of the dispersion model.
+!		'ray_deriv_name' refers to the subroutine name that calculates the ray derivatives.
 !	The same physics derivatives might be provided by different named subroutines. e.g.
 !	deriv_num works with an arbitrary dispersion function and can provide derivatives for
-!	any dispersion physics model.
+!	any dispersion physics model.  There is the further complication that the general
+!   dispersion tensor and dispersion function allow different species to have different
+!   dispersion models.  Therefore, in module species_m there is specification of the
+!   dispersion model for individual species, spec_model(:).
+!   Necessary specifications are:
+!   	'ray_deriv_name' in ode_m -> cold, general or num (i.e. numerical)
+!   	'ray_dispersion_model' in rf_m -> cold or general
+!   	'spec_model' in species_m -> cold or bessel
 
-    character(len=60) :: ray_deriv_name
 
 ! Maximum length of ray
      real(KIND=rkind) :: s_max

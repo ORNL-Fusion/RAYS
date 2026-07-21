@@ -7,12 +7,12 @@
 !_________________________________________________________________________________________
 
 
-    use constants_m, only : rkind
+    use constants_m, only : rkind, zero, ten, epsmach
     use diagnostics_m, only : integrate_eq_gradients, message, text_message, &
                             & write_formatted_ray_files, output_unit
     use species_m, only : nspec, n0s
     use equilibrium_m, only : equilibrium, eq_point, write_eq_point
-    use ode_m, only : ds, ode_stop
+    use ode_m, only : ds, ode_stop, ray_deriv_name
     use rf_m, only : ray_dispersion_model, ray_param, k0, dispersion_resid_limit
     use damping_m, only : damping_model, damping, multi_spec_damping, total_damping_limit
 
@@ -63,7 +63,7 @@
 
 !   Calculate the residual.
 
-    resid = residual(eq, k1,k3)
+    resid = residual(eq, k1, k3)
     call message ('check_save: residual', resid, 1)
     if (resid > dispersion_resid_limit) then
         ray_stop%stop_ode = .true.
@@ -76,15 +76,24 @@
 !   respect to time.  This part is extracted from EQN_RAY.
 !   First, calculate dD/dk, dD/dx, and dD/d(omega)
 
-    if ( ray_dispersion_model == 'cold' ) then
+    ray_derivatives: select case (trim(ray_deriv_name))
 
-!      Derivatives of D for a cold plasma.
+       case ('cold')
        call deriv_cold(eq, nvec, dddx, dddk, dddw)
-    else
-       call text_message('CHECK_SAVE: ray_dispersion_model = ', ray_dispersion_model)
-       write(*,*) 'CHECK_SAVE: ray_dispersion_model = ', ray_dispersion_model
-       stop 'check_save: unimplemented ray_dispersion_model'
-    end if
+
+       case ('general')
+           call deriv_general(eq, nvec, dddx, dddk, dddw)
+
+       case ('num')
+           call deriv_num(eq, nvec, dddx, dddk, dddw)
+
+       case default
+          write(0,*) 'check_save: unimplemented ray_derivatives =', trim(ray_deriv_name)
+          call text_message('check_save: unimplemented ray_derivatives ',&
+                           & trim(ray_deriv_name),0)
+          stop 'check_save: unimplemented ray_derivatives'
+
+   end select ray_derivatives
 
 !   Group velocity.
     if ( abs(dddw) > tiny(dddw) ) then
@@ -163,18 +172,25 @@ contains
     real(KIND=rkind) function residual(eq, k1, k3)
 !      calculates the residual for given k1 and k3.
 !      get dielectric tensor from module suscep_m
-! N.B. This function is different from the residual functions in the dispersion solver
-!      routines.  That residual is what's left after plugging the refractive indices
-!      into the dispersion relations.  Whether that residual is large or small should be
-!      judged on the basis of how large the elements of the dielectric tensor are.  At ion
+! N.B. This function is different from the dispersion_function routines in the dispersion
+!      solver files in 3 ways:
+!  1)  Here input is wave number k, there input is refractive index n.
+!  2)  They calculate what's left after plugging the refractive indices
+!      into the dispersion relations.  The result, and some of the n's, are complex
+!  3)  This residual uses real k1, k3 from ray solutions.
+
+!      Philosophy: Whether a residual is large or small should be judged
+!      on the basis of how large the elements of the dielectric tensor are.  At ion
 !      cyclotron frequencies f_plasma*2/f_rf**2 is really big.  Here we put a norm on the
 !      dielectric tensor by taking the absolute value of each term of the dispersion
 !      relation and summing.  The residual is then taken as relative to that norm.  This
 !      gives an indication of how good the cancellation is in the dispersion relation
 !      compared to the size of the terms.
 
+       use constants_m, only : rkind, zero
        use species_m, only : nspec
-       use suscep_m, only :  dielectric_cold
+       use suscep_m, only :  dielectric_cold, dielectric_general
+	   use matrix3x3_m, only : hermitian3x3, determinant3x3
 
        implicit none
 
@@ -188,42 +204,40 @@ contains
 
        integer :: i, j
 
-!   Need dielectric tensor.
+!      Refractive index.
+       n(1) = k1/k0; n(2) = zero; n(3) = k3/k0
 
-    if (ray_dispersion_model == "cold") then
-        call dielectric_cold(eq, eps)
-    end if
+    dispersion_relation: select case (trim(ray_dispersion_model))
+       case ('cold')
+		   call dielectric_cold(eq, eps)
+       case ('general')
+           call dielectric_general(eq, cmplx(n1, zero, rkind), cmplx(n1, zero, rkind), eps)
+   end select dispersion_relation
 
 !    write(*,*) 'eps = ', eps
 
 !      Hermitian part.
-       eps_h = .5 * ( eps + conjg(transpose(eps)) )
-
-!      Refractive index.
-       n(1) = k1/k0; n(2) = 0.; n(3) = k3/k0
+       eps_h = hermitian3x3(eps)
 
 !      epsn = eps + nn -n^2I:
 !      epsn.E = eps.E + n x n x E = (eps + nn -n^2I).E,
 !      where E = (Ex,Ey,Ez)^T and I is the unit 3X3 tensor.
 
        do i = 1, 3; do j = 1, 3
-          epsn(i,j) = eps_h(i,j) + n(i)*n(j) - int(i/j)*int(j/i)*sum(n**2)
+          epsn(i,j) = eps_h(i,j) + cmplx(n(i)*n(j), rkind) - &
+                    & cmplx(int(i/j)*int(j/i), rkind)*sum(n**2)
           eps_norm(i,j) = abs( eps_h(i,j) ) + abs(n(i)*n(j))
        end do; end do
 
 !      Determinant for 3X3 epsn:
-       ctmp = &
-          &   epsn(3,3)*(epsn(1,1)*epsn(2,2)-epsn(2,1)*epsn(1,2)) &
-          & - epsn(3,2)*(epsn(1,1)*epsn(2,3)-epsn(2,1)*epsn(1,3)) &
-          & + epsn(3,1)*(epsn(1,2)*epsn(2,3)-epsn(2,2)*epsn(1,3))
+       ctmp = determinant3x3(epsn)
 
 !      For a Hermitian matrix, the imaginary part of its determinant vanishes.
-       if ( abs(aimag(ctmp)) > 1.e-6 ) then
+       if ( abs(aimag(ctmp)) > ten*epsmach ) then
           write(0,'(a,1p1e12.4)') 'RESIDUAL: Im(det) = ', aimag(ctmp)
           stop 1
        end if
 
-!       residual = abs(ctmp)
        residual = abs(ctmp) / &
           & ( eps_norm(3,3)*(eps_norm(1,1)*eps_norm(2,2)) &
           & + eps_norm(3,3)*(eps_norm(2,1)*eps_norm(1,2)) &

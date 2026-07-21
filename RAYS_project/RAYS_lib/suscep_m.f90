@@ -144,12 +144,13 @@ contains
 !   ei = exp(-lambda)*I_n(lambda), eip = exp(-lambda)*I'_n(lambda).
 
        call ebessel_dbb(lambda, nmin, nmax, ei(nmin:nmax), eip(nmin:nmax))
- write(*,*) ' '
+
+!  write(*,*) ' '
  write(*,*) 'suscep_bessel: vth = ', vth, '  lambda = ', lambda
- do n = nmin, nmax
-	 write(*,*) 'suscep_bessel: n = ', n,' ei = ', ei(n)
-	 write(*,*) 'suscep_bessel: n = ', n,' eip = ', eip(n)
- end do
+!  do n = nmin, nmax
+! 	 write(*,*) 'suscep_bessel: n = ', n,' ei = ', ei(n)
+! 	 write(*,*) 'suscep_bessel: n = ', n,' eip = ', eip(n)
+!  end do
 
     if ( abs(n3) > zero ) then
        beta = eq%omgp2(is)/(omgrf*k0*n3*vth)
@@ -165,9 +166,10 @@ contains
          end if
 
          zfp(n) = -two*(1+xi(n)*zf(n)) ! Z'
-write(*,*) 'suscep_bessel: n = ', n, ' xi(n) = ', xi(n)
-write(*,*) 'suscep_bessel: zf(n) = ', zf(n)
-write(*,*) 'suscep_bessel: zfp(n) = ', zfp(n)
+
+! write(*,*) 'suscep_bessel: n = ', n, ' xi(n) = ', xi(n)
+! write(*,*) 'suscep_bessel: zf(n) = ', zf(n)
+! write(*,*) 'suscep_bessel: zfp(n) = ', zfp(n)
        end do
 !  write(*,*) 'suscep_bessel: species ', is, '  xi = ', xi
 !  write(*,*) 'suscep_bessel: species ', is, '  zf = ', zf
@@ -181,12 +183,12 @@ write(*,*) 'suscep_bessel: zfp(n) = ', zfp(n)
           chin(4,n) = zi * n * (eip(n)-ei(n)) * zf(n)
           chin(5,n) = -one/sqrt(two)/b * n * ei(n) * zfp(n)
           chin(6,n) = zi/sqrt(two) * b * (eip(n)-ei(n)) * zfp(n)
-  write(*,*) 'suscep_bessel: ','  n = ', n, '  beta*chin(1,n) = ', beta*chin(1,n)
-  write(*,*) 'suscep_bessel: ','  n = ', n, '  beta*chin(2,n) = ', beta*chin(2,n)
-  write(*,*) 'suscep_bessel: ','  n = ', n, '  beta*chin(3,n) = ', beta*chin(3,n)
-  write(*,*) 'suscep_bessel: ','  n = ', n, '  beta*chin(4,n) = ', beta*chin(4,n)
-  write(*,*) 'suscep_bessel: ','  n = ', n, '  beta*chin(5,n) = ', beta*chin(5,n)
-  write(*,*) 'suscep_bessel: ','  n = ', n, '  beta*chin(6,n) = ', beta*chin(6,n)
+!   write(*,*) 'suscep_bessel: ','  n = ', n, '  beta*chin(1,n) = ', beta*chin(1,n)
+!   write(*,*) 'suscep_bessel: ','  n = ', n, '  beta*chin(2,n) = ', beta*chin(2,n)
+!   write(*,*) 'suscep_bessel: ','  n = ', n, '  beta*chin(3,n) = ', beta*chin(3,n)
+!   write(*,*) 'suscep_bessel: ','  n = ', n, '  beta*chin(4,n) = ', beta*chin(4,n)
+!   write(*,*) 'suscep_bessel: ','  n = ', n, '  beta*chin(5,n) = ', beta*chin(5,n)
+!   write(*,*) 'suscep_bessel: ','  n = ', n, '  beta*chin(6,n) = ', beta*chin(6,n)
       end do
 
     else ! n3 = 0
