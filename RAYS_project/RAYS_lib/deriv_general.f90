@@ -307,10 +307,10 @@ subroutine depsdq_bessel(eq, is, kvec, depsdw_hs, depsdk_hs, depsdx_hs)
 	n1 = k1/k0
 	n3 = k3/k0
 
-!   Argument for Bessel's function.
+!   Argument for Bessel functions.
     lambda = half * (k1*vth/omgc)**2
 
-!   Argument for plasma Z function.
+!   Arguments for plasma Z functions.
     do n = nmin, nmax
        xi(n) = (omgrf-n*omgc) / (k3*vth)
     end do
@@ -523,7 +523,7 @@ subroutine depsdq_bessel(eq, is, kvec, depsdw_hs, depsdk_hs, depsdx_hs)
 ! Generates the quantities g(1:6), h1 and h3 as defined in the notes from
 ! 11-4-99.  These are elements in the chain rule for dD/dq.
 
-    use constants_m, only : rkind, zero, one, two
+    use constants_m, only : rkind, zero, one, two, three, four
     use equilibrium_m, only : eq_point
     use rf_m, only : ray_dispersion_model
     use suscep_m, only : dielectric_cold, dielectric_general
@@ -538,6 +538,7 @@ subroutine depsdq_bessel(eq, is, kvec, depsdw_hs, depsdk_hs, depsdx_hs)
     complex(KIND=rkind) :: n1c, n3c
     complex(KIND=rkind) :: eps(3,3)
     complex(KIND=rkind) :: eps_h(3,3)   ! Hermitian part of eps_6v
+    complex(KIND=rkind) :: e1,e2,e3,e4,e5,e6
     real(KIND=rkind) :: half = one/two
 
     n3 = dot_product(nvec, eq%bunit)
@@ -556,24 +557,21 @@ subroutine depsdq_bessel(eq, is, kvec, depsdw_hs, depsdk_hs, depsdx_hs)
 
     eps_h = hermitian3x3(eps)
 
-    g(1) = n1**4 + n1**2*n3**2 + n1**2*(-eps_h(2,2) - eps_h(3,3)) - n3**2*eps_h(3,3) +&
-            & eps_h(2,2)*eps_h(3,3) + eps_h(2,3)**2
-    g(2) = -(n1**2*eps_h(1,1)) - n3**2*eps_h(3,3) + eps_h(1,1)*eps_h(3,3) - two*n1*n3*eps_h(1,3) -&
-            & eps_h(1,3)**2
-    g(3) = n1**2*n3**2 + n3**4 - n1**2*eps_h(1,1) + n3**2*(-eps_h(1,1) - eps_h(2,2)) +&
-            & eps_h(1,1)*eps_h(2,2) + eps_h(1,2)**2
-    g(4) = -two*n1**2*eps_h(1,2) + two*eps_h(3,3)*eps_h(1,2) + two*n1*n3*eps_h(2,3) + two*eps_h(1,3)*eps_h(2,3)
-    g(5) = two*n1**3*n3 + two*n1*n3**3 - two*n1*n3*eps_h(2,2) + two*n1**2*eps_h(1,3) + &
-            &2*n3**2*eps_h(1,3) - two*eps_h(2,2)*eps_h(1,3) + two*eps_h(1,2)*eps_h(2,3)
-    g(6) = two*n1*n3*eps_h(1,2) + two*eps_h(1,2)*eps_h(1,3) - two*n3**2*eps_h(2,3) + two*eps_h(1,1)*eps_h(2,3)
+    e1 = eps_h(1,1); e2 = eps_h(2,2); e3 = eps_h(3,3); e4 = eps_h(1,2)
+    e5 = eps_h(1,3); e6 = eps_h(2,3);
 
-    h1 = 4*n1**3*eps_h(1,1) + 6.0_rkind*n1**2*n3*eps_h(1,3) + two*n3**3*eps_h(1,3) + &
-        & n1*(2*n3**2*(eps_h(1,1) + eps_h(3,3)) + two*(-(eps_h(1,1)*eps_h(2,2)) - eps_h(1,1)*eps_h(3,3)&
-         & - eps_h(1,2)**2 + eps_h(1,3)**2)) + n3*(-two*eps_h(2,2)*eps_h(1,3) + two*eps_h(1,2)*eps_h(2,3))
+    g(1) = e6**2 + e2*(e3 - n1**2) - (e3 - n1**2)*(n1**2 + n3**2)
+    g(2) = -e5**2 + e1*(e3 - n1**2) - two*e5*n1*n3 - e3*n3**2
+    g(3) = e1*e2 + e4**2 - e1*n1**2 - e1*n3**2 - e2*n3**2 + n1**2*n3**2 + n3**4
+    g(4) = two*(e3*e4 + e5*e6 + n1*(-e4*n1 + e6*n3))
+    g(5) = two*(e4*e6 - e2*(e5 + n1*n3) + (e5 + n1*n3)*(n1**2 + n3**2))
+    g(6) = two*(e4*(e5 + n1*n3) + e6*(e1 - n3**2))
 
-    h3 = 4.0_rkind*n3**3*eps_h(3,3) + two*n1**2*n3*(eps_h(1,1) + eps_h(3,3)) + two*n1**3*eps_h(1,3) +&
-        & 6.0_rkind*n1*n3**2*eps_h(1,3) + n1*(-two*eps_h(2,2)*eps_h(1,3) + two*eps_h(1,2)*eps_h(2,3)) + &
-        & two*n3*(-(eps_h(1,1)*eps_h(3,3)) - eps_h(2,2)*eps_h(3,3) + eps_h(1,3)**2 - eps_h(2,3)**2)
+    h1 = two*(-(e4**2*n1) + e5**2*n1 - e2*e5*n3 + e4*e6*n3 + three*e5*n1**2*n3 + &
+          & e3*n1*n3**2 + e5*n3**3 + e1*n1*(-e2 - e3 + two*n1**2 + n3**2))
+
+    h3 = two*(e4*e6*n1 + e5*n1**3 - e1*e3*n3 + e5**2*n3 - e6**2*n3 + e1*n1**2*n3 + &
+         & e3*n1**2*n3 + three*e5*n1*n3**2 + two*e3*n3**3 - e2*(e5*n1 + e3*n3))
 
 !  write(*,*) 'g_and_h: g = ', g
 !  write(*,*) 'g_and_h: h = ', h1, '  h3 = ',h3
