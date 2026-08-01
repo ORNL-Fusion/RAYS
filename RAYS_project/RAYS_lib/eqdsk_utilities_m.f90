@@ -65,12 +65,12 @@ subroutine ReadgFile (eqdsk_file_name)
   read (100, '(5e16.9  )') zero,    zero,    zero,    zero,     zero
 
   if (.not. allocated(T)) then
-	  allocate (T   (NRBOX))
-	  allocate (P   (NRBOX))
-	  allocate (TTp (NRBOX))
-	  allocate (Pp  (NRBOX))
-	  allocate (Q   (NRBOX))
-	  allocate (Psi (NRBOX, NZBOX))
+      allocate (T   (NRBOX))
+      allocate (P   (NRBOX))
+      allocate (TTp (NRBOX))
+      allocate (Pp  (NRBOX))
+      allocate (Q   (NRBOX))
+      allocate (Psi (NRBOX, NZBOX))
   end if
 
   read (100, '(5e16.9)') (T   (i), i = 1, NRBOX)
@@ -85,10 +85,10 @@ subroutine ReadgFile (eqdsk_file_name)
   read (100, '(2i5)') NBOUND, NLIM
 
   if (.not. allocated(RBOUND)) then
-	  allocate (RBOUND (NBOUND))
-	  allocate (ZBOUND (NBOUND))
-	  allocate (RLIM   (NLIM))
-	  allocate (ZLIM   (NLIM))
+      allocate (RBOUND (NBOUND))
+      allocate (ZBOUND (NBOUND))
+      allocate (RLIM   (NLIM))
+      allocate (ZLIM   (NLIM))
   end if
 
 !   write(*,*) 'NBOUND = ', NBOUND, '   NLIM = ', NLIM
@@ -341,19 +341,19 @@ end subroutine FindOXPoint
 !********************************************************************
 
     subroutine deallocate_eqdsk_utilities_m
-	  deallocate (T)
-	  deallocate (P)
-	  deallocate (TTp)
-	  deallocate (Pp)
-	  deallocate (Q)
-	  deallocate (Psi)
-	  deallocate (RBOUND)
-	  deallocate (ZBOUND)
-	  deallocate (RLIM)
-	  deallocate (ZLIM)
-	  deallocate (R_grid)
-	  deallocate (Z_grid)
-	  return
+      deallocate (T)
+      deallocate (P)
+      deallocate (TTp)
+      deallocate (Pp)
+      deallocate (Q)
+      deallocate (Psi)
+      deallocate (RBOUND)
+      deallocate (ZBOUND)
+      deallocate (RLIM)
+      deallocate (ZLIM)
+      deallocate (R_grid)
+      deallocate (Z_grid)
+      return
     end subroutine deallocate_eqdsk_utilities_m
 
 end module eqdsk_utilities_m

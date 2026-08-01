@@ -70,7 +70,7 @@
 !   eta: concentration as fraction of electron density
 !   t0s_eV: temperature in eV.  Entered in eV in namelist file for convenience
 !   tseps_eV: temperature in eV.  Entered in eV in namelist file for convenience
-!	alfas: T_perp/T_paral
+!   alfas: T_perp/T_paral
 !   v0s: parallel drift velocity
 !   nus: collision frequency i.e. nu/omega
 
@@ -122,13 +122,13 @@ contains
         implicit none
         logical, intent(in) :: read_input
 
-	 	integer :: input_unit, get_unit_number ! External, free unit finder
+        integer :: input_unit, get_unit_number ! External, free unit finder
         integer :: is, j
         real(KIND=rkind) :: charge
 
 ! Read and write input namelist
         if (read_input .eqv. .true.) then
-  		  	input_unit = get_unit_number()
+            input_unit = get_unit_number()
             open(unit=input_unit, file='rays.in',action='read', status='old', form='formatted')
             read(input_unit, species_list)
             close(unit=input_unit)
@@ -176,12 +176,13 @@ contains
         t0s = e * t0s_eV
 
         if (verbosity > 0) then
-			write(message_unit,*) ' is      qs         ms         eta        t0s(eV)      n0s'
-			do is = 0, nspec
-			   write(message_unit,'(1x,i2,1p5e12.4)')                   &
-			   & is, qs(is), ms(is), eta(is), t0s(is)/e, n0s(is)
+            write(message_unit,*) ' is      qs         ms         eta        t0s(eV)      n0s'
+            do is = 0, nspec
+               write(message_unit,'(1x,i2,1p5e12.4)')                   &
+               & is, qs(is), ms(is), eta(is), t0s(is)/e, n0s(is)
         end do
         end if
+
 
     end subroutine initialize_species_m
 

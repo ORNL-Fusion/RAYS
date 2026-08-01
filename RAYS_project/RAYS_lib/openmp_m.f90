@@ -40,28 +40,28 @@
 
        implicit none
        logical, intent(in) :: read_input
- 	   integer :: input_unit, get_unit_number ! External, free unit finder
+       integer :: input_unit, get_unit_number ! External, free unit finder
 
-	   have_OMP = .false.
+       have_OMP = .false.
 !$     have_OMP = .true.
        if (.not. have_OMP) then
            call text_message('Not using Open MP', 0)
            return
         end if
 
-	   num_procs = OMP_get_num_procs()
+       num_procs = OMP_get_num_procs()
        if (read_input .eqv. .true.) then  !See if there is num_threads != 0 in namelist
             num_threads = 0
- 			! Read num_threads from namelist.
-			input_unit = get_unit_number()
-			open(unit=input_unit, file='rays.in',action='read', status='old', form='formatted')
-			read(input_unit, openmp_list, end=1, err=1)
-			close(unit=input_unit)
-1       	continue ! error return, no namelist
+            ! Read num_threads from namelist.
+            input_unit = get_unit_number()
+            open(unit=input_unit, file='rays.in',action='read', status='old', form='formatted')
+            read(input_unit, openmp_list, end=1, err=1)
+            close(unit=input_unit)
+1           continue ! error return, no namelist
             if (num_threads == 0) then ! Calculate num_threads
- 			   num_threads = min(num_procs,nray)
+               num_threads = min(num_procs,nray)
             end if
-	        call omp_set_num_threads(num_threads)
+            call omp_set_num_threads(num_threads)
        end if
        ! read_input = false, use num_threads value set from outside e.g. environment
 

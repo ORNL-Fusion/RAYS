@@ -25,7 +25,7 @@ contains
 
   module subroutine initialize_RK4_ode
 
-     use diagnostics_m, only : message_unit, text_message, messages_to_stdout, verbosity
+     use diagnostics_m, only : text_message, messages_to_stdout, verbosity
 
     implicit none
 
@@ -38,8 +38,8 @@ contains
 
 ! Write input namelist
     if (verbosity >= 0) then
-		call text_message('initialize_RK4_ode: RK4 needs no initialization',0)
-		if (messages_to_stdout) write(*,*) 'initialize_RK4_ode: RK4 needs no initialization'
+        call text_message('initialize_RK4_ode: RK4 needs no initialization',0)
+        if (messages_to_stdout) write(*,*) 'initialize_RK4_ode: RK4 needs no initialization'
     end if
 
     return
@@ -59,7 +59,7 @@ contains
    module subroutine RK4_ode(eqn_ray, nv, v, s, sout, ray_stop)
   ! Simple RK4_ode solver
 
-        use diagnostics_m, only : message_unit, message, verbosity
+        use diagnostics_m, only : message, verbosity
         use constants_m, only : rkind
         use ode_m, only : ode_stop
 

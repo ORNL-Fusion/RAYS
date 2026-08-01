@@ -81,22 +81,22 @@ contains
 
         implicit none
         logical, intent(in) :: read_input
- 		integer :: input_unit, get_unit_number ! External, free unit finder
+        integer :: input_unit, get_unit_number ! External, free unit finder
 
-		call message(1)
-		call text_message('Initializing ray_init_m ', 1)
+        call message(1)
+        call text_message('Initializing ray_init_m ', 1)
 
         if (read_input .eqv. .true.) then
         ! Read and write input namelist
-  		  	input_unit = get_unit_number()
+            input_unit = get_unit_number()
             open(unit=input_unit, file='rays.in',action='read', status='old', form='formatted')
             read(input_unit, ray_init_list)
             close(unit=input_unit)
         end if
-		if (verbosity >= 0) then
-			write(message_unit, ray_init_list)
-			if (messages_to_stdout) write(*, ray_init_list)
-		end if
+        if (verbosity >= 0) then
+            write(message_unit, ray_init_list)
+            if (messages_to_stdout) write(*, ray_init_list)
+        end if
 
         init_model: select case (trim(ray_init_model))
 
@@ -115,8 +115,8 @@ contains
                    & rindex_vec0, ray_pwr_wt)
 
              case ('file_input_ray_init')
-				call file_input_ray_init(read_input, nray_max, nray, rvec0, &
-				  & rindex_vec0, ray_pwr_wt)
+                call file_input_ray_init(read_input, nray_max, nray, rvec0, &
+                  & rindex_vec0, ray_pwr_wt)
             case default
                 write(0,*) 'initialize_ray_init: invalid ray_init_model = ', trim(ray_init_model)
                 call text_message('initialize_ray_init: invalid ray_init_model = ', trim(ray_init_model),0)

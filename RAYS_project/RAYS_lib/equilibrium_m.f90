@@ -43,15 +43,15 @@
     !   gradbtensor(i,j) = d[B(j)]/d[x(i)].
         real(KIND=rkind) :: bvec(3), bmag, gradbmag(3), bunit(3), gradbunit(3,3), gradbtensor(3,3)
 
-	!   Density.
-		real(KIND=rkind) :: ns(0:nspec0), gradns(3, 0:nspec0)
+    !   Density.
+        real(KIND=rkind) :: ns(0:nspec0), gradns(3, 0:nspec0)
 
-	!   Temperature.
-		real(KIND=rkind)  :: ts(0:nspec0), gradts(3, 0:nspec0)
+    !   Temperature.
+        real(KIND=rkind)  :: ts(0:nspec0), gradts(3, 0:nspec0)
 
-	!   Some often used plasma parameters.
-		real(KIND=rkind)  :: omgc(0:nspec0), omgp2(0:nspec0)
-		real(KIND=rkind)  :: alpha(0:nspec0), gamma(0:nspec0)
+    !   Some often used plasma parameters.
+        real(KIND=rkind)  :: omgc(0:nspec0), omgp2(0:nspec0)
+        real(KIND=rkind)  :: alpha(0:nspec0), gamma(0:nspec0)
 
     !   Error returns
         character(len=60) :: equib_err = ''
@@ -83,11 +83,11 @@ contains
 
     implicit none
     logical, intent(in) :: read_input
-	integer :: input_unit, get_unit_number ! External, free unit finder
+    integer :: input_unit, get_unit_number ! External, free unit finder
 
     if (read_input .eqv. .true.) then
     ! Read and write input namelist
-    	input_unit = get_unit_number()
+        input_unit = get_unit_number()
         open(unit=input_unit, file='rays.in',action='read', status='old', form='formatted')
         read(input_unit, equilibrium_list)
         close(unit=input_unit)
@@ -95,8 +95,8 @@ contains
 
 ! Write input namelist
     if (verbosity >= 0) then
-		write(message_unit, equilibrium_list)
-		if (messages_to_stdout) write(*, equilibrium_list)
+        write(message_unit, equilibrium_list)
+        if (messages_to_stdout) write(*, equilibrium_list)
     end if
 
     equilibria: select case (trim(equilib_model))
@@ -288,8 +288,7 @@ contains
 ! present, in which case it writes to 'unit'
 
     use, intrinsic :: iso_fortran_env, only : stdout=>output_unit
-    use diagnostics_m, only : message, message_unit, text_message, verbosity
-    use species_m, only : nspec
+    use diagnostics_m, only : message, text_message, verbosity
 
     implicit none
 
@@ -339,13 +338,13 @@ contains
 !********************************************************************
 
     subroutine deallocate_equilibrium_m
-		use slab_eq_m, only : deallocate_slab_eq_m
-		use solovev_eq_m, only : deallocate_solovev_eq_m
-		use axisym_toroid_eq_m, only : deallocate_axisym_toroid_eq_m
+        use slab_eq_m, only : deallocate_slab_eq_m
+        use solovev_eq_m, only : deallocate_solovev_eq_m
+        use axisym_toroid_eq_m, only : deallocate_axisym_toroid_eq_m
 
-		call deallocate_slab_eq_m
-		call deallocate_solovev_eq_m
-		call deallocate_axisym_toroid_eq_m
+        call deallocate_slab_eq_m
+        call deallocate_solovev_eq_m
+        call deallocate_axisym_toroid_eq_m
     end subroutine deallocate_equilibrium_m
 
  end module equilibrium_m

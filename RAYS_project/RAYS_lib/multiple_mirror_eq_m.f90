@@ -57,13 +57,13 @@ module multiple_mirror_eq_m
 
 ! Local data
 
-	integer :: i, is
+    integer :: i, is
 
 ! Geometry data
     real(KIND=rkind) :: box_rmax, box_zmin, box_zmax
 
-	! Get r_LUFS, z_LUFS, Aphi_LUFS from specific mirror magnetics routine (e.g.
-	! initialize_mirror_magnetics_spline_interp) set in init
+    ! Get r_LUFS, z_LUFS, Aphi_LUFS from specific mirror magnetics routine (e.g.
+    ! initialize_mirror_magnetics_spline_interp) set in init
     real(KIND=rkind) :: r_LUFS, z_LUFS ! Location of scrape-off point of last flux surface
     real(KIND=rkind) :: Aphi_LUFS ! Bounding value of Aphi evaluated at r_LUFS, z_LUFS
 
@@ -94,7 +94,7 @@ module multiple_mirror_eq_m
     real(KIND=rkind) :: T_scrape_off = zero
 
  namelist /multiple_mirror_eq_list/&
-	 & magnetics_model, &
+     & magnetics_model, &
      & plasma_AphiN_limit, &
      & density_prof_model, &
      & d_scrape_off, &
@@ -114,35 +114,33 @@ contains
     use constants_m, only : rkind
     use diagnostics_m, only : message, message_unit, text_message, messages_to_stdout, verbosity
 
-	use species_m, only : nspec
-	use mirror_magnetics_spline_interp_m, only : initialize_mirror_magnetics_spline_interp, &
-	               & r_LUFS_spline, z_LUFS_spline, Aphi_LUFS_spline
+    use species_m, only : nspec
+    use mirror_magnetics_spline_interp_m, only : initialize_mirror_magnetics_spline_interp, &
+                   & r_LUFS_spline, z_LUFS_spline, Aphi_LUFS_spline
     use density_spline_interp_m, only : initialize_density_spline_interp
     use temperature_spline_interp_m, only : initialize_temperature_spline_interp
 
     implicit none
     logical, intent(in) :: read_input
-	integer :: input_unit, get_unit_number ! External, free unit finder
-	integer :: n_T_spline ! Number of species with splined temperature profiles
-	integer :: i_spec_spline(0:nspec) ! Species number of any splined Ti profiles
-
-    real(KIND=rkind) :: bp0
+    integer :: input_unit, get_unit_number ! External, free unit finder
+    integer :: n_T_spline ! Number of species with splined temperature profiles
+    integer :: i_spec_spline(0:nspec) ! Species number of any splined Ti profiles
 
     call message(1)
     call text_message('initializing_multiple_mirror_eq ', 1)
 
-	if (.not. allocated(temperature_prof_model)) then
-		allocate( temperature_prof_model(0:nspec) )
-		allocate( alphat1(0:nspec), alphat2(0:nspec) )
-		allocate( Aphin0_t(0:nspec), delta_t(0:nspec) )
-		temperature_prof_model = ' '
-		alphat1 = 0.
-		alphat2 = 0.
+    if (.not. allocated(temperature_prof_model)) then
+        allocate( temperature_prof_model(0:nspec) )
+        allocate( alphat1(0:nspec), alphat2(0:nspec) )
+        allocate( Aphin0_t(0:nspec), delta_t(0:nspec) )
+        temperature_prof_model = ' '
+        alphat1 = 0.
+        alphat2 = 0.
     end if
 
 ! Read input namelist
     if (read_input .eqv. .true.) then
-    	input_unit = get_unit_number()
+        input_unit = get_unit_number()
         open(unit=input_unit, file='rays.in',action='read', status='old', form='formatted')
         read(input_unit, multiple_mirror_eq_list)
         close(unit=input_unit)
@@ -150,8 +148,8 @@ contains
 
 ! Write input namelist
     if (verbosity > 0) then
-		write(message_unit, multiple_mirror_eq_list)
-		if (messages_to_stdout) write(*, multiple_mirror_eq_list)
+        write(message_unit, multiple_mirror_eq_list)
+        if (messages_to_stdout) write(*, multiple_mirror_eq_list)
     end if
 
 ! magnetics (For, now only have spline interpolation.  Add analytic fields someday soon.)
@@ -170,51 +168,51 @@ contains
           stop 1
     end select magnetics
 
-	if (verbosity > 0) then
-		write(message_unit, *) 'multiple_mirror_eq: r_LUFS = ', r_LUFS,  '  z_LUFS = ', &
-		                      & z_LUFS, '   Aphi_LUFS =  ', Aphi_LUFS
-		write(*, *)  'multiple_mirror_eq: r_LUFS = ', r_LUFS,  '  z_LUFS = ', &
-		                      & z_LUFS, '   Aphi_LUFS =  ', Aphi_LUFS
-	end if
+    if (verbosity > 0) then
+        write(message_unit, *) 'multiple_mirror_eq: r_LUFS = ', r_LUFS,  '  z_LUFS = ', &
+                              & z_LUFS, '   Aphi_LUFS =  ', Aphi_LUFS
+        write(*, *)  'multiple_mirror_eq: r_LUFS = ', r_LUFS,  '  z_LUFS = ', &
+                              & z_LUFS, '   Aphi_LUFS =  ', Aphi_LUFS
+    end if
 
 ! Density and Temperature.  Check for valid model name
 ! Density and temperature only need initialization for spline interpolation models
 
     density: select case (trim(density_prof_model))
         case ('density_spline_interp')
-        	call initialize_density_spline_interp(read_input)
+            call initialize_density_spline_interp(read_input)
         case ('constant')
         case ('parabolic')
         case ('hyperbolic')
         case default
-				write(message_unit, *) 'multiple_mirror_eq: Unknown density_prof_model: ', &
+                write(message_unit, *) 'multiple_mirror_eq: Unknown density_prof_model: ', &
                      & trim(density_prof_model)
-				write(*, *) 'multiple_mirror_eq: Unknown density_prof_model: ', &
+                write(*, *) 'multiple_mirror_eq: Unknown density_prof_model: ', &
                      & trim(density_prof_model)
             stop 1
     end select density
 
 ! Temperature.  Check for valid model name and count number of splined profiles
-	n_T_spline = 0
+    n_T_spline = 0
     do is = 0, nspec
        temperature: select case( trim(temperature_prof_model(is)) )
         case ('temperature_spline_interp')
-			n_T_spline = n_T_spline + 1
-			i_spec_spline(n_T_spline) = is
+            n_T_spline = n_T_spline + 1
+            i_spec_spline(n_T_spline) = is
         case('zero')
         case('constant')
         case('parabolic')
         case default
-			write(message_unit, *) 'multiple_mirror_eq: Unknown temperature_prof_model: ', &
-				 & temperature_prof_model(is)
-			write(*,*) 'multiple_mirror_eq: Unknown temperature_prof_model: ', &
-				 & temperature_prof_model(is)
+            write(message_unit, *) 'multiple_mirror_eq: Unknown temperature_prof_model: ', &
+                 & temperature_prof_model(is)
+            write(*,*) 'multiple_mirror_eq: Unknown temperature_prof_model: ', &
+                 & temperature_prof_model(is)
             stop 1
        end select temperature
     end do
 
 ! Initialize temperature splines if there are any
-	if (n_T_spline > 0) call initialize_temperature_spline_interp(read_input)
+    if (n_T_spline > 0) call initialize_temperature_spline_interp(read_input)
 
   end subroutine initialize_multiple_mirror_eq_m
 
@@ -234,9 +232,9 @@ contains
 ! although someday may add an analytic form
 
     use species_m, only : nspec, n0s, t0s
-    use diagnostics_m, only : message_unit, message, verbosity
+    use diagnostics_m, only : message, verbosity
 
-	use mirror_magnetics_spline_interp_m, only : mirror_magnetics_spline_interp
+    use mirror_magnetics_spline_interp_m, only : mirror_magnetics_spline_interp
     use density_spline_interp_m, only : density_spline_interp
     use temperature_spline_interp_m, only : temperature_spline_interp
 
@@ -250,7 +248,7 @@ contains
 
 
     real(KIND=rkind) :: x, y, z, r
-    real(KIND=rkind) :: br, bz, bphi, bp0
+!     real(KIND=rkind) :: br, bz, bphi, bp0
     real(KIND=rkind) ::  Aphi, gradAphi(3), AphiN, gradAphiN(3)
     real(KIND=rkind) :: dens, dd_rho
     real(KIND=rkind) :: t_prof, dt_drho
@@ -268,19 +266,19 @@ contains
 ! Check that we are in the box.  But so we don't get crash when evaluating on the
 ! box boundary, allow a leeway of 2*tiny(x)
     if (r > box_rmax) then
-    	equib_err = 'R_out_of_box'
-    	write(*,*) 'R_out_of_box: R = ', R, '   box_rmax = ', box_rmax
+        equib_err = 'R_out_of_box'
+        write(*,*) 'R_out_of_box: R = ', R, '   box_rmax = ', box_rmax
     end if
     if (z < box_zmin .or. z > box_zmax) then
-    	equib_err = 'Z_out_of_box'
-    	write(*,*) 'Z_out_of_box: Z = ', Z, '   box_zmin = ', box_zmin, '   box_zmax = ', box_zmax
+        equib_err = 'Z_out_of_box'
+        write(*,*) 'Z_out_of_box: Z = ', Z, '   box_zmin = ', box_zmin, '   box_zmax = ', box_zmax
     end if
 
     if (equib_err /= '') return
 
     magnetics: select case (trim(magnetics_model))
        case ('mirror_magnetics_spline_interp')
-			call mirror_magnetics_spline_interp(rvec, bvec, gradbtensor, Aphi, gradAphi,&
+            call mirror_magnetics_spline_interp(rvec, bvec, gradbtensor, Aphi, gradAphi,&
                            & AphiN, gradAphiN, equib_err)
     end select magnetics
 
@@ -299,24 +297,24 @@ contains
 !      Parabolic: N.B. AphiN goes something like r**2 so if alphan2 = 1 and alphan1 = 2
 !      the profile is pretty much parabolic
             call parabolic_prof(AphiN, d_scrape_off, alphan1, alphan2, dens, dd_rho)
-			ns(0:nspec) = n0s(0:nspec) * dens
-			gradns(1, 0:nspec) = n0s(0:nspec)*dd_rho*gradAphiN(1)
-			gradns(2, 0:nspec) = n0s(0:nspec)*dd_rho*gradAphiN(2)
-			gradns(3, 0:nspec) = n0s(0:nspec)*dd_rho*gradAphiN(3)
+            ns(0:nspec) = n0s(0:nspec) * dens
+            gradns(1, 0:nspec) = n0s(0:nspec)*dd_rho*gradAphiN(1)
+            gradns(2, 0:nspec) = n0s(0:nspec)*dd_rho*gradAphiN(2)
+            gradns(3, 0:nspec) = n0s(0:nspec)*dd_rho*gradAphiN(3)
 
         case ('hyperbolic')
             call hyperbolic_prof(AphiN, d_scrape_off, AphiN0_d, delta_d, dens, dd_rho)
-			ns(0:nspec) = n0s(0:nspec) * dens
-			gradns(1, 0:nspec) = n0s(0:nspec)*dd_rho*gradAphiN(1)
-			gradns(2, 0:nspec) = n0s(0:nspec)*dd_rho*gradAphiN(2)
-			gradns(3, 0:nspec) = n0s(0:nspec)*dd_rho*gradAphiN(3)
+            ns(0:nspec) = n0s(0:nspec) * dens
+            gradns(1, 0:nspec) = n0s(0:nspec)*dd_rho*gradAphiN(1)
+            gradns(2, 0:nspec) = n0s(0:nspec)*dd_rho*gradAphiN(2)
+            gradns(3, 0:nspec) = n0s(0:nspec)*dd_rho*gradAphiN(3)
 
         case ('density_spline_interp')
             call density_spline_interp(AphiN, d_scrape_off, dens, dd_rho)
-			ns(0:nspec) = n0s(0:nspec) * dens
-			gradns(1, 0:nspec) = n0s(0:nspec)*dd_rho*gradAphiN(1)
-			gradns(2, 0:nspec) = n0s(0:nspec)*dd_rho*gradAphiN(2)
-			gradns(3, 0:nspec) = n0s(0:nspec)*dd_rho*gradAphiN(3)
+            ns(0:nspec) = n0s(0:nspec) * dens
+            gradns(1, 0:nspec) = n0s(0:nspec)*dd_rho*gradAphiN(1)
+            gradns(2, 0:nspec) = n0s(0:nspec)*dd_rho*gradAphiN(2)
+            gradns(3, 0:nspec) = n0s(0:nspec)*dd_rho*gradAphiN(3)
 
     end select density
 
@@ -337,28 +335,28 @@ contains
        case ('parabolic')
 !      Parabolic: N.B. AphiN goes something like r**2 so if alphan2 = 1 and alphan1 = 2
 !      the profile is pretty much parabolic
-		  call parabolic_prof(AphiN, T_scrape_off, alphat1(is), alphat2(is), t_prof, dt_drho)
-		  ts(is) = t0s(is) * t_prof
-		  gradts(1,is) = t0s(is)*dt_drho*gradAphiN(1)
-		  gradts(2,is) = t0s(is)*dt_drho*gradAphiN(2)
-		  gradts(3,is) = t0s(is)*dt_drho*gradAphiN(3)
+          call parabolic_prof(AphiN, T_scrape_off, alphat1(is), alphat2(is), t_prof, dt_drho)
+          ts(is) = t0s(is) * t_prof
+          gradts(1,is) = t0s(is)*dt_drho*gradAphiN(1)
+          gradts(2,is) = t0s(is)*dt_drho*gradAphiN(2)
+          gradts(3,is) = t0s(is)*dt_drho*gradAphiN(3)
 
        case ('hyperbolic')
-		  call hyperbolic_prof(AphiN, T_scrape_off, Aphin0_t(is),delta_t(is), t_prof, dt_drho)
-		  ts(is) = t0s(is) * t_prof
-		  gradts(1,is) = t0s(is)*dt_drho*gradAphiN(1)
-		  gradts(2,is) = t0s(is)*dt_drho*gradAphiN(2)
-		  gradts(3,is) = t0s(is)*dt_drho*gradAphiN(3)
+          call hyperbolic_prof(AphiN, T_scrape_off, Aphin0_t(is),delta_t(is), t_prof, dt_drho)
+          ts(is) = t0s(is) * t_prof
+          gradts(1,is) = t0s(is)*dt_drho*gradAphiN(1)
+          gradts(2,is) = t0s(is)*dt_drho*gradAphiN(2)
+          gradts(3,is) = t0s(is)*dt_drho*gradAphiN(3)
 
        case ('temperature_spline_interp')
             call temperature_spline_interp(AphiN, T_scrape_off, Te, dTe_rho, Ti, dTi_rho)
             if (is == 0) then
-            	ts(is) = t0s(is) * Te
+                ts(is) = t0s(is) * Te
                 gradts(1,is) = t0s(is)*dTe_rho*gradAphiN(1)
                 gradts(2,is) = t0s(is)*dTe_rho*gradAphiN(2)
                 gradts(3,is) = t0s(is)*dTe_rho*gradAphiN(3)
-        	else
-            	ts(is) = t0s(is) * Ti
+            else
+                ts(is) = t0s(is) * Ti
                 gradts(1,is) = t0s(is)*dTi_rho*gradAphiN(1)
                 gradts(2,is) = t0s(is)*dTi_rho*gradAphiN(2)
                 gradts(3,is) = t0s(is)*dTi_rho*gradAphiN(3)
@@ -384,7 +382,7 @@ contains
  ! although someday may add an analytic form
 
     use constants_m, only : rkind
-    use diagnostics_m, only : message_unit, message, text_message
+    use diagnostics_m, only : message, text_message
 
     use mirror_magnetics_spline_interp_m, only : mirror_magnetics_spline_interp_aphi
 
@@ -393,7 +391,7 @@ contains
     real(KIND=rkind), intent(in) :: rvec(3)
     real(KIND=rkind), intent(out) :: Aphi, gradAphi(3), AphiN, gradAphiN(3)
 
-	call mirror_magnetics_spline_interp_Aphi(rvec, Aphi, gradAphi, AphiN, gradAphiN)
+    call mirror_magnetics_spline_interp_Aphi(rvec, Aphi, gradAphi, AphiN, gradAphiN)
 
     return
   end subroutine multiple_mirror_Aphi
@@ -429,8 +427,8 @@ contains
 !     write (message_unit,*) '    x', b9,'ne', b12, 'bx', b9, 'by', b9, 'bz', b9, 'rho', &
 !             & b8, 'rhoN', b8,  'Te',b9, 'Ti(s)'
 !     if (messages_to_stdout) then
-! 		write (*,*) '    x', b9,'ne', b12, 'bx', b9, 'by', b9, 'bz', b9, 'rho', &
-! 				& b8, 'rhoN', b8,  'Te',b9, 'Ti(s)'
+!       write (*,*) '    x', b9,'ne', b12, 'bx', b9, 'by', b9, 'bz', b9, 'rho', &
+!               & b8, 'rhoN', b8,  'Te',b9, 'Ti(s)'
 !     end if
 !
 !     do ip = 1, nx_points
@@ -440,10 +438,10 @@ contains
 !         call multiple_mirror_rho(rvec, rho, gradrho, rhoN, grad_rhoN)
 !         write (message_unit,'(f11.5, a, e12.5, 3f11.5, f11.5, f11.5,  7f11.5)') &
 !                & x,'  ', ns(0), bvec, rho, rhoN, (ts(i), i=0, nspec)
-! 		if (messages_to_stdout) then
-! 			write (*,'(f11.5, a, e12.5, 3f11.5, f11.5, f11.5,  7f11.5)') &
-! 				   & x,'  ', ns(0), bvec, rho, rhoN, (ts(i), i=0, nspec)
-! 		end if
+!       if (messages_to_stdout) then
+!           write (*,'(f11.5, a, e12.5, 3f11.5, f11.5, f11.5,  7f11.5)') &
+!                  & x,'  ', ns(0), bvec, rho, rhoN, (ts(i), i=0, nspec)
+!       end if
 !
 ! !        write(*,*) 'x = ', x, '  gradrho = ', gradrho
 ! !        write(*,*) 'gradbtensor = ', gradbtensor
@@ -467,17 +465,17 @@ contains
     real(KIND=rkind), intent(in) :: rho, f_min, alpha1, alpha2
     real(KIND=rkind), intent(out) :: f, fp
 
-	f = zero
-	if (rho < one) then
-		f = (1.-rho**(alpha2))**alpha1
-		fp = -alpha1*alpha2*rho**(alpha2 - 1.)*(1.-rho**(alpha2))&
-				& **(alpha1 - 1.)
-	end if
+    f = zero
+    if (rho < one) then
+        f = (1.-rho**(alpha2))**alpha1
+        fp = -alpha1*alpha2*rho**(alpha2 - 1.)*(1.-rho**(alpha2))&
+                & **(alpha1 - 1.)
+    end if
 
-	if (f < f_min) then
-		f = f_min
-		fp = zero
-	end if
+    if (f < f_min) then
+        f = f_min
+        fp = zero
+    end if
 
   end subroutine parabolic_prof
 
@@ -503,18 +501,18 @@ contains
     argLimit = 35.
 
     if (argP > argLimit) then
-    	f = f_min
-    	fp = zero
-    	return
+        f = f_min
+        fp = zero
+        return
     end if
 
-	f = zero
-	f = (tanh(argP)-tanh(argM))/two/tanh(arg0)
-	fp = (one/cosh(argP)**2 - one/cosh(argM)**2)/(two*delta)/&
-		& tanh(arg0)
+    f = zero
+    f = (tanh(argP)-tanh(argM))/two/tanh(arg0)
+    fp = (one/cosh(argP)**2 - one/cosh(argM)**2)/(two*delta)/&
+        & tanh(arg0)
 
-	f = (one - f_min)*f + f_min
-	fp = (one - f_min)*fp
+    f = (one - f_min)*f + f_min
+    fp = (one - f_min)*fp
 
   end subroutine hyperbolic_prof
 
@@ -543,22 +541,22 @@ contains
     argLimit = 10.
 
     if (argP > argLimit) then
-    	f = f_min
-    	fp = zero
-    	return
+        f = f_min
+        fp = zero
+        return
     end if
 
-	f = zero
-	if (rho < one) then
-		f = (tanh((rho+rho0)/delta)-tanh((rho-rho0)/delta))/two/tanh((rho0)/delta)
-		fp = (one/cosh((rho+rho0)/delta)**2 - one/cosh((rho-rho0)/delta)**2)/(two*delta)/&
-		    & tanh((rho0)/delta)
-	end if
+    f = zero
+    if (rho < one) then
+        f = (tanh((rho+rho0)/delta)-tanh((rho-rho0)/delta))/two/tanh((rho0)/delta)
+        fp = (one/cosh((rho+rho0)/delta)**2 - one/cosh((rho-rho0)/delta)**2)/(two*delta)/&
+            & tanh((rho0)/delta)
+    end if
 
-	if (f < f_min) then
-		f = f_min
-		fp = zero
-	end if
+    if (f < f_min) then
+        f = f_min
+        fp = zero
+    end if
 
   end subroutine hyperbolic_prof_inside_LUFS
 
@@ -566,16 +564,16 @@ contains
 !********************************************************************
 
   subroutine deallocate_multiple_mirror_eq_m
-	use mirror_magnetics_spline_interp_m, only : deallocate_mirror_magnetics_spline_interp_m
+    use mirror_magnetics_spline_interp_m, only : deallocate_mirror_magnetics_spline_interp_m
 
-	if (allocated(temperature_prof_model)) then
-		deallocate( temperature_prof_model )
-		deallocate( alphat1 )
-		deallocate( alphat2 )
-	end if
+    if (allocated(temperature_prof_model)) then
+        deallocate( temperature_prof_model )
+        deallocate( alphat1 )
+        deallocate( alphat2 )
+    end if
 
-	call deallocate_mirror_magnetics_spline_interp_m
-	return
+    call deallocate_mirror_magnetics_spline_interp_m
+    return
 
   end subroutine deallocate_multiple_mirror_eq_m
 

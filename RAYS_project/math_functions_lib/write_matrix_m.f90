@@ -11,6 +11,7 @@
 
 !_________________________________________________________________________________________
 ! Working notes:
+! (DBB 7/26/2026) Added write_vector interface and some module procedures
 !_________________________________________________________________________________________
 
 !_________________________________________________________________________________________
@@ -27,6 +28,10 @@
     interface write_matrix
         module procedure write_matrix_S, write_matrix_rkind, write_Cmatrix_S,&
               & write_Cmatrix_rkind
+    end interface
+
+    interface write_vector
+        module procedure write_vector_rkind, write_Cvector_rkind
     end interface
 
 !_________________________________________________________________________________________
@@ -90,6 +95,8 @@ contains
     return
     end subroutine write_matrix_S
 
+
+!***************************************************************************
     subroutine write_matrix_rkind(mess, value, m_dim, n_dim, unit)
 
     implicit none
@@ -141,12 +148,13 @@ contains
 			write(out_unit, '(i3,2x,8(3x,(1pe14.6)))' )  i, (value(i, j), j=1, n_dim)
 !			write(*, '(i3,2x,8(3x,(1pe14.6)))' )  i, (value(i, j), j=1, n_dim)
 		end do
-
 	end if
 
-    return
+	return
     end subroutine write_matrix_rkind
 
+
+!***************************************************************************
     subroutine write_Cmatrix_S(mess, value, m_dim, n_dim, unit)
 
     implicit none
@@ -204,6 +212,7 @@ contains
     return
     end subroutine write_Cmatrix_S
 
+!***************************************************************************
     subroutine write_Cmatrix_rkind(mess, value, m_dim, n_dim, unit)
 
     implicit none
@@ -259,5 +268,186 @@ contains
 
     return
     end subroutine write_Cmatrix_rkind
+
+!***************************************************************************
+    subroutine write_vector_S(mess, value, n_dim, unit)
+
+    implicit none
+
+    character (len=*), intent (in) :: mess
+    integer, intent (in) :: n_dim
+    real, intent (in) :: value(n_dim)
+    integer, optional, intent (in) :: unit
+    integer :: out_unit
+
+    real :: v_min, v_max
+    integer :: i, j
+
+    if(present(unit)) then
+    	out_unit = unit
+    else
+    	out_unit = output_unit
+    end if
+
+	v_min = huge(v_min)
+	v_max = tiny(v_max)
+
+	do j = 1, n_dim
+		if ((abs(value(j)) > 0.).and.(abs(value(j)) < v_min)) &
+			& v_min = abs(value(j))
+		if (abs(value(j)) > v_max ) v_max = abs(value(j))
+	end do
+
+
+	if ((v_max < 1.e4) .and. (v_min > 1.e-3)) then ! Write in floating point
+
+		write(out_unit, '(a, " = ")' ) trim(mess)
+		write(out_unit, '(8(3x,f14.8))' ) (value(j), j=1, n_dim)
+
+	else ! Write in scientific notation
+
+		write(out_unit, '(a, " = ")' ) trim(mess)
+		write(out_unit, '(8(3x,(1pe14.6)))' ) (value(j), j=1, n_dim)
+
+	end if
+
+    return
+    end subroutine write_vector_S
+
+!***************************************************************************
+    subroutine write_Cvector_S(mess, value, n_dim, unit)
+
+    implicit none
+
+    character (len=*), intent (in) :: mess
+    integer, intent (in) :: n_dim
+    complex, intent (in) :: value(n_dim)
+    integer, optional, intent (in) :: unit
+    integer :: out_unit
+
+    real :: v_min, v_max
+    integer :: i, j
+
+    if(present(unit)) then
+    	out_unit = unit
+    else
+    	out_unit = output_unit
+    end if
+
+	v_min = huge(v_min)
+	v_max = tiny(v_max)
+
+	do j = 1, n_dim
+		if ((abs(value(j)) > 0.).and.(abs(value(j)) < v_min)) &
+			& v_min = abs(value(j))
+		if (abs(value(j)) > v_max ) v_max = abs(value(j))
+	end do
+
+	if ((v_max < 1.e4) .and. (v_min > 1.e-3)) then ! Write in floating point
+
+		write(out_unit, '(a," ")')
+		write(out_unit, '(a, " = ")' ) trim(mess)
+		write(out_unit, '(8(f14.8))' ) (value(j), j=1, n_dim)
+
+	else ! Write in scientific notation
+
+		write(out_unit, '(a," ")')
+		write(out_unit, '(a, " = ")' ) trim(mess)!		write(*, '(a, " = ")' ) trim(mess)
+		write(out_unit, '(8(3x,1pe14.6))' ) (value(j), j=1, n_dim)
+
+	end if
+
+    return
+    end subroutine write_Cvector_S
+
+!***************************************************************************
+    subroutine write_vector_rkind(mess, value, n_dim, unit)
+
+    implicit none
+
+    character (len=*), intent (in) :: mess
+    integer, intent (in) :: n_dim
+    real(kind=rkind), intent (in) :: value(n_dim)
+    integer, optional, intent (in) :: unit
+    integer :: out_unit
+
+    real(kind=rkind) :: v_min, v_max
+    integer :: i, j
+
+    if(present(unit)) then
+    	out_unit = unit
+    else
+    	out_unit = output_unit
+    end if
+
+	v_min = huge(v_min)
+	v_max = tiny(v_max)
+
+	do j = 1, n_dim
+		if ((abs(value(j)) > 0.).and.(abs(value(j)) < v_min)) &
+			& v_min = abs(value(j))
+		if (abs(value(j)) > v_max ) v_max = abs(value(j))
+	end do
+
+	if ((v_max < 1.e4) .and. (v_min > 1.e-3)) then ! Write in floating point
+
+		write(out_unit, '(a, " = ")' ) trim(mess)
+		write(out_unit, '(8(3x,f14.8))' ) (value(j), j=1, n_dim)
+
+	else ! Write in scientific notation
+
+		write(out_unit, '(a, " = ")' ) trim(mess)
+		write(out_unit, '(8(3x,(1pe14.6)))' ) (value(j), j=1, n_dim)
+
+	end if
+
+    return
+    end subroutine write_vector_rkind
+
+!***************************************************************************
+    subroutine write_Cvector_rkind(mess, value, n_dim, unit)
+
+    implicit none
+
+    character (len=*), intent (in) :: mess
+    integer, intent (in) :: n_dim
+    complex(kind=rkind), intent (in) :: value(n_dim)
+    integer, optional, intent (in) :: unit
+    integer :: out_unit
+
+    real(kind=rkind) :: v_min, v_max
+    integer :: i, j
+
+    if(present(unit)) then
+    	out_unit = unit
+    else
+    	out_unit = output_unit
+    end if
+
+	v_min = huge(v_min)
+	v_max = tiny(v_max)
+
+	do j = 1, n_dim
+		if ((abs(value(j)) > 0.).and.(abs(value(j)) < v_min)) &
+			& v_min = abs(value(j))
+		if (abs(value(j)) > v_max ) v_max = abs(value(j))
+	end do
+
+	if ((v_max < 1.e4) .and. (v_min > 1.e-3)) then ! Write in floating point
+
+		write(out_unit, '(a," ")')
+		write(out_unit, '(a, " = ")' ) trim(mess)
+		write(out_unit, '(8(3x,2f14.8))' ) (value(j), j=1, n_dim)
+
+	else ! Write in scientific notation
+
+		write(out_unit, '(a," ")')
+		write(out_unit, '(a, " = ")' ) trim(mess)!		write(*, '(a, " = ")' ) trim(mess)
+		write(out_unit, '(8(3x,2(1pe14.6)))' ) (value(j), j=1, n_dim)
+
+	end if
+
+    return
+    end subroutine write_Cvector_rkind
 
  END MODULE write_matrix_m

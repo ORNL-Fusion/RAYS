@@ -27,16 +27,16 @@
 
 !   Name of dispersion model used in ray tracing
 !   Presently supported are:
-!		cold -> All species are4 cold
-!		general -> different species can have different dispersion model
+!       cold -> All species are4 cold
+!       general -> different species can have different dispersion model
 !
-!	N.B. There is a distinction between ray_dispersion_model here and ray_deriv_name
-!	found in ode_m.f90:
-!		ray_dispersion_model refers to the physics of the dispersion model.
-!		ray_deriv_name refers to the subroutine name that calculates the ray derivatives.
-!	The same physics derivatives might be provided by different named subroutines. e.g.
-!	deriv_num works with an arbitrary dispersion function and can provide derivatives for
-!	any dispersion physics model.
+!   N.B. There is a distinction between ray_dispersion_model here and ray_deriv_name
+!   found in ode_m.f90:
+!       ray_dispersion_model refers to the physics of the dispersion model.
+!       ray_deriv_name refers to the subroutine name that calculates the ray derivatives.
+!   The same physics derivatives might be provided by different named subroutines. e.g.
+!   deriv_num works with an arbitrary dispersion function and can provide derivatives for
+!   any dispersion physics model.
     character(len=60) :: ray_dispersion_model
 
 !   RF in Hz,
@@ -75,22 +75,22 @@ contains
 
     implicit none
     logical, intent(in) :: read_input
- 	integer :: input_unit, get_unit_number ! External, free unit finder
+    integer :: input_unit, get_unit_number ! External, free unit finder
 
     if (read_input .eqv. .true.) then
-		! Read and write input namelist
-  		  	input_unit = get_unit_number()
-			open(unit=input_unit, file='rays.in',action='read', status='old', form='formatted')
-			read(input_unit, rf_list)
-			close(unit=input_unit)
+        ! Read and write input namelist
+            input_unit = get_unit_number()
+            open(unit=input_unit, file='rays.in',action='read', status='old', form='formatted')
+            read(input_unit, rf_list)
+            close(unit=input_unit)
     end if
 
     call text_message('Initializing rf_m', 1)
 
 ! Write input namelist
     if (verbosity >= 0) then
-		write(message_unit, rf_list)
-		if (messages_to_stdout) write(*, rf_list)
+        write(message_unit, rf_list)
+        if (messages_to_stdout) write(*, rf_list)
     end if
 
     if ( frf <= 0. ) then

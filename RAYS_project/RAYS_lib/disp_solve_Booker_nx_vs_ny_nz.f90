@@ -27,7 +27,7 @@
     use constants_m, only : rkind, zero, one, two
     use diagnostics_m, only : message
     use equilibrium_m, only : eq_point
-	use rpoly_m, only : rpoly
+    use rpoly_m, only : rpoly
 
     implicit none
 
@@ -42,7 +42,6 @@
     real(KIND=rkind) :: coeffs(5) ! Booker coefficient vector
     integer, parameter :: degree = 4 ! order of equation
     real(KIND=rkind) :: nx_re(4), nx_im(4)
-    real(KIND=rkind) :: a
     integer :: i, istat
 
     X = eq%alpha(0)
@@ -53,40 +52,40 @@
 
     C4 = (1 - X/(1 - Y**2))*cos(theta)**2 + (1 - X)*sin(theta)**2
 
-	c3 = (-2*nz*X*Y**2*cos(theta)*sin(theta))/(-1 + Y**2)
+    c3 = (-2*nz*X*Y**2*cos(theta)*sin(theta))/(-1 + Y**2)
 
     C2 = (ny**2*(-1 + X + Y**2) + (-1 + X)*(-1 + X + Y**2)*cos(theta)**4 + &
-		  &(-(ny**2*(-1 + X)*(-1 + Y**2)) + (-1 + X)*(-1 + X + Y**2) + &
-		  &   nz**2*(-2 + 2*X + 2*Y**2 - X*Y**2))*sin(theta)**2 + &
-		  & (-1 + X)*(-1 + X + Y**2)*sin(theta)**4 + &
-		  & cos(theta)**2*(1 - 2*nz**2 - 2*X + 2*nz**2*X + X**2 - Y**2 + &
-		  &   2*nz**2*Y**2 - nz**2*X*Y**2 + ny**2*(-1 + X + Y**2) + &
-		  &  2*(-1 + X)*(-1 + X + Y**2)*sin(theta)**2))/(-1 + Y**2)
+          &(-(ny**2*(-1 + X)*(-1 + Y**2)) + (-1 + X)*(-1 + X + Y**2) + &
+          &   nz**2*(-2 + 2*X + 2*Y**2 - X*Y**2))*sin(theta)**2 + &
+          & (-1 + X)*(-1 + X + Y**2)*sin(theta)**4 + &
+          & cos(theta)**2*(1 - 2*nz**2 - 2*X + 2*nz**2*X + X**2 - Y**2 + &
+          &   2*nz**2*Y**2 - nz**2*X*Y**2 + ny**2*(-1 + X + Y**2) + &
+          &  2*(-1 + X)*(-1 + X + Y**2)*sin(theta)**2))/(-1 + Y**2)
 
     C1 = (2*nz*(-1 + ny**2 + nz**2)*X*Y**2*cos(theta)*sin(theta))/(1 - Y**2)
 
-	C0 = ((-1 + X)*(1 - 2*X + X**2 - Y**2 + nz**2*(-1 + X + Y**2))*cos(theta)**4 + &
-		 & (ny**2 + nz**2 + (-1 + X)*sin(theta)**2)* &
-		 &  (ny**2*(-1 + X + Y**2) + &
-		 &   (1 - 2*X + X**2 - Y**2 + nz**2*(-1 + X + Y**2))*sin(theta)**2) + &
-		 & cos(theta)**2*(nz**2*(-1 + X)*(-1 + X + Y**2 - nz**2*(-1 + Y**2)) + &
-		 &    ny**2*(2 + 2*X**2 - 2*Y**2 + X*(-4 + Y**2) - &
-		 &       nz**2*(-1 + X)*(-1 + Y**2)) + &
-		 &    2*(-1 + X)*(1 - 2*X + X**2 - Y**2 + nz**2*(-1 + X + Y**2))*sin(theta)**2 &
-			 ))/(-1 + Y**2)
+    C0 = ((-1 + X)*(1 - 2*X + X**2 - Y**2 + nz**2*(-1 + X + Y**2))*cos(theta)**4 + &
+         & (ny**2 + nz**2 + (-1 + X)*sin(theta)**2)* &
+         &  (ny**2*(-1 + X + Y**2) + &
+         &   (1 - 2*X + X**2 - Y**2 + nz**2*(-1 + X + Y**2))*sin(theta)**2) + &
+         & cos(theta)**2*(nz**2*(-1 + X)*(-1 + X + Y**2 - nz**2*(-1 + Y**2)) + &
+         &    ny**2*(2 + 2*X**2 - 2*Y**2 + X*(-4 + Y**2) - &
+         &       nz**2*(-1 + X)*(-1 + Y**2)) + &
+         &    2*(-1 + X)*(1 - 2*X + X**2 - Y**2 + nz**2*(-1 + X + Y**2))*sin(theta)**2 &
+             ))/(-1 + Y**2)
 
-	coeffs = (/C4, C3, C2, C1, C0/)
-	call rpoly(coeffs, degree, nx_re, nx_im, istat)
-	do i = 1,4
-		nx(i) = cmplx(nx_re(i), nx_im(i))
+    coeffs = (/C4, C3, C2, C1, C0/)
+    call rpoly(coeffs, degree, nx_re, nx_im, istat)
+    do i = 1,4
+        nx(i) = cmplx(nx_re(i), nx_im(i),rkind)
 ! write(*,*) 'nx(i) = ', nx(i)
-	end do
+    end do
 
     return
  end subroutine solve_Booker_nx_vs_theta_ny_nz
 !****************************************************************************
 
-complex function disp_fun_Booker(eq, theta, nx, ny, nz)
+complex(KIND=rkind) function disp_fun_Booker(eq, theta, nx, ny, nz)
 ! Calculates the dispersion function of the Booker quartic versus nx, ny, nz where the
 ! local coordinate system is as described above.
 ! N.B. nx is complex, as is the returned value disp_fun_Booker.  But ny, nz are real.
@@ -95,13 +94,13 @@ complex function disp_fun_Booker(eq, theta, nx, ny, nz)
     use diagnostics_m, only : message
     use equilibrium_m, only : eq_point
 
-       implicit none
+    implicit none
 
-!      Derived type containing equilibrium data for a spatial point in the plasma
-       type(eq_point), intent(in) :: eq
+!  Derived type containing equilibrium data for a spatial point in the plasma
+   type(eq_point), intent(in) :: eq
 
-       complex(KIND=rkind), intent(in) :: nx
-       real(KIND=rkind), intent(in) :: theta, ny, nz
+   complex(KIND=rkind), intent(in) :: nx
+   real(KIND=rkind), intent(in) :: theta, ny, nz
 
     real(KIND=rkind) :: X, Y
     real(KIND=rkind) :: C4, C3, C2, C1, C0 ! Booker coefficients in descending powers of nx
@@ -111,27 +110,27 @@ complex function disp_fun_Booker(eq, theta, nx, ny, nz)
 
     C4 = (1 - X/(1 - Y**2))*cos(theta)**2 + (1 - X)*sin(theta)**2
 
-	c3 = (-2*nz*X*Y**2*cos(theta)*sin(theta))/(-1 + Y**2)
+    c3 = (-2*nz*X*Y**2*cos(theta)*sin(theta))/(-1 + Y**2)
 
     C2 = (ny**2*(-1 + X + Y**2) + (-1 + X)*(-1 + X + Y**2)*cos(theta)**4 + &
-		  &(-(ny**2*(-1 + X)*(-1 + Y**2)) + (-1 + X)*(-1 + X + Y**2) + &
-		  &   nz**2*(-2 + 2*X + 2*Y**2 - X*Y**2))*sin(theta)**2 + &
-		  & (-1 + X)*(-1 + X + Y**2)*sin(theta)**4 + &
-		  & cos(theta)**2*(1 - 2*nz**2 - 2*X + 2*nz**2*X + X**2 - Y**2 + &
-		  &   2*nz**2*Y**2 - nz**2*X*Y**2 + ny**2*(-1 + X + Y**2) + &
-		  &  2*(-1 + X)*(-1 + X + Y**2)*sin(theta)**2))/(-1 + Y**2)
+          &(-(ny**2*(-1 + X)*(-1 + Y**2)) + (-1 + X)*(-1 + X + Y**2) + &
+          &   nz**2*(-2 + 2*X + 2*Y**2 - X*Y**2))*sin(theta)**2 + &
+          & (-1 + X)*(-1 + X + Y**2)*sin(theta)**4 + &
+          & cos(theta)**2*(1 - 2*nz**2 - 2*X + 2*nz**2*X + X**2 - Y**2 + &
+          &   2*nz**2*Y**2 - nz**2*X*Y**2 + ny**2*(-1 + X + Y**2) + &
+          &  2*(-1 + X)*(-1 + X + Y**2)*sin(theta)**2))/(-1 + Y**2)
 
     C1 = (2*nz*(-1 + ny**2 + nz**2)*X*Y**2*cos(theta)*sin(theta))/(1 - Y**2)
 
-	C0 = ((-1 + X)*(1 - 2*X + X**2 - Y**2 + nz**2*(-1 + X + Y**2))*cos(theta)**4 + &
-		 & (ny**2 + nz**2 + (-1 + X)*sin(theta)**2)* &
-		 &  (ny**2*(-1 + X + Y**2) + &
-		 &   (1 - 2*X + X**2 - Y**2 + nz**2*(-1 + X + Y**2))*sin(theta)**2) + &
-		 & cos(theta)**2*(nz**2*(-1 + X)*(-1 + X + Y**2 - nz**2*(-1 + Y**2)) + &
-		 &    ny**2*(2 + 2*X**2 - 2*Y**2 + X*(-4 + Y**2) - &
-		 &       nz**2*(-1 + X)*(-1 + Y**2)) + &
-		 &    2*(-1 + X)*(1 - 2*X + X**2 - Y**2 + nz**2*(-1 + X + Y**2))*sin(theta)**2 &
-			 ))/(-1 + Y**2)
+    C0 = ((-1 + X)*(1 - 2*X + X**2 - Y**2 + nz**2*(-1 + X + Y**2))*cos(theta)**4 + &
+         & (ny**2 + nz**2 + (-1 + X)*sin(theta)**2)* &
+         &  (ny**2*(-1 + X + Y**2) + &
+         &   (1 - 2*X + X**2 - Y**2 + nz**2*(-1 + X + Y**2))*sin(theta)**2) + &
+         & cos(theta)**2*(nz**2*(-1 + X)*(-1 + X + Y**2 - nz**2*(-1 + Y**2)) + &
+         &    ny**2*(2 + 2*X**2 - 2*Y**2 + X*(-4 + Y**2) - &
+         &       nz**2*(-1 + X)*(-1 + Y**2)) + &
+         &    2*(-1 + X)*(1 - 2*X + X**2 - Y**2 + nz**2*(-1 + X + Y**2))*sin(theta)**2 &
+             ))/(-1 + Y**2)
 
     disp_fun_Booker = C0 + nx*C1 + nx**2*C2 + nx**3*C3 + nx**4*C4
 

@@ -92,16 +92,16 @@ contains
     real(KIND=rkind) :: x, y, z, rindex_y, rindex_z
     real(KIND=rkind) :: rvec(3)
     complex(KIND=rkind) :: rindex_x
-	integer :: input_unit, get_unit_number ! External, free unit finder
+    integer :: input_unit, get_unit_number ! External, free unit finder
 
 ! Read and write input namelist
-  	input_unit = get_unit_number()
+    input_unit = get_unit_number()
     open(unit=input_unit, file='rays.in',action='read', status='old', form='formatted')
     read(input_unit, simple_slab_ray_init_list)
     close(unit=input_unit)
     if (verbosity >= 0) then
-		write(message_unit, simple_slab_ray_init_list)
-		if (messages_to_stdout) write(*, simple_slab_ray_init_list)
+        write(message_unit, simple_slab_ray_init_list)
+        if (messages_to_stdout) write(*, simple_slab_ray_init_list)
     end if
 
 ! allocate maximum space for the initial condition vectors rvec0, rindex_vec0
@@ -110,12 +110,12 @@ contains
     nray = n_x_launch * n_ky_launch * n_kz_launch
 
         if ((nray > 0) .and. (nray <= nray_max)) then
-			allocate ( rvec_temp(3, nray), rindex_vec_temp(3, nray), source = 0.0_rkind )
-			allocate ( ray_pwr_wt_temp(nray), source = one )
+            allocate ( rvec_temp(3, nray), rindex_vec_temp(3, nray), source = 0.0_rkind )
+            allocate ( ray_pwr_wt_temp(nray), source = one )
         else
-			call message ('simple slab ray init: improper number of rays  nray=', nray)
-			write (*,*) 'simple slab ray init: improper number of rays  nray=', nray
-			stop 1
+            call message ('simple slab ray init: improper number of rays  nray=', nray)
+            write (*,*) 'simple slab ray init: improper number of rays  nray=', nray
+            stop 1
         end if
 
 ! Load up initial position and k vectors for each ray.  Count successful initializations.
@@ -173,14 +173,14 @@ contains
     else
 
 ! Now that we know correct nray, allocate the output arrays
-		allocate ( rvec0(3, nray), rindex_vec0(3, nray) )
-		allocate ( ray_pwr_wt(nray) )
+        allocate ( rvec0(3, nray), rindex_vec0(3, nray) )
+        allocate ( ray_pwr_wt(nray) )
 
-		rvec0 = rvec_temp(1:3,1:nray)
-		rindex_vec0 = rindex_vec_temp(1:3,1:nray)
-		ray_pwr_wt = ray_pwr_wt_temp(1:nray)/nray ! Note: Q&D power model 1/nray
+        rvec0 = rvec_temp(1:3,1:nray)
+        rindex_vec0 = rindex_vec_temp(1:3,1:nray)
+        ray_pwr_wt = ray_pwr_wt_temp(1:nray)/nray ! Note: Q&D power model 1/nray
 
-		deallocate ( rvec_temp, rindex_vec_temp, ray_pwr_wt_temp )
+        deallocate ( rvec_temp, rindex_vec_temp, ray_pwr_wt_temp )
     end if
 
     end  subroutine simple_slab_ray_init
@@ -188,12 +188,12 @@ contains
 !****************************************************************************
 
     subroutine deallocate_simple_slab_ray_init_m
-! 		if (allocated(rvec0)) then
-! 			deallocate ( rvec0, rindex_vec0)
-! 			deallocate ( ray_pwr_wt)
-! 		end if
-		return ! Maybe nothing to deallocate.  rvec0 etc deallocated when
-		       ! ray_init_axisym_toroid_R_Z_nphi_ntheta returns?
+!       if (allocated(rvec0)) then
+!           deallocate ( rvec0, rindex_vec0)
+!           deallocate ( ray_pwr_wt)
+!       end if
+        return ! Maybe nothing to deallocate.  rvec0 etc deallocated when
+               ! ray_init_axisym_toroid_R_Z_nphi_ntheta returns?
     end subroutine deallocate_simple_slab_ray_init_m
 
 end module simple_slab_ray_init_m

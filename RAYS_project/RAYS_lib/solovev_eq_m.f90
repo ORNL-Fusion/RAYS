@@ -55,7 +55,7 @@ contains
 
     implicit none
     logical, intent(in) :: read_input
- 	integer :: input_unit, get_unit_number ! External, free unit finder
+    integer :: input_unit, get_unit_number ! External, free unit finder
 
     real(KIND=rkind) :: bp0
 
@@ -66,7 +66,7 @@ contains
     call text_message('Initializing solovev_eq_m ', 1)
 
     if (read_input .eqv. .true.) then
-  		input_unit = get_unit_number()
+        input_unit = get_unit_number()
         open(unit=input_unit, file='rays.in',action='read', status='old', form='formatted')
         read(input_unit, solovev_eq_list)
         close(unit=input_unit)
@@ -74,8 +74,8 @@ contains
 
 ! Write input namelist
     if (verbosity >= 0) then
-		write(message_unit, solovev_eq_list)
-		if (messages_to_stdout) write(*, solovev_eq_list)
+        write(message_unit, solovev_eq_list)
+        if (messages_to_stdout) write(*, solovev_eq_list)
     end if
 
 ! Calculate inner and boundary
@@ -284,8 +284,7 @@ contains
 !   Checks for some error conditions and sets equib_err for outside handling.  Does not
 !   stop.
 
-    use species_m, only : nspec, n0s, t0s
-    use diagnostics_m, only : message_unit, message
+    use diagnostics_m, only : message
 
     implicit none
 
@@ -294,7 +293,7 @@ contains
 
 
     real(KIND=rkind) :: x, y, z, R
-    real(KIND=rkind) :: br, bz, bphi, bp0
+    real(KIND=rkind) :: br, bz, bp0
 
     x = rvec(1)
     y = rvec(2)
@@ -367,11 +366,11 @@ contains
 !********************************************************************
 
     subroutine deallocate_solovev_eq_m
-		if (allocated(t_prof_model)) then
-			deallocate( t_prof_model )
-			deallocate( alphat1 )
-		end if
-		return
+        if (allocated(t_prof_model)) then
+            deallocate( t_prof_model )
+            deallocate( alphat1 )
+        end if
+        return
     end subroutine deallocate_solovev_eq_m
 
 end module solovev_eq_m

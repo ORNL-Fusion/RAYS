@@ -89,11 +89,11 @@
     logical :: messages_to_stdout = .false.
 
 !   write_formatted_ray_files = If true, write ray data to formatted ASCII file.
-!	This was the original output method.  It has been superseded by either writing
-!	a list directed ASCII  output file, or to a neCDF file.  These have more metadata
-!	about the run.  We keep this around for diagnostic purposes.  It is written
-!	incrementally as the run proceeds, whereas the other files are written at the end of
-!	the run.
+!   This was the original output method.  It has been superseded by either writing
+!   a list directed ASCII  output file, or to a neCDF file.  These have more metadata
+!   about the run.  We keep this around for diagnostic purposes.  It is written
+!   incrementally as the run proceeds, whereas the other files are written at the end of
+!   the run.
     logical :: write_formatted_ray_files = .false.
 
 !  Run description
@@ -119,29 +119,27 @@ contains
     implicit none
     logical, intent(in) :: read_input
 
-    integer :: n_args ! number of command line arguments
-    character(len=80) :: namelist_file = ''
-	integer :: input_unit, get_unit_number ! External, free unit finder
-	integer :: ierr ! Error return for date-to_julian()
+    integer :: input_unit, get_unit_number ! External, free unit finder
+    integer :: ierr ! Error return for date-to_julian()
 
    ! Find date and time
     call date_and_time (values=date_v)
 
     ! Convert start date_v to Julian to get process start time
-	call date_to_julian(date_v,t_start_RAYS,ierr)
-	if (ierr .ne. 0) then
-		write(*,*) 'julian start, ierr = ', ierr
-		stop
-	end if
+    call date_to_julian(date_v,t_start_RAYS,ierr)
+    if (ierr .ne. 0) then
+        write(*,*) 'julian start, ierr = ', ierr
+        stop
+    end if
 
-	! Get unit number and open file for output messages
-		message_unit = get_unit_number()
-		open(unit=message_unit, file=trim(message_file),                    &
-		   & action='write', status='replace', form='formatted')
+    ! Get unit number and open file for output messages
+        message_unit = get_unit_number()
+        open(unit=message_unit, file=trim(message_file),                    &
+           & action='write', status='replace', form='formatted')
 
     if (read_input .eqv. .true.) then
     ! Read input namelist
-    	input_unit = get_unit_number()
+        input_unit = get_unit_number()
         open(unit=input_unit, file='rays.in',action='read', status='old', form='formatted')
         read(input_unit, diagnostics_list)
         close(unit=input_unit)
@@ -151,9 +149,9 @@ contains
 
 ! Write input namelist
     if (verbosity >= 0) then
-		write(message_unit, diagnostics_list)
-		if (messages_to_stdout) write(*, diagnostics_list)
-		call message(1)
+        write(message_unit, diagnostics_list)
+        if (messages_to_stdout) write(*, diagnostics_list)
+        call message(1)
     end if
 
     return
@@ -163,19 +161,19 @@ contains
 
 ! Print blank line  i.e. skip a line
     subroutine blank_message(threshold)
-		implicit none
-		integer, optional, intent (in) :: threshold
+        implicit none
+        integer, optional, intent (in) :: threshold
 
-		if (present(threshold)) then
-		   if (verbosity < threshold) then
-			 return
-		   end if
-		end if
+        if (present(threshold)) then
+           if (verbosity < threshold) then
+             return
+           end if
+        end if
 
-		write(message_unit, '(" ")')
-		if (messages_to_stdout) write(*, '(" ")')
+        write(message_unit, '(" ")')
+        if (messages_to_stdout) write(*, '(" ")')
 
-		return
+        return
     end subroutine blank_message
 
 
@@ -238,16 +236,16 @@ contains
             write(message_unit, '(a, " = ", I6)') &
             &    mess, value
             if (messages_to_stdout) then
-				write(*, '(a, " = ", I6)') &
-				&    mess, value
+                write(*, '(a, " = ", I6)') &
+                &    mess, value
             end if
 
         else
             write(message_unit, '(a, " = ", 1pe11.4)') &
             &    mess, real(value)
             if (messages_to_stdout) then
-				write(*, '(a, " = ", 1pe11.4)') &
-				&    mess, real(value)
+                write(*, '(a, " = ", 1pe11.4)') &
+                &    mess, real(value)
             end if
 
         end if
@@ -274,15 +272,15 @@ contains
             write(message_unit, '(a, " = .true. ")') &
             & mess
             if (messages_to_stdout) then
-				write(*, '(a, " = .true. ")') &
-				& mess
+                write(*, '(a, " = .true. ")') &
+                & mess
             end if
         else
             write(message_unit, '(a, " = .false.")') &
             & mess
             if (messages_to_stdout) then
-				write(*, '(a, " = .false.")') &
-				& mess
+                write(*, '(a, " = .false.")') &
+                & mess
             end if
         end if
     return
@@ -307,15 +305,15 @@ contains
             write(message_unit, '(a, " = ", f11.4)') &
             & mess, value
             if (messages_to_stdout) then
-				write(*, '(a, " = ", f11.4)') &
-				& mess, value
+                write(*, '(a, " = ", f11.4)') &
+                & mess, value
             end if
         else
             write(message_unit, '(a, " = ", 1pe11.4)') &
             & mess, value
             if (messages_to_stdout) then
-				write(*, '(a, " = ", 1pe11.4)') &
-				& mess, value
+                write(*, '(a, " = ", 1pe11.4)') &
+                & mess, value
             end if
         end if
     return
@@ -346,8 +344,8 @@ contains
             write(message_unit, '(a, " = (", 1pe11.4,", ",1pe11.4,")")')&
             & mess, value
             if (messages_to_stdout) then
-				write(*, '(a, " = (", 1pe11.4,", ",1pe11.4,")")')&
-				& mess, value
+                write(*, '(a, " = (", 1pe11.4,", ",1pe11.4,")")')&
+                & mess, value
             end if
         end if
     return
@@ -383,15 +381,15 @@ contains
             write(message_unit, '(a, " = ")') mess
             write(message_unit, '(10i8)') (value(i), i=1, length_n)
             if (messages_to_stdout) then
-				write(*, '(a, " = ")') mess
-				write(*, '(10i8)') (value(i), i=1, length_n)
+                write(*, '(a, " = ")') mess
+                write(*, '(10i8)') (value(i), i=1, length_n)
             end if
         else
             write(message_unit, '(a, " = ")') mess
             write(message_unit, '(10(1pe12.4))') (value(i), i=1, length_n)
             if (messages_to_stdout) then
-				write(*, '(a, " = ")') mess
-				write(*, '(10(1pe12.4))') (value(i), i=1, length_n)
+                write(*, '(a, " = ")') mess
+                write(*, '(10(1pe12.4))') (value(i), i=1, length_n)
             end if
         end if
     return
@@ -437,25 +435,25 @@ contains
             else
                 write(message_unit, '(a, " = ", 10(1pe12.4),")")') &
                 & mess, (value(i), i=1, length_n)
-				if (messages_to_stdout) then
-					write(*, '(a, " = ", 10(1pe12.4),")")') &
-					& mess, (value(i), i=1, length_n)
-				end if
+                if (messages_to_stdout) then
+                    write(*, '(a, " = ", 10(1pe12.4),")")') &
+                    & mess, (value(i), i=1, length_n)
+                end if
             end if
         else
 
             if ((v_max < 1.e4) .and. (v_min > 1.e-3)) then
                 write(message_unit, '(10f12.4)') (value(i), i=1, length_n)
-				if (messages_to_stdout) then
-					write(*, '(10f12.4)') (value(i), i=1, length_n)
-				end if
+                if (messages_to_stdout) then
+                    write(*, '(10f12.4)') (value(i), i=1, length_n)
+                end if
             else
                 write(message_unit, '(a, " = ")') mess
                 write(message_unit, '(10(1pe12.4))') (value(i), i=1, length_n)
-				if (messages_to_stdout) then
-					write(*, '(a, " = ")') mess
-					write(*, '(10(1pe12.4))') (value(i), i=1, length_n)
-				end if
+                if (messages_to_stdout) then
+                    write(*, '(a, " = ")') mess
+                    write(*, '(10(1pe12.4))') (value(i), i=1, length_n)
+                end if
             end if
 
         end if
@@ -504,17 +502,17 @@ contains
             if ((v_max < 1.e4) .and. (v_min > 1.e-3)) then
                 write(message_unit, '(a, " = ", 5(2f12.5,5x),")")') &
                 & mess, (value(i), i=1, length_n)
-				if (messages_to_stdout) then
-					write(*, '(a, " = ", 5(2f12.5,5x),")")') &
-					& mess, (value(i), i=1, length_n)
-				end if
-				else
+                if (messages_to_stdout) then
+                    write(*, '(a, " = ", 5(2f12.5,5x),")")') &
+                    & mess, (value(i), i=1, length_n)
+                end if
+                else
                 write(message_unit, '(a, " = ", 5(1pe12.4,1x,1pe12.4,4x),")")') &
                 & mess, (value(i), i=1, length_n)
-				if (messages_to_stdout) then
-					write(*, '(a, " = ", 5(1pe12.4,1x,1pe12.4,4x),")")') &
-					& mess, (value(i), i=1, length_n)
-				end if
+                if (messages_to_stdout) then
+                    write(*, '(a, " = ", 5(1pe12.4,1x,1pe12.4,4x),")")') &
+                    & mess, (value(i), i=1, length_n)
+                end if
             end if
 
         else
@@ -522,17 +520,17 @@ contains
             if ((v_max < 1.e4) .and. (v_min > 1.e-3)) then
                 write(message_unit, '(a, " = ")') mess
                 write(message_unit, '(5(2f10.4,5x))') (value(i), i=1, length_n)
-				if (messages_to_stdout) then
-					write(*, '(a, " = ")') mess
-					write(*, '(5(2f10.4,5x))') (value(i), i=1, length_n)
-				end if
+                if (messages_to_stdout) then
+                    write(*, '(a, " = ")') mess
+                    write(*, '(5(2f10.4,5x))') (value(i), i=1, length_n)
+                end if
            else
                 write(message_unit, '(a, " = ")') mess
                 write(message_unit, '(5(2(1pe11.4),5x))') (value(i), i=1, length_n)
-				if (messages_to_stdout) then
-					write(*, '(a, " = ")') mess
-					write(*, '(5(2(1pe11.4),5x))') (value(i), i=1, length_n)
-				end if
+                if (messages_to_stdout) then
+                    write(*, '(a, " = ")') mess
+                    write(*, '(5(2(1pe11.4),5x))') (value(i), i=1, length_n)
+                end if
             end if
 
         end if
@@ -575,27 +573,27 @@ contains
         if ((v_max < 1.e4) .and. (v_min > 1.e-3)) then
 
             write(message_unit, '(a, " = ")' ) mess
-			if (messages_to_stdout) then
-				write(*, '(a, " = ")' ) mess
-			end if
+            if (messages_to_stdout) then
+                write(*, '(a, " = ")' ) mess
+            end if
             do i = 1, m_dim
                 write(message_unit, '(10f12.5)' )  (value(i, j), j=1, n_dim)
-				if (messages_to_stdout) then
-					write(*, '(10f12.5)' )  (value(i, j), j=1, n_dim)
-				end if
+                if (messages_to_stdout) then
+                    write(*, '(10f12.5)' )  (value(i, j), j=1, n_dim)
+                end if
             end do
 
         else
 
             write(message_unit, '(a, " = ")' ) mess
-			if (messages_to_stdout) then
-				write(*, '(a, " = ")' ) mess
-			end if
+            if (messages_to_stdout) then
+                write(*, '(a, " = ")' ) mess
+            end if
             do i = 1, m_dim
                 write(message_unit, '(10(1pe12.4))' )  (value(i, j), j=1, n_dim)
-				if (messages_to_stdout) then
-					write(*, '(10(1pe12.4))' )  (value(i, j), j=1, n_dim)
-				end if
+                if (messages_to_stdout) then
+                    write(*, '(10(1pe12.4))' )  (value(i, j), j=1, n_dim)
+                end if
             end do
 
         end if
@@ -624,15 +622,15 @@ contains
             write(message_unit, '(a, " = ", f11.4)') &
             & mess, value
             if (messages_to_stdout) then
-				write(*, '(a, " = ", f11.4)') &
-				& mess, value
+                write(*, '(a, " = ", f11.4)') &
+                & mess, value
             end if
         else
             write(message_unit, '(a, " = ", 1pe11.4)') &
             & mess, value
             if (messages_to_stdout) then
-				write(*, '(a, " = ", 1pe11.4)') &
-				& mess, value
+                write(*, '(a, " = ", 1pe11.4)') &
+                & mess, value
             end if
         end if
 !******************************
@@ -672,15 +670,15 @@ contains
             write(message_unit, '(a, " = ", 10f12.4,")")') &
             & mess, (value(i), i=1, length_n)
             if (messages_to_stdout) then
-				write(*, '(a, " = ", 10f12.4,")")') &
-				& mess, (value(i), i=1, length_n)
+                write(*, '(a, " = ", 10f12.4,")")') &
+                & mess, (value(i), i=1, length_n)
             end if
        else
             write(message_unit, '(a, " = ", 10(1pe12.4),")")') &
             & mess, (value(i), i=1, length_n)
             if (messages_to_stdout) then
-				write(*, '(a, " = ", 10(1pe12.4),")")') &
-				& mess, (value(i), i=1, length_n)
+                write(*, '(a, " = ", 10(1pe12.4),")")') &
+                & mess, (value(i), i=1, length_n)
             end if
         end if
 !******************************
@@ -725,26 +723,26 @@ contains
 
             write(message_unit, '(a, " = ")' ) mess
             if (messages_to_stdout) then
-				write(*, '(a, " = ")' ) mess
+                write(*, '(a, " = ")' ) mess
             end if
             do i = 1, m_dim
                 write(message_unit, '(10f12.5)' )  (value(i, j), j=1, n_dim)
-				if (messages_to_stdout) then
-					write(*, '(10f12.5)' )  (value(i, j), j=1, n_dim)
-				end if
+                if (messages_to_stdout) then
+                    write(*, '(10f12.5)' )  (value(i, j), j=1, n_dim)
+                end if
             end do
 
         else
 
             write(message_unit, '(a, " = ")' ) mess
-			if (messages_to_stdout) then
-				write(*, '(a, " = ")' ) mess
-			end if
+            if (messages_to_stdout) then
+                write(*, '(a, " = ")' ) mess
+            end if
            do i = 1, m_dim
                 write(message_unit, '(10(1pe12.4))' )  (value(i, j), j=1, n_dim)
-				if (messages_to_stdout) then
-					write(*, '(10(1pe12.4))' )  (value(i, j), j=1, n_dim)
-				end if
+                if (messages_to_stdout) then
+                    write(*, '(10(1pe12.4))' )  (value(i, j), j=1, n_dim)
+                end if
             end do
 
         end if
@@ -777,8 +775,8 @@ contains
             write(message_unit, '(a, " = (", 1pe11.4,", ",1pe11.4,")")')&
             & mess, value
             if (messages_to_stdout) then
-				write(*, '(a, " = (", 1pe11.4,", ",1pe11.4,")")')&
-				& mess, value
+                write(*, '(a, " = (", 1pe11.4,", ",1pe11.4,")")')&
+                & mess, value
             end if
         end if
     return
@@ -828,17 +826,17 @@ contains
             if ((v_max < 1.e4) .and. (v_min > 1.e-3)) then
                 write(message_unit, '(a, " = ", 5(2f12.5,5x),")")') &
                 & mess, (value(i), i=1, length_n)
-				if (messages_to_stdout) then
-					write(*, '(a, " = ", 5(2f12.5,5x),")")') &
-					& mess, (value(i), i=1, length_n)
-				end if
+                if (messages_to_stdout) then
+                    write(*, '(a, " = ", 5(2f12.5,5x),")")') &
+                    & mess, (value(i), i=1, length_n)
+                end if
             else
                 write(message_unit, '(a, " = ", 5(1pe12.4,1x,1pe12.4,4x),")")') &
                 & mess, (value(i), i=1, length_n)
-				if (messages_to_stdout) then
-					write(*, '(a, " = ", 5(1pe12.4,1x,1pe12.4,4x),")")') &
-					& mess, (value(i), i=1, length_n)
-				end if
+                if (messages_to_stdout) then
+                    write(*, '(a, " = ", 5(1pe12.4,1x,1pe12.4,4x),")")') &
+                    & mess, (value(i), i=1, length_n)
+                end if
             end if
 
         else
@@ -846,17 +844,17 @@ contains
             if ((v_max < 1.e4) .and. (v_min > 1.e-3)) then
                 write(message_unit, '(a, " = ")') mess
                 write(message_unit, '(5(2f10.4,5x))') (value(i), i=1, length_n)
-				if (messages_to_stdout) then
-					write(*, '(a, " = ")') mess
-					write(*, '(5(2f10.4,5x))') (value(i), i=1, length_n)
-				end if
+                if (messages_to_stdout) then
+                    write(*, '(a, " = ")') mess
+                    write(*, '(5(2f10.4,5x))') (value(i), i=1, length_n)
+                end if
             else
                 write(message_unit, '(a, " = ")') mess
                 write(message_unit, '(5(2(1pe11.4),5x))') (value(i), i=1, length_n)
-				if (messages_to_stdout) then
-					write(*, '(a, " = ")') mess
-					write(*, '(5(2(1pe11.4),5x))') (value(i), i=1, length_n)
-				end if
+                if (messages_to_stdout) then
+                    write(*, '(a, " = ")') mess
+                    write(*, '(5(2(1pe11.4),5x))') (value(i), i=1, length_n)
+                end if
             end if
 
         end if
@@ -902,27 +900,27 @@ contains
         if ((v_max < 1.e4) .and. (v_min > 1.e-3)) then
 
             write(message_unit, '(a, " = ")' ) mess
-			if (messages_to_stdout) then
-				write(*, '(a, " = ")' ) mess
-			end if
+            if (messages_to_stdout) then
+                write(*, '(a, " = ")' ) mess
+            end if
             do i = 1, m_dim
                 write(message_unit, '(i3,8(3x,2f10.4))' )  i, (value(i, j), j=1, n_dim)
-				if (messages_to_stdout) then
-					write(*, '(i3,8(3x,2f10.4))' )  i, (value(i, j), j=1, n_dim)
-				end if
+                if (messages_to_stdout) then
+                    write(*, '(i3,8(3x,2f10.4))' )  i, (value(i, j), j=1, n_dim)
+                end if
             end do
 
         else
 
             write(message_unit, '(a, " = ")' ) mess
             if (messages_to_stdout) then
-				write(*, '(a, " = ")' ) mess
-			end if
+                write(*, '(a, " = ")' ) mess
+            end if
             do i = 1, m_dim
                 write(message_unit, '(i3,8(2x,2(1pe12.4)))' )  i, (value(i, j), j=1, n_dim)
-				if (messages_to_stdout) then
-					write(*, '(i3,8(2x,2(1pe12.4)))' )  i, (value(i, j), j=1, n_dim)
-				end if
+                if (messages_to_stdout) then
+                    write(*, '(i3,8(2x,2(1pe12.4)))' )  i, (value(i, j), j=1, n_dim)
+                end if
             end do
 
         end if
@@ -967,26 +965,26 @@ contains
 
             write(message_unit, '(a, " = ")' ) mess
             if (messages_to_stdout) then
-				write(*, '(a, " = ")' ) mess
+                write(*, '(a, " = ")' ) mess
             end if
             do i = 1, m_dim
                 write(message_unit, '(i3,2x,8(3x,2f10.4))' )  i, (value(i, j), j=1, n_dim)
-				if (messages_to_stdout) then
-					write(*, '(i3,2x,8(3x,2f10.4))' )  i, (value(i, j), j=1, n_dim)
-				end if
+                if (messages_to_stdout) then
+                    write(*, '(i3,2x,8(3x,2f10.4))' )  i, (value(i, j), j=1, n_dim)
+                end if
             end do
 
         else
 
             write(message_unit, '(a, " = ")' ) mess
             if (messages_to_stdout) then
-				write(*, '(a, " = ")' ) mess
+                write(*, '(a, " = ")' ) mess
             end if
             do i = 1, m_dim
                 write(message_unit, '(i3,2x,8(3x,2(1pe11.4)))' )  i, (value(i, j), j=1, n_dim)
-				if (messages_to_stdout) then
-					write(*, '(i3,2x,8(3x,2(1pe11.4)))' )  i, (value(i, j), j=1, n_dim)
-				end if
+                if (messages_to_stdout) then
+                    write(*, '(i3,2x,8(3x,2(1pe11.4)))' )  i, (value(i, j), j=1, n_dim)
+                end if
             end do
 
         end if
@@ -1048,55 +1046,55 @@ subroutine date_to_julian(dat,julian,ierr)
 ! is days since the beginning of time and fractions of days.  The difference of 2 julian
 ! dates times 24*60*60 gives difference in seconds.
 
-	implicit none
+    implicit none
 
-	! array like returned by DATE_AND_TIME(3f)
-	integer,intent(in)               :: dat(8)
+    ! array like returned by DATE_AND_TIME(3f)
+    integer,intent(in)               :: dat(8)
 
-	! Julian Date (non-negative, but may be non-integer)
+    ! Julian Date (non-negative, but may be non-integer)
     integer,parameter :: realtime=kind(0.0d0)
-	real(kind=realtime),intent(out)  :: julian
+    real(kind=realtime),intent(out)  :: julian
 
-	! Error return: 0 =successful execution,-1=invalid year,-2=invalid month,
-	! -3=invalid day -4=invalid date (29th Feb, non leap-year)
+    ! Error return: 0 =successful execution,-1=invalid year,-2=invalid month,
+    ! -3=invalid day -4=invalid date (29th Feb, non leap-year)
 
-	integer,intent(out)              :: ierr
-	integer                          :: year, month, day, utc, hour, minute
-	real(kind=realtime)              :: second
-	integer                          :: A, Y, M, JDN
-	   year   = dat(1)
-	   month  = dat(2)
-	   day    = dat(3)
-	   utc    = dat(4)*60 ! Delta from UTC, convert from minutes to seconds
-	   hour   = dat(5)
-	   minute = dat(6)
-	   second = dat(7)-utc+dat(8)/1000.0d0 ! correct for time zone and milliseconds
-										   ! and IERR is < 0
-	   if(year==0 .or. year .lt. -4713) then
-		  julian = -HUGE(99999_realtime) ! this is the date if an error occurs
-		  ierr=-1
-		  return
-	   endif
-	!  You must compute first the number of years (Y) and months (M) since
-	!  March 1st -4800 (March 1, 4801 BC)
-	   A=(14-month)/12 ! A will be 1 for January or February, and 0 for
-					   ! other months, with integer truncation
-	   Y=year+4800-A
-	   M=month+12*A-3  ! M will be 0 for March and 11 for February
-	!  All years in the BC era must be converted to astronomical years,
-	!  so that 1BC is year 0, 2 BC is year "-1", etc.
-	!  Convert to a negative number, then increment towards zero
-	!  Staring from a Gregorian calendar date
-	   !  intentional integer truncation
-	   JDN=day + (153*M+2)/5 + 365*Y + Y/4 - Y/100 + Y/400 - 32045
-	!  Finding the Julian Calendar date given the JDN (Julian day number)
-	!  and time of day
-	   julian=JDN + dble(hour-12)/24.0d0 + dble(minute)/1440.0d0 + second/86400.0d0
-	   if(julian.lt.0.d0) then                  ! Julian Day must be non-negative
-		  ierr=1
-	   else
-		  ierr=0
-	   endif
+    integer,intent(out)              :: ierr
+    integer                          :: year, month, day, utc, hour, minute
+    real(kind=realtime)              :: second
+    integer                          :: A, Y, M, JDN
+       year   = dat(1)
+       month  = dat(2)
+       day    = dat(3)
+       utc    = dat(4)*60 ! Delta from UTC, convert from minutes to seconds
+       hour   = dat(5)
+       minute = dat(6)
+       second = dat(7)-utc+dat(8)/1000.0d0 ! correct for time zone and milliseconds
+                                           ! and IERR is < 0
+       if(year==0 .or. year .lt. -4713) then
+          julian = -real(HUGE(99999_realtime), rkind) ! this is the date if an error occurs
+          ierr=-1
+          return
+       endif
+    !  You must compute first the number of years (Y) and months (M) since
+    !  March 1st -4800 (March 1, 4801 BC)
+       A=(14-month)/12 ! A will be 1 for January or February, and 0 for
+                       ! other months, with integer truncation
+       Y=year+4800-A
+       M=month+12*A-3  ! M will be 0 for March and 11 for February
+    !  All years in the BC era must be converted to astronomical years,
+    !  so that 1BC is year 0, 2 BC is year "-1", etc.
+    !  Convert to a negative number, then increment towards zero
+    !  Staring from a Gregorian calendar date
+       !  intentional integer truncation
+       JDN=day + (153*M+2)/5 + 365*Y + Y/4 - Y/100 + Y/400 - 32045
+    !  Finding the Julian Calendar date given the JDN (Julian day number)
+    !  and time of day
+       julian=JDN + dble(hour-12)/24.0d0 + dble(minute)/1440.0d0 + second/86400.0d0
+       if(julian.lt.0.d0) then                  ! Julian Day must be non-negative
+          ierr=1
+       else
+          ierr=0
+       endif
 end subroutine date_to_julian
 
 !********************************************************************

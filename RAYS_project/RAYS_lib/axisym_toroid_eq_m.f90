@@ -81,7 +81,7 @@ module axisym_toroid_eq_m
 ! Temperature outside psi = 1 as a fraction of Te0, defaults to 0. but can be set in namelist
     real(KIND=rkind) :: T_scrape_off = zero
 
-	integer :: i, is
+    integer :: i, is
 
  namelist /axisym_toroid_eq_list/&
      & magnetics_model, &
@@ -103,7 +103,7 @@ contains
     use constants_m, only : rkind
     use diagnostics_m, only : message, message_unit, text_message, messages_to_stdout, verbosity
 
-	use species_m, only : nspec
+    use species_m, only : nspec
     use solovev_magnetics_m, only : initialize_solovev_magnetics
     use eqdsk_magnetics_lin_interp_m, only : initialize_eqdsk_magnetics_lin_interp
     use eqdsk_magnetics_spline_interp_m, only : initialize_eqdsk_magnetics_spline_interp
@@ -112,26 +112,24 @@ contains
 
     implicit none
     logical, intent(in) :: read_input
-	integer :: input_unit, get_unit_number ! External, free unit finder
-	integer :: n_T_spline ! Number of species with splined temperature profiles
-	integer :: i_spec_spline(0:nspec) ! Species number of any splined Ti profiles
-
-    real(KIND=rkind) :: bp0
+    integer :: input_unit, get_unit_number ! External, free unit finder
+    integer :: n_T_spline ! Number of species with splined temperature profiles
+    integer :: i_spec_spline(0:nspec) ! Species number of any splined Ti profiles
 
     call message(1)
     call text_message('initializing_axisym_toroid_eq ', 1)
 
-	if (.not. allocated(temperature_prof_model)) then
-		allocate( temperature_prof_model(0:nspec) )
-		allocate( alphat1(0:nspec), alphat2(0:nspec) )
-		temperature_prof_model = ' '
-		alphat1 = 0.
-		alphat2 = 0.
+    if (.not. allocated(temperature_prof_model)) then
+        allocate( temperature_prof_model(0:nspec) )
+        allocate( alphat1(0:nspec), alphat2(0:nspec) )
+        temperature_prof_model = ' '
+        alphat1 = 0.
+        alphat2 = 0.
     end if
 
 ! Read input namelist
     if (read_input .eqv. .true.) then
-    	input_unit = get_unit_number()
+        input_unit = get_unit_number()
         open(unit=input_unit, file='rays.in',action='read', status='old', form='formatted')
         read(input_unit, axisym_toroid_eq_list)
         close(unit=input_unit)
@@ -139,8 +137,8 @@ contains
 
 ! Write input namelist
     if (verbosity > 0) then
-		write(message_unit, axisym_toroid_eq_list)
-		if (messages_to_stdout) write(*, axisym_toroid_eq_list)
+        write(message_unit, axisym_toroid_eq_list)
+        if (messages_to_stdout) write(*, axisym_toroid_eq_list)
     end if
 
     magnetics: select case (trim(magnetics_model))
@@ -171,42 +169,42 @@ contains
 
     density: select case (trim(density_prof_model))
         case ('density_spline_interp')
-        	call initialize_density_spline_interp(read_input)
+            call initialize_density_spline_interp(read_input)
         case ('constant')
         case ('parabolic')
         case default
-			if (verbosity > 0) then
-				write(message_unit, *) 'axisym_toroid_eq: Unknown density_prof_model: ', &
+            if (verbosity > 0) then
+                write(message_unit, *) 'axisym_toroid_eq: Unknown density_prof_model: ', &
                      & trim(density_prof_model)
-				write(*, *) 'axisym_toroid_eq: Unknown density_prof_model: ', &
+                write(*, *) 'axisym_toroid_eq: Unknown density_prof_model: ', &
                      & trim(density_prof_model)
-			end if
+            end if
             stop 1
     end select density
 
 ! Temperature.  Check for valid model name and count number of splined profiles
-	n_T_spline = 0
+    n_T_spline = 0
     do is = 0, nspec
        temperature: select case( trim(temperature_prof_model(is)) )
         case ('temperature_spline_interp')
-			n_T_spline = n_T_spline + 1
-			i_spec_spline(n_T_spline) = is
+            n_T_spline = n_T_spline + 1
+            i_spec_spline(n_T_spline) = is
         case('zero')
         case('constant')
         case('parabolic')
         case default
-			if (verbosity > 0) then
-				write(message_unit, *) 'axisym_toroid_eq: Unknown temperature_prof_model: ', &
+            if (verbosity > 0) then
+                write(message_unit, *) 'axisym_toroid_eq: Unknown temperature_prof_model: ', &
                      & temperature_prof_model(is)
-				write(*,*) 'axisym_toroid_eq: Unknown temperature_prof_model: ', &
+                write(*,*) 'axisym_toroid_eq: Unknown temperature_prof_model: ', &
                      & temperature_prof_model(is)
-			end if
+            end if
             stop 1
        end select temperature
     end do
 
 ! Initialize temperature splines if there are any
-	if (n_T_spline > 0) call initialize_temperature_spline_interp(read_input)
+    if (n_T_spline > 0) call initialize_temperature_spline_interp(read_input)
 
   end subroutine initialize_axisym_toroid_eq_m
 
@@ -223,7 +221,7 @@ contains
 ! and their gradients based on density_prof_model and temperature_prof_model
 
     use species_m, only : nspec, n0s, t0s
-    use diagnostics_m, only : message_unit, message, verbosity
+    use diagnostics_m, only : message, verbosity
 
     use solovev_magnetics_m, only : solovev_magnetics
     use eqdsk_magnetics_lin_interp_m, only : eqdsk_magnetics_lin_interp
@@ -241,7 +239,6 @@ contains
 
 
     real(KIND=rkind) :: x, y, z, r
-    real(KIND=rkind) :: br, bz, bphi, bp0
     real(KIND=rkind) :: psi, gradpsi(3), psiN, grad_psiN(3)
     real(KIND=rkind) :: dens, dd_psi
     real(KIND=rkind) :: t_prof, dt_dpsi
@@ -259,12 +256,12 @@ contains
 ! Check that we are in the box.  But so we don't get crash when evaluating on the
 ! box boundary, allow a leeway of 2*tiny(x)
     if (r < box_rmin-Tiny .or. r > box_rmax+Tiny) then
-    	equib_err = 'R_out_of_box'
-    	write(*,*) 'R_out_of_box: R = ', R, '   box_rmin = ', box_rmin, '   box_rmax = ', box_rmax
+        equib_err = 'R_out_of_box'
+        write(*,*) 'R_out_of_box: R = ', R, '   box_rmin = ', box_rmin, '   box_rmax = ', box_rmax
     end if
     if (z < box_zmin-Tiny .or. z > box_zmax+Tiny) then
-    	equib_err = 'Z_out_of_box'
-    	write(*,*) 'Z_out_of_box: Z = ', Z, '   box_zmin = ', box_zmin, '   box_zmax = ', box_zmax
+        equib_err = 'Z_out_of_box'
+        write(*,*) 'Z_out_of_box: Z = ', Z, '   box_zmin = ', box_zmin, '   box_zmax = ', box_zmax
     end if
 
     if (equib_err /= '') return
@@ -299,17 +296,17 @@ contains
 !      Parabolic: N.B. psi goes something like r**2 so if alphan2 = 1 and alphan1 = 2
 !      the profile is pretty much parabolic
             call parabolic_prof(psiN, d_scrape_off, alphan1, alphan2, dens, dd_psi)
-			ns(0:nspec) = n0s(0:nspec) * dens
-			gradns(1, 0:nspec) = n0s(0:nspec)*dd_psi*grad_psiN(1)
-			gradns(2, 0:nspec) = n0s(0:nspec)*dd_psi*grad_psiN(2)
-			gradns(3, 0:nspec) = n0s(0:nspec)*dd_psi*grad_psiN(3)
+            ns(0:nspec) = n0s(0:nspec) * dens
+            gradns(1, 0:nspec) = n0s(0:nspec)*dd_psi*grad_psiN(1)
+            gradns(2, 0:nspec) = n0s(0:nspec)*dd_psi*grad_psiN(2)
+            gradns(3, 0:nspec) = n0s(0:nspec)*dd_psi*grad_psiN(3)
 
         case ('density_spline_interp')
             call density_spline_interp(psiN, d_scrape_off, dens, dd_psi)
-			ns(0:nspec) = n0s(0:nspec) * dens
-			gradns(1, 0:nspec) = n0s(0:nspec)*dd_psi*grad_psiN(1)
-			gradns(2, 0:nspec) = n0s(0:nspec)*dd_psi*grad_psiN(2)
-			gradns(3, 0:nspec) = n0s(0:nspec)*dd_psi*grad_psiN(3)
+            ns(0:nspec) = n0s(0:nspec) * dens
+            gradns(1, 0:nspec) = n0s(0:nspec)*dd_psi*grad_psiN(1)
+            gradns(2, 0:nspec) = n0s(0:nspec)*dd_psi*grad_psiN(2)
+            gradns(3, 0:nspec) = n0s(0:nspec)*dd_psi*grad_psiN(3)
 
     end select density
 
@@ -330,21 +327,21 @@ contains
        case ('parabolic')
 !      Parabolic: N.B. psi goes something like r**2 so if alphan2 = 1 and alphan1 = 2
 !      the profile is pretty much parabolic
-		  call parabolic_prof(psiN, T_scrape_off, alphat1(is), alphat2(is), t_prof, dt_dpsi)
-		  ts(is) = t0s(is) * t_prof
-		  gradts(1,is) = t0s(is)*dt_dpsi*grad_psiN(1)
-		  gradts(2,is) = t0s(is)*dt_dpsi*grad_psiN(2)
-		  gradts(3,is) = t0s(is)*dt_dpsi*grad_psiN(3)
+          call parabolic_prof(psiN, T_scrape_off, alphat1(is), alphat2(is), t_prof, dt_dpsi)
+          ts(is) = t0s(is) * t_prof
+          gradts(1,is) = t0s(is)*dt_dpsi*grad_psiN(1)
+          gradts(2,is) = t0s(is)*dt_dpsi*grad_psiN(2)
+          gradts(3,is) = t0s(is)*dt_dpsi*grad_psiN(3)
 
        case ('temperature_spline_interp')
             call temperature_spline_interp(psiN, T_scrape_off, Te, dTe_psi, Ti, dTi_psi)
             if (is == 0) then
-            	ts(is) = t0s(is) * Te
+                ts(is) = t0s(is) * Te
                 gradts(1,is) = t0s(is)*dTe_psi*grad_psiN(1)
                 gradts(2,is) = t0s(is)*dTe_psi*grad_psiN(2)
                 gradts(3,is) = t0s(is)*dTe_psi*grad_psiN(3)
-        	else
-            	ts(is) = t0s(is) * Ti
+            else
+                ts(is) = t0s(is) * Ti
                 gradts(1,is) = t0s(is)*dTi_psi*grad_psiN(1)
                 gradts(2,is) = t0s(is)*dTi_psi*grad_psiN(2)
                 gradts(3,is) = t0s(is)*dTi_psi*grad_psiN(3)
@@ -367,8 +364,7 @@ contains
  ! Returns poloidal flux -> psi(x,y,z) etc
 
     use constants_m, only : rkind
-    use species_m, only : nspec, n0s, t0s
-    use diagnostics_m, only : message_unit, message
+    use diagnostics_m, only : message
 
     use solovev_magnetics_m, only : solovev_magnetics_psi
     use eqdsk_magnetics_lin_interp_m, only : eqdsk_magnetics_lin_interp_psi
@@ -403,7 +399,7 @@ contains
  ! N.B. so far this is only implemented in eqdsk_magnetics_spline_interp
 
     use constants_m, only : rkind
-    use diagnostics_m, only : message_unit, message, text_message
+    use diagnostics_m, only : message, text_message
 
 !     use solovev_magnetics_m, only : solovev_magnetics_rho
 !     use eqdsk_magnetics_lin_interp_m, only : eqdsk_magnetics_lin_interp_rho
@@ -467,8 +463,8 @@ contains
     write (message_unit,*) '    x', b9,'ne', b12, 'bx', b9, 'by', b9, 'bz', b9, 'psi', &
             & b8, 'psiN', b8,  'Te',b9, 'Ti(s)'
     if (messages_to_stdout) then
-		write (*,*) '    x', b9,'ne', b12, 'bx', b9, 'by', b9, 'bz', b9, 'psi', &
-				& b8, 'psiN', b8,  'Te',b9, 'Ti(s)'
+        write (*,*) '    x', b9,'ne', b12, 'bx', b9, 'by', b9, 'bz', b9, 'psi', &
+                & b8, 'psiN', b8,  'Te',b9, 'Ti(s)'
     end if
 
     do ip = 1, nx_points
@@ -478,10 +474,10 @@ contains
         call axisym_toroid_psi(rvec, psi, gradpsi, psiN, grad_psiN)
         write (message_unit,'(f11.5, a, e12.5, 3f11.5, f11.5, f11.5,  7f11.5)') &
                & x,'  ', ns(0), bvec, psi, psiN, (ts(i), i=0, nspec)
-		if (messages_to_stdout) then
-			write (*,'(f11.5, a, e12.5, 3f11.5, f11.5, f11.5,  7f11.5)') &
-				   & x,'  ', ns(0), bvec, psi, psiN, (ts(i), i=0, nspec)
-		end if
+        if (messages_to_stdout) then
+            write (*,'(f11.5, a, e12.5, 3f11.5, f11.5, f11.5,  7f11.5)') &
+                   & x,'  ', ns(0), bvec, psi, psiN, (ts(i), i=0, nspec)
+        end if
 
 !        write(*,*) 'x = ', x, '  gradpsi = ', gradpsi
 !        write(*,*) 'gradbtensor = ', gradbtensor
@@ -507,17 +503,17 @@ contains
     real(KIND=rkind), intent(in) :: rho, f_min, alpha1, alpha2
     real(KIND=rkind), intent(out) :: f, fp
 
-	f = zero
-	if (rho < one) then
-		f = (1.-rho**(alpha2))**alpha1
-		fp = -alpha1*alpha2*rho**(alpha2 - 1.)*(1.-rho**(alpha2))&
-				& **(alpha1 - 1.)
-	end if
+    f = zero
+    if (rho < one) then
+        f = (1.-rho**(alpha2))**alpha1
+        fp = -alpha1*alpha2*rho**(alpha2 - 1.)*(1.-rho**(alpha2))&
+                & **(alpha1 - 1.)
+    end if
 
-	if (f < f_min) then
-		f = f_min
-		fp = zero
-	end if
+    if (f < f_min) then
+        f = f_min
+        fp = zero
+    end if
 
   end subroutine parabolic_prof
 
@@ -525,20 +521,20 @@ contains
 !********************************************************************
 
     subroutine deallocate_axisym_toroid_eq_m
-		use solovev_magnetics_m, only : deallocate_solovev_magnetics_m
-		use eqdsk_magnetics_lin_interp_m, only : deallocate_eqdsk_magnetics_lin_interp_m
-		use eqdsk_magnetics_spline_interp_m, only : deallocate_eqdsk_magnetics_spline_interp_m
+        use solovev_magnetics_m, only : deallocate_solovev_magnetics_m
+        use eqdsk_magnetics_lin_interp_m, only : deallocate_eqdsk_magnetics_lin_interp_m
+        use eqdsk_magnetics_spline_interp_m, only : deallocate_eqdsk_magnetics_spline_interp_m
 
-		if (allocated(temperature_prof_model)) then
-			deallocate( temperature_prof_model )
-			deallocate( alphat1 )
-			deallocate( alphat2 )
-		end if
+        if (allocated(temperature_prof_model)) then
+            deallocate( temperature_prof_model )
+            deallocate( alphat1 )
+            deallocate( alphat2 )
+        end if
 
-		call deallocate_solovev_magnetics_m
-		call deallocate_eqdsk_magnetics_lin_interp_m
-		call deallocate_eqdsk_magnetics_spline_interp_m
-		return
+        call deallocate_solovev_magnetics_m
+        call deallocate_eqdsk_magnetics_lin_interp_m
+        call deallocate_eqdsk_magnetics_spline_interp_m
+        return
 
     end subroutine deallocate_axisym_toroid_eq_m
 

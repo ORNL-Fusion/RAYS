@@ -86,8 +86,8 @@ contains
     use species_m, only : nspec
     use equilibrium_m, only : equilibrium, eq_point, write_eq_point
     use dispersion_solvers_m, only: solve_n1_vs_n2_n3
-    use rf_m, only : ray_dispersion_model, wave_mode, k0_sign, k0
-    use axisym_toroid_eq_m, only: r_axis, z_axis, axisym_toroid_psi
+    use rf_m, only : ray_dispersion_model, wave_mode, k0_sign
+    use axisym_toroid_eq_m, only: axisym_toroid_psi
 
     implicit none
 
@@ -99,28 +99,27 @@ contains
     real(KIND=rkind), allocatable :: rvec_temp(:, :), rindex_vec_temp(:, :)
     real(KIND=rkind), allocatable :: ray_pwr_wt_temp(:)
 
- 	integer :: input_unit, get_unit_number ! External, free unit finder
+    integer :: input_unit, get_unit_number ! External, free unit finder
 
     integer :: i_R, i_Z, i_ntheta, i_nphi, count
-    real(KIND=rkind) :: x, z, rmin_launch, theta, rindex_theta, rindex_phi, n2, n3
+    real(KIND=rkind) :: x, z, rindex_theta, rindex_phi, n2, n3
     real(KIND=rkind) :: psi, gradpsi(3), psiN, gradpsiN(3)
     real(KIND=rkind) :: rvec(3), phi_unit(3), psi_unit(3), theta_unit(3), trans_unit(3)
     real(KIND=rkind) :: rindex_vec(3)
     complex(KIND=rkind) :: npsi_cmplx
     real(KIND=rkind) :: npsi
-    real(KIND=rkind) :: nperp
 
     call message(1)
     call text_message( 'Initializing ray_init_axisym_toroid_nphi_ntheta ', 1)
 
 ! Read and write input namelist
-  	input_unit = get_unit_number()
+    input_unit = get_unit_number()
     open(unit=input_unit, file='rays.in',action='read', status='old', form='formatted')
     read(input_unit, axisym_toroid_ray_init_R_Z_nphi_ntheta_list)
     close(unit=input_unit)
     if (verbosity >= 0) then
-		write(message_unit, axisym_toroid_ray_init_R_Z_nphi_ntheta_list)
-		if (messages_to_stdout) write(*, axisym_toroid_ray_init_R_Z_nphi_ntheta_list)
+        write(message_unit, axisym_toroid_ray_init_R_Z_nphi_ntheta_list)
+        if (messages_to_stdout) write(*, axisym_toroid_ray_init_R_Z_nphi_ntheta_list)
     end if
 
 ! Allocate maximum space for the initial condition vectors rvec_temp, rindex_vec_temp
@@ -130,12 +129,12 @@ contains
         nray = n_R_launch * n_Z_launch * n_rindex_theta * n_rindex_phi
 
         if ((nray > 0) .and. (nray <= nray_max)) then
-			allocate ( rvec_temp(3, nray), rindex_vec_temp(3, nray), source = 0.0_rkind )
-			allocate ( ray_pwr_wt_temp(nray), source = 1.0_rkind )
+            allocate ( rvec_temp(3, nray), rindex_vec_temp(3, nray), source = 0.0_rkind )
+            allocate ( ray_pwr_wt_temp(nray), source = 1.0_rkind )
         else
-			call message ('axisym_toroid ray init: improper number of rays  nray=', nray)
-			write (*,*) 'axisym_toroid ray init: improper number of rays  nray=', nray
-			stop 1
+            call message ('axisym_toroid ray init: improper number of rays  nray=', nray)
+            write (*,*) 'axisym_toroid ray init: improper number of rays  nray=', nray
+            stop 1
         end if
 
     count = 0
@@ -154,11 +153,11 @@ contains
         rindex_phi = rindex_phi0 + (i_nphi-1) * delta_rindex_phi
 
         call equilibrium(rvec, eq)
-		if (trim(eq%equib_err) /= '') then
-		   call text_message('ray_init_axisym_toroid_nphi_ntheta: equib_err = ', &
-		                    & trim(eq%equib_err), 1)
-		   cycle rindex_phi_loop
-		end if
+        if (trim(eq%equib_err) /= '') then
+           call text_message('ray_init_axisym_toroid_nphi_ntheta: equib_err = ', &
+                            & trim(eq%equib_err), 1)
+           cycle rindex_phi_loop
+        end if
 
         call axisym_toroid_psi(rvec, psi, gradpsi, psiN, gradpsiN)
 
@@ -195,8 +194,8 @@ contains
 
         if (abs(npsi_cmplx%im) > 10.*tiny(abs(npsi_cmplx))) then
             if (verbosity > 0) then
-				write(message_unit, *) 'axisym_toroid_ray_init: non-zero Im(npsi_cmplx),&
-				   & rvec = ',  rvec, ' n2 = ', n2, ' n3 = ', n3, ' npsi_cmplx = ', npsi_cmplx
+                write(message_unit, *) 'axisym_toroid_ray_init: non-zero Im(npsi_cmplx),&
+                   & rvec = ',  rvec, ' n2 = ', n2, ' n3 = ', n3, ' npsi_cmplx = ', npsi_cmplx
             end if
             cycle rindex_phi_loop
         end if
@@ -232,14 +231,14 @@ contains
 
 ! Now that we know correct nray, allocate the output arrays
 
-	allocate ( rvec0(3, nray), rindex_vec0(3, nray) )
-	allocate ( ray_pwr_wt(nray) )
+    allocate ( rvec0(3, nray), rindex_vec0(3, nray) )
+    allocate ( ray_pwr_wt(nray) )
 
     rvec0 = rvec_temp(1:3,1:nray)
     rindex_vec0 = rindex_vec_temp(1:3,1:nray)
     ray_pwr_wt = ray_pwr_wt_temp(1:nray)/nray ! Note: Q&D power model 1/nray
 
-	deallocate ( rvec_temp, rindex_vec_temp, ray_pwr_wt_temp )
+    deallocate ( rvec_temp, rindex_vec_temp, ray_pwr_wt_temp )
 
     end subroutine ray_init_axisym_toroid_R_Z_nphi_ntheta
 
@@ -261,7 +260,7 @@ contains
        real(KIND=rkind) :: k1, k3
 
        complex(KIND=rkind) :: eps(3,3), eps_h(3,3), epsn(3,3), ctmp
-       complex(KIND=rkind) :: eps_norm(3,3)
+       real(KIND=rkind) :: eps_norm(3,3)
        real(KIND=rkind) :: n(3)
 
        integer :: i, j
@@ -320,12 +319,12 @@ contains
 !****************************************************************************
 
     subroutine deallocate_axisym_toroid_ray_init_R_Z_nphi_ntheta_m
-! 		if (allocated(rvec0)) then
-! 			deallocate ( rvec0, rindex_vec0)
-! 			deallocate ( ray_pwr_wt)
-! 		end if
-		return ! Maybe nothing to deallocate.  rvec0 etc deallocated when
-		       ! ray_init_axisym_toroid_R_Z_nphi_ntheta returns?
+!       if (allocated(rvec0)) then
+!           deallocate ( rvec0, rindex_vec0)
+!           deallocate ( ray_pwr_wt)
+!       end if
+        return ! Maybe nothing to deallocate.  rvec0 etc deallocated when
+               ! ray_init_axisym_toroid_R_Z_nphi_ntheta returns?
     end subroutine deallocate_axisym_toroid_ray_init_R_Z_nphi_ntheta_m
 
 end module axisym_toroid_ray_init_R_Z_nphi_ntheta_m

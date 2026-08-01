@@ -34,11 +34,11 @@ module  mirror_magnetics_spline_interp_m
 ! Stuff for 2D spline profiles
 
     type(cube_spline_function_2D) :: Br_spline
- 	character (len = 80) :: Br_spline_name = 'Br_spline'
+    character (len = 80) :: Br_spline_name = 'Br_spline'
     type(cube_spline_function_2D) :: Bz_spline
- 	character (len = 80) :: Bz_spline_name = 'Bz_spline'
+    character (len = 80) :: Bz_spline_name = 'Bz_spline'
     type(cube_spline_function_2D) :: Aphi_spline
- 	character (len = 80) :: Aphi_spline_name = 'Aphi_spline'
+    character (len = 80) :: Aphi_spline_name = 'Aphi_spline'
 
 !_________________________________________________________________________________________
 ! Namelist data for /mirror_magnetics_spline_interp_list/
@@ -47,7 +47,7 @@ module  mirror_magnetics_spline_interp_m
     ! Output netCDF file used by multiple_mirror_eq_m
     character (len = 100) :: mirror_field_NC_file
 
-	namelist / mirror_magnetics_spline_interp_list/ mirror_field_NC_file
+    namelist / mirror_magnetics_spline_interp_list/ mirror_field_NC_file
 
 !_________________________________________________________________________________________
 contains
@@ -56,9 +56,7 @@ contains
   subroutine initialize_mirror_magnetics_spline_interp(read_input, &
                & box_rmax, box_zmin, box_zmax)
 
-
     use constants_m, only : one
-    use species_m, only : nspec
     use diagnostics_m, only : message, text_message, message_unit,messages_to_stdout,&
                             & verbosity
     use mirror_magnetics_m, only : n_r, n_z, r_min, r_max, z_min, z_max, &
@@ -72,18 +70,18 @@ contains
    implicit none
 
     logical, intent(in) :: read_input
- 	integer :: input_unit, get_unit_number ! External, free unit finder
+    integer :: input_unit, get_unit_number ! External, free unit finder
 
 ! Geometry data
     ! data for bounding box of computational domain
     real(KIND=rkind), intent(out) :: box_rmax, box_zmin, box_zmax
 
     if (verbosity >= 0) then
-		write(*,*) 'initialize_mirror_magnetics_spline_interp'
+        write(*,*) 'initialize_mirror_magnetics_spline_interp'
     end if
 ! Read input namelist
     if (read_input .eqv. .true.) then
-    	input_unit = get_unit_number()
+        input_unit = get_unit_number()
         open(unit=input_unit, file='rays.in',action='read', status='old', form='formatted')
         read(input_unit, mirror_magnetics_spline_interp_list)
         close(unit=input_unit)
@@ -91,17 +89,17 @@ contains
 
 ! Write input namelist
     if (verbosity > 0) then
-		write(message_unit, mirror_magnetics_spline_interp_list)
-		if (messages_to_stdout) write(*, mirror_magnetics_spline_interp_list)
+        write(message_unit, mirror_magnetics_spline_interp_list)
+        if (messages_to_stdout) write(*, mirror_magnetics_spline_interp_list)
     end if
 
 ! Allocate the grids and field array and load the arrays
     call read_mirror_fields_Brz_NC(trim(mirror_field_NC_file))
 
     if (r_min /= zero) then
-    	call text_message('initialize_mirror_magnetics_spline_interp: non-zero r_min')
-    	write (*,*) 'initialize_mirror_magnetics_spline_interp: non-zero r_min'
-    	stop
+        call text_message('initialize_mirror_magnetics_spline_interp: non-zero r_min')
+        write (*,*) 'initialize_mirror_magnetics_spline_interp: non-zero r_min'
+        stop
     end if
 
     box_rmax = r_max
@@ -112,17 +110,17 @@ contains
     z_LUFS_spline = z_LUFS
 
 ! Initialize spline coefficients for Br_spline on 2D grid
-	call Br_spline%cube_spline_2D_init(n_r, r_grid, n_z, z_grid, Br, Br_spline_name)
+    call Br_spline%cube_spline_2D_init(n_r, r_grid, n_z, z_grid, Br, Br_spline_name)
 
 ! Initialize spline coefficients for Bz_spline on 2D grid
-	call Bz_spline%cube_spline_2D_init(n_r, r_grid, n_z, z_grid, Bz, Bz_spline_name)
+    call Bz_spline%cube_spline_2D_init(n_r, r_grid, n_z, z_grid, Bz, Bz_spline_name)
 
 ! Initialize spline coefficients for Aphi_spline on 2D grid
-	call Aphi_spline%cube_spline_2D_init(n_r, r_grid, n_z, z_grid, Aphi, Aphi_spline_name)
+    call Aphi_spline%cube_spline_2D_init(n_r, r_grid, n_z, z_grid, Aphi, Aphi_spline_name)
 
 ! Calculate Aphi at strike point of LUFS for normalization purposes.
-	call Aphi_spline%eval_2D_f(r_LUFS_spline, z_LUFS_spline, Aphi_LUFS_spline)
-	write(*,*) 'r_LUFS_spline = ', r_LUFS_spline,'  z_LUFS_spline = ', z_LUFS_spline,'  Aphi_LUFS_spline = ', Aphi_LUFS_spline
+    call Aphi_spline%eval_2D_f(r_LUFS_spline, z_LUFS_spline, Aphi_LUFS_spline)
+    write(*,*) 'r_LUFS_spline = ', r_LUFS_spline,'  z_LUFS_spline = ', z_LUFS_spline,'  Aphi_LUFS_spline = ', Aphi_LUFS_spline
 
     return
   end subroutine initialize_mirror_magnetics_spline_interp
@@ -135,7 +133,7 @@ contains
 !   Checks for some error conditions and sets equib_err for outside handling.  Does not
 !   stop.
 
-    use diagnostics_m, only : message_unit, message
+    use diagnostics_m, only : message
 
     implicit none
 
@@ -145,8 +143,8 @@ contains
     character(len=60), intent(out) :: equib_err
 
     real(KIND=rkind) :: x, y, z, r
-    real(KIND=rkind) :: br, bz, bphi, bp0
-    real(KIND=rkind) :: dd_rho, dbrdr, dbrdz, dbzdr, dbzdz, dbphidr
+    real(KIND=rkind) :: br, bz
+    real(KIND=rkind) :: dbrdr, dbrdz, dbzdr, dbzdz
     real(KIND=rkind) :: dAphidr, dAphidz
 
     equib_err = ''
@@ -155,44 +153,44 @@ contains
     z = rvec(3)
     r = sqrt(x**2+y**2)
 
-	call Br_spline%eval_2D_fp(r, z, br, dbrdr, dbrdz)
-	call Bz_spline%eval_2D_fp(r, z, bz, dbzdr, dbzdz)
-	call Aphi_spline%eval_2D_fp(r, z, Aphi, dAphidr, dAphidz)
+    call Br_spline%eval_2D_fp(r, z, br, dbrdr, dbrdz)
+    call Bz_spline%eval_2D_fp(r, z, bz, dbzdr, dbzdz)
+    call Aphi_spline%eval_2D_fp(r, z, Aphi, dAphidr, dAphidz)
 
     if (r < two*tiny(one)) then ! On axis
-		bvec = (/ zero, zero, bz /)
+        bvec = (/ zero, zero, bz /)
 
-		gradbtensor = zero
-		gradbtensor(1,1) = -dbzdz/two
-		gradbtensor(2,2) = -dbzdz/two
-		gradbtensor(3,3) = dbzdz
-		Aphi = zero
-		gradAphi = zero
-		AphiN = zero
-		gradAphiN = zero
+        gradbtensor = zero
+        gradbtensor(1,1) = -dbzdz/two
+        gradbtensor(2,2) = -dbzdz/two
+        gradbtensor(3,3) = dbzdz
+        Aphi = zero
+        gradAphi = zero
+        AphiN = zero
+        gradAphiN = zero
 
-	else ! Off axis
-		bvec = (/ x*br/r, y*br/r, bz /)
+    else ! Off axis
+        bvec = (/ x*br/r, y*br/r, bz /)
 
 !   d(Bx)/dx, d(Bx)/dy, and d(Bx)/dz:
-		gradbtensor(1,1) = (one - (x/r)**2)*br/r + (x/r)**2*dbrdr
-		gradbtensor(2,1) =  x*y/r**2*(dbrdr - br/r)
-		gradbtensor(3,1) = dbrdz*x/r
+        gradbtensor(1,1) = (one - (x/r)**2)*br/r + (x/r)**2*dbrdr
+        gradbtensor(2,1) =  x*y/r**2*(dbrdr - br/r)
+        gradbtensor(3,1) = dbrdz*x/r
 
 !   d(By)/dx, d(By)/dy, and d(By)/dz:
-		gradbtensor(1,2) = x*y/r**2*(dbrdr - br/r)
-		gradbtensor(2,2) = (one - (y/r)**2)*br/r + (y/r)**2*dbrdr
-		gradbtensor(3,2) = dbrdz*y/r
+        gradbtensor(1,2) = x*y/r**2*(dbrdr - br/r)
+        gradbtensor(2,2) = (one - (y/r)**2)*br/r + (y/r)**2*dbrdr
+        gradbtensor(3,2) = dbrdz*y/r
 
 !   d(Bz)/dx, d(Bz)/dy, and d(Bz)/dz:
-		gradbtensor(1,3) = dbzdr * x/r
-		gradbtensor(2,3) = dbzdr * y/r
-		gradbtensor(3,3) = dbzdz
+        gradbtensor(1,3) = dbzdr * x/r
+        gradbtensor(2,3) = dbzdr * y/r
+        gradbtensor(3,3) = dbzdz
 
 ! Aphi
-		gradAphi(1) = dAphidr*x/r
-		gradAphi(2) = dAphidr*y/r
-		gradAphi(3) = dAphidz
+        gradAphi(1) = dAphidr*x/r
+        gradAphi(2) = dAphidr*y/r
+        gradAphi(3) = dAphidz
 
     end if
 
@@ -209,7 +207,7 @@ contains
 !   Checks for some error conditions and sets equib_err for outside handling.  Does not
 !   stop.
 
-    use diagnostics_m, only : message_unit, message
+    use diagnostics_m, only : message
 
     implicit none
 
@@ -217,8 +215,8 @@ contains
     real(KIND=rkind), intent(out) :: Aphi, gradAphi(3), AphiN, gradAphiN(3)
 
     real(KIND=rkind) :: x, y, z, r
-    real(KIND=rkind) :: br, bz, bphi, bp0
-    real(KIND=rkind) :: dd_rho, dbrdr, dbrdz, dbzdr, dbzdz, dbphidr
+!     real(KIND=rkind) :: br, bz, bphi, bp0
+!     real(KIND=rkind) :: dd_rho, dbrdr, dbrdz, dbzdr, dbzdz, dbphidr
     real(KIND=rkind) :: dAphidr, dAphidz
 
     x = rvec(1)
@@ -226,18 +224,18 @@ contains
     z = rvec(3)
     r = sqrt(x**2+y**2)
 
-	call Aphi_spline%eval_2D_fp(r, z, Aphi, dAphidr, dAphidz)
+    call Aphi_spline%eval_2D_fp(r, z, Aphi, dAphidr, dAphidz)
 
     if (r < two*tiny(one)) then ! On axis
-		Aphi = zero
-		gradAphi = zero
-		AphiN = zero
-		gradAphiN = zero
+        Aphi = zero
+        gradAphi = zero
+        AphiN = zero
+        gradAphiN = zero
 
-	else ! Off axis
-		gradAphi(1) = dAphidr*x/r
-		gradAphi(2) = dAphidr*y/r
-		gradAphi(3) = dAphidz
+    else ! Off axis
+        gradAphi(1) = dAphidr*x/r
+        gradAphi(2) = dAphidr*y/r
+        gradAphi(3) = dAphidz
 
     end if
 
@@ -251,8 +249,8 @@ contains
 !********************************************************************
 
     subroutine deallocate_mirror_magnetics_spline_interp_m
-		! Nothing to deallocate
-		return
+        ! Nothing to deallocate
+        return
     end subroutine deallocate_mirror_magnetics_spline_interp_m
 
  !********************************************************************

@@ -54,7 +54,7 @@ contains
     implicit none
 
     logical, intent(in) :: read_input
-	integer :: input_unit, get_unit_number ! External, free unit finder
+    integer :: input_unit, get_unit_number ! External, free unit finder
 
 ! Geometry data
     ! Magnetic axis
@@ -69,7 +69,7 @@ contains
     write(*,*) 'initialize_eqdsk_magnetics_lin_interp'
 
     if (read_input .eqv. .true.) then
-    	input_unit = get_unit_number()
+        input_unit = get_unit_number()
         open(unit=input_unit, file='rays.in',action='read', status='old', form='formatted')
         read(input_unit, eqdsk_magnetics_lin_interp_list)
         close(unit=input_unit)
@@ -78,20 +78,20 @@ contains
 
 ! Write input namelist
     if (verbosity >= 0) then
-		write(message_unit, eqdsk_magnetics_lin_interp_list)
-		if (messages_to_stdout) write(*, eqdsk_magnetics_lin_interp_list)
-		call message(1)
+        write(message_unit, eqdsk_magnetics_lin_interp_list)
+        if (messages_to_stdout) write(*, eqdsk_magnetics_lin_interp_list)
+        call message(1)
     end if
 
     call ReadgFile(eqdsk_file_name)
 
-	r_axis = RAXIS
-	z_axis = ZAXIS
+    r_axis = RAXIS
+    z_axis = ZAXIS
 
-	box_rmin = RBOXLFT
-	box_rmax = box_rmin + RBOXLEN
-	box_zmin = ZOFF - ZBOXLEN/2.
-	box_zmax = ZOFF + ZBOXLEN/2.
+    box_rmin = RBOXLFT
+    box_rmax = box_rmin + RBOXLEN
+    box_zmin = ZOFF - ZBOXLEN/2.
+    box_zmax = ZOFF + ZBOXLEN/2.
 
     inner_bound = minval(RBOUND)
     outer_bound = maxval(RBOUND)
@@ -110,16 +110,16 @@ contains
 
     ! radial and Z grids that Psi is defined on
     if (.not. allocated(R_grid)) then
-		allocate (R_grid(NRBOX))
-		allocate (Z_grid(NZBOX))
+        allocate (R_grid(NRBOX))
+        allocate (Z_grid(NZBOX))
     end if
 
     do i = 1, NRBOX
-    	R_grid(i) = box_rmin + (box_rmax - box_rmin)*(i-1)/(NRBOX - 1)
+        R_grid(i) = box_rmin + (box_rmax - box_rmin)*(i-1)/(NRBOX - 1)
     end do
 
     do i = 1, NZBOX
-    	Z_grid(i) = box_zmin + (box_zmax - box_zmin)*(i-1)/(NZBOX - 1)
+        Z_grid(i) = box_zmin + (box_zmax - box_zmin)*(i-1)/(NZBOX - 1)
     end do
 
     dR = (R_grid(2) - R_grid(1))/2.
@@ -258,7 +258,7 @@ contains
 !********************************************************************
 
     subroutine deallocate_eqdsk_magnetics_lin_interp_m
-		return ! Nothing to deallocate. R_grid,Z_grid deallocated in eqdsk_utilities_m
+        return ! Nothing to deallocate. R_grid,Z_grid deallocated in eqdsk_utilities_m
     end subroutine deallocate_eqdsk_magnetics_lin_interp_m
 
 end module  eqdsk_magnetics_lin_interp_m

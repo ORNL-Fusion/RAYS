@@ -21,20 +21,20 @@
     real(KIND=rkind), intent(in) :: n_vec(3)
 
 ! Output mode vector
-	logical :: mode(2)
+    logical :: mode(2)
 
     real(KIND=rkind) :: nunit(3), nmag, nmag2, theta
     real(KIND=rkind) :: nsq(4) !n perp square
 
-	real(KIND=rkind), parameter :: tolerance = one/10.0_rkind**6
+    real(KIND=rkind), parameter :: tolerance = one/10.0_rkind**6
 
-	mode =(/.false., .false./)
+    mode =(/.false., .false./)
 
 ! normalize n_vec
     nmag = norm2(n_vec)
     nmag2 = nmag**2
     nunit = n_vec/nmag
-	theta = acos(dot_product(nunit,eq%bunit))
+    theta = acos(dot_product(nunit,eq%bunit))
 
     dispersion_relation: select case (trim(dispersion_model))
 

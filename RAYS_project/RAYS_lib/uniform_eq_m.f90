@@ -17,7 +17,7 @@ module uniform_eq_m
 !_________________________________________________________________________________________
 
 ! Geometry data
-	! data for bounding box (meters)
+    ! data for bounding box (meters)
     real(KIND=rkind) :: xmin, xmax, ymin, ymax, zmin, zmax
 
 ! data for uniform magnetics
@@ -40,15 +40,14 @@ contains
 
   subroutine initialize_uniform_eq_m(read_input)
 
-    use species_m, only : nspec
     use diagnostics_m, only : message_unit, messages_to_stdout, verbosity
 
     implicit none
     logical, intent(in) :: read_input
- 	integer :: input_unit, get_unit_number ! External, free unit finder
+    integer :: input_unit, get_unit_number ! External, free unit finder
 
     if (read_input .eqv. .true.) then
-  		input_unit = get_unit_number()
+        input_unit = get_unit_number()
         open(unit=input_unit, file='rays.in',action='read', status='old', form='formatted')
         read(input_unit, uniform_eq_list)
         close(unit=input_unit)
@@ -56,8 +55,8 @@ contains
 
 ! Write input namelist
     if (verbosity >= 0) then
-		write(message_unit, uniform_eq_list)
-		if (messages_to_stdout) write(*, uniform_eq_list)
+        write(message_unit, uniform_eq_list)
+        if (messages_to_stdout) write(*, uniform_eq_list)
     end if
 
     return
@@ -80,8 +79,6 @@ contains
     character(len=60), intent(out) :: equib_err
 
     real(KIND=rkind) :: x, y, z
-    integer :: is
-	real(KIND=rkind) :: f, fp ! dummy variables for parabolic_prof
 
     equib_err = ''
     x = rvec(1)

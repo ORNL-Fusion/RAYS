@@ -40,23 +40,23 @@ contains
 
     implicit none
     logical, intent(in) :: read_input
-	integer :: input_unit, get_unit_number ! External, free unit finder
+    integer :: input_unit, get_unit_number ! External, free unit finder
 
     call message(1)
     call text_message('Initializing SG_ode_m ', 1)
 
-	if (read_input .eqv. .true.) then
-	! Read and write input namelist
-  		input_unit = get_unit_number()
-		open(unit=input_unit, file='rays.in',action='read', status='old', form='formatted')
-		read(input_unit, SG_ode_list)
-		close(unit=input_unit)
-	end if
+    if (read_input .eqv. .true.) then
+    ! Read and write input namelist
+        input_unit = get_unit_number()
+        open(unit=input_unit, file='rays.in',action='read', status='old', form='formatted')
+        read(input_unit, SG_ode_list)
+        close(unit=input_unit)
+    end if
 
 ! Write input namelist
     if (verbosity >= 0) then
-		write(message_unit, SG_ode_list)
-		if (messages_to_stdout) write(*, SG_ode_list)
+        write(message_unit, SG_ode_list)
+        if (messages_to_stdout) write(*, SG_ode_list)
     end if
 
 !   Check error criterion for the ODE solver.  Put a limit on how small target error can be.
@@ -122,8 +122,8 @@ contains
        call ode(eqn_ray, nv, v, s, sout, rel_err, abs_err, &
             & iflag, work, iwork, ray_stop)
 
-		ray_stop%rel_err = rel_err
-		ray_stop%abs_err = abs_err
+        ray_stop%rel_err = rel_err
+        ray_stop%abs_err = abs_err
 
        if (verbosity > 2) write(message_unit,'(/,1(a,i4),2(a,g12.6),2(a,1pe10.4))') &
             & ' iflag =', iflag,'  s=', s, '  sout=',sout,  &

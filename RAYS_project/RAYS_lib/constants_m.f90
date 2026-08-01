@@ -31,7 +31,7 @@
 
     real(KIND=rkind),parameter :: pi = atan(zero,-one)
     real(KIND=rkind),parameter :: sqrt_pi = sqrt(pi)
-    complex(KIND=rkind), parameter :: i = cmplx(zero, one)
+    complex(KIND=rkind), parameter :: i = cmplx(zero, one, rkind)
 
 !_________________________________________________________________________________________
 contains

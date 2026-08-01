@@ -26,6 +26,11 @@ target_link_libraries(math_functions
                       spline
 )
 
+# target_compile_options(math_functions
+#                        PRIVATE
+#                        -O0 -g3 -fcheck=all -finit-real=snan -Wall
+# )
+
 #********************************************
 
 #SET(CMAKE_RUNTIME_OUTPUT_DIRECTORY "../../tests")

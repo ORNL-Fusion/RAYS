@@ -67,6 +67,12 @@ target_link_libraries(RAYS_lib
                       $<$<BOOL:${OpenMP_Fortran_FOUND}>:OpenMP::OpenMP_Fortran>
                       $<$<BOOL:${NetCDF_FOUND}>:NetCDF::NetCDF>
 )
+
+# target_compile_options(RAYS_lib
+#                        PRIVATE
+#                        -O0 -g3 -fcheck=all -finit-real=snan -Wall
+# )
+
 #
 # target_sources (RAYS_lib
 #                 PRIVATE

@@ -8,13 +8,13 @@
 
     use damping_slab_test_m, only : init_damping_slab_test, damping_slab_test
     use read_results_LD_test_m, only : init_read_results_LD_test, read_results_LD_test
-	use dispersion_solver_test_m, only : init_dispersion_solver_test, dispersion_solver_test
-	use dielectric_tensor_test_m, only : init_dielectric_tensor_test, dielectric_tensor_test
-	use ray_deriv_test_m, only : init_ray_deriv_test, ray_deriv_test
+    use dispersion_solver_test_m, only : init_dispersion_solver_test, dispersion_solver_test
+    use dielectric_tensor_test_m, only : init_dielectric_tensor_test, dielectric_tensor_test
+    use ray_deriv_test_m, only : init_ray_deriv_test, ray_deriv_test
 
     implicit none
     logical :: read_input = .true.
-	integer :: input_unit, get_unit_number ! External, free unit finder
+    integer :: input_unit, get_unit_number ! External, free unit finder
 
     character(len=60) :: test_name
 
@@ -25,14 +25,14 @@
     call initialize(read_input)
 
     if (read_input .eqv. .true.) then
-	! Read and write input namelist
-   		input_unit = get_unit_number()
+    ! Read and write input namelist
+        input_unit = get_unit_number()
         open(unit=input_unit, file='component_test_rays.in',action='read', status='old',&
                                   & form='formatted')
         read(input_unit, component_test_list)
         close(unit=input_unit)
         write(message_unit, component_test_list)
-	end if
+    end if
 
 
     select case (trim(test_name))
@@ -54,11 +54,8 @@
           call dielectric_tensor_test
 
        case ('ray_deriv')
- write(*,*) 'component_test_RAYS: got to 1'
           call init_ray_deriv_test(read_input)
- write(*,*) 'component_test_RAYS: got to 2'
           call ray_deriv_test
- write(*,*) 'component_test_RAYS: got to 3'
 
        case default
           write(*,*) 'Unimplemented component tester =', trim(test_name)

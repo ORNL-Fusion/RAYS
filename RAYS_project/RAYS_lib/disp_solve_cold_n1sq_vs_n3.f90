@@ -90,7 +90,7 @@
  end subroutine solve_cold_n1sq_vs_n3
 !****************************************************************************
 
-complex function disp_fun_cold_n1_n3(eq, n1, n3)
+complex(KIND=rkind) function disp_fun_cold_n1_n3(eq, n1, n3)
 ! Evaluates cold plasma dispersion function, i.e. determinant of cold plasma dielectric
 ! tensor.
 ! N.B. n1 is complex, n3 is real

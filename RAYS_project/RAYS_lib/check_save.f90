@@ -128,7 +128,7 @@
         call message ('check_save: ni', ki/k0, 1)
         call message ('check_save: Total absorption', total_absorption, 1)
         if (total_absorption > total_damping_limit) then
- 	       ray_stop%stop_ode = .true.
+           ray_stop%stop_ode = .true.
            ray_stop%ode_stop_flag = 'total_absorption'
            call text_message('ray_stop%ode_stop_flag = ', ray_stop%ode_stop_flag, 1)
         end if
@@ -159,7 +159,7 @@
 !****** write ray vector for this step to output file *********************************
 
     if (write_formatted_ray_files) then
-		write(output_unit, *) s, v
+        write(output_unit, *) s, v
     end if
 
     return
@@ -190,7 +190,7 @@ contains
        use constants_m, only : rkind, zero
        use species_m, only : nspec
        use suscep_m, only :  dielectric_cold, dielectric_general
-	   use matrix3x3_m, only : hermitian3x3, determinant3x3
+       use matrix3x3_m, only : hermitian3x3, determinant3x3
 
        implicit none
 
@@ -199,7 +199,7 @@ contains
        real(KIND=rkind) :: k1, k3
 
        complex(KIND=rkind) :: eps(3,3), eps_h(3,3), epsn(3,3), ctmp
-       complex(KIND=rkind) :: eps_norm(3,3)
+       real(KIND=rkind) :: eps_norm(3,3)
        real(KIND=rkind) :: n(3)
 
        integer :: i, j
@@ -209,7 +209,7 @@ contains
 
     dispersion_relation: select case (trim(ray_dispersion_model))
        case ('cold')
-		   call dielectric_cold(eq, eps)
+           call dielectric_cold(eq, eps)
        case ('general')
            call dielectric_general(eq, cmplx(n1, zero, rkind), cmplx(n1, zero, rkind), eps)
    end select dispersion_relation
@@ -224,8 +224,8 @@ contains
 !      where E = (Ex,Ey,Ez)^T and I is the unit 3X3 tensor.
 
        do i = 1, 3; do j = 1, 3
-          epsn(i,j) = eps_h(i,j) + cmplx(n(i)*n(j), rkind) - &
-                    & cmplx(int(i/j)*int(j/i), rkind)*sum(n**2)
+          epsn(i,j) = eps_h(i,j) + cmplx(n(i)*n(j), zero, rkind) - &
+                    & cmplx(int(i/j)*int(j/i), zero, rkind)*sum(n**2)
           eps_norm(i,j) = abs( eps_h(i,j) ) + abs(n(i)*n(j))
        end do; end do
 

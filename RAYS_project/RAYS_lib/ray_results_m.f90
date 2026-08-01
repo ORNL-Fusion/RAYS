@@ -47,7 +47,7 @@
 
 ! Summary data
     real(KIND=rkind), allocatable :: initial_ray_power(:) ! nray
-    real(KIND=rkind), allocatable :: end_ray_power(:)	  ! nray
+    real(KIND=rkind), allocatable :: end_ray_power(:)     ! nray
     real(KIND=rkind), allocatable :: ray_trace_time(:)    ! nray
     real(KIND=rkind), allocatable :: end_residuals(:)     ! nray
     real(KIND=rkind), allocatable :: max_residuals(:)     ! nray
@@ -61,35 +61,35 @@
 ! Derived type containing same data as above so can have multiple run results in memory
     type run_results
 
-	! Time and date vector, get from diagnostics_m
-		integer :: date_vector(8)
+    ! Time and date vector, get from diagnostics_m
+        integer :: date_vector(8)
 
-	!  Run label (N.B. should be legal in file name, get from diagnostics_m)
-		character(len=60) :: RAYS_run_label = ''
+    !  Run label (N.B. should be legal in file name, get from diagnostics_m)
+        character(len=60) :: RAYS_run_label = ''
 
-		integer :: number_of_rays ! AKA nray in other modules
-		integer :: max_number_of_points, dim_v_vector
+        integer :: number_of_rays ! AKA nray in other modules
+        integer :: max_number_of_points, dim_v_vector
 
-	! ray data
-		real(KIND=rkind), allocatable :: ray_vec(:,:,:) ! nv, nstep_max+1, nray
-		real(KIND=rkind), allocatable :: residual(:,:)  ! nstep_max+1, nray
-		integer, allocatable :: npoints(:)              ! nray
+    ! ray data
+        real(KIND=rkind), allocatable :: ray_vec(:,:,:) ! nv, nstep_max+1, nray
+        real(KIND=rkind), allocatable :: residual(:,:)  ! nstep_max+1, nray
+        integer, allocatable :: npoints(:)              ! nray
 
-	! Summary data
-		real(KIND=rkind), allocatable :: initial_ray_power(:) ! nray
-		real(KIND=rkind), allocatable :: end_ray_power(:) 	  ! nray
-		real(KIND=rkind), allocatable :: ray_trace_time(:)    ! nray
-		real(KIND=rkind), allocatable :: end_residuals(:)     ! nray
-		real(KIND=rkind), allocatable :: max_residuals(:)     ! nray
-		real(KIND=rkind), allocatable :: end_ray_parameter(:) ! nray
-		real(KIND=rkind), allocatable :: start_ray_vec(:,:)   ! nv, nray
-		real(KIND=rkind), allocatable :: end_ray_vec(:,:)     ! nv, nray
-		character(len=60), allocatable :: ray_stop_flag(:)    ! nray
+    ! Summary data
+        real(KIND=rkind), allocatable :: initial_ray_power(:) ! nray
+        real(KIND=rkind), allocatable :: end_ray_power(:)     ! nray
+        real(KIND=rkind), allocatable :: ray_trace_time(:)    ! nray
+        real(KIND=rkind), allocatable :: end_residuals(:)     ! nray
+        real(KIND=rkind), allocatable :: max_residuals(:)     ! nray
+        real(KIND=rkind), allocatable :: end_ray_parameter(:) ! nray
+        real(KIND=rkind), allocatable :: start_ray_vec(:,:)   ! nv, nray
+        real(KIND=rkind), allocatable :: end_ray_vec(:,:)     ! nv, nray
+        character(len=60), allocatable :: ray_stop_flag(:)    ! nray
 
-		real(KIND=rkind)  :: total_trace_time
+        real(KIND=rkind)  :: total_trace_time
 
-	contains
-		procedure :: from_module, to_module, read_results_instance_NC
+    contains
+        procedure :: from_module, to_module, read_results_instance_NC
 
     end type run_results
 
@@ -116,10 +116,10 @@ contains
 
         implicit none
         logical, intent(in) :: read_input
- 		integer :: input_unit, get_unit_number ! External, free unit finder
+        integer :: input_unit, get_unit_number ! External, free unit finder
 
-		call message(1)
-		call text_message('Initializing ray_results_m ', 1)
+        call message(1)
+        call text_message('Initializing ray_results_m ', 1)
 
         dim_v_vector = nv
         number_of_rays = nray
@@ -127,30 +127,30 @@ contains
 
         if (read_input .eqv. .true.) then
         ! Read and write input namelist
-  		  	input_unit = get_unit_number()
+            input_unit = get_unit_number()
             open(unit=input_unit, file='rays.in',action='read', status='old', form='formatted')
             read(input_unit, ray_results_list)
             close(unit=input_unit)
 
-			allocate (ray_vec(nv, max_number_of_points, nray))
-			allocate (residual(max_number_of_points, nray))
-			allocate (npoints(nray))
-			allocate (initial_ray_power(nray))
-			allocate (end_ray_power(nray))
-			allocate (ray_trace_time(nray))
-			allocate (end_ray_parameter(nray))
-			allocate (end_residuals(nray))
-			allocate (max_residuals(nray))
-			allocate (start_ray_vec(nv, nray))
-			allocate (end_ray_vec(nv, nray))
-			allocate (ray_stop_flag(nray))
+            allocate (ray_vec(nv, max_number_of_points, nray))
+            allocate (residual(max_number_of_points, nray))
+            allocate (npoints(nray))
+            allocate (initial_ray_power(nray))
+            allocate (end_ray_power(nray))
+            allocate (ray_trace_time(nray))
+            allocate (end_ray_parameter(nray))
+            allocate (end_residuals(nray))
+            allocate (max_residuals(nray))
+            allocate (start_ray_vec(nv, nray))
+            allocate (end_ray_vec(nv, nray))
+            allocate (ray_stop_flag(nray))
         end if
 
 ! Write input namelist
-		if (verbosity >= 0) then
-			write(message_unit, ray_results_list)
-			if (messages_to_stdout) write(*, ray_results_list)
-		end if
+        if (verbosity >= 0) then
+            write(message_unit, ray_results_list)
+            if (messages_to_stdout) write(*, ray_results_list)
+        end if
 
         date_vector = date_v
         RAYS_run_label = run_label
@@ -187,7 +187,6 @@ contains
     integer :: ncid
 ! Declarations: dimensions
     integer, parameter :: n_dims = 5
-    integer :: d8, d60
     integer :: number_of_rays_id, max_number_of_points_id, dim_v_vector_id, d8_id, d60_id
 
 ! Declarations: variables
@@ -270,8 +269,7 @@ call check( nf90_enddef(ncid))
 ! netCDF Declarations
     integer :: ncid
     integer, parameter :: n_dims = 5
-    integer :: number_of_rays_id, max_number_of_points_id, dim_v_vector_id, d8_id, d60_id
-    integer :: d8, d60 ! Need these declarations, they are not in the module data
+    integer :: number_of_rays_id, max_number_of_points_id, dim_v_vector_id
 
 ! Declarations: variables
     integer, parameter :: n_vars =  13
@@ -438,9 +436,9 @@ call check( nf90_enddef(ncid))
 
     subroutine read_results_LD(in_filename)
 
-	use diagnostics_m, only : run_label, date_v
-	use ray_init_m, only : nray  ! Number of rays initialized
-	use ode_m, only : nv, nstep_max ! dimension of ray vector, max number of steps allowed
+    use diagnostics_m, only : run_label
+    use ray_init_m, only : nray  ! Number of rays initialized
+    use ode_m, only : nv, nstep_max ! dimension of ray vector, max number of steps allowed
 
     implicit none
 
@@ -459,146 +457,146 @@ call check( nf90_enddef(ncid))
 
     read (results_star_unit,*) var_name
     if (var_name .ne. 'RAYS_run_label') then
-    	write(*,*) 'read_results_LD: inconsistent variable name = ', var_name
-    	stop
+        write(*,*) 'read_results_LD: inconsistent variable name = ', var_name
+        stop
     end if
     read (results_star_unit,*) RAYS_run_label
 
     read (results_star_unit,*) var_name
     if (var_name .ne. 'date_vector') then
-    	write(*,*) 'read_results_LD: inconsistent variable name = ', var_name
-    	stop
+        write(*,*) 'read_results_LD: inconsistent variable name = ', var_name
+        stop
     end if
     read (results_star_unit,*) date_vector
 
     read (results_star_unit,*) var_name
     if (var_name .ne. 'number_of_rays') then
-    	write(*,*) 'read_results_LD: inconsistent variable name = ', var_name
-    	stop
+        write(*,*) 'read_results_LD: inconsistent variable name = ', var_name
+        stop
     end if
     read (results_star_unit,*) number_of_rays
 
     read (results_star_unit,*) var_name
     if (var_name .ne. 'max_number_of_points') then
-    	write(*,*) 'read_results_LD: inconsistent variable name = ', var_name
-    	stop
+        write(*,*) 'read_results_LD: inconsistent variable name = ', var_name
+        stop
     end if
     read (results_star_unit,*) max_number_of_points
 
     read (results_star_unit,*) var_name
     if (var_name .ne. 'dim_v_vector') then
-    	write(*,*) 'read_results_LD: inconsistent variable name = ', var_name
-    	stop
+        write(*,*) 'read_results_LD: inconsistent variable name = ', var_name
+        stop
     end if
     read (results_star_unit,*) dim_v_vector
 
 ! If the arrays are already allocated deallocate them and reallocate with dimensions just read
 
-	if (allocated(ray_vec)) call deallocate_ray_results_m
-	allocate (ray_vec(nv, nstep_max+1, nray))
-	allocate (residual(nstep_max, nray))
-	allocate (npoints(nray))
-	allocate (initial_ray_power(nray))
-	allocate (end_ray_power(nray))
-	allocate (ray_trace_time(nray))
-	allocate (end_ray_parameter(nray))
-	allocate (end_residuals(nray))
-	allocate (max_residuals(nray))
-	allocate (start_ray_vec(nv, nray))
-	allocate (end_ray_vec(nv, nray))
-	allocate (ray_stop_flag(nray))
+    if (allocated(ray_vec)) call deallocate_ray_results_m
+    allocate (ray_vec(nv, nstep_max+1, nray))
+    allocate (residual(nstep_max, nray))
+    allocate (npoints(nray))
+    allocate (initial_ray_power(nray))
+    allocate (end_ray_power(nray))
+    allocate (ray_trace_time(nray))
+    allocate (end_ray_parameter(nray))
+    allocate (end_residuals(nray))
+    allocate (max_residuals(nray))
+    allocate (start_ray_vec(nv, nray))
+    allocate (end_ray_vec(nv, nray))
+    allocate (ray_stop_flag(nray))
 
 
 ! Read arrays
 
     read (results_star_unit,*) var_name
     if (var_name .ne. 'npoints') then
-    	write(*,*) 'read_results_LD: inconsistent variable name = ', var_name
-    	stop
+        write(*,*) 'read_results_LD: inconsistent variable name = ', var_name
+        stop
     end if
     read (results_star_unit,*) npoints
 
     read (results_star_unit,*) var_name
     if (var_name .ne. 'total_trace_time') then
-    	write(*,*) 'read_results_LD: inconsistent variable name = ', var_name
-    	stop
+        write(*,*) 'read_results_LD: inconsistent variable name = ', var_name
+        stop
     end if
     read (results_star_unit,*) total_trace_time
 
     read (results_star_unit,*) var_name
     if (var_name .ne. 'initial_ray_power') then
-    	write(*,*) 'read_results_LD: inconsistent variable name = ', var_name
-    	stop
+        write(*,*) 'read_results_LD: inconsistent variable name = ', var_name
+        stop
     end if
     read (results_star_unit,*) initial_ray_power
 
     read (results_star_unit,*) var_name
     if (var_name .ne. 'end_ray_power') then
-    	write(*,*) 'read_results_LD: inconsistent variable name = ', var_name
-    	stop
+        write(*,*) 'read_results_LD: inconsistent variable name = ', var_name
+        stop
     end if
     read (results_star_unit,*) end_ray_power
 
     read (results_star_unit,*) var_name
     if (var_name .ne. 'ray_trace_time') then
-    	write(*,*) 'read_results_LD: inconsistent variable name = ', var_name
-    	stop
+        write(*,*) 'read_results_LD: inconsistent variable name = ', var_name
+        stop
     end if
     read (results_star_unit,*) ray_trace_time
 
     read (results_star_unit,*) var_name
     if (var_name .ne. 'end_ray_parameter') then
-    	write(*,*) 'read_results_LD: inconsistent variable name = ', var_name
-    	stop
+        write(*,*) 'read_results_LD: inconsistent variable name = ', var_name
+        stop
     end if
     read (results_star_unit,*) end_ray_parameter
 
     read (results_star_unit,*) var_name
     if (var_name .ne. 'end_residuals') then
-    	write(*,*) 'read_results_LD: inconsistent variable name = ', var_name
-    	stop
+        write(*,*) 'read_results_LD: inconsistent variable name = ', var_name
+        stop
     end if
     read (results_star_unit,*) end_residuals
 
     read (results_star_unit,*) var_name
     if (var_name .ne. 'max_residuals') then
-    	write(*,*) 'read_results_LD: inconsistent variable name = ', var_name
-    	stop
+        write(*,*) 'read_results_LD: inconsistent variable name = ', var_name
+        stop
     end if
     read (results_star_unit,*) max_residuals
 
     read (results_star_unit,*) var_name
     if (var_name .ne. 'ray_stop_flag') then
-    	write(*,*) 'read_results_LD: inconsistent variable name = ', var_name
-    	stop
+        write(*,*) 'read_results_LD: inconsistent variable name = ', var_name
+        stop
     end if
     read (results_star_unit,*) ray_stop_flag
 
     read (results_star_unit,*) var_name
     if (var_name .ne. 'start_ray_vec') then
-    	write(*,*) 'read_results_LD: inconsistent variable name = ', var_name
-    	stop
+        write(*,*) 'read_results_LD: inconsistent variable name = ', var_name
+        stop
     end if
     read (results_star_unit,*) start_ray_vec
 
     read (results_star_unit,*) var_name
     if (var_name .ne. 'end_ray_vec') then
-    	write(*,*) 'read_results_LD: inconsistent variable name = ', var_name
-    	stop
+        write(*,*) 'read_results_LD: inconsistent variable name = ', var_name
+        stop
     end if
     read (results_star_unit,*) end_ray_vec
 
     read (results_star_unit,*) var_name
     if (var_name .ne. 'residual') then
-    	write(*,*) 'read_results_LD: inconsistent variable name = ', var_name
-    	stop
+        write(*,*) 'read_results_LD: inconsistent variable name = ', var_name
+        stop
     end if
     read (results_star_unit,*) residual
 
     read (results_star_unit,*) var_name
     if (var_name .ne. 'ray_vec') then
-    	write(*,*) 'read_results_LD: inconsistent variable name = ', var_name
-    	stop
+        write(*,*) 'read_results_LD: inconsistent variable name = ', var_name
+        stop
     end if
     read (results_star_unit,*) ray_vec
 
@@ -609,17 +607,17 @@ call check( nf90_enddef(ncid))
 !********************************************************************
 
     subroutine allocate_ray_results_m
-		allocate (ray_vec(dim_v_vector, max_number_of_points, number_of_rays))
-		allocate (residual(max_number_of_points, number_of_rays))
-		allocate (npoints(number_of_rays))
-		allocate (initial_ray_power(number_of_rays))
-		allocate (ray_trace_time(number_of_rays))
-		allocate (end_ray_parameter(number_of_rays))
-		allocate (end_residuals(number_of_rays))
-		allocate (max_residuals(number_of_rays))
-		allocate (start_ray_vec(dim_v_vector, number_of_rays))
-		allocate (end_ray_vec(dim_v_vector, number_of_rays))
-		allocate (ray_stop_flag(number_of_rays))
+        allocate (ray_vec(dim_v_vector, max_number_of_points, number_of_rays))
+        allocate (residual(max_number_of_points, number_of_rays))
+        allocate (npoints(number_of_rays))
+        allocate (initial_ray_power(number_of_rays))
+        allocate (ray_trace_time(number_of_rays))
+        allocate (end_ray_parameter(number_of_rays))
+        allocate (end_residuals(number_of_rays))
+        allocate (max_residuals(number_of_rays))
+        allocate (start_ray_vec(dim_v_vector, number_of_rays))
+        allocate (end_ray_vec(dim_v_vector, number_of_rays))
+        allocate (ray_stop_flag(number_of_rays))
 
         return
     end subroutine allocate_ray_results_m
@@ -651,18 +649,18 @@ call check( nf90_enddef(ncid))
 
     class (run_results) ::  this
 
-! 	allocate ( this%ray_vec(dim_v_vector, max_number_of_points, number_of_rays))
-! 	allocate ( this%residual(max_number_of_points, number_of_rays))
-! 	allocate ( this%npoints(number_of_rays))
-! 	allocate ( this%initial_ray_power(number_of_rays))
-! 	allocate ( this%end_ray_power(number_of_rays))
-! 	allocate ( this%ray_trace_time(number_of_rays))
-! 	allocate ( this%end_ray_parameter(number_of_rays))
-! 	allocate ( this%end_residuals(number_of_rays))
-! 	allocate ( this%max_residuals(number_of_rays))
-! 	allocate ( this%start_ray_vec(dim_v_vector, number_of_rays))
-! 	allocate ( this%end_ray_vec(dim_v_vector, number_of_rays))
-! 	allocate ( this%ray_stop_flag(number_of_rays))
+!   allocate ( this%ray_vec(dim_v_vector, max_number_of_points, number_of_rays))
+!   allocate ( this%residual(max_number_of_points, number_of_rays))
+!   allocate ( this%npoints(number_of_rays))
+!   allocate ( this%initial_ray_power(number_of_rays))
+!   allocate ( this%end_ray_power(number_of_rays))
+!   allocate ( this%ray_trace_time(number_of_rays))
+!   allocate ( this%end_ray_parameter(number_of_rays))
+!   allocate ( this%end_residuals(number_of_rays))
+!   allocate ( this%max_residuals(number_of_rays))
+!   allocate ( this%start_ray_vec(dim_v_vector, number_of_rays))
+!   allocate ( this%end_ray_vec(dim_v_vector, number_of_rays))
+!   allocate ( this%ray_stop_flag(number_of_rays))
 
      this%RAYS_run_label = RAYS_run_label
      this%date_vector = date_vector
@@ -694,18 +692,18 @@ call check( nf90_enddef(ncid))
 
     class (run_results) ::  this
 
-! 	allocate ( this%ray_vec(dim_v_vector, max_number_of_points, number_of_rays))
-! 	allocate ( this%residual(max_number_of_points, number_of_rays))
-! 	allocate ( this%npoints(number_of_rays))
-! 	allocate ( this%initial_ray_power(number_of_rays))
-! 	allocate ( this%end_ray_power(number_of_rays))
-! 	allocate ( this%ray_trace_time(number_of_rays))
-! 	allocate ( this%end_ray_parameter(number_of_rays))
-! 	allocate ( this%end_residuals(number_of_rays))
-! 	allocate ( this%max_residuals(number_of_rays))
-! 	allocate ( this%start_ray_vec(dim_v_vector, number_of_rays))
-! 	allocate ( this%end_ray_vec(dim_v_vector, number_of_rays))
-! 	allocate ( this%ray_stop_flag(number_of_rays))
+!   allocate ( this%ray_vec(dim_v_vector, max_number_of_points, number_of_rays))
+!   allocate ( this%residual(max_number_of_points, number_of_rays))
+!   allocate ( this%npoints(number_of_rays))
+!   allocate ( this%initial_ray_power(number_of_rays))
+!   allocate ( this%end_ray_power(number_of_rays))
+!   allocate ( this%ray_trace_time(number_of_rays))
+!   allocate ( this%end_ray_parameter(number_of_rays))
+!   allocate ( this%end_residuals(number_of_rays))
+!   allocate ( this%max_residuals(number_of_rays))
+!   allocate ( this%start_ray_vec(dim_v_vector, number_of_rays))
+!   allocate ( this%end_ray_vec(dim_v_vector, number_of_rays))
+!   allocate ( this%ray_stop_flag(number_of_rays))
 
     call deallocate_ray_results_m
 

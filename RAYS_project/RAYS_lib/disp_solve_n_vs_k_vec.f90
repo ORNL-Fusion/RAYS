@@ -37,7 +37,7 @@
     kmag = norm2(k_vec)
     kunit = k_vec/kmag
 
-	theta = acos(dot_product(kunit,eq%bunit))
+    theta = acos(dot_product(kunit,eq%bunit))
     mode: select case (trim(wave_mode))
 
        case ('plus') ! -> O-mode

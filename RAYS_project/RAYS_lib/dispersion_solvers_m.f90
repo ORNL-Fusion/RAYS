@@ -29,7 +29,7 @@
 !
 !3) solve_n_vs_theta
 !   n = scalar refractive index
-!	theta = angle between vector refractive index and B
+!   theta = angle between vector refractive index and B
 !   This is essentially Appleton_Hartree
 !
 !4) solve_Booker_n1_vs_n2_n3 -> Booker quartic, electron dynamics only
@@ -263,7 +263,7 @@ contains
           ! Solve for n squared
           call solve_cold_nsq_vs_theta(eq,theta, nsq)
   write(*,*) 'solve_n_vs_theta: nsq = ', nsq, '  i_mode = ', i_mode
-          n_out = sqrt(cmplx(nsq(i_mode), zero))
+          n_out = sqrt(cmplx(nsq(i_mode), zero, rkind))
   write(*,*) 'solve_n_vs_theta: n_out = ', n_out
 
        case default

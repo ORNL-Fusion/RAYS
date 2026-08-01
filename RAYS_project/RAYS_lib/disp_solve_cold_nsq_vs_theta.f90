@@ -37,8 +37,8 @@
 
        call RLSDP_cold(eq, S ,D , P, R, L)
 
-	   cos2 = cos(theta)**2
-	   sin2 = one - cos2
+       cos2 = cos(theta)**2
+       sin2 = one - cos2
 
 !      Coefficients for A(n3)*(nsq)^2 + B(n3)*nsq + C(n3) = 0.
        a = S*sin2 + P*cos2
@@ -78,7 +78,7 @@
  end subroutine solve_cold_nsq_vs_theta
 !****************************************************************************
 
-complex function disp_fun_cold_n_theta(eq, theta, n)
+complex(KIND=rkind) function disp_fun_cold_n_theta(eq, theta, n)
 ! Evaluates cold plasma dispersion function versus refractive index, n, and angle theta.
 ! i.e. residual of Appleton-Hartree.
 ! N.B. n is complex, theta is real
@@ -103,8 +103,8 @@ complex function disp_fun_cold_n_theta(eq, theta, n)
 
        call RLSDP_cold(eq, S ,D , P, R, L)
 
-	   cos2 = cos(theta)**2
-	   sin2 = one - cos2
+       cos2 = cos(theta)**2
+       sin2 = one - cos2
 
 !      Coefficients for A(n3)*(nsq)^2 + B(n3)*nsq + C(n3) = 0.
        a = S*sin2 + P*cos2

@@ -9,10 +9,13 @@
 !   eps(i,j) as a six vector
 !   eps(i) -> [ (eps(1,1), eps(2,2), eps(3,3), eps(1,2), eps(1,3), eps(2,3) ]
 
+!   N./B. Send depsdx_h, depsdk_h, depsdw_h to depsdq_h by host association.
+
     use constants_m, only : rkind, zero
     use equilibrium_m, only : eq_point
     use rf_m, only : omgrf, k0
     use ode_m, only : nv
+    use write_matrix_m, only : write_matrix, write_vector
 
     implicit none
 
@@ -21,12 +24,12 @@
     real(KIND=rkind), intent(out) :: dddx(3), dddk(3), dddw
 
     real(KIND=rkind) :: rvec(3), kvec(3), nvec(3)
-    complex(KIND=rkind) :: n1, n3
+    real(KIND=rkind) :: n1, n3
     real(KIND=rkind) :: dn3dk(3), dn1dk(3), dn3dx(3), dn1dx(3), dn3dw, dn1dw
     complex(KIND=rkind) :: depsdk_h(6,3), depsdx_h(6,3), depsdw_h(6)
 
     complex(KIND=rkind) :: g(6), h1, h3
-   complex(KIND=rkind) :: ddxc, ddkc, ddwc
+    complex(KIND=rkind) :: ddxc(3), ddkc(3), ddwc
 
     integer :: i
 
@@ -46,46 +49,41 @@
     dn1dw = -n1/omgrf
     dn3dw = -n3/omgrf
 
+
 ! *******************************
     depsdw_h = zero
     depsdk_h = zero
     depsdx_h = zero
 
-! Send args by host association
+! Send args depsdx_h, depsdk_h, depsdw_h by host association
     call depsdq_h(eq, kvec)
-write(*,*) 'deriv_general: depsdx_h = ', depsdx_h
-write(*,*) 'deriv_general: depsdk_h = ', depsdk_h
-write(*,*) 'deriv_general: depsdw_h = ', depsdw_h
+!  write(*,*) ' '
+!  call write_vector('deriv_general: depsdw_h', depsdw_h, 6)
+!  call write_matrix('deriv_general: depsdx_h', depsdx_h, 6, 3)
+!  call write_matrix('deriv_general: depsdk_h', depsdk_h, 6, 3)
 
 ! ********************************
 
     call g_and_h(eq, nvec, g, h1, h3)
-! write(*,*) 'deriv_general: g = ', g
-! write(*,*) 'deriv_general: h1 = ', h1
-! write(*,*) 'deriv_general: h3 = ', h3
+
 ! ********************************
 
     do i = 1,3
-    ddkc = sum( g(:)*depsdk_h(:,i) ) + h1*dn1dk(i) + h3*dn3dk(i)
-    ddxc = sum( g(:)*depsdx_h(:,i) ) + h1*dn1dx(i) + h3*dn3dx(i)
-!  write(*,*) 'deriv_general: i = ', i, '  depsdx_h(:,i) = ',depsdx_h(:,i)
-!  write(*,*) 'deriv_general: i = ', i, '  dn1dx(i) = ', dn1dx(i)
-!  write(*,*) 'deriv_general: i = ', i, '  dn3dx(i) = ', dn3dx(i)
-    dddk(i) = ddkc%re
-    dddx(i) = ddxc%re
+        ddkc(i) = sum( g(:)*depsdk_h(:,i) ) + h1*dn1dk(i) + h3*dn3dk(i)
+        ddxc(i) = sum(g(:)*depsdx_h(:,i)) + h1*dn1dx(i) + h3*dn3dx(i)
+
+        dddk(i) = ddkc(i)%re
+        dddx(i) = ddxc(i)%re
     end do
 
-	ddwc = sum(depsdw_h*g) + h1*dn1dw + h3*dn3dw
+    ddwc = sum(depsdw_h*g) + h1*dn1dw + h3*dn3dw
     dddw = ddwc%re
-!  write(*,*) 'deriv_general: ddkc = ', ddkc
-!  write(*,*) 'deriv_general: ddxc = ', ddxc
-!  write(*,*) 'deriv_general: ddwc = ', ddwc
 
-    return
+  return
 
 ! **************************************************************************
 
-    contains
+  contains
 
 ! **************************************************************************
 
@@ -96,6 +94,7 @@ write(*,*) 'deriv_general: depsdw_h = ', depsdw_h
 
 !   Calculates the partial of derivatives of eps_h with respect to k, x, omega.
 !   sums over  species is.
+!   Get depsdx_h, depsdk_h, depsdw_h from above by host association.
 
     use constants_m, only : rkind, one, zero
     use species_m, only : nspec, spec_model
@@ -110,7 +109,6 @@ write(*,*) 'deriv_general: depsdw_h = ', depsdw_h
     integer :: is
 
     do is = 0, nspec
- write(*,*) 'depsdq_h: spec_model(is) = ', spec_model(is)
       plasma_model: select case (spec_model(is) )
 
           case ('cold')
@@ -145,6 +143,7 @@ subroutine depsdq_cold(eq, is, depsdw_hs, depsdk_hs, depsdx_hs)
     use constants_m, only : rkind, zero, one, two, zi=>i
     use equilibrium_m, only : eq_point
     use species_m, only : nus
+    use write_matrix_m, only : write_matrix, write_vector
 
     implicit none
 
@@ -159,7 +158,6 @@ subroutine depsdq_cold(eq, is, depsdw_hs, depsdk_hs, depsdx_hs)
 
     integer :: ivec
 
- write(*,*) 'depsdq_cold: nus(is) = ', nus(is)
      alpha_c = eq%alpha(is)/cmplx(one,nus(is),rkind)**2
      gamma_c = eq%gamma(is)/cmplx(one,nus(is),rkind)
 
@@ -179,7 +177,7 @@ subroutine depsdq_cold(eq, is, depsdw_hs, depsdk_hs, depsdx_hs)
     d_chi_d_alpha_c(5) = zero
     d_chi_d_alpha_c(6) = zero
 
-    d_chi_d_gamma_c(1) = two*gamma_c*alpha_c/(one-gamma_c**2)**2
+    d_chi_d_gamma_c(1) = -two*gamma_c*alpha_c/(one-gamma_c**2)**2
     d_chi_d_gamma_c(2) = d_chi_d_gamma_c(1)
     d_chi_d_gamma_c(3) = zero
     d_chi_d_gamma_c(4) = -zi*alpha_c*(one+gamma_c**2)/(one-gamma_c**2)**2
@@ -188,8 +186,8 @@ subroutine depsdq_cold(eq, is, depsdw_hs, depsdk_hs, depsdx_hs)
 
 ! Derivatives with respect to omgrf
 
-    d_alpha_c_dw = -two*alpha_c/omgrf*cmplx(1.,-nus(is))
-    d_gamma_c_dw = -gamma_c/omgrf/cmplx(1.,nus(is))
+    d_alpha_c_dw = -two*alpha_c/omgrf*cmplx(one,-nus(is),rkind)
+    d_gamma_c_dw = -gamma_c/omgrf/cmplx(one,nus(is),rkind)
 
     depsdw(1) = d_chi_d_alpha_c(1)*d_alpha_c_dw + d_chi_d_gamma_c(1)*d_gamma_c_dw
     depsdw(2) = d_chi_d_alpha_c(2)*d_alpha_c_dw + d_chi_d_gamma_c(2)*d_gamma_c_dw
@@ -210,12 +208,10 @@ subroutine depsdq_cold(eq, is, depsdw_hs, depsdk_hs, depsdx_hs)
        depsdk_hs(:,ivec) = zero
     end do
 
-!   dddx = dD/dx:
-!   Derivatives with respect to space coordinates.
-
+    depsdx = zero
     do ivec = 1, 3
-       depsdx(:,ivec) = d_chi_d_alpha_c*alpha_c*eq%gradns(ivec,is)/eq%ns(is)+ &
-                      & d_chi_d_gamma_c*gamma_c*eq%gradbmag(ivec)/eq%bmag
+       depsdx(:,ivec) = d_chi_d_alpha_c(:)*alpha_c*eq%gradns(ivec,is)/eq%ns(is)+ &
+                      & d_chi_d_gamma_c(:)*gamma_c*eq%gradbmag(ivec)/eq%bmag
        call v6_Hermitian( depsdx(:,ivec), depsdx_hs(:,ivec) )
     end do
 
@@ -228,16 +224,18 @@ subroutine depsdq_cold(eq, is, depsdw_hs, depsdk_hs, depsdx_hs)
 
 ! *************************************************************
 
-subroutine depsdq_bessel(eq, is, kvec, depsdw_hs, depsdk_hs, depsdx_hs)
+  subroutine depsdq_bessel(eq, is, kvec, depsdw_hs, depsdk_hs, depsdx_hs)
 
 !   calculates the partial of derivatives of the dielectric tensor with respect
 !   to k, r, omega for species is using the Bessel function susceptibility
 
-    use constants_m, only : rkind, zero, one, two, zi=>i
+    use constants_m, only : rkind, zero, one, two, ten, zi=>i
     use equilibrium_m, only : eq_point
     use rf_m, only : omgrf
     use species_m, only : ms, nmins, nmaxs, n_limit
     use zfunctions_m, only : zfun0_real_arg
+    use suscep_m, only : suscep_bessel
+    use write_matrix_m, only : write_matrix, write_vector
 
     implicit none
 
@@ -254,12 +252,12 @@ subroutine depsdq_bessel(eq, is, kvec, depsdw_hs, depsdk_hs, depsdx_hs)
     real(KIND=rkind) :: vth, beta, lambda
     real(KIND=rkind), dimension(-n_limit:n_limit) :: xi
     complex(KIND=rkind), dimension(-n_limit:n_limit) :: zf, zfp, zfpp, ei, eip, eipp
-    complex(KIND=rkind) :: a, b, chin(6,-n_limit:n_limit), chis_6v(6)
+    complex(KIND=rkind) :: a, chin(6,-n_limit:n_limit), chis_6v(6)
 
     complex(KIND=rkind) :: depsdw(6), depsdk(6,3), depsdx(6,3)
     complex(KIND=rkind), dimension(6) :: depsdb, depsdl
     complex(KIND=rkind), dimension(6,-n_limit:n_limit) :: depsdxi, ctmp
-
+    complex(KIND=rkind) :: de1, de2, de3
     real(KIND=rkind) :: dbdk(3), dldk(3), dxidk(3,-n_limit:n_limit)
     real(KIND=rkind) :: dbdx(3), dldx(3), dxidx(3,-n_limit:n_limit)
     real(KIND=rkind) :: dbdw, dxidw
@@ -272,7 +270,7 @@ subroutine depsdq_bessel(eq, is, kvec, depsdw_hs, depsdk_hs, depsdx_hs)
     interface
       subroutine ebessel_dbb(z, nmin, nmax, ein, einp)
 !        calculates exp(-z)*I_n(z) and exp(-z)*I'_n(z).
-    	 use constants_m, only : rkind
+         use constants_m, only : rkind
          implicit none
          complex(KIND=rkind), intent(in) :: z
          integer, intent(in) :: nmin, nmax
@@ -280,16 +278,19 @@ subroutine depsdq_bessel(eq, is, kvec, depsdw_hs, depsdk_hs, depsdx_hs)
       end subroutine ebessel_dbb
     end interface
 
-	bmag = eq%bmag
-	ns = eq%ns(is)
-	ts = eq%ts(is)
-	omgp2 = eq%omgp2(is)
-	omgc = eq%omgc(is)
-	bunit = eq%bunit
-	gradbunit = eq%gradbunit
-	gradbmag = eq%gradbmag
-	gradns(:) = eq%gradns(:,is)
-	gradts(:) = eq%gradts(:,is)
+    chin = zero
+    chis_6v = zero
+
+    bmag = eq%bmag
+    ns = eq%ns(is)
+    ts = eq%ts(is)
+    omgp2 = eq%omgp2(is)
+    omgc = eq%omgc(is)
+    bunit = eq%bunit
+    gradbunit = eq%gradbunit
+    gradbmag = eq%gradbmag
+    gradns(:) = eq%gradns(:,is)
+    gradts(:) = eq%gradts(:,is)
 
 !   nmin and nmax for this species
     nmin = nmins(is)
@@ -301,11 +302,11 @@ subroutine depsdq_bessel(eq, is, kvec, depsdw_hs, depsdk_hs, depsdx_hs)
 !   Thermal speed.
     vth = sqrt( two*ts/ms(is) )
 
-! 	k_perp and k_parallel
+!   k_perp and k_parallel
     k3 = dot_product(kvec, eq%bunit)
     k1 = sqrt( sum((kvec-k3*eq%bunit)**2) )
-	n1 = k1/k0
-	n3 = k3/k0
+    n1 = k1/k0
+    n3 = k3/k0
 
 !   Argument for Bessel functions.
     lambda = half * (k1*vth/omgc)**2
@@ -318,61 +319,55 @@ subroutine depsdq_bessel(eq, is, kvec, depsdw_hs, depsdk_hs, depsdx_hs)
 !   Generate Bessel functions ******************************************
 !   ei = exp(-lambda)*I_n(lambda), eip = exp(-lambda)*I'_n(lambda).
 
-       call ebessel_dbb(cmplx(lambda, zero, rkind), nmin, nmax, ei(nmin:nmax), eip(nmin:nmax))
+    call ebessel_dbb(cmplx(lambda, zero, rkind), nmin, nmax, ei(nmin:nmax), eip(nmin:nmax))
 
 !   eipp = exp(-lambda)*I''_n(lambda).
 !   Use the Bessel'e equation: y'' + (1/x)y' - (1+n^2/x^2)y = 0.
-
     do n = nmin, nmax
        eipp(n) = (one+(n/lambda)**2)*ei(n) - eip(n)/lambda
     end do
 
 ! Generate susceptibility
 
-    if ( k3 /= zero ) then
+  if ( k3 /= zero ) then
 
        beta = omgp2/(omgrf*k3*vth)
 
 !    Generate Plasma Z functions ***************************************
 
-    do n = nmin, nmax
-       zf(n) = zfun0_real_arg(xi(n), k3)
-
-!     Z' = dZ/d(xi) & Z'' = d^2Z/d(xi)^2.
-	  zfp(n) = -two * ( one + xi(n)*zf(n) )
-	  zfpp(n) = -two * ( zf(n) + xi(n)*zfp(n) )
+   do n = nmin, nmax
+      zf(n) = zfun0_real_arg(xi(n), k3)
+      zfp(n) = -two * ( one + xi(n)*zf(n) )
+      zfpp(n) = -two * ( zf(n) + xi(n)*zfp(n) )
     end do
 
-       do n = nmin, nmax
-          chin(1,n) = n**2 * (ei(n)/lambda) * zf(n)
-          chin(2,n) = chin(1,n) + two*lambda*(ei(n)-eip(n)) * zf(n)
-          chin(3,n) = -ei(n) * xi(n) * zfp(n)
+   do n = nmin, nmax
+      chin(1,n) = n**2 * (ei(n)/lambda) * zf(n)
+      chin(2,n) = chin(1,n) + two*lambda*(ei(n)-eip(n)) * zf(n)
+      chin(3,n) = -ei(n) * xi(n) * zfp(n)
 
-          chin(4,n) = zi * n * (eip(n)-ei(n)) * zf(n)
-          chin(5,n) = -iomgc * sqrt(half/lambda) * n * ei(n) * zfp(n)
-          chin(6,n) = iomgc * zi * sqrt(half*lambda) * (eip(n)-ei(n)) * zfp(n)
+      chin(4,n) = zi * n * (eip(n)-ei(n)) * zf(n)
+      chin(5,n) = -iomgc * sqrt(half/lambda) * n * ei(n) * zfp(n)
+      chin(6,n) = iomgc * zi * sqrt(half*lambda) * (eip(n)-ei(n)) * zfp(n)
+   end do
 
-       end do
-
-    else
+  else
 !      For k3=0.
 !      See Eq.(11-32). Here, an=A_n, but bn=B_n/k3.
        do n = nmin, nmax
-          a = -one / (omgrf-n*omgc)
-          b = -half * (vth/(omgrf-n*omgc))**2
+          a = -one / (omgrf-n*eq%omgc(is))
 
-!         Eq.(10-57):
           chin(1,n) = n**2 * (ei(n)/lambda) * a
           chin(2,n) = chin(1,n) + two*lambda*(ei(n)-eip(n)) * a
-          chin(3,n) = two*(omgrf-n*omgc)/vth**2 * ei(n) * b
-
+          chin(3,n) = ei(n) * a
           chin(4,n) = zi * n * (eip(n)-ei(n)) * a
           chin(5,n) = zero
           chin(6,n) = zero
-
        end do
 
-    end if
+        beta = eq%omgp2(is)/omgrf
+
+  end if
 
 !   Sum suscep over harmonic number
 
@@ -383,13 +378,10 @@ subroutine depsdq_bessel(eq, is, kvec, depsdw_hs, depsdk_hs, depsdx_hs)
      chis_6v(5) = beta*sum(chin(5,nmin:nmax))
      chis_6v(6) = beta*sum(chin(6,nmin:nmax))
 
-!   Generate derivatives of dielectric tensor for this species ********
-
 !   Derivatives of dielectric tensor eps with respect to beta:
 !   depsdb = d(eps)/d(beta).
 
-       depsdb = chis_6v/beta
-
+    depsdb = chis_6v/beta
 
 !   Derivatives of dielectric tensor eps with respect to xi:
 !   depsdxi = d(eps)/d(xi) = d(chi)/d(xi)
@@ -404,8 +396,6 @@ subroutine depsdq_bessel(eq, is, kvec, depsdw_hs, depsdk_hs, depsdx_hs)
        depsdxi(6,n) = iomgc * zi * beta * sqrt(half*lambda) &
           & * (eip(n)-ei(n)) * zfpp(n)
     end do
-
-
 
 ! Derivatives with respect to w
 !   dbdw = d(beta)/d(omega); dxidw = d(xi)/d(omega); d(lambda)/d(omega) = 0.
@@ -425,57 +415,45 @@ subroutine depsdq_bessel(eq, is, kvec, depsdw_hs, depsdk_hs, depsdx_hs)
 !   Derivatives with respect to k.
 !   dbdk = d(beta)/dk; dldk = d(lambda)/dk; dxidk = d(xi)/dk
 
-
 !   Derivatives of dielectric tensor eps with respect to lambda:
 !   depsdl = d(eps)/d(lambda) = d(chi)/d(lambda)
 
     do n = nmin, nmax
-       ctmp(1,n) = beta * n**2 / lambda &
-          & * (eip(n)-(one+one/lambda)*ei(n)) * zf(n)
-       ctmp(2,n) = ctmp(1,n) + two * beta &
-          & * (ei(n)*(one-lambda)+eip(n)*(two*lambda-one)-lambda*eipp(n)) &
-          & * zf(n)
-       ctmp(3,n) = beta * (ei(n)-eip(n)) * xi(n)*zfp(n)
-
-       ctmp(4,n) = zi * beta * n * (eipp(n)-two*eip(n)+ei(n)) &
-          & * zf(n)
-       ctmp(5,n) = iomgc * beta * sqrt(half/lambda) * n &
-           & * (ei(n)*(one+half/lambda)-eip(n)) * zfp(n)
-       ctmp(6,n) = iomgc * zi * beta * sqrt(half*lambda) &
-          & * (eipp(n)+eip(n)*(half/lambda-two)+ei(n)*(one-half/lambda)) &
-          & * zfp(n)
+       de1 = -ei(n) + eip(n)
+       de2 = -eip(n) + eipp(n)
+       de3 = -ei(n) + two*eip(n) - eipp(n)
+       ctmp(1,n) = n**2 * zf(n) *(-ei(n)/lambda**2 + de1/lambda)
+       ctmp(2,n) = ctmp(1,n) + two * zf(n) * (-de1 + lambda * de3)
+       ctmp(3,n) = -xi(n)*zfp(n) * de1
+       ctmp(4,n) = -zi * n * zf(n) * de3
+       ctmp(5,n) = -iomgc/sqrt(two) * n * zfp(n)*(-half/lambda**(1.5) * ei(n) &
+                 & + de1/sqrt(lambda))
+        ctmp(6,n) = iomgc *sqrt(half)* zi * zfp(n)* (half/sqrt(lambda) * de1  &
+                 &  -sqrt(lambda) * de3 )
     end do
+
+    ctmp = ctmp * beta
 
 !   Sum over harmonics.
     depsdl = sum(ctmp(:,nmin:nmax),dim=2)
 
+    dbdk(:) = -beta/k3 * bunit
+    dldk(:) = two*lambda/k1**2 * (kvec-k3*bunit)
 
-
-       dbdk(:) = -beta/k3 * bunit
-       dldk(:) = two*lambda/k1**2 * (kvec-k3*bunit)
-
-       depsdk_xi = zero
-
+    depsdk_xi = zero
     do n = nmin, nmax
-
        dxidk(:,n) = -xi(n)/k3 * bunit
-
        do i = 1,6
            depsdk_xi(i,:) = depsdk_xi(i,:) + depsdxi(i,n)*dxidk(:,n)
        end do
-
     end do
 
     do ivec = 1, 3
-
        depsdk(:,ivec) = depsdb*dbdk(ivec) + depsdl*dldk(ivec) &
           & + depsdk_xi(:,ivec)
 
         call v6_Hermitian( depsdk(:,ivec), depsdk_hs(:,ivec) )
-
     end do
-
-
 
 !   dddx = dD/dx:
 !   Derivatives with respect to space coordinates.
@@ -483,12 +461,10 @@ subroutine depsdq_bessel(eq, is, kvec, depsdw_hs, depsdk_hs, depsdx_hs)
 
        dbdx(:) = beta * ( gradns(:)/ns  &
         & - matmul(gradbunit,kvec)/k3 - gradts(:)/(two*ts) )
-!  write(*,*) 'depsdq_bessel: dbdx = ', dbdx
 
        dldx(:) = lambda &
        & * ( -two*k3*matmul(gradbunit,kvec)/k1**2 &
        &      + gradts(:)/ts - two*gradbmag/bmag )
-!  write(*,*) 'depsdq_bessel: dldx = ', dldx
 
     depsdx_xi = zero
     do n = nmin, nmax
@@ -501,7 +477,6 @@ subroutine depsdq_bessel(eq, is, kvec, depsdw_hs, depsdk_hs, depsdx_hs)
             depsdx_xi(i,:) = depsdx_xi(i,:) + depsdxi(i,n)*dxidx(:,n)
         end do
     end do
-!  write(*,*) 'depsdq_bessel: dxidx = ', dxidx
 
     do ivec = 1, 3
 
@@ -511,15 +486,12 @@ subroutine depsdq_bessel(eq, is, kvec, depsdw_hs, depsdk_hs, depsdx_hs)
         call v6_Hermitian( depsdx(:,ivec), depsdx_hs(:,ivec) )
 
     end do
-!  write(*,*) 'depsdq_bessel: depsdx = ', depsdx
-!  write(*,*) 'depsdq_bessel: depsdx_hs = ', depsdx_hs
 
-    end subroutine depsdq_bessel
-
+  end subroutine depsdq_bessel
 
 ! *************************************************************
 
-    subroutine g_and_h(eq, nvec, g, h1, h3)
+  subroutine g_and_h(eq, nvec, g, h1, h3)
 ! Generates the quantities g(1:6), h1 and h3 as defined in the notes from
 ! 11-4-99.  These are elements in the chain rule for dD/dq.
 
@@ -528,6 +500,7 @@ subroutine depsdq_bessel(eq, is, kvec, depsdw_hs, depsdk_hs, depsdx_hs)
     use rf_m, only : ray_dispersion_model
     use suscep_m, only : dielectric_cold, dielectric_general
     USE matrix3x3_m, only : hermitian3x3
+    use write_matrix_m, only : write_matrix, write_vector
 
     implicit none
     type(eq_point), intent(in) :: eq
@@ -539,20 +512,18 @@ subroutine depsdq_bessel(eq, is, kvec, depsdw_hs, depsdk_hs, depsdx_hs)
     complex(KIND=rkind) :: eps(3,3)
     complex(KIND=rkind) :: eps_h(3,3)   ! Hermitian part of eps_6v
     complex(KIND=rkind) :: e1,e2,e3,e4,e5,e6
-    real(KIND=rkind) :: half = one/two
 
     n3 = dot_product(nvec, eq%bunit)
     n1 = sqrt( sum((nvec-n3*eq%bunit)**2) )
     n3c = cmplx(n3, zero, rkind)
     n1c = cmplx(n1, zero, rkind)
 
- write(*,*) 'g_and_h: ray_dispersion_model = ', ray_dispersion_model
     dispersion_model: select case (ray_dispersion_model )
-	  case ('cold')
-		call dielectric_cold(eq, eps)
-	  case('bessel')
-! 	   N.B.  Dielectric routines take complex args n, but in ray tracing nvec is real
-	   call dielectric_general(eq, n1c, n3c, eps)
+      case ('cold')
+        call dielectric_cold(eq, eps)
+      case('general')
+!      N.B.  Dielectric routines take complex args n, but in ray tracing nvec is real
+       call dielectric_general(eq, n1c, n3c, eps)
     end select dispersion_model
 
     eps_h = hermitian3x3(eps)
@@ -573,13 +544,10 @@ subroutine depsdq_bessel(eq, is, kvec, depsdw_hs, depsdk_hs, depsdx_hs)
     h3 = two*(e4*e6*n1 + e5*n1**3 - e1*e3*n3 + e5**2*n3 - e6**2*n3 + e1*n1**2*n3 + &
          & e3*n1**2*n3 + three*e5*n1*n3**2 + two*e3*n3**3 - e2*(e5*n1 + e3*n3))
 
-!  write(*,*) 'g_and_h: g = ', g
-!  write(*,*) 'g_and_h: h = ', h1, '  h3 = ',h3
-
     return
-    end subroutine g_and_h
+  end subroutine g_and_h
 
-    end subroutine deriv_general
+  end subroutine deriv_general
 
 
 ! ********************************************************************************

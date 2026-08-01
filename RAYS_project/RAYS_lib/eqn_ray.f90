@@ -20,9 +20,9 @@
 !        dsd_ray_param = |v group| == vg0 for ray_param = 'time'
 
 !   External procedures:
-!		deriv_cold (deriv_cold.f90)
-!		deriv_general (deriv_general.f90)
-!		deriv_num (deriv_num.f90)
+!       deriv_cold (deriv_cold.f90)
+!       deriv_general (deriv_general.f90)
+!       deriv_num (deriv_num.f90)
 
 ! Working notes:
 
@@ -43,7 +43,7 @@
     type(ode_stop)  :: ray_stop
 
     real(KIND=rkind) :: rvec(3)
-    real(KIND=rkind) :: kvec(3), k1, k3
+    real(KIND=rkind) :: kvec(3)
     real(KIND=rkind) :: nvec(3)
     real(KIND=rkind) :: v_xk(6) ! N.B. damping() needs x and k from v(:), not the rest of it.
 
@@ -108,13 +108,13 @@
         ray_stop%stop_ode = .true.
         ray_stop%ode_stop_flag = eq%equib_err
 
-		if (verbosity > 0) then
+        if (verbosity > 0) then
           write (message_unit,'(a,g12.4,3a,3g12.4)') 'eqn_ray: s = ', s, '  equib_err = ',&
               & trim(eq%equib_err), '  r_end = ', rvec
-		  if (messages_to_stdout) then
-			 write (*,*) 'eqn_ray: s = ', s, '  equib_err = ', eq%equib_err
-		  end if
-		end if
+          if (messages_to_stdout) then
+             write (*,*) 'eqn_ray: s = ', s, '  equib_err = ', eq%equib_err
+          end if
+        end if
          return
     end if
 

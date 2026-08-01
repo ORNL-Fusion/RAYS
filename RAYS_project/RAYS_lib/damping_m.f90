@@ -50,11 +50,11 @@ contains
 
     implicit none
     logical, intent(in) :: read_input
-	integer :: input_unit, get_unit_number ! External, free unit finder
+    integer :: input_unit, get_unit_number ! External, free unit finder
 
     if (read_input .eqv. .true.) then
     ! Read and write input namelist
-    	input_unit = get_unit_number()
+        input_unit = get_unit_number()
         open(unit=input_unit, file='rays.in',action='read', status='old', form='formatted')
         read(input_unit, damping_list)
         close(unit=input_unit)
@@ -62,7 +62,7 @@ contains
     if (verbosity >= 0) write(message_unit, damping_list)
 
 ! initialize splines
-	if (.not. initialized) call initialize_spline_coeffs
+    if (.not. initialized) call initialize_spline_coeffs
 
     return
   end subroutine initialize_damping_m

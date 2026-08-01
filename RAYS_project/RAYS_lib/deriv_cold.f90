@@ -12,7 +12,7 @@
     use equilibrium_m, only : eq_point, write_eq_point
     use rf_m, only : omgrf, k0
     use species_m, only : nspec0, nspec
-    use diagnostics_m, only : message_unit, verbosity
+    use diagnostics_m, only : verbosity
 
     implicit none
 
@@ -37,10 +37,10 @@
 
     integer :: is, is1, is2, ivec
 
-	do is = 0, nspec
-		alpha(is) = eq%alpha(is)
-		gamma(is) = eq%gamma(is)
-	end do
+    do is = 0, nspec
+        alpha(is) = eq%alpha(is)
+        gamma(is) = eq%gamma(is)
+    end do
 
     n3 = dot_product(nvec, eq%bunit)
     n1 = sqrt( sum((nvec-n3*eq%bunit)**2) )

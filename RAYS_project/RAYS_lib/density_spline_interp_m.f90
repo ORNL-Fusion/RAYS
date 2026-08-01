@@ -27,21 +27,21 @@ module  density_spline_interp_m
 
     implicit none
 
-	integer, parameter :: n_grid_max = 200 ! Max dimension of input arrays, truncated later
+    integer, parameter :: n_grid_max = 200 ! Max dimension of input arrays, truncated later
 
 !_________________________________________________________________________________________
 ! Namelist data for /density_spline_interp_list/
 !_________________________________________________________________________________________
 
     character (len = 60) :: spline_density_model ! Not used, YET
-	integer :: ngrid ! Actual number of points to be splined. <= n_grid_max
-	real(KIND=rkind) ::  ne_in(n_grid_max) ! Values on grid (grid assumed uniform 0 to 1)
+    integer :: ngrid ! Actual number of points to be splined. <= n_grid_max
+    real(KIND=rkind) ::  ne_in(n_grid_max) ! Values on grid (grid assumed uniform 0 to 1)
 
 
 ! Stuff for 1D spline profiles
 
     type(cube_spline_function_1D) :: ne_profile_N  ! ne profile normalized to 1. on axis
- 	character (len = 80) :: profile_name = 'ne_profile'
+    character (len = 80) :: profile_name = 'ne_profile'
 
   namelist /density_spline_interp_list/ ngrid, ne_in
 
@@ -52,30 +52,29 @@ contains
   subroutine initialize_density_spline_interp(read_input)
 
     use constants_m, only : one
-    use species_m, only : nspec
     use diagnostics_m, only : message, message_unit,messages_to_stdout, verbosity
-!	use axisym_toroid_eq_m,  only : plasma_psi_limit ! N.B. This is circular dependence but
-			! gfortran compiler seems to allow it.  But don't change plasma_psi_limit!
-			! We need this to allow plasma outside psiN = 1.
+!   use axisym_toroid_eq_m,  only : plasma_psi_limit ! N.B. This is circular dependence but
+            ! gfortran compiler seems to allow it.  But don't change plasma_psi_limit!
+            ! We need this to allow plasma outside psiN = 1.
 
     implicit none
 
     logical, intent(in) :: read_input
 
- 	integer :: input_unit, get_unit_number ! External, free unit finder
+    integer :: input_unit, get_unit_number ! External, free unit finder
 
-	real(KIND=rkind), allocatable ::  grid(:) ! Grid points (constructed to be 0. to 1.)
-	real(KIND=rkind), allocatable ::  ne_values(:) ! Values on grid
-	character (len = 80) :: profile_name = 'ne_profile'
+    real(KIND=rkind), allocatable ::  grid(:) ! Grid points (constructed to be 0. to 1.)
+    real(KIND=rkind), allocatable ::  ne_values(:) ! Values on grid
+    character (len = 80) :: profile_name = 'ne_profile'
 
-	integer :: i
+    integer :: i
 
     if (verbosity >= 0) then
-		write(*,*) 'initialize_density_spline_interp'
+        write(*,*) 'initialize_density_spline_interp'
     end if
 
     if (read_input .eqv. .true.) then
-  		input_unit = get_unit_number()
+        input_unit = get_unit_number()
         open(unit=input_unit, file='rays.in',action='read', status='old', form='formatted')
         read(input_unit, density_spline_interp_list)
         close(unit=input_unit)
@@ -83,19 +82,19 @@ contains
 
 ! Write input namelist
     if (verbosity >= 0) then
-		write(message_unit, density_spline_interp_list)
-		if (messages_to_stdout) write(*, density_spline_interp_list)
-		call message(1)
+        write(message_unit, density_spline_interp_list)
+        if (messages_to_stdout) write(*, density_spline_interp_list)
+        call message(1)
     end if
 
 ! Allocate arrays
-	allocate(grid(ngrid), ne_values(ngrid))
+    allocate(grid(ngrid), ne_values(ngrid))
 
 ! Construct arrays for splining
     do i = 1, ngrid
-!    	grid(i) = plasma_psi_limit*(i-1)/(ngrid - 1)
-    	grid(i) = one*(i-1)/(ngrid - 1)
-    	ne_values(i) = ne_in(i)/ne_in(1) ! Normalized to 1.0 on axis
+!       grid(i) = plasma_psi_limit*(i-1)/(ngrid - 1)
+        grid(i) = one*(i-1)/(ngrid - 1)
+        ne_values(i) = ne_in(i)/ne_in(1) ! Normalized to 1.0 on axis
     end do
 
 ! Initialize spline coefficients for ne_profile_N
@@ -109,21 +108,20 @@ contains
   subroutine  density_spline_interp(psi, d_scrape_off, dens, dd_psi)
 
     use constants_m, only : one, zero
-    use species_m, only : nspec, n0s, t0s
-    use diagnostics_m, only : message_unit, message
+    use diagnostics_m, only : message
 
     implicit none
 
-	real(KIND=rkind), intent(in) :: psi, d_scrape_off
-	real(KIND=rkind), intent(out) :: dens, dd_psi
+    real(KIND=rkind), intent(in) :: psi, d_scrape_off
+    real(KIND=rkind), intent(out) :: dens, dd_psi
 
-	dens = zero
+    dens = zero
     if (psi <= one) then
-		call ne_profile_N%eval_1D_fp(psi, dens, dd_psi)
-	end if
+        call ne_profile_N%eval_1D_fp(psi, dens, dd_psi)
+    end if
     if (dens < d_scrape_off) then
-    	dens = d_scrape_off
-    	dd_psi = zero
+        dens = d_scrape_off
+        dd_psi = zero
     end if
 
     return
@@ -132,8 +130,8 @@ contains
 !********************************************************************
 
     subroutine deallocate_density_spline_interp_m
-		! Nothing to deallocate
-		return
+        ! Nothing to deallocate
+        return
     end subroutine deallocate_density_spline_interp_m
 
  !********************************************************************

@@ -76,7 +76,7 @@ contains
     use species_m, only : nspec
     use equilibrium_m, only : equilibrium, eq_point
     use dispersion_solvers_m, only: solve_n1_vs_n2_n3
-    use rf_m, only : ray_dispersion_model, wave_mode, k0_sign, k0
+    use rf_m, only : ray_dispersion_model, wave_mode, k0_sign
     use solovev_eq_m, only: rmaj, solovev_psi
 
     implicit none
@@ -87,7 +87,7 @@ contains
     real(KIND=rkind), allocatable, intent(out) :: rvec0(:, :), rindex_vec0(:, :)
     real(KIND=rkind), allocatable, intent(out) :: ray_pwr_wt(:)
 
- 	integer :: input_unit, get_unit_number ! External, free unit finder
+    integer :: input_unit, get_unit_number ! External, free unit finder
 
     integer :: iray, itheta, i_ntheta, i_nphi, count
     real(KIND=rkind) :: x, z, rmin_launch, theta, rindex_theta, rindex_phi, n2, n3
@@ -99,7 +99,7 @@ contains
     real(KIND=rkind) :: nperp
 
 ! Read and write input namelist
-  	input_unit = get_unit_number()
+    input_unit = get_unit_number()
     open(unit=input_unit, file='rays.in',action='read', status='old', form='formatted')
     read(input_unit, solovev_ray_init_nphi_ktheta_list)
     close(unit=input_unit)
@@ -226,7 +226,7 @@ contains
        real(KIND=rkind) :: k1, k3
 
        complex(KIND=rkind) :: eps(3,3), eps_h(3,3), epsn(3,3), ctmp
-       complex(KIND=rkind) :: eps_norm(3,3)
+       real(KIND=rkind) :: eps_norm(3,3)
        real(KIND=rkind) :: n(3)
 
        integer :: i, j
@@ -283,12 +283,12 @@ contains
     end function residual_2
 
     subroutine deallocate_solovev_ray_init_nphi_ntheta_m
-! 		if (allocated(rvec0)) then
-! 			deallocate ( rvec0, rindex_vec0)
-! 			deallocate ( ray_pwr_wt)
-! 		end if
-		return ! Maybe nothing to deallocate.  rvec0 etc deallocated when
-		       ! ray_init_axisym_toroid_R_Z_nphi_ntheta returns?
+!       if (allocated(rvec0)) then
+!           deallocate ( rvec0, rindex_vec0)
+!           deallocate ( ray_pwr_wt)
+!       end if
+        return ! Maybe nothing to deallocate.  rvec0 etc deallocated when
+               ! ray_init_axisym_toroid_R_Z_nphi_ntheta returns?
     end subroutine deallocate_solovev_ray_init_nphi_ntheta_m
 
 end module solovev_ray_init_nphi_ntheta_m

@@ -21,8 +21,8 @@
 !
 ! Definitions:
 !    susceptibility tensor, chi, in this module means 4*pi*i*/omega*sigma where sigma
-!    is the conductivity tensor, i.e. plasma current J = sigma dot E.  Also note that total
-!    chi is the sum over individual species chi(is).
+!    is the conductivity tensor, i.e. plasma current J = sigma dot E.  Also note that
+!    total chi is the sum over individual species chi(is).
 !
 !    dielectric tensor, eps, is I + sum[chi(is)] where I is the identity.
 !
@@ -40,22 +40,22 @@
 !   dielectric_cold
 !   dielectric_bessel
 
-!_________________________________________________________________________________________
+!________________________________________________________________________________________
 ! Working notes:
-!_________________________________________________________________________________________
+!________________________________________________________________________________________
 
-!_________________________________________________________________________________________
+!________________________________________________________________________________________
 ! Module data
-!_________________________________________________________________________________________
+!________________________________________________________________________________________
 
-    use constants_m, only : rkind, zi=>i, zero, one, two, ten, tinyr
+    use constants_m, only : rkind, zi=>i, zero, one, two, ten, tinyr, unitmat3
     use equilibrium_m, only : eq_point
 
     implicit none
 
-!_________________________________________________________________________________________
+!________________________________________________________________________________________
 contains
-!_________________________________________________________________________________________
+!________________________________________________________________________________________
 
 ! ********************************************************************************
 !       SUSCEPTIBILITY ROUTINES
@@ -100,6 +100,7 @@ contains
 !   N.B. Args n1, n3 are real
 !   Notations in Stix's book are used.
 
+!     use constants_m, only : clight
     use species_m, only : ms, n_limit, nmins, nmaxs
     use rf_m, only : omgrf, k0
     use zfunctions_m, only : zfun, zfun0, zfun0_real_arg
@@ -123,7 +124,8 @@ contains
 
     integer :: n, nmin, nmax
 
-   chi = zero
+    chi = cmplx(zero,zero,rkind)
+    chin = cmplx(zero,zero,rkind)
 
 !   alpha = (omgp/omgrf)^2, gamma = (omgc/omgrf).
     alphas= eq%alpha(is)
@@ -146,7 +148,7 @@ contains
        call ebessel_dbb(lambda, nmin, nmax, ei(nmin:nmax), eip(nmin:nmax))
 
 !  write(*,*) ' '
- write(*,*) 'suscep_bessel: vth = ', vth, '  lambda = ', lambda
+!  write(*,*) 'suscep_bessel: vth/c = ', vth/clight, '  lambda = ', lambda
 !  do n = nmin, nmax
 ! 	 write(*,*) 'suscep_bessel: n = ', n,' ei = ', ei(n)
 ! 	 write(*,*) 'suscep_bessel: n = ', n,' eip = ', eip(n)
@@ -154,7 +156,7 @@ contains
 
     if ( abs(n3) > zero ) then
        beta = eq%omgp2(is)/(omgrf*k0*n3*vth)
- write(*,*) 'suscep_bessel: species ', is, '   beta = ', beta
+!  write(*,*) 'suscep_bessel: species ', is, '   beta = ', beta
 
 !      Z function.
        do n = nmin, nmax
@@ -192,7 +194,7 @@ contains
       end do
 
     else ! n3 = 0
-!      See Eq.(11-32, 11-33). Here, an=A_n, but bn=B_n/k3.
+!      See Stix, Eq.(11-32, 11-33). Here, an=A_n, but bn=B_n/k3.
 
        do n = nmin, nmax
           an = -one / (omgrf-n*eq%omgc(is))
@@ -231,7 +233,6 @@ contains
 ! N.B. Collisions not included so these are all real.
 
     use species_m, only : nspec, spec_model
-    use rf_m, only : omgrf
 
     implicit none
 
@@ -242,7 +243,8 @@ contains
     real(KIND=rkind) :: alphas, gammas  ! alpha = (omgp/omgrf)^2, gamma = (omgc/omgrf).
 
 
-    integer :: is, i
+    integer :: is
+!     integer :: is, i
 
     R= zero ; L = zero; S = zero; D = zero; P = zero;
     do is = 0, nspec
@@ -288,10 +290,11 @@ contains
     complex(KIND=rkind), intent(out) :: eps(3,3)
     complex(KIND=rkind) :: chi(3,3)
 
-    integer :: is, i
+    integer :: is
+!     integer :: is, i
 
-    eps = zero
-    chi = zero
+    eps = cmplx(zero,zero,rkind)
+    chi = cmplx(zero,zero,rkind)
 
 !   Get susceptibility tensor for each species.
     do is = 0, nspec
@@ -315,10 +318,10 @@ contains
     end do
 
 !   Dielectric tensor.
-
-    do i =1,3
-        eps(i,i) = eps(i,i) + cmplx(one, zero)
-    end do
+    eps = eps +unitmat3
+!     do i =1,3
+!         eps(i,i) = eps(i,i) + cmplx(one, zero)
+!     end do
 
     return
     end subroutine dielectric_general
@@ -326,10 +329,9 @@ contains
 ! ********************************************************************************
 
  subroutine dielectric_cold(eq, eps)
-!   calculates the cold plasma dielectric tensor eps for each species using suscep_cold().
+!   calculates the cold plasma dielectric tensor eps for each species using suscep_cold()
 !   Output eps is derived type dielectric_tensor defined above.
 
-    use constants_m, only : unitmat3
     use species_m, only : nspec, spec_model
 
     implicit none
@@ -341,9 +343,10 @@ contains
 
     complex(KIND=rkind) :: chi(3,3)
 
-    integer :: is, i
+    integer :: is
+!     integer :: is, i
 
-    eps = zero
+    eps = cmplx(zero,zero,rkind)
 
 !   Get susceptibility tensor for each species.
     do is = 0, nspec
@@ -353,9 +356,10 @@ contains
     end do
 
 !   Dielectric tensor.
-    do i =1,3
-        eps(i,i) = eps(i,i) + cmplx(one,zero)
-    end do
+    eps = eps + unitmat3
+!     do i =1,3
+!         eps(i,i) = eps(i,i) + cmplx(one,zero)
+!     end do
 
     return
  end subroutine dielectric_cold
@@ -375,10 +379,11 @@ contains
 
     complex(KIND=rkind) :: chi(3,3)
 
-    integer :: is, i
+    integer :: is
+!     integer :: is, i
 
-    chi = cmplx(zero, zero)
-    eps = cmplx(zero, zero)
+    chi = zero
+    eps = zero
 
 !   Get susceptibility tensor for each species.
     do is = 0, nspec
@@ -388,17 +393,17 @@ contains
     end do
 
 !   Dielectric tensor.
-
-    do i =1,3
-        eps(i,i) = eps(i,i) + cmplx(one, zero)
-    end do
+    eps = eps + unitmat3
+!     do i =1,3
+!         eps(i,i) = eps(i,i) + cmplx(one, zero)
+!     end do
 
     return
  end subroutine dielectric_bessel
 
 !****************************************************************************
 
-complex function disp_fun_cold(eq, n1, n2, n3)
+complex(KIND=rkind) function disp_fun_cold(eq, n1, n2, n3)
 ! calculates the cold plasma dispersion function versus the components of n perpendicular
 ! to B (i.e. n1, n2), and the component parallel to B (i.e. n3)
 
@@ -412,7 +417,7 @@ complex function disp_fun_cold(eq, n1, n2, n3)
        complex(KIND=rkind), intent(in) :: n1, n2, n3
 
        real(KIND=rkind) :: S ,D , P,  R, L
-       real(KIND=rkind) :: a, b, c
+       complex(KIND=rkind) :: a, b, c
        complex(KIND=rkind) :: n_perp_sq
 
        call RLSDP_cold(eq, S ,D , P, R, L)
@@ -430,9 +435,9 @@ complex function disp_fun_cold(eq, n1, n2, n3)
 
 ! ********************************************************************************
 
- complex function disp_fun_general(eq, n1, n3)
-! Calculates the general plasma dispersion function versus the components of n perpendicular
-! to B (i.e. n1), and the component parallel to B (i.e. n3).
+ complex(KIND=rkind) function disp_fun_general(eq, n1, n3)
+! Calculates the general plasma dispersion function versus the components of n
+! perpendicular to B (i.e. n1), and the component parallel to B (i.e. n3).
 ! N.B. n1 and n2 are complex.
 ! The dispersion function is the determinant of the dispersion tensor
 
@@ -445,6 +450,9 @@ complex function disp_fun_cold(eq, n1, n2, n3)
     complex(KIND=rkind), intent(in) :: n1, n3
 
     complex(KIND=rkind) :: eps(3,3), disp_tensor(3,3)
+
+    eps = cmplx(zero,zero,rkind)
+    disp_tensor = cmplx(zero,zero,rkind)
 
     call dielectric_general(eq, n1, n3, eps)
     disp_tensor = hermitian3x3(eps)
@@ -462,8 +470,8 @@ complex function disp_fun_cold(eq, n1, n2, n3)
 ! ********************************************************************************
 
  function disp_fun_general_Hermitian(eq, n1, n3)
-! Calculates the general plasma dispersion function versus the components of n perpendicular
-! to B (i.e. n1), and the component parallel to B (i.e. n3).
+! Calculates the general plasma dispersion function versus the components of n
+! perpendicular to B (i.e. n1), and the component parallel to B (i.e. n3).
 ! N.B. n1 and n2 are complex.
 ! The dispersion function is the determinant of the Hermitian part of dispersion tensor
 ! and is therefore real.  Used for root finding to initialize k for ray tracing.
@@ -478,7 +486,7 @@ complex function disp_fun_cold(eq, n1, n2, n3)
     type(eq_point), intent(in) :: eq
     complex(KIND=rkind), intent(in) :: n1, n3
 
-    complex(KIND=rkind) :: eps(3,3), disp_tensor(3,3)
+    complex(KIND=rkind) :: eps(3,3), disp_tensor(3,3), dc
 
     call dielectric_general(eq, n1, n3, eps)
     disp_tensor = hermitian3x3(eps)
@@ -488,7 +496,8 @@ complex function disp_fun_cold(eq, n1, n2, n3)
     disp_tensor(3,1) = disp_tensor(3,1)+n1*n3
     disp_tensor(3,3) = disp_tensor(3,3)-n1**2
 
-    disp_fun_general_Hermitian = determinant3x3(disp_tensor)
+    dc = determinant3x3(disp_tensor)
+    disp_fun_general_Hermitian = dc%re
 
        return
  end function disp_fun_general_Hermitian

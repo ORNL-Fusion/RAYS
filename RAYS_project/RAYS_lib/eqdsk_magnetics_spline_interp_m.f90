@@ -29,26 +29,26 @@ module  eqdsk_magnetics_spline_interp_m
 ! Stuff for 2D spline profiles i.e. psi
 
     type(cube_spline_function_2D) :: Psi_profile
- 	character (len = 80) :: Psi_name = 'Psi_profile'
+    character (len = 80) :: Psi_name = 'Psi_profile'
 
 ! Stuff for 1D spline profiles versus PsiN
 
     type(cube_spline_function_1D) :: T_profile
- 	character (len = 80) :: T_name = 'T_profile'
+    character (len = 80) :: T_name = 'T_profile'
 
     type(cube_spline_function_1D) :: Q_profile
- 	character (len = 80) ::Q_name = 'Q_profile'
+    character (len = 80) ::Q_name = 'Q_profile'
 
     type(cube_spline_function_1D) :: rho_profile
- 	character (len = 80) ::rho_name = 'rho_profile'
+    character (len = 80) ::rho_name = 'rho_profile'
 
     type(cube_spline_function_1D) :: Tflux_profile
- 	character (len = 80) ::Tflux_name = 'Tflux_profile'
+    character (len = 80) ::Tflux_name = 'Tflux_profile'
 
 ! Stuff for 1D spline profiles versus rho
 
     type(cube_spline_function_1D) :: psiN_profile_rho
- 	character (len = 80) :: psiN_name = 'psiN_profile_rho'
+    character (len = 80) :: psiN_name = 'psiN_profile_rho'
 
     ! Flux function psi at plasma boundary
     real(KIND=rkind) :: psiB
@@ -82,7 +82,7 @@ contains
     implicit none
 
     logical, intent(in) :: read_input
- 	integer :: input_unit, get_unit_number ! External, free unit finder
+    integer :: input_unit, get_unit_number ! External, free unit finder
 
 ! Geometry data
     ! Magnetic axis
@@ -98,14 +98,14 @@ contains
     real(KIND=rkind), dimension (:), allocatable :: rho_on_psiNgrid
     real(KIND=rkind), dimension (:), allocatable :: psiN_on_rhogrid
 
-    integer :: i, j, nwk
+    integer :: i, nwk
 
     if (verbosity >= 0) then
-		write(*,*) 'initialize_eqdsk_magnetics_spline_interp'
+        write(*,*) 'initialize_eqdsk_magnetics_spline_interp'
     end if
 
     if (read_input .eqv. .true.) then
-  		input_unit = get_unit_number()
+        input_unit = get_unit_number()
         open(unit=input_unit, file='rays.in',action='read', status='old', form='formatted')
         read(input_unit, eqdsk_magnetics_spline_interp_list)
         close(unit=input_unit)
@@ -113,20 +113,20 @@ contains
 
 ! Write input namelist
     if (verbosity >= 0) then
-		write(message_unit, eqdsk_magnetics_spline_interp_list)
-		if (messages_to_stdout) write(*, eqdsk_magnetics_spline_interp_list)
-		call message(1)
+        write(message_unit, eqdsk_magnetics_spline_interp_list)
+        if (messages_to_stdout) write(*, eqdsk_magnetics_spline_interp_list)
+        call message(1)
     end if
 
     call ReadgFile(eqdsk_file_name)
 
-	r_axis = RAXIS
-	z_axis = ZAXIS
+    r_axis = RAXIS
+    z_axis = ZAXIS
 
-	box_rmin = RBOXLFT
-	box_rmax = box_rmin + RBOXLEN
-	box_zmin = ZOFF - ZBOXLEN/2.
-	box_zmax = ZOFF + ZBOXLEN/2.
+    box_rmin = RBOXLFT
+    box_rmax = box_rmin + RBOXLEN
+    box_zmin = ZOFF - ZBOXLEN/2.
+    box_zmax = ZOFF + ZBOXLEN/2.
 
     inner_bound = minval(RBOUND)
     outer_bound = maxval(RBOUND)
@@ -134,42 +134,42 @@ contains
     upper_bound = maxval(ZBOUND)
 
     if (verbosity >= 0) then
-		call message('r_axis = ', r_axis)
-		call message('z_axis = ', z_axis)
-		call message('Inner boundary = ', inner_bound)
-		call message('Outer boundary = ', outer_bound)
-		call message('Upper boundary = ', upper_bound)
-		call message('Lower boundary = ', lower_bound)
+        call message('r_axis = ', r_axis)
+        call message('z_axis = ', z_axis)
+        call message('Inner boundary = ', inner_bound)
+        call message('Outer boundary = ', outer_bound)
+        call message('Upper boundary = ', upper_bound)
+        call message('Lower boundary = ', lower_bound)
 
-		write(*,*) 'r_axis = ', r_axis
-		write(*,*) 'z_axis = ', z_axis
-		write(*,*) 'Inner boundary = ', inner_bound
-		write(*,*) 'Outer boundary = ', outer_bound
-		write(*,*) 'Lower boundary = ', lower_bound
-		write(*,*) 'Upper boundary = ', upper_bound
+        write(*,*) 'r_axis = ', r_axis
+        write(*,*) 'z_axis = ', z_axis
+        write(*,*) 'Inner boundary = ', inner_bound
+        write(*,*) 'Outer boundary = ', outer_bound
+        write(*,*) 'Lower boundary = ', lower_bound
+        write(*,*) 'Upper boundary = ', upper_bound
     end if
 
 ! Allocate arrays
     ! radial and Z grids that Psi is defined on
     if (.not. allocated(R_grid)) then
-		allocate (R_grid(NRBOX))
-		allocate (Z_grid(NZBOX))
-		allocate (PsiN_grid(NRBOX))
-		allocate (Tflux_on_psiNgrid(NRBOX))
-		allocate (rho_on_psiNgrid(NRBOX))
-		allocate (PsiN_on_rhogrid(NRBOX))
+        allocate (R_grid(NRBOX))
+        allocate (Z_grid(NZBOX))
+        allocate (PsiN_grid(NRBOX))
+        allocate (Tflux_on_psiNgrid(NRBOX))
+        allocate (rho_on_psiNgrid(NRBOX))
+        allocate (PsiN_on_rhogrid(NRBOX))
     end if
 
     do i = 1, NRBOX
-    	R_grid(i) = box_rmin + (box_rmax - box_rmin)*(i-1)/(NRBOX - 1)
+        R_grid(i) = box_rmin + (box_rmax - box_rmin)*(i-1)/(NRBOX - 1)
     end do
 
     do i = 1, NZBOX
-    	Z_grid(i) = box_zmin + (box_zmax - box_zmin)*(i-1)/(NZBOX - 1)
+        Z_grid(i) = box_zmin + (box_zmax - box_zmin)*(i-1)/(NZBOX - 1)
     end do
 
     do i = 1, NRBOX
-    	PsiN_grid(i) = one*(i-1)/(NRBOX - 1)
+        PsiN_grid(i) = one*(i-1)/(NRBOX - 1)
     end do
 
 ! shift Psi to be zero on axis
@@ -178,7 +178,7 @@ contains
     psiB = PSIBOUND
 
 ! Initialize spline coefficients for psi on 2D grid
-	call psi_profile%cube_spline_2D_init(NRBOX, R_grid, NZBOX, Z_grid, Psi, Psi_name)
+    call psi_profile%cube_spline_2D_init(NRBOX, R_grid, NZBOX, Z_grid, Psi, Psi_name)
 
 ! Initialize spline coefficients for RBphi
     call T_profile%cube_spline_1D_init(NRBOX, R_grid, T, T_name)
@@ -189,13 +189,13 @@ contains
 
 ! Initialize spline coefficients for rho on psiN grid
   ! First have to calculate rho on psiN grid
-	call calculate_rho_on_psiNgrid(PsiN_grid, Tflux_on_psiNgrid, rho_on_psiNgrid)
+    call calculate_rho_on_psiNgrid(PsiN_grid, Tflux_on_psiNgrid, rho_on_psiNgrid)
     call rho_profile%cube_spline_1D_init(NRBOX, PsiN_grid, rho_on_psiNgrid, rho_name)
     call Tflux_profile%cube_spline_1D_init(NRBOX, PsiN_grid, Tflux_on_psiNgrid, Tflux_name)
 
 ! Initialize spline coefficients for psiN on rho grid.
 ! Use the same rho grid as PsiN, [0, 1]
-	call calculate_PsiN_on_rhogrid(PsiN_grid, psiN_on_rhogrid)
+    call calculate_PsiN_on_rhogrid(PsiN_grid, psiN_on_rhogrid)
     call psiN_profile_rho%cube_spline_1D_init(NRBOX, PsiN_grid, psiN_on_rhogrid, psiN_name)
 
     return
@@ -209,9 +209,8 @@ contains
 !   Checks for some error conditions and sets equib_err for outside handling.  Does not
 !   stop.
 
-    use species_m, only : nspec, n0s, t0s
-    use diagnostics_m, only : message_unit, message
-    use eqdsk_utilities_m, only : NRBOX, NZBOX, R_grid, Z_grid, PSIBOUND
+    use diagnostics_m, only : message
+    use eqdsk_utilities_m, only : PSIBOUND
 
     implicit none
 
@@ -222,8 +221,8 @@ contains
 
     real(KIND=rkind) :: PsiR, PsiZ, PsiRR, PsiRZ, PsiZZ, RBphi, RBphiR
     real(KIND=rkind) :: x, y, z, r
-    real(KIND=rkind) :: br, bz, bphi, bp0
-    real(KIND=rkind) :: dd_psi, dbrdr, dbrdz, dbzdr, dbzdz, dbphidr
+    real(KIND=rkind) :: br, bz, bphi
+    real(KIND=rkind) :: dbrdr, dbrdz, dbzdr, dbzdz, dbphidr
 
     equib_err = ''
     x = rvec(1)
@@ -231,7 +230,7 @@ contains
     z = rvec(3)
     r = sqrt(x**2+y**2)
 
-	call Psi_profile%eval_2D_fpp(r, z, Psi, PsiR, PsiZ, PsiRR, PsiRZ, PsiZZ)
+    call Psi_profile%eval_2D_fpp(r, z, Psi, PsiR, PsiZ, PsiRR, PsiRZ, PsiZZ)
 
     call T_profile%eval_1D_fp(r, RBphi, RBphiR)
 
@@ -288,26 +287,22 @@ contains
 !   Reworked extensively by DBB.  See notes of 2-12-2022.
 
     use constants_m, only : rkind
-    use species_m, only : nspec, n0s, t0s
-    use diagnostics_m, only : message_unit, message
-    use eqdsk_utilities_m, only :   PSIBOUND
-    use eqdsk_utilities_m, only : R_grid, Z_grid, NRBOX, NZBOX, PSIBOUND
 
     implicit none
 
     real(KIND=rkind), intent(in) :: rvec(3)
     real(KIND=rkind), intent(out) :: Psi, gradpsi(3), psiN, gradpsiN(3)
 
-    real(KIND=rkind) :: PsiR, PsiZ
+    real(KIND=rkind) :: PsiR, PsiZ, PSIBOUND
     real(KIND=rkind) :: x, y, z, R
-    real(KIND=rkind) :: br, bz, bphi, bp0
+    real(KIND=rkind) :: br, bz
 
     x = rvec(1)
     y = rvec(2)
     z = rvec(3)
     R = sqrt(x**2+y**2)
 
-	call Psi_profile%eval_2D_fp(r, z, Psi, PsiR, PsiZ)
+    call Psi_profile%eval_2D_fp(r, z, Psi, PsiR, PsiZ)
 
 !   Magnetic field
     br = PsiZ/r
@@ -325,10 +320,7 @@ contains
   subroutine  eqdsk_magnetics_spline_interp_rho(rvec, rho, gradrho)
 
     use constants_m, only : rkind
-    use species_m, only : nspec, n0s, t0s
-    use diagnostics_m, only : message_unit, message
-    use eqdsk_utilities_m, only :   PSIBOUND
-    use eqdsk_utilities_m, only : R_grid, Z_grid, NRBOX, NZBOX, PSIBOUND
+    use diagnostics_m, only : message
 
     implicit none
 
@@ -344,9 +336,9 @@ contains
     z = rvec(3)
     R = sqrt(x**2+y**2)
 
-	call eqdsk_magnetics_spline_interp_psi(rvec, psi, gradpsi, psiN, gradpsiN)
-	call eqdsk_magnetics_spline_interp_rho_psiN(psiN, rho, drho_dpsi)
-	gradrho = gradpsiN*drho_dpsi
+    call eqdsk_magnetics_spline_interp_psi(rvec, psi, gradpsi, psiN, gradpsiN)
+    call eqdsk_magnetics_spline_interp_rho_psiN(psiN, rho, drho_dpsi)
+    gradrho = gradpsiN*drho_dpsi
 
     return
   end subroutine  eqdsk_magnetics_spline_interp_rho
@@ -359,7 +351,7 @@ contains
     real(KIND=rkind), intent(in) :: PsiN
     real(KIND=rkind), intent(out) :: Q, dQ_dPsi
 
-	call Q_profile%eval_1D_fp(PsiN, Q, dQ_dPsi)
+    call Q_profile%eval_1D_fp(PsiN, Q, dQ_dPsi)
 
     return
   end subroutine  eqdsk_magnetics_spline_interp_Q_psiN
@@ -372,7 +364,7 @@ contains
     real(KIND=rkind), intent(in) :: PsiN
     real(KIND=rkind), intent(out) :: rho, drho_dPsi
 
-	call rho_profile%eval_1D_fp(PsiN, rho, drho_dPsi)
+    call rho_profile%eval_1D_fp(PsiN, rho, drho_dPsi)
 
     return
   end subroutine  eqdsk_magnetics_spline_interp_rho_PsiN
@@ -385,7 +377,7 @@ contains
     real(KIND=rkind), intent(in) :: rho
     real(KIND=rkind), intent(out) :: PsiN, dPsiN_drho
 
-	call psiN_profile_rho%eval_1D_fp(rho,  PsiN, dPsiN_drho)
+    call psiN_profile_rho%eval_1D_fp(rho,  PsiN, dPsiN_drho)
 
     return
   end subroutine  eqdsk_magnetics_spline_interp_PsiN_rho
@@ -397,11 +389,11 @@ contains
 
     real(KIND=rkind), intent(in) :: rho
     real(KIND=rkind), intent(out) :: Q, dQ_drho
-    real(KIND=rkind) ::  PsiN, dPsiN_dPsi, dPsiN_drho, dQ_dPsi
+    real(KIND=rkind) ::  PsiN, dPsiN_drho, dQ_dPsi
 
-	call eqdsk_magnetics_spline_interp_PsiN_rho(rho, PsiN, dPsiN_drho)
-	call Q_profile%eval_1D_fp(PsiN,  Q, dQ_dPsi)
-	dQ_drho = dQ_dPsi*dPsiN_drho
+    call eqdsk_magnetics_spline_interp_PsiN_rho(rho, PsiN, dPsiN_drho)
+    call Q_profile%eval_1D_fp(PsiN,  Q, dQ_dPsi)
+    dQ_drho = dQ_dPsi*dPsiN_drho
 
     return
   end subroutine  eqdsk_magnetics_spline_interp_Q_rho
@@ -412,7 +404,7 @@ contains
 ! integrating d(Phi) = q(psi)d(psi)
 
     use constants_m, only : rkind
-    use diagnostics_m, only : message_unit, message
+    use diagnostics_m, only : message
     USE trapezoid_quad_m, only : trapezoid_quad_cumulative
 
     implicit none
@@ -428,12 +420,12 @@ contains
     n_grid = size(PsiN_grid)
 
     do i = 1, n_grid
-		call eqdsk_magnetics_spline_interp_Q_psiN(PsiN_grid(i), Q(i), dQ_dPsi)
-	end do
+        call eqdsk_magnetics_spline_interp_Q_psiN(PsiN_grid(i), Q(i), dQ_dPsi)
+    end do
 
-	CALL trapezoid_quad_cumulative(PsiN_grid, Q, Tflux_total, Tflux_on_psiNgrid)
-	rho_on_psiNgrid = Tflux_on_psiNgrid/Tflux_total
-	rho_on_psiNgrid = sqrt(rho_on_psiNgrid)
+    CALL trapezoid_quad_cumulative(PsiN_grid, Q, Tflux_total, Tflux_on_psiNgrid)
+    rho_on_psiNgrid = Tflux_on_psiNgrid/Tflux_total
+    rho_on_psiNgrid = sqrt(rho_on_psiNgrid)
 
     return
   end subroutine calculate_rho_on_psiNgrid
@@ -446,7 +438,7 @@ contains
 ! function
 
     use constants_m, only : rkind, one, zero
-    use diagnostics_m, only : message_unit, message
+    use diagnostics_m, only : message
     use bisect_m, only : solve_bisection
 
     implicit none
@@ -461,10 +453,10 @@ contains
 
     n_grid = size(rho_grid)
 
-	do i = 1, n_grid
-	    call solve_bisection(f_rho_psiN, psiN_on_rhogrid(i), rho_grid(1), rho_grid(n_grid),&
-	                         &rho_grid(i), bisection_eps, ierr)
-	end do
+    do i = 1, n_grid
+        call solve_bisection(f_rho_psiN, psiN_on_rhogrid(i), rho_grid(1), rho_grid(n_grid),&
+                             &rho_grid(i), bisection_eps, ierr)
+    end do
 
     return
   end subroutine calculate_psiN_on_rhogrid
@@ -475,20 +467,20 @@ contains
 
     use constants_m, only : rkind, zero
 
-	IMPLICIT NONE
+    IMPLICIT NONE
     real(KIND=rkind) :: f_rho_psiN
     real(KIND=rkind) :: psiN, drho_dPsi
 
-	call eqdsk_magnetics_spline_interp_rho_PsiN(PsiN, f_rho_psiN, drho_dPsi)
+    call eqdsk_magnetics_spline_interp_rho_PsiN(PsiN, f_rho_psiN, drho_dPsi)
 
-	return
+    return
  end function f_rho_psiN
 
 !********************************************************************
 
     subroutine deallocate_eqdsk_magnetics_spline_interp_m
-		! Nothing to deallocate
-		return
+        ! Nothing to deallocate
+        return
     end subroutine deallocate_eqdsk_magnetics_spline_interp_m
 
  !********************************************************************

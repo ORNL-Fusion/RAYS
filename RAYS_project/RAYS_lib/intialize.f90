@@ -25,7 +25,7 @@
 
     implicit none
     logical, intent(in) :: read_input
-	integer :: input_unit, get_unit_number ! External, free unit finder
+    integer :: get_unit_number ! External, free unit finder
 
 !************* read input data and set up for messages and diagnostic output  **************
 
@@ -34,12 +34,12 @@
 
     call text_message('initializing RAYS', 0)
     if (verbosity > 0) then
-		write (message_unit,fmt="(i2,'-',i2,'-',i4,'   ',i2,':',i2,':',i2,'.',i3)") &
-		 & date_v(2), date_v(3), date_v(1), date_v(5), date_v(6), date_v(7), date_v(8)
-		if (messages_to_stdout) then
-			write (*,fmt="(i2,'-',i2,'-',i4,'   ',i2,':',i2,':',i2,'.',i3)") &
-			 & date_v(2), date_v(3), date_v(1), date_v(5), date_v(6), date_v(7), date_v(8)
-		end if
+        write (message_unit,fmt="(i2,'-',i2,'-',i4,'   ',i2,':',i2,':',i2,'.',i3)") &
+         & date_v(2), date_v(3), date_v(1), date_v(5), date_v(6), date_v(7), date_v(8)
+        if (messages_to_stdout) then
+            write (*,fmt="(i2,'-',i2,'-',i4,'   ',i2,':',i2,':',i2,'.',i3)") &
+             & date_v(2), date_v(3), date_v(1), date_v(5), date_v(6), date_v(7), date_v(8)
+        end if
     end if
     call text_message('run_description = ',trim(run_description), 1)
     call text_message('run_label = ', trim(run_label), 1)
@@ -76,19 +76,19 @@
 
 !*************** Open output files ******************************
 
-	if (write_formatted_ray_files) then
-	!   Open a formatted file to receive number of rays and number of steps per ray
-	!   File written in ray_tracing()
-		ray_list_unit = get_unit_number()
-		open(unit=ray_list_unit, file='ray_list.'//trim(run_label),action='write', &
-					& status='replace', form='formatted')
+    if (write_formatted_ray_files) then
+    !   Open a formatted file to receive number of rays and number of steps per ray
+    !   File written in ray_tracing()
+        ray_list_unit = get_unit_number()
+        open(unit=ray_list_unit, file='ray_list.'//trim(run_label),action='write', &
+                    & status='replace', form='formatted')
 
 
-	!   Open a file for formatted ray output. File written in check_save()
-		output_unit = get_unit_number()
-		open(unit=output_unit, file='ray_out.'//trim(run_label),action='write', &
-					& status='replace', form='formatted')
-	end if
+    !   Open a file for formatted ray output. File written in check_save()
+        output_unit = get_unit_number()
+        open(unit=output_unit, file='ray_out.'//trim(run_label),action='write', &
+                    & status='replace', form='formatted')
+    end if
 
     return
  end subroutine initialize

@@ -40,15 +40,14 @@ contains
 !_________________________________________________________________________________________
 
   subroutine initialize_solovev_magnetics(read_input, r_axis, z_axis, &
-	   & arg_box_rmin, arg_box_rmax, arg_box_zmin, arg_box_zmax, &
-	   & inner_bound, outer_bound, upper_bound, lower_bound)
+       & arg_box_rmin, arg_box_rmax, arg_box_zmin, arg_box_zmax, &
+       & inner_bound, outer_bound, upper_bound, lower_bound)
 
-    use species_m, only : nspec
     use diagnostics_m, only : message, text_message, message_unit, messages_to_stdout, verbosity
 
     implicit none
     logical, intent(in) :: read_input
- 	integer :: input_unit, get_unit_number ! External, free unit finder
+    integer :: input_unit, get_unit_number ! External, free unit finder
 
 ! Geometry data
     ! Magnetic axis
@@ -64,7 +63,7 @@ contains
     call text_message('Initializing solovev_magnetics_m ', 1)
 
     if (read_input .eqv. .true.) then
-  		input_unit = get_unit_number()
+        input_unit = get_unit_number()
         open(unit=input_unit, file='rays.in',action='read', status='old', form='formatted')
         read(input_unit, solovev_magnetics_list)
         close(unit=input_unit)
@@ -72,14 +71,14 @@ contains
 
 ! Write input namelist
     if (verbosity >= 0) then
-		write(message_unit, solovev_magnetics_list)
-		if (messages_to_stdout) write(*, solovev_magnetics_list)
+        write(message_unit, solovev_magnetics_list)
+        if (messages_to_stdout) write(*, solovev_magnetics_list)
     end if
 
-	arg_box_rmin = box_rmin
-	arg_box_rmax = box_rmax
-	arg_box_zmin = box_zmin
-	arg_box_zmax = box_zmax
+    arg_box_rmin = box_rmin
+    arg_box_rmax = box_rmax
+    arg_box_zmin = box_zmin
+    arg_box_zmax = box_zmax
 
 
     outer_bound = outer_boundary
@@ -128,8 +127,7 @@ contains
 !   Checks for some error conditions and sets equib_err for outside handling.  Does not
 !   stop.
 
-    use species_m, only : nspec, n0s, t0s
-    use diagnostics_m, only : message_unit, message, text_message
+    use diagnostics_m, only : message, text_message
 
     implicit none
 
@@ -141,8 +139,7 @@ contains
 
     real(KIND=rkind) :: x, y, z, r
     real(KIND=rkind) :: br, bz, bphi, bp0
-    real(KIND=rkind) :: dd_psi, dbrdr, dbrdz, dbzdr, dbzdz, dbphidr
-    integer :: is
+    real(KIND=rkind) :: dbrdr, dbrdz, dbzdr, dbzdz, dbphidr
 
     equib_err = ''
     x = rvec(1)
@@ -216,8 +213,7 @@ contains
 !   stop.
 
     use constants_m, only : rkind
-    use species_m, only : nspec, n0s, t0s
-    use diagnostics_m, only : message_unit, message
+    use diagnostics_m, only : message
 
     implicit none
 
@@ -226,7 +222,7 @@ contains
 
 
     real(KIND=rkind) :: x, y, z, R
-    real(KIND=rkind) :: br, bz, bphi, bp0
+    real(KIND=rkind) :: br, bz, bp0
 
     x = rvec(1)
     y = rvec(2)
