@@ -50,6 +50,8 @@ list (APPEND lib_sources
 	temperature_spline_interp_m.f90
 	uniform_eq_m.f90
 	XY_curves_netCDF_m.f90
+	Z_slab_eq_m.f90
+
 )
 
 add_library (RAYS_lib ${lib_sources})

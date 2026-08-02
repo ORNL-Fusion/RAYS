@@ -1,18 +1,18 @@
-module slab_eq_m
-! Simple models for plasma stratified in x and uniform in y and z useful for testing and
+module Z_slab_eq_m
+! This is almost exactly the same as slab_eq_m except that gradient is in z.
+! Simple models for plasma stratified in z and uniform in x and y useful for testing and
 ! benchmarking.  There are several different models for each quantity.
 
 ! The coding is self explanatory, however some comments about the linear_2 models might be
-! useful.  For these one specifies the quantity at x = rmin and the slope there.  If any
-! of the models are linear_2, then to make the x ranges consistent, all the models should
-! be linear_2, zero, or constant.  The only complication is that in the subroutine
-! write_slab_profiles() rmaj now serves the role of max value of x for writing.  The
-! motivation for linear_2 is added flexibility in specifying the independent coordinate,
-! for example using the density or B field as a plotting axis coordinate.
+! useful.  For these one specifies the quantity at z = z0 and the slope there.  If any
+! of the models are linear_2, then to make the z ranges consistent, all the models should
+! be linear_2, zero, or constant.
+! The motivation for linear_2 is added flexibility in specifying the independent
+! coordinate, for example using the density or B field as a plotting axis coordinate.
 
 ! N.B. There is danger of negative density or temperature in linear and Linear_2 models.
-!      linear density or temp -> 1 + x/Ln_scale, asking for x < -Ln_scale will give < 0
-!      Linear_2 density or temp -> n0 + dndx*(x - x0) so same issue
+!      linear density or temp -> 1 + z/Ln_scale, asking for z < -Ln_scale will give < 0
+!      Linear_2 density or temp -> n0 + dndz*(z - z0) so same issue
 
 !_________________________________________________________________________________________
 ! Working notes:
@@ -29,18 +29,18 @@ module slab_eq_m
     implicit none
 
 !_________________________________________________________________________________________
-! Namelist data for /slab_eq_list/
+! Namelist data for /Z_slab_eq_list/
 !_________________________________________________________________________________________
 
 ! Geometry data
-    ! data for bounding box (meters)
+	! data for bounding box (meters)
     real(KIND=rkind) :: xmin, xmax, ymin, ymax, zmin, zmax
-    ! location of x = 0 for tokamak-like models
+	! location of x = 0 for tokamak-like models
     real(KIND=rkind) :: rmaj
     ! minor radius-like scale length for parabolic profiles or Gaussian
     real(KIND=rkind) :: rmin
     ! center position of Linear_2 profiles
-    real(KIND=rkind) :: x0
+    real(KIND=rkind) :: z0
 
 
 ! data for slab magnetics
@@ -53,7 +53,7 @@ module slab_eq_m
     ! Parameters for linear models of Bz and By shear
     real(KIND=rkind) :: LBy_shear_scale, LBz_scale
     ! Slope for Linear_2 model
-    real(KIND=rkind) :: dBzdx
+    real(KIND=rkind) :: dBzdz
 
 ! data for slab density
     ! Model name for density profiles
@@ -61,11 +61,11 @@ module slab_eq_m
     ! Parameters for linear model of ne
     real(KIND=rkind) :: Ln_scale
     ! Slope for Linear_2 model
-    real(KIND=rkind) :: dndx
+    real(KIND=rkind) :: dndz
     ! Parameters for parabolic model
     real(KIND=rkind) :: alphan1
     real(KIND=rkind) :: alphan2
-    ! Density outside x = rmin as a fraction of ne0, defaults to 0. but can be set in namelist
+	! Density outside z = rmin as a fraction of ne0, defaults to 0. but can be set in namelist
     real(KIND=rkind) :: n_min = zero
 
 ! data for slab temperature
@@ -74,47 +74,47 @@ module slab_eq_m
     ! Parameters for linear models of Te
     real(KIND=rkind) :: LT_scale
     ! Parameters for Linear_2 models
-    real(KIND=rkind) :: dtdx
+    real(KIND=rkind) :: dtdz
     ! Parameters for parabolic model
     real(KIND=rkind), allocatable :: alphat1(:)
    real(KIND=rkind), allocatable :: alphat2(:)
-    ! Temperature outside x = rmin as a fraction of T0s, defaults to 0. but can be set in namelist
+	! Temperature outside z = rmin as a fraction of T0s, defaults to 0. but can be set in namelist
    real(KIND=rkind), allocatable :: T_min(:)
 
- namelist /slab_eq_list/ &
+ namelist /Z_slab_eq_list/ &
      & bx_prof_model, by_prof_model, bz_prof_model, bx0, by0, bz0,                    &
      & rmaj, rmin, dens_prof_model, alphan1, alphan2, n_min,                          &
      & t_prof_model, alphat1, alphat2, T_min, &
-     & Ln_scale, LT_scale, LBy_shear_scale, LBx_scale, LBz_scale, dBzdx, dndx, dtdx,  &
-     & x0, xmin, xmax, ymin, ymax, zmin, zmax
+     & Ln_scale, LT_scale, LBy_shear_scale, LBx_scale, LBz_scale, dBzdz, dndz, dtdz,  &
+     & z0, xmin, xmax, ymin, ymax, zmin, zmax
 
 !_________________________________________________________________________________________
 contains
 !_________________________________________________________________________________________
 
-  subroutine initialize_slab_eq_m(read_input)
+  subroutine initialize_Z_slab_eq_m(read_input)
 
     use species_m, only : nspec
     use diagnostics_m, only : message_unit, messages_to_stdout, verbosity
 
     implicit none
     logical, intent(in) :: read_input
-    integer :: input_unit, get_unit_number ! External, free unit finder
+ 	integer :: input_unit, get_unit_number ! External, free unit finder
 
     allocate( t_prof_model(0:nspec) )
     allocate( alphat1(0:nspec), alphat2(0:nspec), T_min(0:nspec), source = zero )
 
     if (read_input .eqv. .true.) then
-        input_unit = get_unit_number()
+  		input_unit = get_unit_number()
         open(unit=input_unit, file='rays.in',action='read', status='old', form='formatted')
-        read(input_unit, slab_eq_list)
+        read(input_unit, Z_slab_eq_list)
         close(unit=input_unit)
     end if
 
 ! Write input namelist
     if (verbosity >= 0) then
-        write(message_unit, slab_eq_list)
-        if (messages_to_stdout) write(*, slab_eq_list)
+		write(message_unit, Z_slab_eq_list)
+		if (messages_to_stdout) write(*, Z_slab_eq_list)
     end if
 
     if (verbosity > 2)  then
@@ -122,18 +122,18 @@ contains
     end if
 
     return
-  end subroutine initialize_slab_eq_m
+  end subroutine initialize_Z_slab_eq_m
 
 !********************************************************************
 
- subroutine slab_eq(rvec, bvec, gradbtensor, ns, gradns, ts, gradts, equib_err)
-!   A simple slab plasma equilibrium with B(x) = By(x)*ey + Bz(x)*ez,
-!   where ey and ez are unit vectors along y and z.
+ subroutine Z_slab_eq(rvec, bvec, gradbtensor, ns, gradns, ts, gradts, equib_err)
+!   A simple slab plasma equilibrium with B(z) = Bx(z)*ex + By(z)*ey + Bz(z)*ez,
+!   where ex, ey and ez are unit vectors along x, y, z.
 !   Note that bvec = B and gradbtensor(i,j) = d[B(j)]/d[x(i)].
 !
-!   For now Bx is constrained to be 0.  Non-zero B component in the direction of
-!   stratification (i.e, x) complicates initialization solution of the dispersion
-!   relation.  Several models are given for By(x), Bz(x).
+!   N.B.  Non-zero B component in the direction of
+!   stratification (i.e, z) complicates initialization solution of the dispersion
+!   relation.  Several models are given for By(z), By(z), Bz(z).
 !
 !   Checks for some error conditions and sets equib_err for outside handling.  Does not
 !   stop.
@@ -151,7 +151,7 @@ contains
 
     real(KIND=rkind) :: x, y, z
     integer :: is
-    real(KIND=rkind) :: f, fp ! dummy variables for parabolic_prof
+	real(KIND=rkind) :: f, fp ! dummy variables for parabolic_prof
 
     equib_err = ''
     x = rvec(1)
@@ -168,7 +168,7 @@ contains
     if (y < ymin .or. y > ymax) equib_err = 'y out_of_bounds'
     if (z < zmin .or. z > zmax) equib_err = 'z out_of_bounds'
     if (equib_err /= '') then
-        write (message_unit, *) 'slab_eq:  equib_err ', trim(equib_err)
+        write (message_unit, *) 'Z_slab_eq:  equib_err ', trim(equib_err)
         return
     end if
 
@@ -183,8 +183,8 @@ contains
 
        case ('linear')
 !         Linear with scale length LBz_scale
-          bvec(1) = bx0 * (1.+x/LBx_scale)
-          gradbtensor(1,1) = bx0/LBx_scale
+          bvec(1) = bx0 * (1.+z/LBx_scale)
+          gradbtensor(3,1) = bx0/LBx_scale
 
        case default
           write(0,*) 'SLAB: invalid bx_prof_model = ', bx_prof_model
@@ -202,14 +202,14 @@ contains
           bvec(2) = by0
 
        case ('toroid')
-!         Same as Tokamak like magnetic field Bz. For diagnostics.
-          bvec(2) = by0 / (1.+x/rmaj)
-          gradbtensor(1,2) = -bvec(2) / (rmaj+x)
+!         Same as Tokamak like magnetic field B toroidal. For diagnostics.
+          bvec(2) = by0 / (1.+z/rmaj)
+          gradbtensor(3,2) = -bvec(2) / (rmaj+x)
 
        case ('linear_shear')
 !         Sheared By(x), By(0) = 0
-          bvec(2) = by0 * x/LBy_shear_scale
-          gradbtensor(1,2) = by0 / LBy_shear_scale
+          bvec(2) = by0 * z/LBy_shear_scale
+          gradbtensor(3,2) = by0 / LBy_shear_scale
 
        case default
           write(*,*) 'SLAB: invalid by_prof_model = ', by_prof_model
@@ -225,18 +225,18 @@ contains
 
        case ('toroid')
 !         Tokamak like toroidal  field.
-          bvec(3) = bz0 / (1.+x/rmaj)
-          gradbtensor(1,3) = -bvec(3) / (rmaj+x)
+          bvec(3) = bz0 / (1.+z/rmaj)
+          gradbtensor(3,3) = -bvec(3) / (rmaj+x)
 
        case ('linear')
 !         Linear with scale length LBz_scale
-          bvec(3) = bz0 * (1.+x/LBz_scale)
-          gradbtensor(1,3) = bz0/LBz_scale
+          bvec(3) = bz0 * (1.+z/LBz_scale)
+          gradbtensor(3,3) = bz0/LBz_scale
 
        case ('linear_2')
-!         Linear centered at x0: Specify bz0 => Bz(x0) & slope => dBzdx
-          bvec(3) = bz0 + dBzdx*(x - x0)
-          gradbtensor(1,3) = dBzdx
+!         Linear centered at x0: Specify bz0 => Bz(x0) & slope => dBzdz
+          bvec(3) = bz0 + dBzdz*(z - z0)
+          gradbtensor(3,3) = dBzdz
 
        case default
           write(0,*) 'SLAB: invalid bz_prof_model = ', bz_prof_model
@@ -253,24 +253,24 @@ contains
 
         case ('linear')
 !       Linear with scale length Ln_scale (ns = n0s at x = 0, ns = 0 at x = -Ln_scale)
-            ns = n0s(0:nspec)*(1.0 + x/Ln_scale)
-            gradns(1,0:nspec) = n0s(0:nspec) * (1.0/Ln_scale)
+            ns = n0s(0:nspec)*(1.0 + z/Ln_scale)
+            gradns(3,0:nspec) = n0s(0:nspec) * (1.0/Ln_scale)
 
         case ('linear_2')
-!         Linear centered at x0: Specify n0s => ns(x0) & slope => dndx
-           ns = n0s(0:nspec) + dndx*eta(0:nspec)*(x - x0)
-            gradns(1,0:nspec) = eta(0:nspec) * dndx
+!         Linear centered at x0: Specify n0s => ns(x0) & slope => dndz
+           ns = n0s(0:nspec) + dndz*eta(0:nspec)*(z - z0)
+            gradns(3,0:nspec) = eta(0:nspec) * dndz
 
         case ('parabolic')
-!       Parabolic around x = 0
-            call parabolic_prof(x, n_min, alphan1, alphan2, f, fp)
+!       Parabolic around z = 0
+			call parabolic_prof(z, n_min, alphan1, alphan2, f, fp)
             ns(0:nspec) = n0s(0:nspec) * f
-            gradns(1,0:nspec) = n0s(0:nspec) * fp
+            gradns(3,0:nspec) = n0s(0:nspec) * fp
 
         case ('Gaussian')
 !         Gaussian (default: alphan1=1.).
-            ns(0:nspec) = n0s(0:nspec) * exp(-3.*alphan1*(x/rmin)**2)
-            gradns(1, 0:nspec) = ns(0:nspec) * (-6.*alphan1*x/rmin**2)
+            ns(0:nspec) = n0s(0:nspec) * exp(-3.*alphan1*(z/rmin)**2)
+            gradns(3, 0:nspec) = ns(0:nspec) * (-6.*alphan1*z/rmin**2)
 
         case default
             write(0,*) 'SLAB: invalid dens_prof_model =', dens_prof_model
@@ -291,21 +291,19 @@ contains
 
         case ('linear')
 !       Linear with scale length rmin
-            ts(is)=t0s(is)*(1.+x/LT_scale)
-            gradts(1,is) = t0s(is) * (1./LT_scale)
+            ts(is)=t0s(is)*(1.+z/LT_scale)
+            gradts(3,is) = t0s(is) * (1./LT_scale)
 
         case ('linear_2')
-!       Linear: Specify t0s => ns(rmin) & slope => dtdx
- write(*,*) 'slab_eq: Got to 4.1'
-            ts(is)=t0s(is) + dtdx*(x - x0)
- write(*,*) 'slab_eq: Got to 4.2'
-            gradts(1,is) = t0s(is) * dtdx
+!       Linear: Specify t0s => ns(rmin) & slope => dtdz
+            ts(is)=t0s(is) + dtdz*(z - z0)
+            gradts(3,is) = t0s(is) * dtdz
 
        case ('parabolic')
 !      Parabolic around x = x0
-          call parabolic_prof(x-x0, t_min(is), alphat1(is), alphat2(is), f, fp)
+		  call parabolic_prof(z-z0, t_min(is), alphat1(is), alphat2(is), f, fp)
           ts(is) = t0s(is) * f
-          gradts(1,is) = t0s(is) * fp
+          gradts(3,is) = t0s(is) * fp
 
        case default
           write(0,*) 'SLAB: invalid t_prof_model = ', t_prof_model(:nspec)
@@ -320,7 +318,7 @@ contains
     if (minval(ts) < 0.) equib_err = 'negative_temp'
 
     return
- end subroutine slab_eq
+ end subroutine Z_slab_eq
 
 
  subroutine write_slab_profiles
@@ -346,17 +344,12 @@ contains
     dx = (xmax-xmin)/(nx_points-1)
     xstart = xmin
 
-    if (trim(bz_prof_model) == 'linear_2') then
-        xstart = rmin
-        dx = (rmaj - rmin)/(nx_points-1)
-    end if
-
     write (message_unit,*) '    x', b9,'ne', b12, 'bx', b9, 'by', b9, 'bz', b9, 'Te',b9, 'Ti(s)'
 
     do ip = 1, nx_points
         x = xstart + (ip-1)*dx
         rvec( : ) = (/ x, zero, zero /)
-        call slab_eq(rvec, bvec, gradbtensor, ns, gradns, ts, gradts, equib_err)
+        call Z_slab_eq(rvec, bvec, gradbtensor, ns, gradns, ts, gradts, equib_err)
         write (message_unit,'(f11.5, a, e12.5, 3f11.5, 7f11.5)') &
                & x,'  ', ns(0), bvec, (ts(i), i=0, nspec)
 
@@ -381,28 +374,28 @@ contains
     real(KIND=rkind), intent(in) :: rho, f_min, alpha1, alpha2
     real(KIND=rkind), intent(out) :: f, fp
 
-    f = zero
-    if (rho < one) then
-        f = (1.-rho**(alpha2))**alpha1
-        fp = -alpha1*alpha2*rho**(alpha2 - 1.)*(1.-rho**(alpha2))&
-                & **(alpha1 - 1.)
-    end if
+	f = zero
+	if (rho < one) then
+		f = (1.-rho**(alpha2))**alpha1
+		fp = -alpha1*alpha2*rho**(alpha2 - 1.)*(1.-rho**(alpha2))&
+				& **(alpha1 - 1.)
+	end if
 
-    if (f < f_min) then
-        f = f_min
-        fp = zero
-    end if
+	if (f < f_min) then
+		f = f_min
+		fp = zero
+	end if
 
   end subroutine parabolic_prof
 
 !********************************************************************
 
-    subroutine deallocate_slab_eq_m
-        if (allocated(t_prof_model)) then
-            deallocate( t_prof_model )
-            deallocate( alphat1 )
-        end if
-        return
-    end subroutine deallocate_slab_eq_m
+    subroutine deallocate_Z_slab_eq_m
+		if (allocated(t_prof_model)) then
+			deallocate( t_prof_model )
+			deallocate( alphat1 )
+		end if
+		return
+    end subroutine deallocate_Z_slab_eq_m
 
-end module slab_eq_m
+end module Z_slab_eq_m

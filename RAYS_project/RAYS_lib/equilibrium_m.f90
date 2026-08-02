@@ -77,6 +77,7 @@ contains
     use species_m, only : nspec0
     use uniform_eq_m, only : initialize_uniform_eq_m
     use slab_eq_m, only : initialize_slab_eq_m
+    use Z_slab_eq_m, only : initialize_Z_slab_eq_m
     use solovev_eq_m, only : initialize_solovev_eq_m
     use axisym_toroid_eq_m, only : initialize_axisym_toroid_eq_m
     use multiple_mirror_eq_m, only : initialize_multiple_mirror_eq_m
@@ -109,6 +110,10 @@ contains
 !         A 1-D slab equilibrium with stratification in x
           call initialize_slab_eq_m(read_input)
 
+       case ('Z_slab')
+!         A 1-D slab equilibrium with stratification in z
+          call initialize_Z_slab_eq_m(read_input)
+
        case ('solovev')
 !         A simple analytic tokamak model
           call initialize_solovev_eq_m(read_input)
@@ -121,11 +126,11 @@ contains
 
        case ('multiple_mirror')
 
-!         A generic axisymmetric toroidal plasma model
+!         A generic axisymmetric mirror plasma model
           call initialize_multiple_mirror_eq_m(read_input)
 
        case default
-          write(0,*) 'initialize_equilibrium: improper equilib_model =', equilib_model
+          write(0,*) 'initialize_equilibrium: improper equilib_model = ', equilib_model
           call text_message('initialize_equilibrium: improper equilib_model',&
           & trim(equilib_model),0)
           stop 1
@@ -152,6 +157,7 @@ contains
 
     use uniform_eq_m, only : uniform_eq
     use slab_eq_m, only : slab_eq
+    use Z_slab_eq_m, only : Z_slab_eq
     use solovev_eq_m, only : solovev_eq
     use axisym_toroid_eq_m, only : axisym_toroid_eq
     use multiple_mirror_eq_m, only : multiple_mirror_eq
@@ -188,6 +194,10 @@ contains
        case ('slab')
 !         A 1-D slab equilibrium with stratification in x
           call slab_eq(rvec, bvec, gradbtensor, ns, gradns, ts, gradts, equib_err)
+
+       case ('Z_slab')
+!         A 1-D slab equilibrium with stratification in z
+          call Z_slab_eq(rvec, bvec, gradbtensor, ns, gradns, ts, gradts, equib_err)
 
        case ('solovev')
           call solovev_eq(rvec, bvec, gradbtensor, ns, gradns, ts, gradts, equib_err)
