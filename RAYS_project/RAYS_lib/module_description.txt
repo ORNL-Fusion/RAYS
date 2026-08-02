@@ -101,7 +101,17 @@ External procedures: cpu_time (intrinsic)
 
 Description of module: dispersion_solvers_m
 
-Contains routines to solve various forms of the plasma dispersion relation
+N.B. Temporary hack (17-16-2026) !!! Use cold dispersion for general
+Contains routines to solve various forms of the plasma dispersion relation for various
+components of the wave refractive index vector, nvec.
+
+N.B. naming conventions for components of n
+nx, ny, nz are components in the lab Cartesian frame
+n1, n2, n3 are components in what might be called the Stix frame
+n3 = parallel component of nvec parallel to B (AKA n-parallel)
+n1 = component of nvec perpendicular to B (AKA n-perp). Typically the component
+to be solved for (e.g. x or radial component)
+n2 = transverse component of nvec i.e. perpendicular to both B and n1
 
 The particular model to be solved is specified by argument "dispersion_model"
 Presently one model is supported: cold, (warm coming real soon now)
@@ -109,8 +119,6 @@ Presently one model is supported: cold, (warm coming real soon now)
 Presently four forms for this model are supported:
 1) solve_n1_vs_n2_n3
 n1 = component of nvec perpendicular to B to be solved for (e.g. x or radial component)
-n2 = transverse component of nvec i.e. perpendicular to both B and n1
-n3 = parallel component of kvec (nvec)
 
 2) solve_nx_vs_ny_nz_by_bz
 n1 = component of nvec perpendicular to B to be solved for (e.g. x or radial component)
@@ -125,8 +133,8 @@ theta = angle between vector refractive index and B
 This is essentially Appleton_Hartree
 
 4) solve_Booker_n1_vs_n2_n3 -> Booker quartic, electron dynamics only
-n1 = component of nvec in x direction.  The distinguished direction solved for,
-e.g. the direction of grad(n)
+n1 = component of nvec in the distinguished direction solved for,
+e.g. typically the x direction or the direction of grad(n)
 n2 = component of nvec in y direction = transverse component of nvec
 <--> perpendicular to both B and x
 n3 = component in z direction = x cross y <--> i.e. B direction if B is perpendicular
@@ -355,6 +363,8 @@ npoints(:).
 
 Description of module: rf_m
 
+Inputs and initializes RF related data.  Most is self explanatory.  But see note below
+about ray_dispersion model.
 
 Description of module: RK4_ode_m
 
@@ -438,38 +448,52 @@ eta(i), are specified in the input namelist /species_list/. eta(0 ==1 (i.e. elec
 
 Description of module: suscep_m
 
-Contains routines to calculate susceptibility tensor, chi, for a single species, and
-dielectric tensor, eps. eps is of derived type dielectric_tensor.
+Contains routines to calculate susceptibility tensor, chi, for a single species,
+dielectric tensor, eps, and dispersion functions, disp_fun
 
-N.B. is = species number (0:nspec), and eps = I + sum(chis(is))
+N.B. is = species number (0:nspec), and eps = I + sum(chis(is)). The dispersion
+relation is generally written in terms of eps.
 
-There are 2 forms for dielectric tensor:
+There are several forms for the dielectric tensor and dispersion functions.  For
+ray tracing, refractive indices (n vectors, also k vectors), are all real.  But for
+root finding the refractive indices are in general complex.  So included are routines
+with n arguments real and also with n-parallel real and n-perp complex.  I'll deal
+with the general case of complex n-parallel later.
 1) A general routine, dielectric_tensor, where the susceptibility model for each
 species is selected by setting "spec_model" in module species_m to various values
-e.g. "bessel" or "cold".  different suscep routines must be written for each spec_model
-As of right now only "suscep_cold" is implemented.
+e.g. "bessel" or "cold".  Different suscep routines must be written for each
+spec_model.
 
-2) A specific cold dielectric tensor where all species are cold
+2) A specific dielectric_cold tensor where all species are cold
+
+3) A specific dielectric_bessel tensor where all species are warm plasma full bessel
 
 Definitions:
 susceptibility tensor, chi, in this module means 4*pi*i*/omega*sigma where sigma
-is the conductivity tensor, i.e. plasma current J = sigma dot E.  Also note that total
-chi is the sum over individual species chi(is).
+is the conductivity tensor, i.e. plasma current J = sigma dot E.  Also note that
+total chi is the sum over individual species chi(is).
 
-dielectric tensor, eps, is I + sum[chi(is)] where I is the identity.  The dispersion
-relation is generally written in terms of eps.
-N.B. Plasma quantities come in from equilibrium_m.  An equilibrium routine must have been
-called previously.
-Routines:
+dielectric tensor, eps, is I + sum[chi(is)] where I is the identity.
+
+dispersion function, disp_fun, is det(nn-n.nI + eps)
+N.B. Plasma quantities come in from type eq_point defined in equilibrium_m.
+An equilibrium routine must have been called previously to generate eq
+Routines exported:
 suscep_cold(is)
-suscep_bessel(is) -> To be implemented now in the spare parts box
+suscep_bessel(is)
+RLSDP_cold
 dielectric_tensor
 dielectric_cold
+dielectric_bessel
 
 Description of module: temperature_spline_interp_m
 
 Implements temperature profiles based on pointwise numeerical data contained in namelist
 temperature_spline_interp_list.
+
+Description of module: uniform_eq_m
+
+Simple model for uniform plasma, useful for testing
 
 Description of module: XY_curves_netCDF_m
 
@@ -478,3 +502,18 @@ suitable for plotting, therefore called curves.  It provides a derived type,
 XY_curve_netCDF, containing the data needed for a single curve. It provides a subroutine,
 write_XY_curves_netCDF, which accepts a list of type XY_curve_netCDF instances and writes
 a netCDF file contining the curve data plus some metadata.
+
+Description of module: Z_slab_eq_m
+
+This is almost exactly the same as slab_eq_m except that gradient is in z.
+Simple models for plasma stratified in z and uniform in x and y useful for testing and
+benchmarking.  There are several different models for each quantity.
+The coding is self explanatory, however some comments about the linear_2 models might be
+useful.  For these one specifies the quantity at z = z0 and the slope there.  If any
+of the models are linear_2, then to make the z ranges consistent, all the models should
+be linear_2, zero, or constant.
+The motivation for linear_2 is added flexibility in specifying the independent
+coordinate, for example using the density or B field as a plotting axis coordinate.
+N.B. There is danger of negative density or temperature in linear and Linear_2 models.
+linear density or temp -> 1 + z/Ln_scale, asking for z < -Ln_scale will give < 0
+Linear_2 density or temp -> n0 + dndz*(z - z0) so same issue

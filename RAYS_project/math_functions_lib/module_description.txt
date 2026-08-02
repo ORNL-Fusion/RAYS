@@ -61,6 +61,26 @@ In order to put these functions in a module it was necessary to comment out the
 declarations for functions "rd" and "rf" in subroutines elliptic_em(m) and
 elliptic_fm(m).  The declarations shadowed "rd" and "rf" as being module functions.
 
+Description of module: complex_bessel_m
+
+REMARK ON ALGORITHM 644, COLLECTED ALGORITHMS FROM ACM.
+THIS WORK PUBLISHED IN TRANSACTIONS ON MATHEMATICAL SOFTWARE,
+VOL. 21, NO. 4, December, 1995, P.  388--393.
+Code converted using TO_F90 by Alan Miller
+Date: 2002-02-08  Time: 17:53:05
+Latest revision - 16 April 2002
+
+Description of module: matrix3x3_m
+
+Standard functions of 3x3 input matrix 'A'
+generic procedure: transpose3x3, for completeness, redundant with intrinsic
+generic procedure: adjoint3x3, conjugate transpose
+generic procedure: hermitian3x3
+generic procedure: anti_hermitian3x3
+generic procedure: determinant3x3
+N.B. transpose and determinant make sense for both real and complex matrices.
+the others, adjoint, hermitian, anti_hermitian only apply to complex matrices
+
 Description of module: newtonR3_m
 
 generic procedure: solve_newtonR3() to solve a scalar equation on R3 by
@@ -95,35 +115,6 @@ call solve_newtonR3(f, x,  x0, step_max, y, eps, i_iter, &
 N.B. The actual length of extra_data(:) must be declared in the code calling
 solve_newtonR3 and also declared in f().
 
-Description of module: newtonRN_m
-
-generic procedure: solve_newtonRN() to solve a scalar equation on RN by
-Newtons method, f(x)=y.  The user must also provide
-Usual caveats for non-linear solvers apply. There is no attempt to find multiple
-solutions.
-
-f = objective function y = f(x)
-x = solution, is assumed shape dimension = N
-x0 starting point
-step_max = upper limit on norm2 of step to take
-y = equation rhs, scalar
-eps = error tolerance: ABS(f(x)-y) <= eps
-nsig = Stopping criteria if successive iterations agree to nsig significant figures
-ierr return:
-ierr = -1 => (y(x1)-y(x0))(x1-x0) > 0 => no solution or multiple solutions in [x0,x1]
-ierr = 0 => no convergence after max_iter iterations
-ierr >= 1 => sucessful solution, ierr = number of iterations
-
-There are four routines under the solve_newtonRN interface. newtonRN_single, newtonRN_real
-which accept the arguments listed above. The calling sequence for these is:
-call solve_newtonRN(f, x,  x0, step_max, y, eps, ierr)
-The routines newtonRN_singleX and newtonRN_realX accept an additional argument,
-extra_data(:), which is an assumed shape vector.  The calling sequence for these is:
-call solve_newtonRN(f, x,  x0, step_max, y, eps, ierr, extra_data)
-The actual length of extra_data(:) must be declared in the code calling solve_newtonRN
-and also declared in f().
-
-
 Description of module: quad_trapezoid_m
 
 generic procedure: trapezoid_quad, calculates integral from a vector of y
@@ -152,6 +143,16 @@ Description of module: vectors3_m
 generic procedure: cross_product, calculates usual A x B
 generic procedure: triple_product, calculates usual A dot B x C
 generic procedure: triple_vector_product, calculates usual A x B x C
+
+Description of module: write_matrix_m
+
+Generic interface to functions that write out m x n matrix to file or std out
+write_matrix_S : single precision, real
+write_matrix_rkind : precision rkind, real
+write_Cmatrix_S : single precision, complex
+write_Cmatrix_rkind : precision rkind, complex
+N.B. Default unit is ISO_FORTRAN_ENV OUTPUT_UNIT. Can be changed in call by using
+optional argument 'out_unit'
 
 Description of module: zfunctions_m
 

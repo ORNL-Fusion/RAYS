@@ -41,7 +41,7 @@ Parabolic model parameters
 Temperature outside psi = 1 as a fraction of Te0, defaults to 0. but can be set in namelist
 <br>    real(KIND=rkind) :: T_scrape_off = zero
 
-<br>	integer :: i, is
+<br>    integer :: i, is
 
 
 ## Namelist data for module: axisym_toroid_ray_init_R_Z_nphi_ntheta_m
@@ -89,14 +89,14 @@ Ray is considered totally damped if damping > total_damping_limit. Can reset in 
 
 <br>    character (len = 60) :: spline_density_model ! Not used, YET
 
-<br>	integer :: ngrid ! Actual number of points to be splined. <= n_grid_max
+<br>    integer :: ngrid ! Actual number of points to be splined. <= n_grid_max
 
-<br>	real(KIND=rkind) ::  ne_in(n_grid_max) ! Values on grid (grid assumed uniform 0 to 1)
+<br>    real(KIND=rkind) ::  ne_in(n_grid_max) ! Values on grid (grid assumed uniform 0 to 1)
 
 Stuff for 1D spline profiles
 type(cube_spline_function_1D) :: ne_profile_N  ! ne profile normalized to 1. on axis
 
-<br> 	character (len = 80) :: profile_name = 'ne_profile'
+<br>    character (len = 80) :: profile_name = 'ne_profile'
 
 
 ## Namelist data for module: eqdsk_magnetics_lin_interp_m
@@ -130,7 +130,7 @@ Switch to select specific equilibrium model.
 Switch to treat input n-vectors as direction vectors which must be scaled to be solutions
 of the dispersion relation.  The default is false, which means that the rindec_vec_in
 values read in are to be used as is for the initial ray n-vectors.
-<br>	logical :: scale_n_vecs = .false.
+<br>    logical :: scale_n_vecs = .false.
 
 Number of initial condition sets to be read in from namelist
 integer:: n_rays_in
@@ -196,12 +196,23 @@ ode_solver= SG_ode: subroutine ODE developed by L. F. Shampine and M. K. Gordon.
 ode_solver = RK4_ode: Simple Runge-Kutta 4th order integrator.
 <br>    character (len = 15) :: ode_solver_name
 
-Name of routine used to calculate RHS derivatives for ray equations. Presently
-supported routines are:
-ray_deriv_name = cold
-ray_deriv_name = numerical
+Name of routine used to calculate RHS derivatives for ray equations.
 <br>    character(len=60) :: ray_deriv_name
 
+N.B. There is a distinction between ray_dispersion_model in RF_m, ray_deriv_name
+in ode_m.f90 and spec_model in species_m:
+'ray_dispersion_model' refers to the physics of the dispersion model.
+'ray_deriv_name' refers to the subroutine name that calculates the ray derivatives.
+The same physics derivatives might be provided by different named subroutines. e.g.
+deriv_num works with an arbitrary dispersion function and can provide derivatives for
+any dispersion physics model.  There is the further complication that the general
+dispersion tensor and dispersion function allow different species to have different
+dispersion models.  Therefore, in module species_m there is specification of the
+dispersion model for individual species, spec_model(:).
+Necessary specifications are:
+'ray_deriv_name' in ode_m -> cold, general or num (i.e. numerical)
+'ray_dispersion_model' in rf_m -> cold or general
+'spec_model' in species_m -> cold or bessel
 Maximum length of ray
 <br>     real(KIND=rkind) :: s_max
 
@@ -224,7 +235,7 @@ Data for initial launch direction
 <br>    real(KIND=rkind) ::  nX = zero, nY = zero, nZ = zero
 
 Switch to turn off solution of disp rel.  Just use the input nX,nY,nZ as is
-<br>	logical :: use_this_n_vec = .false.
+<br>    logical :: use_this_n_vec = .false.
 
 
 ## Namelist data for module: openmp_m
@@ -260,6 +271,17 @@ Maximum number of rays allowed.
 ### namelist /rf_list/
 
 Name of dispersion model used in ray tracing
+Presently supported are:
+cold -> All species are4 cold
+general -> different species can have different dispersion model
+
+N.B. There is a distinction between ray_dispersion_model here and ray_deriv_name
+found in ode_m.f90:
+ray_dispersion_model refers to the physics of the dispersion model.
+ray_deriv_name refers to the subroutine name that calculates the ray derivatives.
+The same physics derivatives might be provided by different named subroutines. e.g.
+deriv_num works with an arbitrary dispersion function and can provide derivatives for
+any dispersion physics model.
 <br>    character(len=60) :: ray_dispersion_model
 
 RF in Hz,
@@ -496,8 +518,17 @@ nus: collision frequency i.e. nu/omega
 
 An array indicating which plasma dispersion model is to be used for each species
 spec_model(is) = 'cold' susceptibility model is cold plasma
-spec_model(is) = 'bessel' susceptibility model is full besssel function. Not yet.
-<br>    character(len=12) :: spec_model(0:nspec0) = ''
+spec_model(is) = 'bessel' susceptibility model is full besssel function.
+<br>    character(len=60) :: spec_model(0:nspec0) = ''
+
+Maximum number of cyclotron harmonics (+/-) kept in suscep_bessel for ANY species
+with warm_bessel model. i.e. -n_limit <= nmins, nmaxs <= +n_limit.  It might be more
+logical to place this in the suscep_m module, but putting it here eliminates the need
+for initialization in suscep_m.
+<br>    integer :: n_limit = 5
+
+Minimum and maximum harmonics kept in bessel susceptibility tensor for species s.
+<br>    integer, dimension(0:nspec0) :: nmins, nmaxs
 
 Switch to turn off charge neutrality checking
 <br>    logical :: enforce_charge_neutrality = .false.
@@ -512,9 +543,99 @@ Criterion for checking charge neutrality.  Default here can be reset on input.
 
 <br>    character (len = 60) :: spline_Te_model, spline_Ti_model ! Not used, YET
 
-<br>	integer :: ngrid ! Actual number of points to be splined. <= n_grid_max
+<br>    integer :: ngrid ! Actual number of points to be splined. <= n_grid_max
 
-<br>	real(KIND=rkind) ::  Te_in(n_grid_max) ! Values on grid (grid assumed uniform 0 to 1)
+<br>    real(KIND=rkind) ::  Te_in(n_grid_max) ! Values on grid (grid assumed uniform 0 to 1)
 
-<br>	real(KIND=rkind) ::  Ti_in(n_grid_max) ! Values on grid (grid assumed uniform 0 to 1)
+<br>    real(KIND=rkind) ::  Ti_in(n_grid_max) ! Values on grid (grid assumed uniform 0 to 1)
+
+
+## Namelist data for module: uniform_eq_m
+
+### namelist /uniform_eq_list/
+
+Geometry data
+data for bounding box (meters)
+<br>    real(KIND=rkind) :: xmin, xmax, ymin, ymax, zmin, zmax
+
+data for uniform magnetics
+Magnetic field in Tesla
+<br>    real(KIND=rkind) :: B0
+
+Direction of magnetic field.  Doesn't have to be unit vector, gets normalized
+<br>    real(KIND=rkind) :: B_direction(3)
+
+data for density
+No namelist data, n0 is set in /species_list/
+data for slab temperature
+No namelist data, t0s_eV is set in /species_list/
+
+## Namelist data for module: Z_slab_eq_m
+
+### namelist /Z_slab_eq_list/
+
+Geometry data
+data for bounding box (meters)
+<br>    real(KIND=rkind) :: xmin, xmax, ymin, ymax, zmin, zmax
+
+location of x = 0 for tokamak-like models
+<br>    real(KIND=rkind) :: rmaj
+
+minor radius-like scale length for parabolic profiles or Gaussian
+<br>    real(KIND=rkind) :: rmin
+
+center position of Linear_2 profiles
+<br>    real(KIND=rkind) :: z0
+
+data for slab magnetics
+Model names for Bx, By, Bz
+<br>    character(len=12) :: bx_prof_model, by_prof_model, bz_prof_model
+
+Magnetic field in Tesla at x,y,z = 0
+<br>    real(KIND=rkind) :: bx0, by0, bz0
+
+Parameters for linear models of Bx
+<br>    real(KIND=rkind) :: LBx_scale
+
+Parameters for linear models of Bz and By shear
+<br>    real(KIND=rkind) :: LBy_shear_scale, LBz_scale
+
+Slope for Linear_2 model
+<br>    real(KIND=rkind) :: dBzdz
+
+data for slab density
+Model name for density profiles
+<br>    character(len=60) :: dens_prof_model
+
+Parameters for linear model of ne
+<br>    real(KIND=rkind) :: Ln_scale
+
+Slope for Linear_2 model
+<br>    real(KIND=rkind) :: dndz
+
+Parameters for parabolic model
+<br>    real(KIND=rkind) :: alphan1
+
+<br>    real(KIND=rkind) :: alphan2
+
+Density outside z = rmin as a fraction of ne0, defaults to 0. but can be set in namelist
+<br>    real(KIND=rkind) :: n_min = zero
+
+data for slab temperature
+Model name for temperature profiles
+<br>    character(len=20), allocatable :: t_prof_model(:)
+
+Parameters for linear models of Te
+<br>    real(KIND=rkind) :: LT_scale
+
+Parameters for Linear_2 models
+<br>    real(KIND=rkind) :: dtdz
+
+Parameters for parabolic model
+<br>    real(KIND=rkind), allocatable :: alphat1(:)
+
+<br>   real(KIND=rkind), allocatable :: alphat2(:)
+
+Temperature outside z = rmin as a fraction of T0s, defaults to 0. but can be set in namelist
+<br>   real(KIND=rkind), allocatable :: T_min(:)
 

@@ -48,6 +48,78 @@ real(KIND=rkind),parameter :: lolim = 3.D-78
 real(KIND=rkind),parameter :: uplim = 1.D+75
 
 
+Module data for: complex_bessel_m
+
+IMPLICIT NONE
+
+INTEGER, PARAMETER, PUBLIC  :: rkind = selected_real_kind(15,307)
+
+PRIVATE
+
+PUBLIC  :: cbesh, cbesi, cbesj, cbesk, cbesy, cairy, cbiry, gamln
+
+
+Module data for: matrix3x3_m
+
+IMPLICIT NONE
+
+integer, parameter :: rkind = selected_real_kind(15,307) ! kind parameter for reals
+
+real(KIND=rkind),parameter :: zero = 0.0_rkind
+
+real(KIND=rkind),parameter :: one = 1.0_rkind
+
+real(KIND=rkind),parameter :: two = 2.0_rkind
+
+real(KIND=rkind),parameter :: ten = 10.0_rkind
+
+complex, parameter :: c0 = cmplx(0., 0.), c1 = cmplx(1., 0.), ci = cmplx(0., 1.0)
+
+complex(kind=rkind), parameter :: c0_rk = cmplx(zero, zero), c1_rk = cmplx(one, zero)
+
+complex(kind=rkind), parameter :: ci_rk = cmplx(zero,one)
+
+interface transpose3x3
+
+module procedure transpose_rkind, transpose_S, cmplx_transpose_rkind,&
+
+& cmplx_transpose_S
+
+end interface
+
+interface adjoint3x3
+
+module procedure adjoint_rkind, adjoint_S
+
+end interface
+
+interface hermitian3x3
+
+module procedure hermitian_rkind, hermitian_S
+
+end interface
+
+interface anti_hermitian3x3
+
+module procedure anti_hermitian_rkind, anti_hermitian_S
+
+end interface
+
+interface determinant3x3
+
+module procedure determinant_rkind, determinant_S, cmplx_determinant_rkind,&
+
+&  cmplx_determinant_S
+
+end interface
+
+interface inverse3x3
+
+module procedure inverse_rkind, inverse_S
+
+end interface
+
+
 Module data for: newtonR3_m
 
 IMPLICIT NONE
@@ -61,23 +133,6 @@ INTEGER :: max_iter = 1000
 interface solve_newtonR3
 
 module procedure newtonR3_single, newtonR3_real, newtonR3_singleX, newtonR3_realX
-
-end interface
-
-
-Module data for: newtonRN_m
-
-IMPLICIT NONE
-
-integer, parameter :: rkind = selected_real_kind(15,307) ! kind parameter for reals
-
-integer, parameter :: skind = selected_real_kind(6,37) ! kind parameter single precision
-
-INTEGER, PARAMETER :: max_iter = 1000
-
-interface solve_newtonRN
-
-module procedure newtonRN_single, newtonRN_real, newtonRN_singleX, newtonRN_realX
 
 end interface
 
@@ -134,8 +189,6 @@ IMPLICIT NONE
 
 integer, parameter :: rkind = selected_real_kind(15,307) ! kind parameter for reals
 
-integer, parameter :: skind = selected_real_kind(6,37) ! kind parameter single precision
-
 interface cross_product
 
 module procedure cross_product_D, cross_product_S
@@ -151,6 +204,31 @@ end interface
 interface triple_vector_product
 
 module procedure triple_vector_product_D, triple_vector_product_S
+
+end interface
+
+
+Module data for: write_matrix_m
+
+use iso_fortran_env, only: output_unit
+
+IMPLICIT NONE
+
+integer, parameter :: rkind = selected_real_kind(15,307) ! kind parameter for reals
+
+real(KIND=rkind),parameter :: two = 2.0_rkind
+
+interface write_matrix
+
+module procedure write_matrix_S, write_matrix_rkind, write_Cmatrix_S,&
+
+& write_Cmatrix_rkind
+
+end interface
+
+interface write_vector
+
+module procedure write_vector_rkind, write_Cvector_rkind
 
 end interface
 

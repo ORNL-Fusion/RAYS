@@ -24,8 +24,8 @@ import sys
 import os
 import glob
 
-debug = False
-debug0 = True
+debug = True
+debug0 = False
 
 key_words = ['real', 'complex', 'integer', 'character', 'logical',\
              'real(', 'complex(', 'integer(', 'character(', 'logical(']

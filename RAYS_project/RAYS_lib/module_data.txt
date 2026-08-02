@@ -29,10 +29,6 @@ integer, parameter :: rkind = selected_real_kind(15,307) ! kind parameter for re
 
 integer, parameter :: skind = selected_real_kind(6,37) ! kind parameter single precision
 
-complex :: i                ! positive square root of -1
-
-real(KIND=rkind) :: pi, sqrt_pi         ! usual pi= 3.14159.....
-
 real(KIND=rkind) :: clight, mu0, eps0   ! consistent electro-magnetic constants
 
 real(KIND=rkind) :: me, mp, e           ! electron mass, proton mass and unit charge
@@ -55,7 +51,17 @@ real(KIND=rkind),parameter :: one = 1.0_rkind
 
 real(KIND=rkind),parameter :: two = 2.0_rkind
 
+real(KIND=rkind),parameter :: three = 3.0_rkind
+
+real(KIND=rkind),parameter :: four = 4.0_rkind
+
 real(KIND=rkind),parameter :: ten = 10.0_rkind
+
+real(KIND=rkind),parameter :: pi = atan(zero,-one)
+
+real(KIND=rkind),parameter :: sqrt_pi = sqrt(pi)
+
+complex(KIND=rkind), parameter :: i = cmplx(zero, one, rkind)
 
 
 Module data for: damping_m
@@ -115,7 +121,7 @@ module procedure blank_message, &
 
 &   i_message, logical_message, r_message, rdbl_message, c_message, &
 
-&   ivn_message,  rvn_message, rvndbl_message, cvn_message, &
+&   ivn_message, rvn_message, rvndbl_message, cdbl_message, cvn_message, &
 
 &   cvndbl_message, rmatrix_message, rmatrixdbl_message, cmatrix_message, &
 
@@ -370,7 +376,7 @@ type ode_stop
 logical :: stop_ode = .false.
 logical :: stop_ode
 
-character(len=30) :: ode_stop_flag
+character(len=60) :: ode_stop_flag
 
 real(KIND=rkind) :: rel_err, abs_err
 
@@ -527,7 +533,7 @@ integer, allocatable :: npoints(:)              ! nray
 Summary data
 real(KIND=rkind), allocatable :: initial_ray_power(:) ! nray
 
-real(KIND=rkind), allocatable :: end_ray_power(:)	  ! nray
+real(KIND=rkind), allocatable :: end_ray_power(:)     ! nray
 
 real(KIND=rkind), allocatable :: ray_trace_time(:)    ! nray
 
@@ -568,7 +574,7 @@ integer, allocatable :: npoints(:)              ! nray
 Summary data
 real(KIND=rkind), allocatable :: initial_ray_power(:) ! nray
 
-real(KIND=rkind), allocatable :: end_ray_power(:) 	  ! nray
+real(KIND=rkind), allocatable :: end_ray_power(:)     ! nray
 
 real(KIND=rkind), allocatable :: ray_trace_time(:)    ! nray
 
@@ -696,12 +702,6 @@ real(KIND=rkind), dimension(0:5) :: qs0 = (/-1., 1., 1., 1., 2., 2. /) ! units o
 
 real(KIND=rkind), dimension(0:5) :: ms0 = (/1., 1836., 3670., 5497., 5496., 7294. /) ! in units of me
 
-nmins, nmaxs: minimum and maximum harmonics kept in susceptibility tensor for
-for species is.  +/- n_limit is size of nimns,nmax arrays
-integer, parameter :: n_limit = 5
-
-integer, dimension(-n_limit:n_limit) :: nmins, nmaxs
-
 n0s: actual species number density calculated in init = n0*eta(is)
 real(KIND=rkind), dimension(0:nspec0) :: n0s = 0.
 
@@ -714,7 +714,9 @@ real(KIND=rkind), dimension(0:nspec0) :: tseps = 0.
 
 Module data for: suscep_m
 
-use constants_m, only : rkind
+use constants_m, only : rkind, zi=>i, zero, one, two, ten, tinyr, unitmat3
+
+use equilibrium_m, only : eq_point
 
 implicit none
 
@@ -740,6 +742,13 @@ character (len = 80) :: Te_name = 'Te_profile'
 character (len = 80) :: Ti_name = 'Ti_profile'
 
 
+Module data for: uniform_eq_m
+
+use constants_m, only : rkind, zero
+
+implicit none
+
+
 Module data for: XY_curves_netCDF_m
 
 implicit none
@@ -760,4 +769,11 @@ real(kind=rkind), allocatable :: grid(:)
 real(kind=rkind), allocatable :: curve(:)
 
 end type XY_curve_netCDF
+
+
+Module data for: Z_slab_eq_m
+
+use constants_m, only : rkind, zero, one
+
+implicit none
 
