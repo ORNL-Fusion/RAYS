@@ -23,7 +23,7 @@ module dispersion_solver_test_m
     logical :: scan_nz = .true.
     logical :: scan_theta = .true.
 
-    namelist /dispersion_solver_test_list/ scan_nz, scan_nz, &
+    namelist /dispersion_solver_test_list/ scan_nz, scan_theta, &
             & n_xpoints, xmin, xmax, n_nz_points, nz_min, nz_max, &
             & n_theta_points, theta_min, theta_max
 

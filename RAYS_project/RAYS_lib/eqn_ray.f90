@@ -34,8 +34,9 @@
     use ode_m, only : nv, ray_deriv_name, ode_stop
     use rf_m, only : k0, ray_dispersion_model, ray_param
     use damping_m, only : damping_model, damping, multi_spec_damping
+    use write_matrix_m, only : write_matrix, write_vector
 
-     implicit none
+    implicit none
 
     real(KIND=rkind), intent(in) :: s
     real(KIND=rkind), intent(in) :: v(nv)

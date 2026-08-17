@@ -52,7 +52,7 @@
     call date_and_time (values=date_v)
     call date_to_julian(date_v,t_start_tracing,ierr)
     if (ierr .ne. 0) then
-        write(*,*) 'julian t_start_tracing, ierr = ', ierr
+        write(*,*) 'trace_rays: julian t_start_tracing, ierr = ', ierr
         stop
     end if
 
@@ -67,8 +67,8 @@
 !!$  write(12,*) 'ray_tracing begin: ray# = ',iray,'  omp_get_thread_num = ', omp_get_thread_num()
 
          call message(1)
-         call message ('ray_tracing: ray #', iray, 1)
-         call message ('ray_tracing: omp_thread_num = ', omp_get_thread_num(), 1)
+         call message ('trace_rays: ray #', iray, 1)
+         call message ('trace_rays: omp_thread_num = ', omp_get_thread_num(), 1)
 
 !         call cpu_time(t_start_ray)
 !$      t_start_ray = omp_get_wtime()
@@ -102,9 +102,10 @@
             npoints(iray) = 1 ! i.e. initial point
 
             if (verbosity > 0) then
-                write(message_unit, *) 'ray ', iray, ' did not start. ', ray_stop%ode_stop_flag
-                if (messages_to_stdout) write(*, *) 'ray ', iray, ' did not start. ', &
-                              & ray_stop%ode_stop_flag
+                write(message_unit, *) 'trace_rays: ray ', iray, ' did not start. ',&
+                            & ray_stop%ode_stop_flag
+                if (messages_to_stdout) write(*, *) 'trace_rays: ray ', iray, &
+                           & ' did not start. ', ray_stop%ode_stop_flag
             end if
 
             cycle ray_loop
@@ -128,12 +129,12 @@
                 call message ('trace_rays: stop ray, sout > s_max, s',s, 1)
 
                 if (verbosity > 0) then
-                    write (message_unit, '( "ray ",i3, "  s=", g12.4, "   nstep=", i4, /, &
+                    write (message_unit, '( "ray ",i3, "  s=", g12.4, "   nstep=", i5, /, &
                     &  "  (x,y,z)=", 3(f10.4),/,  "  (kx,ky,kz)=", 3(f10.4) )') iray, s, nstep, &
                     & v(1:3), v(4:6)
 
                     if (messages_to_stdout) then
-                         write (*, '( "ray ",i3, "  s=", g12.4, "   nstep=", i4, /, &
+                         write (*, '( "ray ",i3, "  s=", g12.4, "   nstep=", i5, /, &
                         &  "  (x,y,z)=", 3(f10.4),/,  "  (kx,ky,kz)=", 3(f10.4) )') iray, s, nstep, &
                         & v(1:3), v(4:6)
                     end if
@@ -157,12 +158,12 @@
                 if (verbosity > 0) then
 
                     write (message_unit, '( "ray ",i3, " stopped, last valid step   s=", g12.4, &
-                    & "   nstep=", i4, /, "  (x,y,z)=", 3(f10.4),/,  "  (kx,ky,kz)=", 3(f10.4) )') &
+                    & "   nstep=", i5, /, "  (x,y,z)=", 3(f10.4),/,  "  (kx,ky,kz)=", 3(f10.4) )') &
                     &  iray, s, nstep, v(1:3), v(4:6)
 
                     if (messages_to_stdout) then
                         write (message_unit, '( "ray ",i3, " stopped, last valid step   s=", g12.4, &
-                        & "   nstep=", i4, /, "  (x,y,z)=", 3(f10.4),/,  "  (kx,ky,kz)=", 3(f10.4) )') &
+                        & "   nstep=", i5, /, "  (x,y,z)=", 3(f10.4),/,  "  (kx,ky,kz)=", 3(f10.4) )') &
                         &  iray, s, nstep, v(1:3), v(4:6)
                     end if
                 end if
@@ -179,14 +180,14 @@
                 if (verbosity > 0) then
                     write(message_unit, *) 'ray ', iray, ' stopped in ODE solver on step #',&
                       & nstep+1, ',  s = ', s, ', ode_stop_flag =  ', trim(ray_stop%ode_stop_flag)
-                    write (message_unit, '( "last valid step   s=", g12.4, "   nstep=", i4, /, &
+                    write (message_unit, '( "last valid step   s=", g12.4, "   nstep=", i5, /, &
                     &  "  (x,y,z)=", 3(f10.4),/,  "  (kx,ky,kz)=", 3(f10.4) )') s, nstep, &
                     & v(1:3), v(4:6)
 
                     if (messages_to_stdout) then
                         write(*, *) 'ray ', iray, ' stopped in ODE solver on step #',&
                           & nstep+1, ',  s = ', s, ', ode_stop_flag =  ', trim(ray_stop%ode_stop_flag)
-                        write (message_unit, '( "last valid step   s=", g12.4, "   nstep=", i4, /, &
+                        write (message_unit, '( "last valid step   s=", g12.4, "   nstep=", i5, /, &
                         &  "  (x,y,z)=", 3(f10.4),/,  "  (kx,ky,kz)=", 3(f10.4) )') s, nstep, &
                         & v(1:3), v(4:6)
                     end if
@@ -215,7 +216,7 @@
                     write(message_unit, *) 'ray ', iray, ' stopped in check_save  ', &
                                         & ray_stop%ode_stop_flag, '  residual =', resid
 
-                     write (message_unit, '( " s=", g12.4, "   nstep=", i4, /, &
+                     write (message_unit, '( " s=", g12.4, "   nstep=", i5, /, &
                     &  "  (x,y,z)=", 3(f10.4),/,  "  (kx,ky,kz)=", 3(f10.4) )') s, nstep, &
                     & v(1:3), v(4:6)
 
@@ -223,7 +224,7 @@
                         write(message_unit, *) 'ray ', iray, ' stopped in check_save  ', &
                                             & ray_stop%ode_stop_flag, '  residual =', resid
 
-                         write (message_unit, '( " s=", g12.4, "   nstep=", i4, /, &
+                         write (message_unit, '( " s=", g12.4, "   nstep=", i5, /, &
                         &  "  (x,y,z)=", 3(f10.4),/,  "  (kx,ky,kz)=", 3(f10.4) )') s, nstep, &
                         & v(1:3), v(4:6)
                     end if

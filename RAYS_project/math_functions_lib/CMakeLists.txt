@@ -12,6 +12,7 @@ list (APPEND lib_sources
                 $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/complex_bessel_m.f90>
                 $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/ebessel_dbb.f90>
                 $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/matrix3x3_m.f90>
+                $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/XY_curves_netCDF_m.f90>
                 $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/write_matrix_m.f90>
 )
 add_library (math_functions ${lib_sources})
@@ -24,6 +25,7 @@ target_include_directories (math_functions
 target_link_libraries(math_functions
                       PUBLIC
                       spline
+                      $<$<BOOL:${NetCDF_FOUND}>:NetCDF::NetCDF>
 )
 
 # target_compile_options(math_functions

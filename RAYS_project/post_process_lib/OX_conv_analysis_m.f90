@@ -247,7 +247,6 @@ subroutine analyze_OX_conv(OX_restart_ray_data_file)
 	else
 		write(*,*) 'No O-mode rays converted to X-mode'
 	end if
- write(*,*) 'analyze_OX_conv: got to 1'
 
 	return
 	end subroutine analyze_OX_conv

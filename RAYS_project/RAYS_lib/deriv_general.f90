@@ -12,7 +12,7 @@
 !   N./B. Send depsdx_h, depsdk_h, depsdw_h to depsdq_h by host association.
 
     use constants_m, only : rkind, zero
-    use equilibrium_m, only : eq_point
+    use equilibrium_m, only : eq_point, write_eq_point
     use rf_m, only : omgrf, k0
     use ode_m, only : nv
     use write_matrix_m, only : write_matrix, write_vector
@@ -78,6 +78,11 @@
 
     ddwc = sum(depsdw_h*g) + h1*dn1dw + h3*dn3dw
     dddw = ddwc%re
+
+!  write(*,*) ' '
+!  call write_vector('deriv_general: ddxc', ddxc, 3)
+!  call write_vector('deriv_general: ddkc', ddkc, 3)
+!  write(*,*) 'deriv_general: ddwc = ', ddwc
 
   return
 
@@ -208,6 +213,11 @@ subroutine depsdq_cold(eq, is, depsdw_hs, depsdk_hs, depsdx_hs)
        depsdk_hs(:,ivec) = zero
     end do
 
+!   dddx = dD/dx:
+!   Derivatives with respect to space coordinates.
+!  write(*,*) 'depsdq_cold: dne/dx /ne = ', eq%gradns(1,is)/eq%ns(is)
+!  write(*,*) 'depsdq_cold: d|B|/dx /B = ', eq%gradbmag(1)/eq%bmag
+
     depsdx = zero
     do ivec = 1, 3
        depsdx(:,ivec) = d_chi_d_alpha_c(:)*alpha_c*eq%gradns(ivec,is)/eq%ns(is)+ &
@@ -312,6 +322,7 @@ subroutine depsdq_cold(eq, is, depsdw_hs, depsdk_hs, depsdx_hs)
     lambda = half * (k1*vth/omgc)**2
 
 !   Arguments for plasma Z functions.
+    xi = zero
     do n = nmin, nmax
        xi(n) = (omgrf-n*omgc) / (k3*vth)
     end do
@@ -326,6 +337,12 @@ subroutine depsdq_cold(eq, is, depsdw_hs, depsdk_hs, depsdx_hs)
     do n = nmin, nmax
        eipp(n) = (one+(n/lambda)**2)*ei(n) - eip(n)/lambda
     end do
+
+! write(*,*) 'depsdq_bessel: n1 = ', n1, '  n3 = ', n3, '  lambda = ', lambda
+! call write_vector('depsdq_bessel: xi', xi(:), 2*nmax+1)
+! call write_vector('depsdq_bessel: ei', ei, 2*nmax+1)
+! call write_vector('depsdq_bessel: eip', eip, 2*nmax+1)
+! call write_vector('depsdq_bessel: eipp', eipp, 2*nmax+1)
 
 ! Generate susceptibility
 
@@ -461,10 +478,12 @@ subroutine depsdq_cold(eq, is, depsdw_hs, depsdk_hs, depsdx_hs)
 
        dbdx(:) = beta * ( gradns(:)/ns  &
         & - matmul(gradbunit,kvec)/k3 - gradts(:)/(two*ts) )
+!  write(*,*) 'depsdq_bessel: dbdx = ', dbdx
 
        dldx(:) = lambda &
        & * ( -two*k3*matmul(gradbunit,kvec)/k1**2 &
        &      + gradts(:)/ts - two*gradbmag/bmag )
+!  write(*,*) 'depsdq_bessel: dldx = ', dldx
 
     depsdx_xi = zero
     do n = nmin, nmax
@@ -477,6 +496,7 @@ subroutine depsdq_cold(eq, is, depsdw_hs, depsdk_hs, depsdx_hs)
             depsdx_xi(i,:) = depsdx_xi(i,:) + depsdxi(i,n)*dxidx(:,n)
         end do
     end do
+!  write(*,*) 'depsdq_bessel: dxidx = ', dxidx
 
     do ivec = 1, 3
 
@@ -486,6 +506,8 @@ subroutine depsdq_cold(eq, is, depsdw_hs, depsdk_hs, depsdx_hs)
         call v6_Hermitian( depsdx(:,ivec), depsdx_hs(:,ivec) )
 
     end do
+!  write(*,*) 'depsdq_bessel: depsdx = ', depsdx
+!  write(*,*) 'depsdq_bessel: depsdx_hs = ', depsdx_hs
 
   end subroutine depsdq_bessel
 

@@ -150,6 +150,7 @@ contains
     character(len=60), intent(out) :: equib_err
 
     real(KIND=rkind) :: x, y, z
+    real(KIND=rkind) :: error
     integer :: is
     real(KIND=rkind) :: f, fp ! dummy variables for parabolic_prof
 
@@ -164,11 +165,20 @@ contains
     gradts = zero
 
 ! Check that we are in the box
-    if (x < xmin .or. x > xmax) equib_err = 'x out_of_bounds'
-    if (y < ymin .or. y > ymax) equib_err = 'y out_of_bounds'
-    if (z < zmin .or. z > zmax) equib_err = 'z out_of_bounds'
+    if (x < xmin .or. x > xmax) then
+        equib_err = 'x out_of_bounds'
+        error = x
+    end if
+    if (y < ymin .or. y > ymax) then
+        equib_err = 'y out_of_bounds'
+        error = y
+    end if
+    if (z < zmin .or. z > zmax) then
+        equib_err = 'z out_of_bounds'
+        error = z
+    end if
     if (equib_err /= '') then
-        write (message_unit, *) 'slab_eq:  equib_err ', trim(equib_err)
+        write (message_unit, *) 'slab_eq:  equib_err ', trim(equib_err), ' = ', error
         return
     end if
 
@@ -324,6 +334,8 @@ contains
 
 
  subroutine write_slab_profiles
+
+    use constants_m, only : e
     use species_m, only : nspec
     use diagnostics_m, only : message_unit
 
@@ -351,14 +363,14 @@ contains
         dx = (rmaj - rmin)/(nx_points-1)
     end if
 
-    write (message_unit,*) '    x', b9,'ne', b12, 'bx', b9, 'by', b9, 'bz', b9, 'Te',b9, 'Ti(s)'
+    write (message_unit,*) '    x', b9,'ne', b12, 'bx', b9, 'by', b9, 'bz', b9, 'Te',b12, 'Ti(s)'
 
     do ip = 1, nx_points
         x = xstart + (ip-1)*dx
         rvec( : ) = (/ x, zero, zero /)
         call slab_eq(rvec, bvec, gradbtensor, ns, gradns, ts, gradts, equib_err)
-        write (message_unit,'(f11.5, a, e12.5, 3f11.5, 7f11.5)') &
-               & x,'  ', ns(0), bvec, (ts(i), i=0, nspec)
+        write (message_unit,'(f11.5, a, e12.5, 3f11.5, 7(1pe15.5))') &
+               & x,'  ', ns(0), bvec, (ts(i)/e, i=0, nspec)
 
     end do
 

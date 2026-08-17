@@ -49,7 +49,6 @@ list (APPEND lib_sources
 	suscep_m.f90
 	temperature_spline_interp_m.f90
 	uniform_eq_m.f90
-	XY_curves_netCDF_m.f90
 	Z_slab_eq_m.f90
 
 )
@@ -70,10 +69,10 @@ target_link_libraries(RAYS_lib
                       $<$<BOOL:${NetCDF_FOUND}>:NetCDF::NetCDF>
 )
 
-# target_compile_options(RAYS_lib
-#                        PRIVATE
-#                        -O0 -g3 -fcheck=all -finit-real=snan -Wall
-# )
+target_compile_options(RAYS_lib
+                       PRIVATE
+                       -O0 -g3 -fcheck=all -finit-real=snan -Wall
+)
 
 #
 # target_sources (RAYS_lib

@@ -137,10 +137,12 @@ contains
 ! a set of data values for each step along the ray (e.g. ne, omega_ce/omega_rf, psi...).
 ! That data is then written to a netcdf file for analysis or plotting by a graphics code.
 ! There is a lot of data, and this subroutine is probably only useful for small numbers
-! of rays.  The data can be plotted using plot_ray_diags.py which is located in RAYS/graphics_RAYS
+! of rays.  The data can be plotted using plot_ray_diags.py which is located in
+! RAYS/graphics_RAYS
 
 ! Working notes:
-! (DBB 8/28/2025)  This thing is modified from the axisymmetric version ray_detailed_diagnostics
+! (DBB 8/28/2025)  This thing is modified from the axisymmetric version
+!                  ray_detailed_diagnostics
 
     use constants_m, only : rkind, e
     use diagnostics_m, only : integrate_eq_gradients, message, text_message, verbosity

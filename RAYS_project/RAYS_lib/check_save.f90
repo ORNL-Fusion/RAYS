@@ -7,7 +7,7 @@
 !_________________________________________________________________________________________
 
 
-    use constants_m, only : rkind, zero, ten, epsmach
+    use constants_m, only : rkind, zero, ten, epsmach, e
     use diagnostics_m, only : integrate_eq_gradients, message, text_message, &
                             & write_formatted_ray_files, output_unit
     use species_m, only : nspec, n0s
@@ -46,7 +46,7 @@
     call message ('check_save: B(tesla)', eq%bmag, 1)
     call message ('check_save: alpha(s)', eq%alpha(0:nspec), nspec+1, 1)
     call message ('check_save: gamma(s)', eq%gamma(0:nspec), nspec+1, 1)
-    call message ('check_save: T(s)', eq%Ts(0:nspec), nspec+1, 1)
+    call message ('check_save: T(s)', eq%Ts(0:nspec)/e, nspec+1, 1)
 
 
 !   Parallel and perpendicular components of nvec.
@@ -68,6 +68,7 @@
     if (resid > dispersion_resid_limit) then
         ray_stop%stop_ode = .true.
         ray_stop%ode_stop_flag = 'dispersion_residual'
+        return
     end if
 
 
@@ -82,7 +83,7 @@
        call deriv_cold(eq, nvec, dddx, dddk, dddw)
 
        case ('general')
-           call deriv_general(eq, nvec, dddx, dddk, dddw)
+           call deriv_general(eq, v, dddx, dddk, dddw)
 
        case ('num')
            call deriv_num(eq, nvec, dddx, dddk, dddw)
@@ -95,6 +96,8 @@
 
    end select ray_derivatives
 
+   call message ('check_save: v(:)', v, size(v), 1)
+
 !   Group velocity.
     if ( abs(dddw) > tiny(dddw) ) then
        vg = -dddk / dddw
@@ -104,14 +107,14 @@
 !         Note that when ray_param = 'time', "ds" in the code is "dt". Time steps are
 !         typically a fraction of a nonosecond.
           if ( vg0*ds > 1. ) then
-             call message('CHECK_SAVE: time step too big, Vg*dt (m) =', vg0 * ds, 1)
+             call message('check_save: time step too big, Vg*dt (m) =', vg0 * ds, 1)
           end if
        end if
 
        call message('check_save: Vg',vg, 3, 1)
 
     else
-       call message('CHECK_SAVE: dddw = ', dddw)
+       call message('check_save: dddw = ', dddw)
        call text_message('check_save: infinite group velocity, dddw = 0', 1)
        ray_stop%stop_ode = .true.
        ray_stop%ode_stop_flag = 'infinite_Vg'

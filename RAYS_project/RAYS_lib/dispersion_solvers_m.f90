@@ -129,12 +129,12 @@ contains
           call solve_cold_n1sq_vs_n3(eq, n3, nperp_sq)
           n1 = real(k_sign, kind=rkind) * sqrt(nperp_sq(i_mode)-n2**2)
 
-! N.B. Temporary hack (17-16-2026) !!! Use cold dispersion for general
+! N.B. Temporary hack (7-16-2026) !!! Use cold dispersion for general
        case ('general')
           ! Solve for n-perp squared
           call solve_cold_n1sq_vs_n3(eq, n3, nperp_sq)
           n1 = real(k_sign, kind=rkind) * sqrt(nperp_sq(i_mode)-n2**2)
-
+!  write(*,*) 'solve_n1_vs_n2_n3: n1 = ', n1, ' n3 = ', n3
        case default
           write(0,*) 'solve_disp: unimplemented dispersion_model =', trim(dispersion_model)
           call text_message('solve_disp: unimplemented dispersion_model ',trim(dispersion_model),0)
