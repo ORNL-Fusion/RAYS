@@ -28,7 +28,7 @@
 
     integer :: i
 
-! write(*,*) 'v = ', v
+!  write(*,*) 'deriv_num: v = ', v
 !   Save parameters.
     rvec0 = v(1:3); kvec0 = v(4:6); omgrf0 = omgrf
     kvec = kvec0
@@ -39,17 +39,19 @@
 !   Derivatives of D with respect to r.
     do i = 1, 3
        rvec = rvec0
+!        write(*,*) ' '
+!        write(*,*) 'deriv_num: rvec0 = ', rvec0
 !       change = max(delta, abs(delta*rvec(i)))/2.
        change = delta
        rvec(i) = rvec0(i) + change
-       call equilibrium(rvec, eq_plus)
 !        write(*,*) ' '
-!        write(*,*) 'deriv_num: rvec = ', rvec
+!        write(*,*) 'deriv_num: rvec(+) = ', rvec
+       call equilibrium(rvec, eq_plus)
 !        call write_eq_point(eq_plus)
        rvec(i) = rvec0(i) - change
-       call equilibrium(rvec, eq_minus)
 !        write(*,*) ' '
-!        write(*,*) 'deriv_num: rvec = ', rvec
+!        write(*,*) 'deriv_num: rvec(-) = ', rvec
+       call equilibrium(rvec, eq_minus)
 !        call write_eq_point(eq_minus)
        det_plus = determ(eq_plus)
        det_minus = determ(eq_minus)

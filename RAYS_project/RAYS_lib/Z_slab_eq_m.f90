@@ -33,9 +33,9 @@ module Z_slab_eq_m
 !_________________________________________________________________________________________
 
 ! Geometry data
-	! data for bounding box (meters)
+    ! data for bounding box (meters)
     real(KIND=rkind) :: xmin, xmax, ymin, ymax, zmin, zmax
-	! location of x = 0 for tokamak-like models
+    ! location of x = 0 for tokamak-like models
     real(KIND=rkind) :: rmaj
     ! minor radius-like scale length for parabolic profiles or Gaussian
     real(KIND=rkind) :: rmin
@@ -65,7 +65,7 @@ module Z_slab_eq_m
     ! Parameters for parabolic model
     real(KIND=rkind) :: alphan1
     real(KIND=rkind) :: alphan2
-	! Density outside z = rmin as a fraction of ne0, defaults to 0. but can be set in namelist
+    ! Density outside z = rmin as a fraction of ne0, defaults to 0. but can be set in namelist
     real(KIND=rkind) :: n_min = zero
 
 ! data for slab temperature
@@ -78,7 +78,7 @@ module Z_slab_eq_m
     ! Parameters for parabolic model
     real(KIND=rkind), allocatable :: alphat1(:)
    real(KIND=rkind), allocatable :: alphat2(:)
-	! Temperature outside z = rmin as a fraction of T0s, defaults to 0. but can be set in namelist
+    ! Temperature outside z = rmin as a fraction of T0s, defaults to 0. but can be set in namelist
    real(KIND=rkind), allocatable :: T_min(:)
 
  namelist /Z_slab_eq_list/ &
@@ -99,13 +99,13 @@ contains
 
     implicit none
     logical, intent(in) :: read_input
- 	integer :: input_unit, get_unit_number ! External, free unit finder
+    integer :: input_unit, get_unit_number ! External, free unit finder
 
     allocate( t_prof_model(0:nspec) )
     allocate( alphat1(0:nspec), alphat2(0:nspec), T_min(0:nspec), source = zero )
 
     if (read_input .eqv. .true.) then
-  		input_unit = get_unit_number()
+        input_unit = get_unit_number()
         open(unit=input_unit, file='rays.in',action='read', status='old', form='formatted')
         read(input_unit, Z_slab_eq_list)
         close(unit=input_unit)
@@ -113,8 +113,8 @@ contains
 
 ! Write input namelist
     if (verbosity >= 0) then
-		write(message_unit, Z_slab_eq_list)
-		if (messages_to_stdout) write(*, Z_slab_eq_list)
+        write(message_unit, Z_slab_eq_list)
+        if (messages_to_stdout) write(*, Z_slab_eq_list)
     end if
 
     if (verbosity > 2)  then
@@ -151,7 +151,7 @@ contains
 
     real(KIND=rkind) :: x, y, z
     integer :: is
-	real(KIND=rkind) :: f, fp ! dummy variables for parabolic_prof
+    real(KIND=rkind) :: f, fp ! dummy variables for parabolic_prof
 
     equib_err = ''
     x = rvec(1)
@@ -263,7 +263,7 @@ contains
 
         case ('parabolic')
 !       Parabolic around z = 0
-			call parabolic_prof(z, n_min, alphan1, alphan2, f, fp)
+            call parabolic_prof(z, n_min, alphan1, alphan2, f, fp)
             ns(0:nspec) = n0s(0:nspec) * f
             gradns(3,0:nspec) = n0s(0:nspec) * fp
 
@@ -301,7 +301,7 @@ contains
 
        case ('parabolic')
 !      Parabolic around x = x0
-		  call parabolic_prof(z-z0, t_min(is), alphat1(is), alphat2(is), f, fp)
+          call parabolic_prof(z-z0, t_min(is), alphat1(is), alphat2(is), f, fp)
           ts(is) = t0s(is) * f
           gradts(3,is) = t0s(is) * fp
 
@@ -374,28 +374,28 @@ contains
     real(KIND=rkind), intent(in) :: rho, f_min, alpha1, alpha2
     real(KIND=rkind), intent(out) :: f, fp
 
-	f = zero
-	if (rho < one) then
-		f = (1.-rho**(alpha2))**alpha1
-		fp = -alpha1*alpha2*rho**(alpha2 - 1.)*(1.-rho**(alpha2))&
-				& **(alpha1 - 1.)
-	end if
+    f = zero
+    if (rho < one) then
+        f = (1.-rho**(alpha2))**alpha1
+        fp = -alpha1*alpha2*rho**(alpha2 - 1.)*(1.-rho**(alpha2))&
+                & **(alpha1 - 1.)
+    end if
 
-	if (f < f_min) then
-		f = f_min
-		fp = zero
-	end if
+    if (f < f_min) then
+        f = f_min
+        fp = zero
+    end if
 
   end subroutine parabolic_prof
 
 !********************************************************************
 
     subroutine deallocate_Z_slab_eq_m
-		if (allocated(t_prof_model)) then
-			deallocate( t_prof_model )
-			deallocate( alphat1 )
-		end if
-		return
+        if (allocated(t_prof_model)) then
+            deallocate( t_prof_model )
+            deallocate( alphat1 )
+        end if
+        return
     end subroutine deallocate_Z_slab_eq_m
 
 end module Z_slab_eq_m

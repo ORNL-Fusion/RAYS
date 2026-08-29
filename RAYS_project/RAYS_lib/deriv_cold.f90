@@ -1,4 +1,4 @@
- subroutine deriv_cold(eq, nvec, dddx, dddk, dddw)
+ subroutine deriv_cold(eq, v, dddx, dddk, dddw)
 !   calculates the derivatives of D with respect to k, r, omega.
 !   v(1:3) = (x,y,z)
 !   nvec(1:3) == v(4:6)/k0 = (kx, ky, kz)/k0 refractive index vector
@@ -11,17 +11,18 @@
     use constants_m, only : rkind
     use equilibrium_m, only : eq_point, write_eq_point
     use rf_m, only : omgrf, k0
+    use ode_m, only : nv
     use species_m, only : nspec0, nspec
     use diagnostics_m, only : verbosity
 
     implicit none
 
     type(eq_point), intent(in) :: eq
-    real(KIND=rkind), intent(in) :: nvec(3)
+    real(KIND=rkind), intent(in) :: v(nv)
     real(KIND=rkind), intent(out) :: dddx(3), dddk(3), dddw
 
     real(KIND=rkind) :: alpha(0:nspec), gamma(0:nspec)
-    real(KIND=rkind) :: n1, n3
+    real(KIND=rkind) :: n1, n3, nvec(3)
     real(KIND=rkind) :: p, t, dtdg(0:nspec)
     real(KIND=rkind) :: q,  dqda(0:nspec),  dqdg(0:nspec)
     real(KIND=rkind) :: q1, dq1da(0:nspec), dq1dg(0:nspec)
@@ -42,6 +43,7 @@
         gamma(is) = eq%gamma(is)
     end do
 
+    nvec = v(4:6)
     n3 = dot_product(nvec, eq%bunit)
     n1 = sqrt( sum((nvec-n3*eq%bunit)**2) )
 

@@ -3,7 +3,7 @@
 ! over ray parameter step, s, to calculate ray trajectory.
 !
 ! Note: ray loop is parallelized with OpenMP.  Results for each ray are written thread-safe
-!       to arrays in module ray_results_M ater each step
+!       to arrays in module ray_results_m after each step
 !
 !       All output to file or stdout in the parallel region is suppressed by setting
 !       verbosity = 0 in diagnostics_m. Primarily for debugging purposes, with a single
@@ -252,8 +252,8 @@
         npoints(iray) = nstep + 1
         initial_ray_power(iray) = ray_pwr_wt(iray)
         ray_trace_time(iray) = t_finish_ray - t_start_ray
-        end_residuals(iray) = residual(nstep,iray)
-        max_residuals(iray) = maxval(abs(residual(1:nstep,iray)))
+        end_residuals(iray) = residual(nstep+1,iray)
+        max_residuals(iray) = maxval(abs(residual(1:nstep+1,iray)))
         end_ray_parameter(iray) = v(7)
         ray_stop_flag(iray) = ray_stop%ode_stop_flag
         start_ray_vec(:,iray) = ray_vec(:,1,iray)

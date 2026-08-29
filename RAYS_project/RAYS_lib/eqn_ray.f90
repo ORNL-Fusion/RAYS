@@ -124,20 +124,17 @@
     dispersion_model: select case (trim(ray_deriv_name))
 
         case ('cold' )
-
     !      Derivatives of D for a cold plasma.
-           call deriv_cold(eq, nvec, dddx, dddk, dddw)
+           call deriv_cold(eq, v, dddx, dddk, dddw)
 
         case ('general' )
-
     !      Derivatives of D for a dispersion model warm_bessel
            call deriv_general(eq, v, dddx, dddk, dddw)
 
-        case ('numerical' )
+        case ('num' )
     !      Numerical differentiation.
     !      N.B. Must be called with v(), not just nvec.  Evaluates eq at other positions so v(1:3)
     !           is needed
-
            call deriv_num(eq, v, dddx, dddk, dddw)
 
         case default
@@ -152,13 +149,11 @@
 
 
 !   Group velocity.
-
     if ( dddw /= 0. ) then
        vg = -dddk / dddw
        vg0 = sqrt(sum(vg**2))
 !      Unit vector along the group velocity.
        vg_unit = vg / vg0
-!      write(6,'(a,1p3e12.4)') 'EQN_RAY: vg/|vg| =', vg_unit
     else
        call message('EQN_RAY: infinite group velocity, dddw = ', dddw, 1)
        ray_stop%stop_ode = .true.

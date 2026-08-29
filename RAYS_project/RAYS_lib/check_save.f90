@@ -63,7 +63,7 @@
 
 !   Calculate the residual.
 
-    resid = residual(eq, k1, k3)
+    resid = eval_residual(eq, k1, k3)
     call message ('check_save: residual', resid, 1)
     if (resid > dispersion_resid_limit) then
         ray_stop%stop_ode = .true.
@@ -80,13 +80,13 @@
     ray_derivatives: select case (trim(ray_deriv_name))
 
        case ('cold')
-       call deriv_cold(eq, nvec, dddx, dddk, dddw)
+       call deriv_cold(eq, v, dddx, dddk, dddw)
 
        case ('general')
            call deriv_general(eq, v, dddx, dddk, dddw)
 
        case ('num')
-           call deriv_num(eq, nvec, dddx, dddk, dddw)
+           call deriv_num(eq, v, dddx, dddk, dddw)
 
        case default
           write(0,*) 'check_save: unimplemented ray_derivatives =', trim(ray_deriv_name)
@@ -172,7 +172,7 @@
 
 contains
 
-    real(KIND=rkind) function residual(eq, k1, k3)
+    real(KIND=rkind) function eval_residual(eq, k1, k3)
 !      calculates the residual for given k1 and k3.
 !      get dielectric tensor from module suscep_m
 ! N.B. This function is different from the dispersion_function routines in the dispersion
@@ -229,7 +229,8 @@ contains
        do i = 1, 3; do j = 1, 3
           epsn(i,j) = eps_h(i,j) + cmplx(n(i)*n(j), zero, rkind) - &
                     & cmplx(int(i/j)*int(j/i), zero, rkind)*sum(n**2)
-          eps_norm(i,j) = abs( eps_h(i,j) ) + abs(n(i)*n(j))
+         eps_norm(i,j) = abs( eps_h(i,j) ) + abs(n(i)*n(j))
+!           eps_norm(i,j) = abs( eps_h(i,j) )
        end do; end do
 
 !      Determinant for 3X3 epsn:
@@ -241,7 +242,7 @@ contains
           stop 1
        end if
 
-       residual = abs(ctmp) / &
+       eval_residual = abs(ctmp) / &
           & ( eps_norm(3,3)*(eps_norm(1,1)*eps_norm(2,2)) &
           & + eps_norm(3,3)*(eps_norm(2,1)*eps_norm(1,2)) &
           & + eps_norm(3,2)*(eps_norm(1,1)*eps_norm(2,3)) &
@@ -250,6 +251,6 @@ contains
           & + eps_norm(3,1)*(eps_norm(2,2)*eps_norm(1,3)) )
 
        return
-    end function residual
+    end function eval_residual
 
  end subroutine check_save
