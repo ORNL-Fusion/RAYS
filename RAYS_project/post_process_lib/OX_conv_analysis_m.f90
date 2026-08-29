@@ -512,7 +512,7 @@ subroutine analyze_OX_conv(OX_restart_ray_data_file)
     integer :: i
 
     real(KIND=rkind) :: n_vec(3) ! use to check O vs X mode
-	logical :: mode(2) ! (O-mode, X-mode)
+	logical :: mode(2) ! Does n_vec match O-mode, X-mode of Appleton-Hartree?
     character(len=20) :: dispersion_model
 
 	type(eq_point) :: eq

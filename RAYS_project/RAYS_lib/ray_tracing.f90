@@ -89,7 +89,6 @@
 
     !    Save in ray_results_m
          ray_vec(:,1,iray) = v(:)
-         residual(1, iray) = resid ! Assume initial k really solves dispersion relation
 
          call message(1)
          call message ('trace_rays: initial (x,y,z)', v(1:3), 3, 1)
@@ -97,6 +96,7 @@
 
     !    Do some checking and save initial values.
          call check_save(sout, nv, v, resid, ray_stop)
+         residual(1, iray) = resid ! Don't assume initial k really solves dispersion relation
          if (ray_stop%stop_ode .eqv. .true.) then  ! Ray didn't start, initial conditions bad
             ray_stop_flag(iray) = ray_stop%ode_stop_flag
             npoints(iray) = 1 ! i.e. initial point

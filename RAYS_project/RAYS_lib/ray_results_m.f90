@@ -42,7 +42,7 @@
 
 ! ray data
     real(KIND=rkind), allocatable :: ray_vec(:,:,:) ! nv, max_number_of_points=nstep_max+1, nray
-    real(KIND=rkind), allocatable :: residual(:,:)  ! nstep_max, nray
+    real(KIND=rkind), allocatable :: residual(:,:)  ! nstep_max+1, nray
     integer, allocatable :: npoints(:)              ! nray
 
 ! Summary data
