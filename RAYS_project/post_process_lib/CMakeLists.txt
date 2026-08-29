@@ -21,3 +21,8 @@ target_link_libraries (post_process_lib
                       RAYS_lib math_functions spline
                       $<$<BOOL:${NetCDF_FOUND}>:NetCDF::NetCDF>
 )
+
+target_compile_options(RAYS_lib
+                       PRIVATE
+                       -O0 -g3 -fcheck=all -finit-real=snan -Wall
+)

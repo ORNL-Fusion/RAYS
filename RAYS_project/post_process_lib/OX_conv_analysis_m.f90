@@ -61,7 +61,7 @@
 		real(KIND=rkind) ::	nz_c
 		real(KIND=rkind) ::	rvec_restart(3) ! Position for X-mode restart
 		real(KIND=rkind) ::	nvec_restart(3) ! k vector for X-mode restart
-		real(KIND=rkind) ::	alphaX_cut ! omega_pe**2/Omga**2 at X-mode cutoff
+		real(KIND=rkind) ::	alpha_restart ! omega_pe**2/Omga**2 at X-mode restart
 
 		integer :: ray_number ! RAYS ray number for this ray
 		integer :: step_number ! ray step number at r_max
@@ -136,7 +136,7 @@ subroutine analyze_OX_conv(OX_restart_ray_data_file)
 	real(KIND=rkind) :: nvecz_c(3)
 	real(KIND=rkind) :: ny_c, nz_c
 	real(KIND=rkind) :: alphaX_cut
-	real(KIND=rkind) :: rvec_restart(3), nvec_restart(3)
+	real(KIND=rkind) :: alpha_restart, rvec_restart(3), nvec_restart(3)
 
 	logical :: found_max, found_Ocutoff, found_restart
 	integer :: iteration, i
@@ -167,8 +167,8 @@ subroutine analyze_OX_conv(OX_restart_ray_data_file)
 
 ! Find nearest point on O-mode cutoff surface i.e. alpha = 1
 		if (found_max) then
-			write(*,*) 'find Omode cutof'
-			call find_cutoff(r_max_ray, one, found_Ocutoff, r_cutoff_ray, iteration)
+			write(*,*) 'find location of Omode cutof'
+			call find_r_cutoff(r_max_ray, one, found_Ocutoff, r_cutoff_ray, iteration)
 			if(found_Ocutoff) then
 				conv_data_temp(i_ray)%r_cut = r_cutoff_ray
 			else
@@ -192,17 +192,18 @@ subroutine analyze_OX_conv(OX_restart_ray_data_file)
 				conv_data_temp(i_ray)%nz_c = nz_c
 
 ! Find restart point for X-mode
-				call restart_X_mode(r_cutoff_ray, ny_c, nz_c, found_restart, alphaX_cut,&
-			  					  & rvec_restart, nvec_restart)
+				call restart_X_mode(r_cutoff_ray, ny_c, nz_c, found_restart, &
+			  					  & alpha_restart, rvec_restart, nvec_restart)
 
  write(*,*) 'analyze_OX_conv: i_ray = ', i_ray, '  found_restart = ', found_restart
+ write(*,*) 'analyze_OX_conv: alpha_restart = ', alpha_restart
  write(*,*) 'analyze_OX_conv: rvec_restart = ', rvec_restart
  write(*,*) 'analyze_OX_conv: nvec_restart = ', nvec_restart
 
 			    restart: if (found_restart) then
 					number_of_rays_converted = number_of_rays_converted + 1
 					converted_ray_number(number_of_rays_converted) = i_ray
-    				conv_data_temp(i_ray)%alphaX_cut = alphaX_cut
+    				conv_data_temp(i_ray)%alpha_restart = alpha_restart
     				conv_data_temp(i_ray)%rvec_restart = rvec_restart
     				conv_data_temp(i_ray)%nvec_restart = nvec_restart
     			else
@@ -233,7 +234,7 @@ subroutine analyze_OX_conv(OX_restart_ray_data_file)
 		OX_conv_data(i)%nvecz_c = conv_data_temp(i_ray)%nvecz_c
 		OX_conv_data(i)%ny_c = conv_data_temp(i_ray)%ny_c
 		OX_conv_data(i)%nz_c = conv_data_temp(i_ray)%nz_c
-		OX_conv_data(i)%alphaX_cut = conv_data_temp(i_ray)%alphaX_cut
+		OX_conv_data(i)%alpha_restart = conv_data_temp(i_ray)%alpha_restart
 		OX_conv_data(i)%rvec_restart = conv_data_temp(i_ray)%rvec_restart
 		OX_conv_data(i)%nvec_restart = conv_data_temp(i_ray)%nvec_restart
 		OX_conv_data(i)%ray_number = conv_data_temp(i_ray)%ray_number
@@ -308,7 +309,8 @@ subroutine analyze_OX_conv(OX_restart_ray_data_file)
 !****************************************************************************
 
  subroutine find_Omode_cutoff(r_max_ray, found_Ocutoff, r_cutoff, iteration)
-! Find point on O-mode cutoff surface closest to r_max_ray by steepest ascent
+! Find point on O-mode cutoff (i.e. alpha = 1) surface closest to r_max_ray by
+! steepest ascent
 
    USE newtonR3_m, only : solve_newtonR3
 
@@ -436,8 +438,8 @@ subroutine analyze_OX_conv(OX_restart_ray_data_file)
 
 !****************************************************************************
 
- subroutine restart_X_mode(rvecO_cutoff, ny_c, nz_c, found_restart, alphaX,&
-                         & rvecX_restart, nvecX_restart)
+ subroutine restart_X_mode(rvecO_cutoff, ny_c, nz_c, found_restart, &
+                         & alphaX_restart, rvecX_restart, nvecX_restart)
 
 ! Calculate the initial conditions for the x-mode on high density side of the
 ! conversion layer.
@@ -448,19 +450,13 @@ subroutine analyze_OX_conv(OX_restart_ray_data_file)
 ! (these were also assumed the same at the O-mode cutoff surface to calculate the
 ! conversion coefficient).  For more discussion see notes "O-X conversion",11/21/2025.
 !
-! First we find the density for the X-mode cutoff (i.e. alphaX) by solving for the root
-! of the nx**0 coefficient of the Booker quartic at or above the alpha = 1 surface. Taking
-! the transverse components of n to be ny_ and nz_c
-! Then we follow grad(ne(r)) to the level alphaX, which is taken to be the restart
-! position of the X-mode -> rvecX_restart.  It may be that we need to move rvecX_restart
-! a bit along grad(ne(r)) to actually make X-mode propagate, but I'll try not doing that
-! at first.
-
-! First find the point on the high density side where the X-mode
-! starts to propagate. We take the restart location to be the in the direction of grad(n)
-! from the O-mode cutoff position, r_cut, found above.  We search a distane, s, along the
-! grad(n) vector until we find a root of the dispersion function. That will be the X-mode
-! cutoff.  Then extend it a little further so the X-mode is propagating.
+! First we find the density for the X-mode cutoff (i.e. alphaX_cut) by solving for the
+! root of the nx**0 coefficient of the Booker quartic at or above the alpha = 1 surface,
+! taking the transverse components of n to be ny_c and nz_c.
+! Then we follow grad(ne(r)) to the level alphaX_cut -> rvecX_cut.
+! Then to get into the X-mode propagation region, we nudge rvecX_restart
+! a bit along grad(ne(r)) a small distance s_nudge.  Construct a coordinate system at
+! rvecX_restart and solve the Booker quartic to get the grad(ne) component of n.
 
     use constants_m, only : rkind, zero, one, two
     use equilibrium_m, only : equilibrium, eq_point
@@ -474,10 +470,12 @@ subroutine analyze_OX_conv(OX_restart_ray_data_file)
 	real(KIND=rkind), intent(in) :: ny_c
 	real(KIND=rkind), intent(in) :: nz_c
 	logical, intent(out) :: found_restart
-	real(KIND=rkind), intent(out) :: alphaX ! (omega plasma/omega rf)**2 at X cutoff
+	real(KIND=rkind), intent(out) :: alphaX_restart ! (alpha at rvecX_restart)
 	real(KIND=rkind), intent(out) :: rvecX_restart(3)
 	real(KIND=rkind), intent(out) :: nvecX_restart(3)
 
+	real(KIND=rkind) :: alphaX_cut ! (omega plasma/omega rf)**2 at X cutoff
+	real(KIND=rkind) :: rvecX_cut(3)
 	real(KIND=rkind) :: theta ! angle between B and grad(n)
 	real(KIND=rkind) :: gamma ! |omega_c_e|/omega rf
 	real(KIND=rkind) :: v_temp(3)
@@ -492,26 +490,19 @@ subroutine analyze_OX_conv(OX_restart_ray_data_file)
 
 	real(KIND=rkind) :: ny, nz ! For testing only
 
-! 	real(KIND=rkind), intent(out) :: h_vec(3)
-! 	real(KIND=rkind) :: n_parallel, n_vertical, n_crit
 
-! ! Distance along grad(n) for X-mode cutoff
-! 	real(KIND=rkind) :: s_cut
-!
-! ! Maximum distance along grad(n) to search for X-mode cutoff with bisection
-!     real(KIND=rkind), parameter :: s_max = 0.02_rkind
-!
 ! Tolerance for finding s, distance along grad(n) for X-mode cutoff
     real(KIND=rkind), parameter :: bisection_eps = one*10d-6
 
-! ! Distance along grad(n) to extend the restart point past the X-mode cutoff
-! 	real(KIND=rkind), parameter :: s_extend = 0.001_rkind ! one millimeter
+! ! Distance along grad(n) to nudge the restart point past the X-mode cutoff
+!	real(KIND=rkind), parameter :: s_nudge = 0.0001_rkind ! tenth of millimeter
+	real(KIND=rkind), parameter :: s_nudge = 0.001_rkind ! millimeter
 
 ! Additional data to feed to solve_bisection
 	real(KIND=rkind) :: data(4)
 
 ! Data for find_Xmode_cutoff
-	logical :: found_alphaX
+	logical :: found_alphaX_cut
 	logical :: found_Xcutoff
 	real(KIND=rkind) :: rvecX_cutoff(3)
 
@@ -543,24 +534,31 @@ subroutine analyze_OX_conv(OX_restart_ray_data_file)
 	theta = pi/two - acos(dot_product(xc_unit, eq%bunit))
 	gamma = abs(eq%gamma(0))
 
-! Find density alphaX = (omega plasma/omega rf)**2 of X-mode cutoff
+! Find density alphaX_cut = (omega plasma/omega rf)**2 of X-mode cutoff
 
  write(*,*) ' '
- write(*,*) 'gamma = ', gamma, '  ny_c = ', ny_c, '  nz_c = ', nz_c, ',  theta = ', theta
-	call find_alphaX(gamma, ny_c, nz_c, theta, found_alphaX, alphaX)
-    if (.not. found_alphaX) return
+ write(*,*) 'restart_X_mode: gamma = ', gamma, '  ny_c = ', ny_c, '  nz_c = ', nz_c,&
+          & '  theta = ', theta
+	call find_alphaX_cut(gamma, ny_c, nz_c, theta, found_alphaX_cut, alphaX_cut)
+    if (.not. found_alphaX_cut) return
 
-! If alphaX = 1 then we already know the restart point
-	if (alphaX == one) then
+! If alphaX_cut = 1 then we already know the cutoff point
+	if (alphaX_cut == one) then
 		found_Xcutoff = .true.
 		rvecX_cutoff = rvecO_cutoff
 	else
-		call find_cutoff(rvecO_cutoff, alphaX, found_Xcutoff, rvecX_cutoff, iteration)
+		call find_r_cutoff(rvecO_cutoff, alphaX_cut, found_Xcutoff, rvecX_cutoff, iteration)
 		if (.not. found_Xcutoff) return
 	end if
 
+! Nudge X-mode restart point a tiny bit beyond the cutoff point
+    rvecX_restart = rvecX_cutoff + s_nudge*eq%gradns(:,0)/norm2(eq%gradns(:,0))
+    call equilibrium(rvecX_restart, eq)
+    alphaX_restart = eq%alpha(0)
+ write(*,*) 'restart_X_mode: alpha at X-mode restart = ', alphaX_restart
+ write(*,*) 'restart_X_mode: location of X-mode restart = ', rvecX_restart
+
 ! construct local coordinate system at X-mode restart point
-    call equilibrium(rvecX_cutoff, eq)
 	gamma = abs(eq%gamma(0))
 	xc_unit = eq%gradns(:,0)/norm2(eq%gradns(:, 0)) ! Unit vector along grad(ne)
 	v_temp = cross_product(eq%bunit, xc_unit) ! perpendicular to x and B, i.e. y direction
@@ -574,34 +572,28 @@ subroutine analyze_OX_conv(OX_restart_ray_data_file)
 		theta = acos(dot_product(zc_unit, eq%bunit))
 	end if
 
-! If theta = 0 and ny_c = 0 and alphaX = 1, then nx = 0 and no need to solve Booker
-	if (theta == zero .and. ny_c == zero .and. alphaX == one) then
-		nx_min = zero ! used for restart nx
-	else
-		call solve_Booker_nx_vs_theta_ny_nz(eq, theta, ny_c, nz_c, nx_book)
+	call solve_Booker_nx_vs_theta_ny_nz(eq, theta, ny_c, nz_c, nx_book)
 
 ! Sort roots to find X-mode propagating in the direction of grad(ne).  X-mode roots should
 ! be real.  There should be 2 X-mode roots, the mode converted root will be the smallest
 ! positive one.
-		dispersion_model = 'cold'
-		nx_min = huge(one)
-		do i = 1,4
-			if (abs(nx_book(i)%im) > two*tiny(one)) cycle
-			nx_c = nx_book(i)%re
-			n_vec = (/nx_c, ny_c, nz_c/)
-			call classify_mode_OX(eq, dispersion_model, n_vec, mode)
+	dispersion_model = 'cold'
+	nx_min = huge(one)
+	do i = 1,4
+		if (abs(nx_book(i)%im) > two*tiny(one)) cycle
+		nx_c = nx_book(i)%re
+		n_vec = (/nx_c, ny_c, nz_c/)
+		call classify_mode_OX(eq, dispersion_model, n_vec, mode)
  write(*,*) 'restart_X_mode: i = ', i, ' nx_book(i)**2 = ', nx_book(i)**2, '  mode = ', mode
-			if (mode(2) .eqv. .true. .and. nx_c <= nx_min .and.  nx_c >= zero) then
-				nx_min = nx_c
-			end if
-		end do
-	end if
+		if (mode(2) .eqv. .true. .and. nx_c <= nx_min .and.  nx_c >= zero) then
+			nx_min = nx_c
+		end if
+	end do
 
 	found_restart = .false.
 	if (nx_min == huge(one)) return
 
 	found_restart = .true.
-	rvecX_restart = rvecX_cutoff
 	nvecX_restart = nx_min*xc_unit + ny_c*yc_unit + nz_c*zc_unit
 
 	return
@@ -609,7 +601,7 @@ subroutine analyze_OX_conv(OX_restart_ray_data_file)
 
 !****************************************************************************
 
-  subroutine find_alphaX(Y, ny, nz, theta, found_Xcutoff, alphaX)
+  subroutine find_alphaX_cut(Y, ny, nz, theta, found_Xcutoff, alphaX)
 ! Find alphaX -> (omega plasma/omega rf)**2 at X cutoff by solving cubic in alphaX
 ! for roots of nx**0 coefficient of the Booker quartic.
 ! N.B. Going with Booker quartic nontation Y <-> |gamma(0)| -> in RAYS eq
@@ -638,7 +630,7 @@ subroutine analyze_OX_conv(OX_restart_ray_data_file)
 	  & abs(nz) >= nzc) then
 		alphaX = one
 		found_Xcutoff = .true.
-		write(*,*) 'find_alphaX: alphaX = ', alphaX
+		write(*,*) 'find_alphaX_cut: alphaX_cut = ', alphaX
 		return
 	end if
 
@@ -652,8 +644,8 @@ subroutine analyze_OX_conv(OX_restart_ray_data_file)
 	degree = 3
 
 	call rpoly(coeffs, degree, alpha_re, alpha_im, istat)
-!  write(*,*) 'find_Xmode_cutoff: alpha_re = ', alpha_re
-!  write(*,*) 'find_Xmode_cutoff: alpha_im = ', alpha_im
+ write(*,*) 'find_Xmode_cutoff: alpha_re = ', alpha_re
+ write(*,*) 'find_Xmode_cutoff: alpha_im = ', alpha_im
 
 ! Sort to find X-mode cutoff root.  There should be exactly one real root >= 1 which is
 ! the X-mode.  However if theta is small rpoly can give an approximate root that is slightly
@@ -673,21 +665,21 @@ subroutine analyze_OX_conv(OX_restart_ray_data_file)
 	if (alpha_max > one - alpha_tolerence) then
 		found_Xcutoff = .true.
 		alphaX = max(alpha_max, one)
-		write(*,*) 'find_alphaX: alphaX = ', alphaX
+		write(*,*) 'find_alphaX_cut: alphaX_cut = ', alphaX
 		return
 	end if
 
 ! Error found no real root >= 1
-	write(*,*) 'find_alphaX: No x-cutoff found with alpha >= 1'
-	write(*,*) 'find_alphaX: alpha_re = ', alpha_re
-	write(*,*) 'find_alphaX: alpha_im = ', alpha_im
+	write(*,*) 'find_alphaX_cut: No x-cutoff found with alpha >= 1'
+	write(*,*) 'find_alphaX_cut: alpha_re = ', alpha_re
+	write(*,*) 'find_alphaX_cut: alpha_im = ', alpha_im
 
 	return
-  end subroutine find_alphaX
+  end subroutine find_alphaX_cut
 
 !****************************************************************************
 
- subroutine find_cutoff(r_start, alpha, found_cutoff, r_cutoff, iteration)
+ subroutine find_r_cutoff(r_start, alpha, found_cutoff, r_cutoff, iteration)
 ! Find point on cutoff surface closest to r_start by steepest ascent
 
    USE newtonR3_m, only : solve_newtonR3
@@ -710,13 +702,13 @@ subroutine analyze_OX_conv(OX_restart_ray_data_file)
 	if (iteration >= 0) then
 		found_cutoff = .true.
 		r_cutoff = r_cut
-		write(*,*) 'r_start = ', r_start
-		write(*,*) 'r_cutoff = ', r_cutoff
-		write(*,*) 'iteration = ', iteration
+		write(*,*) 'find_r_cutoff: r_start = ', r_start
+		write(*,*) 'find_r_cutoff: r_cutoff = ', r_cutoff
+		write(*,*) 'find_r_cutoff: iteration = ', iteration
 	end if
 
 	return
- end subroutine find_cutoff
+ end subroutine find_r_cutoff
 
 !****************************************************************************
 
@@ -800,7 +792,7 @@ subroutine analyze_OX_conv(OX_restart_ray_data_file)
 	    & status='replace', form='formatted')
 
 	write(ray_init_unit,*) '&input_ray_data_list'
-	write(ray_init_unit,*) '  scale_n_vecs =  .true.'
+	write(ray_init_unit,*) '  scale_n_vecs =  .false.'
 	write(ray_init_unit,*) '  n_rays_in = ', number_of_rays_converted
 
 	write(ray_init_unit,*) '  rvec_in = '
@@ -848,7 +840,7 @@ subroutine analyze_OX_conv(OX_restart_ray_data_file)
 		write(*,*) 'ray ', i_ray, '  conv coeff = ', OX_conv_data(i_ray)%conv_coeff, &
 			 & 'ny_c = ', norm2(OX_conv_data(i_ray)%nvecy_c), &
 			 & 'nz_c = ', norm2(OX_conv_data(i_ray)%nvecz_c)
-		write(*,*) 'ray ', i_ray, '  alphaX_cut = ', OX_conv_data(i_ray)%alphaX_cut
+		write(*,*) 'ray ', i_ray, '  alpha_restart = ', OX_conv_data(i_ray)%alpha_restart
 		write(*,*) 'ray ', i_ray, '  r_restart = ', OX_conv_data(i_ray)%rvec_restart
 		write(*,*) 'ray ', i_ray, '  n_restart = ', OX_conv_data(i_ray)%nvec_restart
 
@@ -856,7 +848,7 @@ subroutine analyze_OX_conv(OX_restart_ray_data_file)
 		write(OX_conv_unit,*) 'ray ', i_ray, '  conv coeff = ', OX_conv_data(i_ray)%conv_coeff, &
 			 & 'ny_c = ', norm2(OX_conv_data(i_ray)%nvecy_c), &
 			 & 'nz_c = ', norm2(OX_conv_data(i_ray)%nvecz_c)
-		write(OX_conv_unit,*) 'ray ', i_ray, '  alphaX_cut = ', OX_conv_data(i_ray)%alphaX_cut
+		write(OX_conv_unit,*) 'ray ', i_ray, '  alpha_restart = ', OX_conv_data(i_ray)%alpha_restart
 		write(OX_conv_unit,*) 'ray ', i_ray, '  r_restart = ', OX_conv_data(i_ray)%rvec_restart
 		write(OX_conv_unit,*) 'ray ', i_ray, '  n_restart = ', OX_conv_data(i_ray)%nvec_restart
 

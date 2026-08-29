@@ -254,7 +254,8 @@ contains
 ! a set of data values for each step along the ray (e.g. ne, omega_ce/omega_rf, psi...).
 ! That data is then written to a netcdf file for analysis or plotting by a graphics code.
 ! There is a lot of data, and this subroutine is probably only useful for small numbers
-! of rays.  The data can be plotted using plot_ray_diags.py which is located in RAYS/graphics_RAYS
+! of rays.  The data can be plotted using plot_ray_diags.py which is located in
+! RAYS/graphics_RAYS
 
     use constants_m, only : rkind, e
     use diagnostics_m, only : integrate_eq_gradients, message, text_message, verbosity
@@ -262,6 +263,7 @@ contains
     use axisym_toroid_eq_m, only : axisym_toroid_psi
     use equilibrium_m, only : equilibrium, eq_point
     use rf_m, only : omgrf, k0, ray_dispersion_model
+    use ode_m, only : nv, ray_deriv_name
     use damping_m, only : damping_model, damping
     use ray_results_m, only : number_of_rays, max_number_of_points, dim_v_vector, npoints,&
         & ray_vec, residual_results => residual, date_vector, RAYS_run_label
@@ -272,6 +274,7 @@ contains
     integer :: iray, istep
     type(eq_point) :: eq
 
+    real(KIND=rkind) :: v(nv)
     real(KIND=rkind) :: rvec(3)
     real(KIND=rkind) :: kvec(3), k1, k3
     real(KIND=rkind) :: nvec(3), n1, n3
@@ -352,10 +355,11 @@ contains
 
         step_loop: do istep = 1, npoints(iray)
 
-			v6 = ray_vec(1:6, istep, iray)
+			v = ray_vec(:, istep, iray)
+			v6 = v(1:6)
         	rvec(:) = v6(1:3)
         	kvec(:) = v6(4:6)
-        	s(istep, iray) = ray_vec(7, istep, iray)
+        	s(istep, iray) = v(7)
 
         	R(istep, iray) = sqrt(rvec(1)**2 + rvec(2)**2)
        		Z(istep, iray) = rvec(3)

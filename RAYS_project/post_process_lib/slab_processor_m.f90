@@ -144,13 +144,15 @@ contains
 ! (DBB 8/28/2025)  This thing is modified from the axisymmetric version
 !                  ray_detailed_diagnostics
 
-    use constants_m, only : rkind, e
+    use constants_m, only : rkind, one, e
     use diagnostics_m, only : integrate_eq_gradients, message, text_message, verbosity
     use species_m, only : nspec,ms
     use equilibrium_m, only : equilibrium, eq_point
     use rf_m, only : omgrf, k0, ray_dispersion_model
+    use ode_m, only : nv, ray_deriv_name
     use damping_m, only : damping_model, damping
-    use ray_results_m, only : number_of_rays, max_number_of_points, dim_v_vector, npoints,&
+    use ray_results_m, only : n_rays => number_of_rays, &
+        & n_points_max => max_number_of_points, dim_v_vector, npoints,&
         & ray_vec, residual_results => residual, date_vector, RAYS_run_label
     use netcdf
 
@@ -159,6 +161,7 @@ contains
     integer :: iray, istep
     type(eq_point) :: eq
 
+    real(KIND=rkind) :: v(nv)
     real(KIND=rkind) :: rvec(3)
     real(KIND=rkind) :: kvec(3), k1, k3
     real(KIND=rkind) :: nvec(3), n1, n3
@@ -169,7 +172,7 @@ contains
     real(KIND=rkind) :: vg(3)
     real(KIND=rkind) :: ksi(0:nspec), ki
 
-! Needed to call deriv_cold()
+! Needed to call deriv
     real(KIND=rkind) :: dddx(3), dddk(3), dddw
 
 ! netCDF Declarations
@@ -178,13 +181,16 @@ contains
 ! Declarations: dimensions
     integer, parameter :: n_dims = 4
     integer :: d8 = 8
-    integer :: number_of_rays_id, max_number_of_points_id, dim_v_vector_id, d8_id
+    integer :: n_rays_id, n_points_max_id, dim_v_vector_id, d8_id
 
 ! Declarations: variable IDs
-    integer, parameter :: n_vars =  19
+    integer, parameter :: n_vars =  29
     integer :: date_vector_id, npoints_id, s_id, ne_id, Te_kev_id, modB_id, alpha_e_id, &
              & gamma_e_id, X_id, Y_id, Z_id, nx_id, ny_id, nz_id, n_par_id, n_perp_id, &
-             & P_absorbed_id, n_imag_id, xi_0_id, xi_1_id, xi_2_id, residual_id
+             & P_absorbed_id, n_imag_id, xi_0_id, xi_1_id, xi_2_id, residual_id, &
+             & dddx_x_id, dddx_y_id, dddx_z_id, dddk_x_id, dddk_y_id, dddk_z_id, dddw_id, &
+             & vg_x_id, vg_y_id, vg_z_id
+
 !   Declare local arrays
 !    integer :: date_vector - from ray_results
 !    integer :: npoints - from ray_results
@@ -208,44 +214,104 @@ contains
     real(kind=rkind), allocatable :: xi_1(:,:)
     real(kind=rkind), allocatable :: xi_2(:,:)
     real(kind=rkind), allocatable :: residual(:,:)
+    real(kind=rkind), allocatable :: dddx_x(:,:)
+    real(kind=rkind), allocatable :: dddx_y(:,:)
+    real(kind=rkind), allocatable :: dddx_z(:,:)
+    real(kind=rkind), allocatable :: dddk_x(:,:)
+    real(kind=rkind), allocatable :: dddk_y(:,:)
+    real(kind=rkind), allocatable :: dddk_z(:,:)
+    real(kind=rkind), allocatable :: dddw_w(:,:)
+    real(kind=rkind), allocatable :: vg_x(:,:)
+    real(kind=rkind), allocatable :: vg_y(:,:)
+    real(kind=rkind), allocatable :: vg_z(:,:)
 
  !  File name for  output
     character(len=128) :: out_filename
+
+!***********************************
+
+    interface deriv_cold
+       subroutine deriv_cold(eq, nvec, dddx, dddk, dddw)
+          use constants_m, only : rkind
+          use equilibrium_m, only : equilibrium, eq_point
+          type(eq_point), intent(in) :: eq
+          real(KIND=rkind), intent(in) :: nvec(3)
+          real(KIND=rkind), intent(out) :: dddx(3), dddk(3), dddw
+       end subroutine deriv_cold
+    end interface deriv_cold
+
+    interface deriv_num
+       subroutine deriv_num(eq, v, dddx, dddk, dddw)
+            use constants_m, only : rkind, clight
+            use equilibrium_m, only : equilibrium, eq_point, write_eq_point
+            use rf_m, only : omgrf, k0, ray_dispersion_model
+            use ode_m, only : nv
+            use diagnostics_m, only : message_unit, verbosity
+            type(eq_point), intent(in) :: eq
+            real(KIND=rkind), intent(in) :: v(nv)
+            real(KIND=rkind), intent(out) :: dddx(3), dddk(3), dddw
+       end subroutine deriv_num
+    end interface deriv_num
+
+    interface deriv_general
+       subroutine deriv_general(eq, v, dddx, dddk, dddw)
+            use constants_m, only : rkind, clight
+            use equilibrium_m, only : equilibrium, eq_point, write_eq_point
+            use rf_m, only : omgrf, k0, ray_dispersion_model
+            use ode_m, only : nv
+            use diagnostics_m, only : message_unit, verbosity
+            type(eq_point), intent(in) :: eq
+            real(KIND=rkind), intent(in) :: v(nv)
+            real(KIND=rkind), intent(out) :: dddx(3), dddk(3), dddw
+       end subroutine deriv_general
+    end interface deriv_general
+!***********************************
 
     if (verbosity > 0) call text_message('Writing ray_detailed_diagnostics')
     out_filename = 'ray_detailed_diagnostics.'//trim(RAYS_run_label)//'.nc'
 
 !   Allocate local arrays
-!    allocate(npoints(number_of_rays))
-    allocate(s(max_number_of_points,number_of_rays),source=0.0_rkind)
-    allocate(ne(max_number_of_points,number_of_rays),source=0.0_rkind)
-    allocate(Te_kev(max_number_of_points,number_of_rays),source=0.0_rkind)
-    allocate(modB(max_number_of_points,number_of_rays),source=0.0_rkind)
-    allocate(alpha_e(max_number_of_points,number_of_rays),source=0.0_rkind)
-    allocate(gamma_e(max_number_of_points,number_of_rays),source=0.0_rkind)
-    allocate(X(max_number_of_points,number_of_rays),source=0.0_rkind)
-    allocate(Y(max_number_of_points,number_of_rays),source=0.0_rkind)
-    allocate(Z(max_number_of_points,number_of_rays),source=0.0_rkind)
-    allocate(nx(max_number_of_points,number_of_rays),source=0.0_rkind)
-    allocate(ny(max_number_of_points,number_of_rays),source=0.0_rkind)
-    allocate(nz(max_number_of_points,number_of_rays),source=0.0_rkind)
-    allocate(n_par(max_number_of_points,number_of_rays),source=0.0_rkind)
-    allocate(n_perp(max_number_of_points,number_of_rays),source=0.0_rkind)
-    allocate(P_absorbed(max_number_of_points,number_of_rays),source=0.0_rkind)
-    allocate(n_imag(max_number_of_points,number_of_rays),source=0.0_rkind)
-    allocate(xi_0(max_number_of_points,number_of_rays),source=0.0_rkind)
-    allocate(xi_1(max_number_of_points,number_of_rays),source=0.0_rkind)
-    allocate(xi_2(max_number_of_points,number_of_rays),source=0.0_rkind)
-    allocate(residual(max_number_of_points,number_of_rays),source=0.0_rkind)
+!    allocate(npoints(n_rays))
+    allocate(s(n_points_max,n_rays),source=0.0_rkind)
+    allocate(ne(n_points_max,n_rays),source=0.0_rkind)
+    allocate(Te_kev(n_points_max,n_rays),source=0.0_rkind)
+    allocate(modB(n_points_max,n_rays),source=0.0_rkind)
+    allocate(alpha_e(n_points_max,n_rays),source=0.0_rkind)
+    allocate(gamma_e(n_points_max,n_rays),source=0.0_rkind)
+    allocate(X(n_points_max,n_rays),source=0.0_rkind)
+    allocate(Y(n_points_max,n_rays),source=0.0_rkind)
+    allocate(Z(n_points_max,n_rays),source=0.0_rkind)
+    allocate(nx(n_points_max,n_rays),source=0.0_rkind)
+    allocate(ny(n_points_max,n_rays),source=0.0_rkind)
+    allocate(nz(n_points_max,n_rays),source=0.0_rkind)
+    allocate(n_par(n_points_max,n_rays),source=0.0_rkind)
+    allocate(n_perp(n_points_max,n_rays),source=0.0_rkind)
+    allocate(P_absorbed(n_points_max,n_rays),source=0.0_rkind)
+    allocate(n_imag(n_points_max,n_rays),source=0.0_rkind)
+    allocate(xi_0(n_points_max,n_rays),source=0.0_rkind)
+    allocate(xi_1(n_points_max,n_rays),source=0.0_rkind)
+    allocate(xi_2(n_points_max,n_rays),source=0.0_rkind)
+    allocate(residual(n_points_max,n_rays),source=0.0_rkind)
+    allocate(dddx_x(n_points_max,n_rays),source=0.0_rkind)
+    allocate(dddx_y(n_points_max,n_rays),source=0.0_rkind)
+    allocate(dddx_z(n_points_max,n_rays),source=0.0_rkind)
+    allocate(dddk_x(n_points_max,n_rays),source=0.0_rkind)
+    allocate(dddk_y(n_points_max,n_rays),source=0.0_rkind)
+    allocate(dddk_z(n_points_max,n_rays),source=0.0_rkind)
+    allocate(dddw_w(n_points_max,n_rays),source=0.0_rkind)
+    allocate(vg_x(n_points_max,n_rays),source=0.0_rkind)
+    allocate(vg_y(n_points_max,n_rays),source=0.0_rkind)
+    allocate(vg_z(n_points_max,n_rays),source=0.0_rkind)
 
-    ray_loop: do iray = 1, number_of_rays
+    ray_loop: do iray = 1, n_rays
 
         step_loop: do istep = 1, npoints(iray)
 
-			v6 = ray_vec(1:6, istep, iray)
+			v = ray_vec(:, istep, iray)
+			v6 = v(1:6)
         	rvec(:) = v6(1:3)
         	kvec(:) = v6(4:6)
-        	s(istep, iray) = ray_vec(7, istep, iray)
+        	s(istep, iray) = v(7)
 
         	X(istep, iray) = rvec(1)
         	Y(istep, iray) = rvec(2)
@@ -278,7 +344,7 @@ contains
 			!   First, calculate dD/dk, dD/dx, and dD/d(omega)
 
 					if ( ray_dispersion_model == 'cold' ) then
-					   call deriv_cold(eq, nvec, dddx, dddk, dddw)
+					   call deriv_cold(eq, v, dddx, dddk, dddw)
 					else
 					   write(*,*) 'ray_detailed_diagnostics_slab: dispersion_model = ', &
 					       & ray_dispersion_model
@@ -307,6 +373,48 @@ contains
 				xi_2(istep, iray) = (omgrf+2.*eq%omgc(0))/(k3*vth)
 			end if
 
+		!   Calculate dD/dk, dD/dx, and dD/d(omega)
+
+			dispersion_model: select case (trim(ray_deriv_name))
+
+				case ('cold' )
+			!      Derivatives of D for a cold plasma.
+				   call deriv_cold(eq, v, dddx, dddk, dddw)
+
+				case ('general' )
+			!      Derivatives of D for a dispersion model warm_bessel
+				   call deriv_general(eq, v, dddx, dddk, dddw)
+
+				case ('num' )
+			!      Numerical differentiation.
+			!      N.B. Must be called with v(), not just nvec.  Evaluates eq at other
+			!      positions so v(1:3) is needed
+				   call deriv_num(eq, v, dddx, dddk, dddw)
+
+				case default
+				   write(*,*) 'EQN_RAY: invalid value, ray_deriv_name = ', ray_deriv_name
+				   stop 1
+			end select dispersion_model
+
+			dddx_x(istep, iray) = dddx(1)
+			dddx_y(istep, iray) = dddx(2)
+			dddx_z(istep, iray) = dddx(3)
+			dddk_x(istep, iray) = dddk(1)
+			dddk_y(istep, iray) = dddk(2)
+			dddk_z(istep, iray) = dddk(3)
+			dddw_w(istep, iray) = dddw
+
+		!   Group velocity.
+			if ( dddw /= 0. ) then
+			   vg_x(istep, iray) = -dddk(1) / dddw
+			   vg_y(istep, iray) = -dddk(2) / dddw
+			   vg_z(istep, iray) = -dddk(3) / dddw
+			else
+			   vg_x(istep, iray) = huge(one)
+			   vg_y(istep, iray) = huge(one)
+			   vg_z(istep, iray) = huge(one)
+			end if
+
 		end do step_loop
 
 	end do ray_loop
@@ -317,34 +425,44 @@ contains
     call check( nf90_create(trim(out_filename), nf90_clobber, ncid) )
 
 !   Define NC dimensions
-    call check( nf90_def_dim(ncid, 'number_of_rays', number_of_rays, number_of_rays_id))
-    call check( nf90_def_dim(ncid, 'max_number_of_points', max_number_of_points, max_number_of_points_id))
+    call check( nf90_def_dim(ncid, 'number_of_rays', n_rays, n_rays_id))
+    call check( nf90_def_dim(ncid, 'n_points_max', n_points_max, n_points_max_id))
     call check( nf90_def_dim(ncid, 'dim_v_vector', dim_v_vector, dim_v_vector_id))
     call check( nf90_def_dim(ncid, 'd8', 8, d8_id))
 
 ! Define NC variables
     call check( nf90_def_var(ncid, 'date_vector', NF90_INT, [d8_id], date_vector_id))
-    call check( nf90_def_var(ncid, 'npoints', NF90_INT, [number_of_rays_id], npoints_id))
-    call check( nf90_def_var(ncid, 's', NF90_DOUBLE, [max_number_of_points_id,number_of_rays_id], s_id))
-    call check( nf90_def_var(ncid, 'ne', NF90_DOUBLE, [max_number_of_points_id,number_of_rays_id], ne_id))
-    call check( nf90_def_var(ncid, 'Te_kev', NF90_DOUBLE, [max_number_of_points_id,number_of_rays_id], Te_kev_id))
-    call check( nf90_def_var(ncid, 'modB', NF90_DOUBLE, [max_number_of_points_id,number_of_rays_id], modB_id))
-    call check( nf90_def_var(ncid, 'alpha_e', NF90_DOUBLE, [max_number_of_points_id,number_of_rays_id], alpha_e_id))
-    call check( nf90_def_var(ncid, 'gamma_e', NF90_DOUBLE, [max_number_of_points_id,number_of_rays_id], gamma_e_id))
-    call check( nf90_def_var(ncid, 'X', NF90_DOUBLE, [max_number_of_points_id,number_of_rays_id], X_id))
-    call check( nf90_def_var(ncid, 'Y', NF90_DOUBLE, [max_number_of_points_id,number_of_rays_id], Y_id))
-    call check( nf90_def_var(ncid, 'Z', NF90_DOUBLE, [max_number_of_points_id,number_of_rays_id], Z_id))
-    call check( nf90_def_var(ncid, 'nx', NF90_DOUBLE, [max_number_of_points_id,number_of_rays_id], nx_id))
-    call check( nf90_def_var(ncid, 'ny', NF90_DOUBLE, [max_number_of_points_id,number_of_rays_id], ny_id))
-    call check( nf90_def_var(ncid, 'nz', NF90_DOUBLE, [max_number_of_points_id,number_of_rays_id], nz_id))
-    call check( nf90_def_var(ncid, 'n_par', NF90_DOUBLE, [max_number_of_points_id,number_of_rays_id], n_par_id))
-    call check( nf90_def_var(ncid, 'n_perp', NF90_DOUBLE, [max_number_of_points_id,number_of_rays_id], n_perp_id))
-    call check( nf90_def_var(ncid, 'P_absorbed', NF90_DOUBLE, [max_number_of_points_id,number_of_rays_id], P_absorbed_id))
-    call check( nf90_def_var(ncid, 'n_imag', NF90_DOUBLE, [max_number_of_points_id,number_of_rays_id], n_imag_id))
-    call check( nf90_def_var(ncid, 'xi_0', NF90_DOUBLE, [max_number_of_points_id,number_of_rays_id], xi_0_id))
-    call check( nf90_def_var(ncid, 'xi_1', NF90_DOUBLE, [max_number_of_points_id,number_of_rays_id], xi_1_id))
-    call check( nf90_def_var(ncid, 'xi_2', NF90_DOUBLE, [max_number_of_points_id,number_of_rays_id], xi_2_id))
-    call check( nf90_def_var(ncid, 'residual', NF90_DOUBLE, [max_number_of_points_id,number_of_rays_id], residual_id))
+    call check( nf90_def_var(ncid, 'npoints', NF90_INT, [n_rays_id], npoints_id))
+    call check( nf90_def_var(ncid, 's', NF90_DOUBLE, [n_points_max_id,n_rays_id], s_id))
+    call check( nf90_def_var(ncid, 'ne', NF90_DOUBLE, [n_points_max_id,n_rays_id], ne_id))
+    call check( nf90_def_var(ncid, 'Te_kev', NF90_DOUBLE, [n_points_max_id,n_rays_id], Te_kev_id))
+    call check( nf90_def_var(ncid, 'modB', NF90_DOUBLE, [n_points_max_id,n_rays_id], modB_id))
+    call check( nf90_def_var(ncid, 'alpha_e', NF90_DOUBLE, [n_points_max_id,n_rays_id], alpha_e_id))
+    call check( nf90_def_var(ncid, 'gamma_e', NF90_DOUBLE, [n_points_max_id,n_rays_id], gamma_e_id))
+    call check( nf90_def_var(ncid, 'X', NF90_DOUBLE, [n_points_max_id,n_rays_id], X_id))
+    call check( nf90_def_var(ncid, 'Y', NF90_DOUBLE, [n_points_max_id,n_rays_id], Y_id))
+    call check( nf90_def_var(ncid, 'Z', NF90_DOUBLE, [n_points_max_id,n_rays_id], Z_id))
+    call check( nf90_def_var(ncid, 'nx', NF90_DOUBLE, [n_points_max_id,n_rays_id], nx_id))
+    call check( nf90_def_var(ncid, 'ny', NF90_DOUBLE, [n_points_max_id,n_rays_id], ny_id))
+    call check( nf90_def_var(ncid, 'nz', NF90_DOUBLE, [n_points_max_id,n_rays_id], nz_id))
+    call check( nf90_def_var(ncid, 'n_par', NF90_DOUBLE, [n_points_max_id,n_rays_id], n_par_id))
+    call check( nf90_def_var(ncid, 'n_perp', NF90_DOUBLE, [n_points_max_id,n_rays_id], n_perp_id))
+    call check( nf90_def_var(ncid, 'P_absorbed', NF90_DOUBLE, [n_points_max_id,n_rays_id], P_absorbed_id))
+    call check( nf90_def_var(ncid, 'n_imag', NF90_DOUBLE, [n_points_max_id,n_rays_id], n_imag_id))
+    call check( nf90_def_var(ncid, 'xi_0', NF90_DOUBLE, [n_points_max_id,n_rays_id], xi_0_id))
+    call check( nf90_def_var(ncid, 'xi_1', NF90_DOUBLE, [n_points_max_id,n_rays_id], xi_1_id))
+    call check( nf90_def_var(ncid, 'xi_2', NF90_DOUBLE, [n_points_max_id,n_rays_id], xi_2_id))
+    call check( nf90_def_var(ncid, 'residual', NF90_DOUBLE, [n_points_max_id,n_rays_id], residual_id))
+    call check( nf90_def_var(ncid, 'dddx_x', NF90_DOUBLE, [n_points_max_id,n_rays_id], dddx_x_id))
+    call check( nf90_def_var(ncid, 'dddx_y', NF90_DOUBLE, [n_points_max_id,n_rays_id], dddx_y_id))
+    call check( nf90_def_var(ncid, 'dddx_z', NF90_DOUBLE, [n_points_max_id,n_rays_id], dddx_z_id))
+    call check( nf90_def_var(ncid, 'dddk_x', NF90_DOUBLE, [n_points_max_id,n_rays_id], dddk_x_id))
+    call check( nf90_def_var(ncid, 'dddk_y', NF90_DOUBLE, [n_points_max_id,n_rays_id], dddk_y_id))
+    call check( nf90_def_var(ncid, 'dddk_z', NF90_DOUBLE, [n_points_max_id,n_rays_id], dddk_z_id))
+    call check( nf90_def_var(ncid, 'dddw_w', NF90_DOUBLE, [n_points_max_id,n_rays_id], dddw_id))
+    call check( nf90_def_var(ncid, 'vg_x', NF90_DOUBLE, [n_points_max_id,n_rays_id], vg_x_id))
+    call check( nf90_def_var(ncid, 'vg_y', NF90_DOUBLE, [n_points_max_id,n_rays_id], vg_y_id))
+    call check( nf90_def_var(ncid, 'vg_z', NF90_DOUBLE, [n_points_max_id,n_rays_id], vg_z_id))
 
 ! Put global attributes
     call check( nf90_put_att(ncid, NF90_GLOBAL, 'RAYS_run_label', RAYS_run_label))
@@ -373,6 +491,16 @@ call check( nf90_enddef(ncid))
     call check( nf90_put_var(ncid, xi_0_id, xi_0))
     call check( nf90_put_var(ncid, xi_1_id, xi_1))
     call check( nf90_put_var(ncid, xi_2_id, xi_2))
+    call check( nf90_put_var(ncid, dddx_x_id, dddx_x))
+    call check( nf90_put_var(ncid, dddx_y_id, dddx_y))
+    call check( nf90_put_var(ncid, dddx_z_id, dddx_z))
+    call check( nf90_put_var(ncid, dddk_x_id, dddk_x))
+    call check( nf90_put_var(ncid, dddk_y_id, dddk_y))
+    call check( nf90_put_var(ncid, dddk_z_id, dddk_z))
+    call check( nf90_put_var(ncid, dddw_id, dddw_w))
+    call check( nf90_put_var(ncid, vg_x_id, vg_x))
+    call check( nf90_put_var(ncid, vg_y_id, vg_y))
+    call check( nf90_put_var(ncid, vg_z_id, vg_z))
     call check( nf90_put_var(ncid, residual_id, residual))
 
 !   Close the NC file

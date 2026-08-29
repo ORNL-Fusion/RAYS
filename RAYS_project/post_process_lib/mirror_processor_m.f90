@@ -248,6 +248,7 @@ contains
     use multiple_mirror_eq_m, only : multiple_mirror_Aphi
     use equilibrium_m, only : equilibrium, eq_point
     use rf_m, only : omgrf, k0, ray_dispersion_model
+    use ode_m, only : nv, ray_deriv_name
     use damping_m, only : damping_model, damping
     use ray_results_m, only : number_of_rays, max_number_of_points, dim_v_vector, npoints,&
         & ray_vec, residual_results => residual, date_vector, RAYS_run_label
@@ -258,6 +259,7 @@ contains
     integer :: iray, istep
     type(eq_point) :: eq
 
+    real(KIND=rkind) :: v(nv)
     real(KIND=rkind) :: rvec(3)
     real(KIND=rkind) :: kvec(3), k1, k3
     real(KIND=rkind) :: nvec(3), n1, n3
@@ -338,10 +340,11 @@ contains
 
         step_loop: do istep = 1, npoints(iray)
 
-			v6 = ray_vec(1:6, istep, iray)
+			v = ray_vec(:, istep, iray)
+			v6 = v(1:6)
         	rvec(:) = v6(1:3)
         	kvec(:) = v6(4:6)
-        	s(istep, iray) = ray_vec(7, istep, iray)
+        	s(istep, iray) = v(7)
 
         	R(istep, iray) = sqrt(rvec(1)**2 + rvec(2)**2)
        		Z(istep, iray) = rvec(3)
@@ -371,7 +374,7 @@ contains
 			!   First, calculate dD/dk, dD/dx, and dD/d(omega)
 
 					if ( ray_dispersion_model == 'cold' ) then
-					   call deriv_cold(eq, nvec, dddx, dddk, dddw)
+					   call deriv_cold(eq, ray_vec(:, istep, iray), dddx, dddk, dddw)
 					else
 					   write(*,*) 'ray_detailed_diagnostics: dispersion_model = ', &
 					       & ray_dispersion_model
