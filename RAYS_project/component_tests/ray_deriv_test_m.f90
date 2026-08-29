@@ -27,6 +27,9 @@ module ray_deriv_test_m
     logical :: test_general = .true.
     logical :: test_num = .true.
 
+! Switches to select specific parameter scans
+    logical :: scan_nx = .false.
+
 ! Data for one_point test
     integer :: number_of__models ! As of now 1 or 2
     real(KIND=rkind) :: x_in, y_in, z_in ! Eq point to evaluate
@@ -34,10 +37,16 @@ module ray_deriv_test_m
     real(KIND=rkind) :: n1_im = zero, n3_im = zero ! imaginary part of n perp and n||
     complex(KIND=rkind) :: n1_c, n3_c ! complex n perp and n|| to evaluate
 
+! Data for x scan and nx scan
+    integer :: n_xpoints ! Number of x points in scan
+    real(KIND=rkind) :: xmin, xmax ! min and max of x scan
+    integer :: n_nx_points ! Number of points in nx scan
+    real(KIND=rkind) :: nx_min, nx_max ! min and max of nx scan
+
     namelist /ray_deriv_test_list/ &
-            & test_cold, test_general, test_num, &
-            & x_in, y_in, z_in, &
-            & n1_in, n3_in
+            & test_cold, test_general, test_num, scan_nx, &
+            & x_in, y_in, z_in, n1_in, n3_in, &
+            & n_xpoints, xmin, xmax, n_nx_points, nx_min, nx_max
 
  !*************************************************************************
 
@@ -93,6 +102,9 @@ module ray_deriv_test_m
     type(eq_point) :: eq
 
 ! Results
+    real(KIND=rkind) :: x, x_vec(n_xpoints), nx_vec(n_nx_points)
+    real(KIND=rkind) :: dx, dnx, nx, nz
+    integer :: i, ix, inx
     real(KIND=rkind):: dddx(3), dddk(3), dddw
 
  !*************************************************************************
@@ -139,7 +151,7 @@ module ray_deriv_test_m
 
     if (test_cold .eqv. .true.) then
         ray_deriv_name = 'cold'
-        call deriv_cold(eq, nvec, dddx, dddk, dddw)
+        call deriv_cold(eq, v, dddx, dddk, dddw)
         label = 'deriv_cold '
         write(*,*) ''
         write(*, '(a)') label
@@ -194,6 +206,76 @@ module ray_deriv_test_m
         write(out_unit,'(a,1p1e12.4)') 'dddw =', dddw
         write(out_unit,*) ''
     end if
+
+!*************************************************************************
+! nx, x scan_nx
+!*************************************************************************
+	nx_scan: if (scan_nx) then
+	! generate nx vector
+		if (n_nx_points > 1) then
+			dnx = (nx_max - nx_min)/(n_nx_points-1)
+		else
+			dnx = 0.
+		end if
+
+		do inx = 0, n_xpoints-1
+			nx = nx_min + ix*dnx
+			nx_vec(inx+1) = nx
+		end do
+		write(out_unit, *) 'nx_vec'
+		write(out_unit, *) nx_vec
+
+		x_loop: do ix = 1, n_xpoints
+			rvec = (/ x_vec(ix), 0.0_rkind,  0.0_rkind /)
+			call equilibrium(rvec, eq )
+
+			nx_loop: do inx = 0, n_nx_points-1
+				nx = nx_min + inx*dx
+
+				if (test_cold .eqv. .true.) then
+					ray_deriv_name = 'cold'
+					call deriv_cold(eq, v, dddx, dddk, dddw)
+					label = 'deriv_cold '
+					write(out_unit,*) ''
+					write(out_unit, '(a)') label
+					write(out_unit,'(a,1p3e12.4)') 'dddx =', dddx
+					write(out_unit,'(a,1p3e12.4)') 'dddk =', dddk
+					write(out_unit,'(a,1p1e12.4)') 'dddw =', dddw
+					write(out_unit,*) ''
+				end if
+
+				if (test_general .eqv. .true.) then
+					ray_deriv_name = 'general'
+					call deriv_general(eq, v, dddx, dddk, dddw)
+					label = 'deriv_general'
+					write(out_unit,*) ''
+					write(out_unit, '(a)') label
+					write(out_unit,'(a,1p3e12.4)') 'dddx =', dddx
+					write(out_unit,'(a,1p3e12.4)') 'dddk =', dddk
+					write(out_unit,'(a,1p1e12.4)') 'dddw =', dddw
+					write(out_unit,*) ''
+				end if
+
+				if (test_num .eqv. .true.) then
+				!     Numerical differentiation.
+				!     N.B. Must be called with v(), not just nvec.  Evaluates eq at
+				!          other positions so v(1:3) is needed
+
+					ray_deriv_name = 'general'
+					call deriv_num(eq, v, dddx, dddk, dddw)
+					label = 'deriv_num '
+					write(out_unit,*) ''
+					write(out_unit, '(a)') label
+					write(out_unit,'(a,1p3e12.4)') 'dddx =', dddx
+					write(out_unit,'(a,1p3e12.4)') 'dddk =', dddk
+					write(out_unit,'(a,1p1e12.4)') 'dddw =', dddw
+					write(out_unit,*) ''
+				end if
+
+			end do nx_loop
+		end do x_loop
+
+	end if nx_scan
 
 !*************************************************************************
 
