@@ -526,7 +526,7 @@ integer :: number_of_rays, max_number_of_points, dim_v_vector
 ray data
 real(KIND=rkind), allocatable :: ray_vec(:,:,:) ! nv, max_number_of_points=nstep_max+1, nray
 
-real(KIND=rkind), allocatable :: residual(:,:)  ! nstep_max, nray
+real(KIND=rkind), allocatable :: residual(:,:)  ! nstep_max+1, nray
 
 integer, allocatable :: npoints(:)              ! nray
 
@@ -747,28 +747,6 @@ Module data for: uniform_eq_m
 use constants_m, only : rkind, zero
 
 implicit none
-
-
-Module data for: XY_curves_netCDF_m
-
-implicit none
-
-integer, parameter :: rkind = selected_real_kind(15,307) ! kind parameter for reals
-
-integer, parameter :: str_max_len = 60
-
-Derived type containing data needed to define an XY curve
-type XY_curve_netCDF
-
-character(len=:), allocatable :: grid_name
-
-character(len=:), allocatable :: curve_name
-
-real(kind=rkind), allocatable :: grid(:)
-
-real(kind=rkind), allocatable :: curve(:)
-
-end type XY_curve_netCDF
 
 
 Module data for: Z_slab_eq_m

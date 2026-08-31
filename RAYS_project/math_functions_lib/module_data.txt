@@ -233,6 +233,28 @@ module procedure write_vector_rkind, write_Cvector_rkind
 end interface
 
 
+Module data for: XY_curves_netCDF_m
+
+implicit none
+
+integer, parameter :: rkind = selected_real_kind(15,307) ! kind parameter for reals
+
+integer, parameter :: str_max_len = 60
+
+Derived type containing data needed to define an XY curve
+type XY_curve_netCDF
+
+character(len=:), allocatable :: grid_name
+
+character(len=:), allocatable :: curve_name
+
+real(kind=rkind), allocatable :: grid(:)
+
+real(kind=rkind), allocatable :: curve(:)
+
+end type XY_curve_netCDF
+
+
 Module data for: zfunctions_m
 
 implicit none

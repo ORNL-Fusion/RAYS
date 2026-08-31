@@ -495,14 +495,6 @@ Description of module: uniform_eq_m
 
 Simple model for uniform plasma, useful for testing
 
-Description of module: XY_curves_netCDF_m
-
-Utilities to conveniently generate a netCDF file containing lists of X/Y vectors
-suitable for plotting, therefore called curves.  It provides a derived type,
-XY_curve_netCDF, containing the data needed for a single curve. It provides a subroutine,
-write_XY_curves_netCDF, which accepts a list of type XY_curve_netCDF instances and writes
-a netCDF file contining the curve data plus some metadata.
-
 Description of module: Z_slab_eq_m
 
 This is almost exactly the same as slab_eq_m except that gradient is in z.

@@ -154,6 +154,14 @@ write_Cmatrix_rkind : precision rkind, complex
 N.B. Default unit is ISO_FORTRAN_ENV OUTPUT_UNIT. Can be changed in call by using
 optional argument 'out_unit'
 
+Description of module: XY_curves_netCDF_m
+
+Utilities to conveniently generate a netCDF file containing lists of X/Y vectors
+suitable for plotting, therefore called curves.  It provides a derived type,
+XY_curve_netCDF, containing the data needed for a single curve. It provides a subroutine,
+write_XY_curves_netCDF, which accepts a list of type XY_curve_netCDF instances and writes
+a netCDF file contining the curve data plus some metadata.
+
 Description of module: zfunctions_m
 
 A collection of routines to calculate plasma dispersion function by various methods
