@@ -128,7 +128,7 @@ real(KIND=rkind) ::	rvec_restart(3) ! Position for X-mode restart
 
 real(KIND=rkind) ::	nvec_restart(3) ! k vector for X-mode restart
 
-real(KIND=rkind) ::	alphaX_cut ! omega_pe**2/Omga**2 at X-mode cutoff
+real(KIND=rkind) ::	alpha_restart ! omega_pe**2/Omga**2 at X-mode restart
 
 integer :: ray_number ! RAYS ray number for this ray
 
