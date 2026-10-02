@@ -19,8 +19,7 @@
 ! 3) Read an ASCII (or binary) pair of files as specified by unit numbers: ray_list_unit and
 !    output_unit,  These files are written incrementally as the rays are traced and
 !    therefore are still available if the code crashes.  The data read is put into this
-!    module variables: npoints, s_vec, and v_vec.  For now the older processors use this
-!    data. ray_data_input_mode = ASCII
+!    module variables: npoints, s_vec, and v_vec.
 !
 ! It requires an input file 'post_process_rays.in' telling it which specific processor to
 ! use and which ray data input method to use. It also contains a namelist group with data
@@ -399,7 +398,7 @@ contains
     call message(1)
     close(message_unit)
 
-! Copy messages file to log.RAYS so it won't get clobbered by post processing
+! Copy messages file to log.post_process_RAYS'
     call system('mv messages log.post_process_RAYS')
 
     return

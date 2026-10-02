@@ -74,7 +74,7 @@ contains
         use diagnostics_m, only : message_unit, messages_to_stdout, message, text_message, verbosity
         use simple_slab_ray_init_m, only : simple_slab_ray_init
         use solovev_ray_init_nphi_ntheta_m, only : ray_init_solovev_nphi_ntheta
-        use axisym_toroid_ray_init_nphi_ntheta_m, only : ray_init_axisym_toroid_nphi_ntheta
+!         use axisym_toroid_ray_init_nphi_ntheta_m, only : ray_init_axisym_toroid_nphi_ntheta
         use axisym_toroid_ray_init_R_Z_nphi_ntheta_m, only : ray_init_axisym_toroid_R_Z_nphi_ntheta
         use one_ray_init_XYZ_k_direction_m, only : one_ray_init_XYZ_n_direction
         use file_input_ray_init_m, only : file_input_ray_init
