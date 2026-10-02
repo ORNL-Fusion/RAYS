@@ -65,4 +65,42 @@ dependencies – OpenMP and netCDF.  RAYS is open source and is accessible at th
 ORNL Fusion github repository – https://github.com/ORNL-Fusion/RAYS.
 
 
-![RAYS-and-kernel](readme_images/RAYS and kernel-fig)
+<p align="center">
+  <img src="readme_images/RAYS-and-kernel-fig.png" alt="RAYS-and-kernel" width="600">
+</p>
+
+<p align="center">
+Figure 1.  Schematic of the simplest front end RAYS code coupled to the RAYS_lib
+kernel (RAYS_lib)
+</p>
+
+The RAYS main program itself has only three executable statements.  Several
+other front-end applications have been written which carry out more complicated
+workflows in a single job submission, such as parameter scans or ray tracing
+runs followed by data post processing and graphics generation.  Note that the
+interfaces in the kernel are generic.  No block in the diagram depends on the
+implementation of anything below or to the right of it, provided that the
+supporting blocks honor the interface.  Selection between multiple
+implementations is done in the main namelist input file without recompilation.
+
+
+<p align="center">
+  <img src="readme_images/post-processing-fig.png" alt="post-processing" width="600">
+</p>
+
+
+<p align="center">
+Figure 2. Schematic of a typical front-end application consisting of a main
+program, the <br> post-processing library and graphics routines.
+</p>
+
+Similarly with the RAYS code, the main post-processing code only has three
+executable statements. In post_process_lib the geometry specific processor
+modules are completely independent so that modification of one, or addition of a
+new one does not disturb the others.  The post-processing module links to the
+RAYS_lib static library and uses many of the exact same routines as used to
+generate the ray data.  Analyzed data from the post-processor is typically
+written to a collection of data-specific netCDF files, but it can also be
+accessed in memory from module data for use in a host code, without file
+transfer.  The graphics capability provided uses external Python code based on
+matplotlib.
