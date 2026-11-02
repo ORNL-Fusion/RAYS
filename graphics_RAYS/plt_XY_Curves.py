@@ -284,7 +284,7 @@ class XY_contour:
         ny = len(y)
         zy = len(z)
         zx = len(z[0])
-        if nx != zx or nx != zx:
+        if nx != zx or ny != zy:
             print('XY_contour: shape of z does not conform to lengths of x, y')
             raise Exception('XY_contour: shape of z does not conform to lengths of x, y')
 
